@@ -21,15 +21,27 @@ The plan, as approved, with status. Phases 0–1 are done; the rest is ahead.
   - the game's own answer log (`log.txt`) is dead code — mod must record choices itself
   - `ShowedScenesList` + `LastOpenScene` determine resume behaviour
 
-## Phase 2 — runtime probe (next)
+## Phase 2 — runtime probe (done, 23 Oct 2026)
 
-- [ ] Run the game with the probe installed; confirm FINDINGS.md against reality:
-  - [ ] `log.txt` empty in a real playthrough
-  - [ ] where `persistentDataPath` lands under Proton
-  - [ ] `WindowPause` exists in all in-game scenes
-  - [ ] `SaveLoadManager.LoadGame(SaveLoadHelper)` present at runtime (probe already checks)
-  - [ ] timing/sequence of autosave calls (informational only)
-- [ ] docs/FINDINGS.md updated with anything that differs
+- [x] Bootstrap made to work in-game (the hard part, see FINDINGS.md for the details):
+  - Doorstop entrypoint must stay pure-managed; `new GameObject()` there is fatal in a
+    sneaky way — Mono caches the failed icall wrapper, so the call keeps throwing even
+    after the engine is up. Never touch the Unity API before engine init.
+  - Working path: `AssemblyLoad` hook → Harmony postfix on
+    `GameManager`/`SaveLoadManager`/`MainMenuController.Awake` → host GameObject created
+    in the first of those, engine fully up. ~20s from game start to probe output.
+- [x] Probe results (all confirmed in `BranteLoadAny/BranteLoadAny.log`):
+  - `log.txt` empty (0 bytes) in a real session — dead code, mod records choices itself
+  - `persistentDataPath` = `C:/users/steamuser/AppData/LocalLow/SEVER/…` (Proton prefix)
+  - `SaveLoadManager.LoadGame(SaveLoadHelper)` present at runtime, instances of
+    `GameManager`/`SaveLoadManager` alive at the main menu
+  - types `SceneController`, `WindowPause`, `ParameterButtonChanger` all present
+    (real name: `_Scripts.AMVCC.Views.ParameterButtonChanger`)
+- [ ] WindowPause presence *per in-game scene* — deferred to Phase 4 (only the main
+  menu was observed; the pause window is only relevant in-game anyway)
+- [ ] timing of autosave calls — dropped: informational only, our hook point is
+  scene-load based and does not depend on it
+- [x] Proton needs `WINEDLLOVERRIDES=winhttp=n,b` (documented in README + installer)
 
 ## Phase 3 — choice-point capture
 

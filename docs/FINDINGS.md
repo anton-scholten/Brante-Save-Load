@@ -34,8 +34,8 @@ exact choice screen. No replay, no state reconstruction of our own.
 - `log.txt` in persistentDataPath — the answer log. **Dead code**: `ChoiceLoggingSystem.AddAnswerInLog`
   is never called from C# (`WriteAnswerInLog` is broadcast by `SceneController`, but no
   C# listener exists), so `log.txt` is always `{"SelectedAnswers":{}}`. The game does
-  not persist choice history. (Verify at runtime with the probe, but the decompile is
-  unambiguous: no other caller.)
+  not persist choice history. **Confirmed at runtime** (Phase 2 probe): the file exists
+  and is empty (0 bytes) after a real session.
 - `SaveGame(turn, chapter, lastOpenScene, state)` → `SaveData()` copies ~25 fields out
   of the singletons into a fresh `SaveLoadHelper` and serialises it. The field list is
   the de facto schema of the save (see `SaveLoadHelper` below).
@@ -142,16 +142,52 @@ an already-held achievement. No harm; noted for completeness.
   `winhttp.dll` proxy + `doorstop_config.ini` next to the exe) is the proven bootstrap
   under Proton (it is what BepInEx uses). We vendor Doorstop and a ~200-line bootstrap
   instead of taking a BepInEx dependency.
+- **Proton needs `WINEDLLOVERRIDES=winhttp=n,b`** or Wine loads its builtin winhttp and
+  Doorstop never runs. Verified with `WINEDEBUG=+loaddll`: only with the override does
+  the game-dir `WINHTTP.dll` load as native. For Steam players this means a launch
+  option: `WINEDLLOVERRIDES=winhttp=n,b %command%`.
 - Managed/.NET level: .NET 4.x equivalent (Mono 5.x). Compile plugins as **net472**.
   Unity assemblies are modular (`UnityEngine.CoreModule.dll` …).
 - The mod loader blacklists nothing — this is not Besiege; `System.IO`,
   `System.Reflection` etc. are all usable. (One fewer constraint.)
 
-## Open questions for the runtime probe
+## The icall-poisoning hazard (verified in-game, 23 Oct 2026)
 
-1. Confirm `log.txt` is empty in a real playthrough (expected: yes, dead code).
-2. Exact timing of `SaveGame` calls from the Bolt flow (which state transitions
-   autosave on) — matters only for deciding our own snapshot hook point; our plan is
-   to hook scene-load instead, which does not depend on this.
-3. Whether `WindowPause` exists in all in-game scenes (it should; verify).
-4. Where `persistentDataPath` actually lands under this Proton prefix.
+Doorstop runs our entrypoint **before the Unity engine initialises**, so the engine's
+icalls (native bindings) are not registered yet. The obvious `new GameObject()` there
+throws `MissingMethodException` on `GameObject.Internal_CreateGameObject` — expected.
+The **dangerous** part: Mono generates and caches the icall wrapper for a method slot on
+first use, including the *failure*. Once our assembly has called `new GameObject()`
+too early, **every later call from our assembly keeps throwing, forever** — verified:
+still failing inside a `GameManager.Awake` postfix (engine fully up, the game itself
+instantiating prefabs at that very moment). The game never notices because it only ever
+creates objects via `Object.Instantiate`, a different method slot.
+
+Rule for every future phase of this mod: **no `UnityEngine` API call may happen before
+the engine is up** — not even "just to see if it works yet". All bootstrap work before
+that point must be pure managed code (`System.*`, reflection, Harmony IL patching).
+
+## Working bootstrap (verified in-game, 23 Oct 2026)
+
+1. Doorstop entrypoint: pure-managed only. Attach an `AppDomain.AssemblyLoad` hook.
+2. `Assembly-CSharp` loads as assembly #68, ~1s after the entrypoint (all engine module
+   assemblies load first). In that callback, apply Harmony postfixes to the `Awake()` of
+   `_Scripts.Managers.GameManager`, `_Scripts.Managers.SaveLoadManager` and
+   `_Scripts.AMVCC.Controllers.MainMenuController` (Harmony is pure IL work, safe here).
+3. First of those `Awake()`s runs ~12s later on the main thread, engine fully up. Its
+   postfix creates the host `GameObject` (`new GameObject("BranteLoadAny")` +
+   `DontDestroyOnLoad` + `AddComponent<ModHost>`) — first-ever Unity API call, works.
+4. Probe results from that host:
+   - `Unity 2018.3.0f2`, platform `WindowsPlayer`.
+   - `Application.persistentDataPath` =
+     `C:/users/steamuser/AppData/LocalLow/SEVER/The Life and Suffering of Sir Brante`
+     (Windows-style path inside the Proton prefix).
+   - `Saves/` holds the player's slot; `log.txt` empty (dead code, see above).
+   - `GameManager` and `SaveLoadManager` instances already exist at the main menu.
+   - **`SaveLoadManager.LoadGame(SaveLoadHelper)` present at runtime** — the load path
+     is exactly as decompiled.
+   - Types `SceneController`, `WindowPause` and `ParameterButtonChanger` (real name:
+     `_Scripts.AMVCC.Views.ParameterButtonChanger`, *not* under `Assets.`) all present.
+- The game's exe is `The Life and Suffering of Sir Brante.exe` (not `Brante.exe`).
+- Test-run hygiene: `timeout`-killing the Proton wrapper orphans the Wine game process
+  (black screen). Kill the `…Sir Brante.exe` processes themselves, then `wineserver -k`.

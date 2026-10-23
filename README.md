@@ -38,6 +38,20 @@ to `BranteLoadAny/`, `doorstop_config.ini` and `winhttp.dll` (Doorstop, the same
 bootstrap BepInEx uses, without BepInEx) — and
 `./tools/install.sh --uninstall` removes exactly those.
 
+### Proton (Steam Play) — one extra step
+
+Under Proton, Wine must be told to use the bundled `winhttp.dll` instead of its own,
+or Doorstop never starts (the game then simply runs unmodded). Set this as the
+game's launch option in Steam:
+
+```
+WINEDLLOVERRIDES=winhttp=n,b %command%
+```
+
+You can check it worked by looking at `BranteLoadAny/BranteLoadAny.log` in the game
+folder after starting the game — it should show the mod's first lines within
+seconds.
+
 ## Building
 
 ```sh

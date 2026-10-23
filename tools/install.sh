@@ -116,8 +116,12 @@ echo "Installed doorstop_config.ini and winhttp.dll"
 cat <<'EOF2'
 
 Done. Next:
-  1. Start the game (Proton runs Doorstop transparently).
-  2. Read the probe log:
+  1. Proton/Steam Play only: set the game's launch option so Wine loads
+     the bundled Doorstop proxy instead of its builtin winhttp:
+       WINEDLLOVERRIDES=winhttp=n,b %command%
+     (Without it the game runs unmodded - no error, just no mod.)
+  2. Start the game.
+  3. Read the probe log:
        cat BranteLoadAny/BranteLoadAny.log
      (in the game folder; with a symlink it is in the repo)
 

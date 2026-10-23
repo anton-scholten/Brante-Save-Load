@@ -1,35 +1,163 @@
 using System;
-using System.Threading;
+using System.Reflection;
+using HarmonyLib;
 using UnityEngine;
 
 namespace Doorstop
 {
-	// The class Doorstop runs before Unity's own main(). Doorstop invokes it
-	// on the main thread with the engine already initialised (this is the
-	// pattern BepInEx relies on), so creating a GameObject right here works.
-	// If some game/update changes that, we retry inline for a few seconds
-	// rather than touching Unity from a background thread, which Unity forbids.
+	// Doorstop runs this BEFORE the Unity engine initialises, and the engine's
+	// icalls (native function bindings) are not registered yet. Two hard-won
+	// facts, both verified in-game 2026-10-23:
+	//
+	// 1. `new GameObject()` at that point throws MissingMethodException on
+	//    GameObject.Internal_CreateGameObject - and what is worse, Mono then
+	//    caches the FAILED icall wrapper for that method slot: every later
+	//    call from our assembly keeps throwing, even after the engine is
+	//    fully up (observed: still failing inside a GameManager.Awake postfix
+	//    while the game itself was instantiating prefabs).
+	//    => NEVER touch the Unity API until the engine is up. Not once.
+	//
+	// 2. Creating the host from an AppDomain.AssemblyLoad callback is
+	//    unreliable for the same reason (attempts during engine module
+	//    loading all failed).
+	//
+	// So the host is created the way real mod loaders do it: pure-managed
+	// Harmony patching (safe at any time, no engine needed) on game methods
+	// that are guaranteed to run on the main thread once the engine is fully
+	// up. Whichever of them fires first creates the host GameObject.
+	//   - GameManager.Awake       - persistent singleton, early boot
+	//   - SaveLoadManager.Awake   - persistent singleton, early boot
+	//   - MainMenuController.Awake - present in the main menu scene
 	public static class Entrypoint
 	{
+		private static bool _hostCreated;
+		private static bool _patched;
+		private static int _loadCount;
+
 		public static void Start()
 		{
-			for (int i = 0; i < 100; i++)
+			// Pure managed code only from here on - no UnityEngine calls!
+			ModLog.Info("Doorstop entrypoint reached (engine not up yet)");
+			AppDomain.CurrentDomain.AssemblyLoad += OnAssemblyLoad;
+		}
+
+		private static void OnAssemblyLoad(object sender, AssemblyLoadEventArgs args)
+		{
+			string name;
+			try { name = args.LoadedAssembly.GetName().Name; }
+			catch { name = "?"; }
+			_loadCount++;
+			if (name == "Assembly-CSharp")
+			{
+				ModLog.Info("Assembly-CSharp loaded (assembly #" + _loadCount + ")");
+				if (!_patched)
+				{
+					_patched = true;
+					try { PatchGameBootMethods(); }
+					catch (Exception e) { ModLog.Error("Harmony patch failed:\n" + e); }
+				}
+			}
+		}
+
+		private static void PatchGameBootMethods()
+		{
+			var harmony = new Harmony("brante.loadanychoice");
+			// type name -> method to postfix; each fires on the main thread
+			// early in the respective scene, engine fully up by then.
+			string[][] targets =
+			{
+				new[] { "_Scripts.Managers.GameManager, Assembly-CSharp", "Awake" },
+				new[] { "_Scripts.Managers.SaveLoadManager, Assembly-CSharp", "Awake" },
+				new[] { "_Scripts.AMVCC.Controllers.MainMenuController, Assembly-CSharp", "Awake" },
+			};
+			foreach (string[] t in targets)
+			{
+				Type type = Type.GetType(t[0]);
+				if (type == null)
+				{
+					ModLog.Error("Type not found: " + t[0]);
+					continue;
+				}
+				MethodInfo method = type.GetMethod(t[1],
+					BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+				if (method == null)
+				{
+					ModLog.Error("Method not found: " + t[0] + "." + t[1]);
+					continue;
+				}
+				harmony.Patch(method,
+					postfix: new HarmonyMethod(typeof(Entrypoint), "BootHookPostfix"));
+				ModLog.Info("Patched " + type.Name + "." + t[1] + " (postfix -> create host)");
+			}
+		}
+
+		// Runs on the main thread, engine fully up, at the end of Awake() of
+		// the first scene that contains one of the patched components.
+		// FIRST touch of the Unity API by this mod - must not run earlier
+		// (fact 1 in the class comment).
+		private static void BootHookPostfix()
+		{
+			ModLog.Info("Game boot hook reached - engine is up");
+			TryCreateHost();
+		}
+
+		private static void TryCreateHost()
+		{
+			if (_hostCreated)
+			{
+				return;
+			}
+			// Preferred: our own persistent host object.
+			GameObject go = null;
+			try
+			{
+				go = new GameObject("BranteLoadAny");
+				UnityEngine.Object.DontDestroyOnLoad(go);
+				go.AddComponent<ModHost>();
+				_hostCreated = true;
+				ModLog.Info("Host created: own DontDestroyOnLoad object");
+			}
+			catch (Exception e)
+			{
+				try { if (go != null) UnityEngine.Object.Destroy(go); } catch { }
+				ModLog.Info("new GameObject failed, falling back to attaching "
+					+ "to a game object:\n" + e);
+			}
+			if (_hostCreated)
+			{
+				return;
+			}
+			// Fallback: different icall - attach ModHost to an existing game
+			// object instead of creating one (persistent if GameManager is
+			// there, menu-lifetime otherwise).
+			string[] candidates =
+			{
+				"_Scripts.Managers.GameManager, Assembly-CSharp",
+				"_Scripts.Managers.SaveLoadManager, Assembly-CSharp",
+				"_Scripts.AMVCC.Controllers.MainMenuController, Assembly-CSharp",
+			};
+			foreach (string tname in candidates)
 			{
 				try
 				{
-					GameObject go = new GameObject("BranteLoadAny");
-					UnityEngine.Object.DontDestroyOnLoad(go);
-					go.AddComponent<ModHost>();
-					ModLog.Info("Host created on attempt " + (i + 1));
+					Type t = Type.GetType(tname);
+					if (t == null) { continue; }
+					Component c = UnityEngine.Object.FindObjectOfType(t) as Component;
+					if (c == null) { continue; }
+					c.gameObject.AddComponent<ModHost>();
+					_hostCreated = true;
+					ModLog.Info("Host attached to '" + c.gameObject.name + "' (fallback)");
 					return;
 				}
 				catch (Exception e)
 				{
-					ModLog.Error("Host creation attempt " + (i + 1) + " failed: " + e.Message);
-					Thread.Sleep(100);
+					ModLog.Error("Fallback attach via " + tname + " failed:\n" + e);
 				}
 			}
-			ModLog.Error("Giving up: could not create the host object.");
+			if (!_hostCreated)
+			{
+				ModLog.Error("Host creation FAILED entirely");
+			}
 		}
 	}
 }
