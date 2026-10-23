@@ -2,12 +2,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using _Scripts.AMVCC.Views.Windows.Destiny;
+using _Scripts.AMVCC.Views;
 using _Scripts.Helpers;
 using _Scripts.Managers;
 
@@ -116,82 +117,88 @@ namespace Doorstop
 		private static string _firstItemTitle;
 
 		// ------------------------------------------------------------------
-		// Book tab
+		// Top-bar tab
 		// ------------------------------------------------------------------
 
-		// Called after the game shows a window (UIManager.ShowWindow
-		// postfix). Adds the "Load any choice" tab to the book next to the
-		// chapter I tab. Idempotent; the book is rebuilt on each open, so
-		// the tab is added again each time.
-		public static void EnsureBookTab()
+		// Called whenever the game's HUD (the top bar with the chapter badge)
+		// is enabled. Adds the "Load any choice" tab right of the chapter
+		// badge. Idempotent.
+		public static void EnsureHudTab()
 		{
 			try
 			{
-				DestinyWindow[] books = UnityEngine.Object.FindObjectsOfType<DestinyWindow>();
-				foreach (DestinyWindow book in books)
+				HudController hud = UnityEngine.Object.FindObjectOfType<HudController>();
+				if (hud == null)
 				{
-					InjectBookTab(book);
+					return;
 				}
+				InjectHudTab(hud);
 			}
 			catch (Exception e)
 			{
-				ModLog.Error("ChoiceWindow: book tab injection failed:\n" + e);
+				ModLog.Error("ChoiceWindow: top-bar tab injection failed:\n" + e);
 			}
 		}
 
-		private static void InjectBookTab(DestinyWindow book)
+		// The chapter badge is the HUD's private _mainChapterButton.
+		private static GameObject ChapterBadge(HudController hud)
 		{
-			if (book.Tabs == null || book.Tabs.Count == 0 || book.Tabs[0] == null)
+			FieldInfo f = typeof(HudController).GetField("_mainChapterButton",
+				BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+			GameObject badge = f != null ? f.GetValue(hud) as GameObject : null;
+			return badge;
+		}
+
+		private static void InjectHudTab(HudController hud)
+		{
+			GameObject badge = ChapterBadge(hud);
+			if (badge == null)
 			{
-				ModLog.Error("ChoiceWindow: book has no chapter tabs - tab not added");
+				ModLog.Error("ChoiceWindow: chapter badge not found - top-bar tab not added");
 				return;
 			}
-			GameObject first = book.Tabs[0];
-			Transform parent = first.transform.parent;
-			if (parent.Find("BranteLoadAny_Tab") != null)
+			Canvas canvas = badge.GetComponentInParent<Canvas>();
+			if (canvas == null)
 			{
+				return;
+			}
+			Transform root = canvas.transform;
+			Transform existing = root.Find("BranteLoadAny_HudTab");
+			if (existing != null)
+			{
+				existing.gameObject.SetActive(true);
 				return;
 			}
 
-			RectTransform src = first.GetComponent<RectTransform>();
-			GameObject tab = UnityEngine.Object.Instantiate(first, parent);
-			tab.name = "BranteLoadAny_Tab";
+			// Right edge of the badge (world), its vertical centre.
+			RectTransform br = badge.GetComponent<RectTransform>();
+			Vector3[] c = new Vector3[4];
+			br.GetWorldCorners(c);
+			float gap = 24f;
+			Vector3 rightMid = new Vector3((c[2].x + c[3].x) * 0.5f + gap, (c[0].y + c[1].y) * 0.5f, 0f);
+			RectTransform canvasRt = (RectTransform)root;
+			Vector3 local = canvasRt.InverseTransformPoint(rightMid);
+
+			GameObject tab = CreateUiObject("BranteLoadAny_HudTab", root);
 			RectTransform rt = tab.GetComponent<RectTransform>();
-			// Right of the chapter I tab with a gap, same anchor and pivot.
-			float gap = 16f;
-			float width = Mathf.Max(src.rect.width, 240f);
-			rt.sizeDelta = new Vector2(width, src.sizeDelta.y);
-			rt.anchoredPosition = new Vector2(
-				src.anchoredPosition.x + (1f - src.pivot.x) * src.rect.width + gap + src.pivot.x * width,
-				src.anchoredPosition.y);
+			// Anchored to the canvas centre, so anchoredPosition is the canvas-
+			// local position computed above, whatever the screen size.
+			rt.anchorMin = new Vector2(0.5f, 0.5f);
+			rt.anchorMax = new Vector2(0.5f, 0.5f);
+			rt.pivot = new Vector2(0f, 0.5f);
+			rt.anchoredPosition = new Vector2(local.x, local.y);
+			rt.sizeDelta = new Vector2(270f, 64f);
 
-			Button btn = tab.GetComponent<Button>();
-			if (btn != null)
-			{
-				btn.onClick = new Button.ButtonClickedEvent();
-				btn.onClick.AddListener(delegate { Open(); });
-				btn.interactable = true;
-			}
-			TextMeshProUGUI label = tab.GetComponentInChildren<TextMeshProUGUI>(true);
-			if (label != null)
-			{
-				label.text = "Load any choice";
-				label.overflowMode = TextOverflowModes.Ellipsis;
-				label.enableWordWrapping = false;
-			}
-			tab.SetActive(true);
+			Image img = tab.AddComponent<Image>();
+			img.color = new Color(0.36f, 0.22f, 0.13f);
+			Button btn = tab.AddComponent<Button>();
+			btn.targetGraphic = img;
+			btn.onClick.AddListener(delegate { Open(); });
+			TextMeshProUGUI label = AddLabel(tab.transform, "Label", "Load any choice", 22f, ColTextLight, true);
+			Stretch(label.rectTransform);
 
-			ModLog.Info("ChoiceWindow: book tab added right of '" + first.name + "' (x="
-				+ rt.anchoredPosition.x + ", width=" + width + ")");
-			for (int i = 0; i < book.Tabs.Count; i++)
-			{
-				if (book.Tabs[i] != null)
-				{
-					RectTransform t = book.Tabs[i].GetComponent<RectTransform>();
-					ModLog.Info("  tab[" + i + "] '" + book.Tabs[i].name + "' pos=" + t.anchoredPosition
-						+ " size=" + t.rect.size);
-				}
-			}
+			ModLog.Info("ChoiceWindow: top-bar tab added right of the chapter badge '" + badge.name
+				+ "' (canvas '" + canvas.name + "', local x=" + local.x + " y=" + local.y + ")");
 		}
 
 		// ------------------------------------------------------------------
@@ -1158,6 +1165,70 @@ namespace Doorstop
 			{
 				LoadSnapshot(_pendingPath);
 			}
+		}
+
+		// Dev top-bar test (marker: Snapshots/dev-book.txt): re-adds the tab and
+		// logs where the chapter badge and our tab are, with their parent chain.
+		public static void DevBook()
+		{
+			if (ModHost.Current != null)
+			{
+				ModHost.Current.StartCoroutine(DevBookDump());
+			}
+		}
+
+		private static IEnumerator DevBookDump()
+		{
+			yield return new WaitForSeconds(2f);
+			EnsureHudTab();
+			HudController hud = UnityEngine.Object.FindObjectOfType<HudController>();
+			GameObject badge = hud != null ? ChapterBadge(hud) : null;
+			if (badge != null)
+			{
+				DumpWorld("badge", badge);
+			}
+			Transform ours = null;
+			if (badge != null)
+			{
+				Canvas canvas = badge.GetComponentInParent<Canvas>();
+				ours = canvas != null ? canvas.transform.Find("BranteLoadAny_HudTab") : null;
+			}
+			if (ours != null)
+			{
+				DumpWorld("ours", ours.gameObject);
+			}
+			else
+			{
+				ModLog.Info("DEV BOOK: our tab was not created");
+			}
+		}
+
+		// Logs a UI object's screen rect and its parent chain (name, active,
+		// canvas), so placement problems show up in the log.
+		private static void DumpWorld(string label, GameObject go)
+		{
+			RectTransform rt = go.GetComponent<RectTransform>();
+			Vector3[] c = new Vector3[4];
+			if (rt != null)
+			{
+				rt.GetWorldCorners(c);
+			}
+			ModLog.Info("DEV BOOK: " + label + " '" + go.name + "' active=" + go.activeInHierarchy
+				+ " world bl=" + c[0] + " tr=" + c[2] + " size=" + (rt != null ? rt.rect.size.ToString() : "-"));
+			Transform t = go.transform.parent;
+			string chain = "";
+			int depth = 0;
+			while (t != null && depth < 12)
+			{
+				Canvas cv = t.GetComponent<Canvas>();
+				chain += " > " + t.name + (t.gameObject.activeSelf ? "" : "(OFF)")
+					+ (cv != null ? "[canvas order=" + cv.sortingOrder + " " + cv.renderMode + "]" : "")
+					+ (t.GetComponent<RectMask2D>() != null ? "[mask]" : "")
+					+ (t.GetComponent<ScrollRect>() != null ? "[scroll]" : "");
+				t = t.parent;
+				depth++;
+			}
+			ModLog.Info("DEV BOOK:    chain" + chain);
 		}
 
 		// ------------------------------------------------------------------

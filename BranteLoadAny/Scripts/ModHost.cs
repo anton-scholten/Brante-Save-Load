@@ -201,6 +201,17 @@ namespace Doorstop
 						yield return new WaitForSeconds(3f);
 						ChoiceWindow.DevTest();
 					}
+					// Phase 6 book test: a marker opens the book and logs the
+					// tab layout (the "Load any choice" tab placement).
+					string book = Path.Combine(Recorder.SnapshotDir, "dev-book.txt");
+					if (File.Exists(book))
+					{
+						try { File.Delete(book); }
+						catch (Exception) { }
+						ModLog.Info("DEV BOOK: marker found - opening the book in 3s");
+						yield return new WaitForSeconds(3f);
+						ChoiceWindow.DevBook();
+					}
 					yield break;
 				}
 			}
