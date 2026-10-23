@@ -1,6 +1,10 @@
 using System;
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using _Scripts.Helpers;
+using _Scripts.Managers;
 
 namespace Doorstop
 {
@@ -9,12 +13,22 @@ namespace Doorstop
 	// phases add the snapshot recorder and the choice-list UI here.
 	public class ModHost : MonoBehaviour
 	{
+		// The one live host; lets static code (Recorder) start coroutines.
+		public static ModHost Current;
+
+		private void Awake()
+		{
+			Current = this;
+		}
+
 		// Start fires the frame after the boot-hook postfix (see Entrypoint)
 		// created us, i.e. the engine is fully up by now.
 		private void Start()
 		{
 			Probe("Start", RunProbes);
 			ProbeGameManagers();
+			Recorder.Arm();
+			StartCoroutine(DevAutoload());
 		}
 
 		private void RunProbes()
@@ -115,6 +129,135 @@ namespace Doorstop
 				}
 			}
 			ModLog.Info("GameManager/SaveLoadManager never appeared in 120s (still in main menu?)");
+		}
+
+		// DEV-ONLY test harness (not part of the player-facing mod): if
+		// <persistentDataPath>/BranteLoadAny/Snapshots/dev-autoload.txt
+		// exists shortly after boot, load the newest autosave and play out
+		// the game's OWN load sequence (loading screen -> dissolve ->
+		// AutomaticSceneLoad) without any UI interaction - used to exercise
+		// the recorder end to end and dry-run Phase 4's load path. The
+		// marker is deleted immediately, so this can never fire twice.
+		private System.Collections.IEnumerator DevAutoload()
+		{
+			yield return new WaitForSeconds(5f);
+			string marker = Path.Combine(Recorder.SnapshotDir, "dev-autoload.txt");
+			if (!File.Exists(marker))
+			{
+				yield break;
+			}
+			try { File.Delete(marker); } catch { }
+			ModLog.Info("DEV AUTOLOAD: marker found, loading newest autosave");
+			// The harness bypasses the game's slot bookkeeping (which decides
+			// WHERE autosaves are written), so block the game's own saves for
+			// the rest of this run - Saves/ must stay untouched.
+			Recorder.DevBlockGameSaves = true;
+			string scene = DevAutoloadDo();
+			if (string.IsNullOrEmpty(scene))
+			{
+				yield break;
+			}
+			yield return new WaitForSeconds(1f);
+
+			// Mirror the vanilla flow (SaveSlot click -> LoadGame, then what
+			// the Continue button does): open GameLoadingScreen additively -
+			// SceneTransitionDissolve + GameLoadingScreenBehaviour live there
+			// - and broadcast StartSceneTransitionEvent. The dissolve's
+			// animation event broadcasts SceneTransitionCompleteEvent ->
+			// AutomaticSceneLoad() re-opens the save's scene (IsShowed=false
+			// branch), which is where the recorder fires.
+			AsyncOperation ao = DevOpenLoadingScreen();
+			if (ao == null)
+			{
+				yield break;
+			}
+			while (!ao.isDone)
+			{
+				yield return null;
+			}
+			ModLog.Info("DEV AUTOLOAD: GameLoadingScreen loaded; broadcasting StartSceneTransitionEvent");
+			DevBroadcastTransition();
+
+			// Wait for the target scene to open (capture fires in its
+			// SceneController.Awake); the show animation then puts the
+			// answer buttons on screen for the sidecar's choice texts.
+			for (int i = 0; i < 30; i++)
+			{
+				yield return new WaitForSeconds(1f);
+				Scene opened = SceneManager.GetSceneByName(scene);
+				if (opened.IsValid() && opened.isLoaded)
+				{
+					ModLog.Info("DEV AUTOLOAD: scene " + scene + " is open");
+					yield break;
+				}
+			}
+			ModLog.Error("DEV AUTOLOAD: scene " + scene + " never opened");
+		}
+
+		// try/catch without yields (C# forbids yield inside try-catch).
+		private AsyncOperation DevOpenLoadingScreen()
+		{
+			try
+			{
+				return SceneManager.LoadSceneAsync("GameLoadingScreen", LoadSceneMode.Additive);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("DEV AUTOLOAD: loading screen failed to open:\n" + e);
+				return null;
+			}
+		}
+
+		private void DevBroadcastTransition()
+		{
+			try
+			{
+				Messenger.Broadcast("StartSceneTransitionEvent");
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("DEV AUTOLOAD: transition broadcast failed:\n" + e);
+			}
+		}
+
+		// Does the file+reflection part of the dev autoload; no yields in
+		// here so it can use try/catch (C# forbids yield inside try-catch).
+		private string DevAutoloadDo()
+		{
+			try
+			{
+				string saves = Path.Combine(Application.persistentDataPath, "Saves");
+				string newest = null;
+				DateTime newestTime = DateTime.MinValue;
+				foreach (string f in Directory.GetFiles(saves, "Autosave.dat", SearchOption.AllDirectories))
+				{
+					DateTime t = File.GetLastWriteTimeUtc(f);
+					if (t > newestTime)
+					{
+						newestTime = t;
+						newest = f;
+					}
+				}
+				if (newest == null)
+				{
+					ModLog.Error("DEV AUTOLOAD: no Autosave.dat found");
+					return null;
+				}
+				SaveLoadHelper helper;
+				using (FileStream fs = File.OpenRead(newest))
+				{
+					helper = (SaveLoadHelper)new BinaryFormatter().Deserialize(fs);
+				}
+				ModLog.Info("DEV AUTOLOAD: " + newest + " -> hero '" + helper.HeroName
+					+ "', scene '" + helper.LastOpenScene + "', turn " + helper.Turn);
+				SaveLoadManager.Instance.LoadGame(helper);
+				return helper.LastOpenScene;
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("DEV AUTOLOAD failed:\n" + e);
+				return null;
+			}
 		}
 	}
 }

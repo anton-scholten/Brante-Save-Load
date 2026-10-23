@@ -9,10 +9,14 @@
 #   ./tools/install.sh --uninstall  remove everything again
 #   ./tools/install.sh --no-build   skip the build step
 #
-# What gets installed into the game folder:
-#   BranteLoadAny        -> symlink/copy of the repo's BranteLoadAny/
-#   doorstop_config.ini  -> from repo doorstop/ (edited once, then yours)
-#   winhttp.dll          -> Doorstop's proxy DLL (from vendor/doorstop/)
+# What gets installed:
+#   game folder:
+#     BranteLoadAny        -> symlink/copy of the repo's BranteLoadAny/
+#     doorstop_config.ini  -> from repo doorstop/ (edited once, then yours)
+#     winhttp.dll          -> Doorstop's proxy DLL (from vendor/doorstop/)
+#   Proton prefix (if the game has one):
+#     user.reg             -> per-app Wine DllOverrides entry so the Doorstop
+#                             proxy loads without any launch option
 # None of the game's own files are modified; --uninstall removes only these.
 #
 # Set BRANTE_DIR if the game is not auto-detected.
@@ -58,6 +62,71 @@ if ! GAME="$(find_game)"; then
     exit 1
 fi
 
+# Steam libraries, for finding the game's Proton prefix (compat data may live
+# in any library, not necessarily the one holding the game files).
+mapfile -t LIBS < <(
+    for vdf in "$HOME/.steam/steam/steamapps/libraryfolders.vdf" \
+               "$HOME/.local/share/Steam/steamapps/libraryfolders.vdf"; do
+        [[ -f "$vdf" ]] || continue
+        grep -oE '"path"[[:space:]]+"[^"]+"' "$vdf" | sed -E 's/.*"([^"]+)"$/\1/'
+    done | sort -u
+)
+
+# --- Proton/Wine: load Doorstop's proxy without a launch option --------------
+# Wine prefers its builtin winhttp.dll over the native proxy in the game dir,
+# which would silently skip Doorstop. A per-app DllOverrides entry in the
+# game's Proton prefix does exactly what the launch option
+# WINEDLLOVERRIDES=winhttp=n,b would, but persistently and per game only.
+# user.reg is plain text; Wine re-reads it when the prefix starts, so editing
+# it is only meaningful while nothing is running (guaranteed further below).
+WINE_SECTION='[Software\\Wine\\AppDefaults\\The Life and Suffering of Sir Brante.exe\\DllOverrides]'
+WINE_VALUE='"winhttp"="native,builtin"'
+
+wine_prefixes() {
+    local lib p
+    for lib in "$(cd "$(dirname "$GAME")/.." && pwd)" "${LIBS[@]}"; do
+        p="$lib/compatdata/1272160/pfx"
+        [[ -f "$p/user.reg" ]] && echo "$p"
+    done | awk '!seen[$0]++'
+}
+
+wine_override_add() {
+    local p
+    while read -r p; do
+        if grep -qF "$WINE_SECTION" "$p/user.reg"; then
+            echo "Wine override already present ($p)"
+            return 0
+        fi
+        printf '\n%s\n%s\n' "$WINE_SECTION" "$WINE_VALUE" >> "$p/user.reg"
+        echo "Added Wine override to $p (winhttp=native,builtin):"
+        echo "the game now starts modded without any launch option."
+        if pgrep -x wineserver >/dev/null 2>&1; then
+            echo "Note: a wineserver is still running. If the override does not"
+            echo "stick (check BranteLoadAny/BranteLoadAny.log after one run),"
+            echo "close everything Proton and re-run ./tools/install.sh --no-build."
+        fi
+        return 0
+    done < <(wine_prefixes)
+    echo "No Proton prefix with user.reg found (game not run under Steam Play yet?)."
+    echo "Fallback: set the launch option  WINEDLLOVERRIDES=winhttp=n,b %command%"
+    return 0
+}
+
+wine_override_del() {
+    local p
+    while read -r p; do
+        grep -qF "$WINE_SECTION" "$p/user.reg" || continue
+        awk -v hdr="$WINE_SECTION" '
+            $0 == hdr { skip = 1; next }
+            skip && /^\[/ { skip = 0 }
+            skip { next }
+            { print }
+        ' "$p/user.reg" > "$p/user.reg.tmp" && mv "$p/user.reg.tmp" "$p/user.reg"
+        echo "Removed Wine override from $p"
+        return 0
+    done < <(wine_prefixes)
+}
+
 DEST="$GAME/$MOD_NAME"
 DOORSTOP_INI="$GAME/doorstop_config.ini"
 WINHTTP="$GAME/winhttp.dll"
@@ -74,6 +143,7 @@ if [[ "$MODE" == "uninstall" ]]; then
             echo "Nothing at $path"
         fi
     done
+    wine_override_del
     echo "Uninstalled. The game's own files were never touched."
     exit 0
 fi
@@ -113,15 +183,15 @@ cp -f "$REPO_DIR/doorstop/doorstop_config.ini" "$DOORSTOP_INI"
 cp -f "$REPO_DIR/vendor/doorstop/winhttp.dll" "$WINHTTP"
 echo "Installed doorstop_config.ini and winhttp.dll"
 
+wine_override_add
+
 cat <<'EOF2'
 
 Done. Next:
-  1. Proton/Steam Play only: set the game's launch option so Wine loads
-     the bundled Doorstop proxy instead of its builtin winhttp:
-       WINEDLLOVERRIDES=winhttp=n,b %command%
-     (Without it the game runs unmodded - no error, just no mod.)
-  2. Start the game.
-  3. Read the probe log:
+  1. Start the game. Under Proton the installer has already registered the
+     Wine override, so no launch option is needed (if that step reported no
+     prefix, use:  WINEDLLOVERRIDES=winhttp=n,b %command%).
+  2. Read the probe log:
        cat BranteLoadAny/BranteLoadAny.log
      (in the game folder; with a symlink it is in the repo)
 

@@ -62,13 +62,16 @@ namespace Doorstop
 		private static void PatchGameBootMethods()
 		{
 			var harmony = new Harmony("brante.loadanychoice");
-			// type name -> method to postfix; each fires on the main thread
-			// early in the respective scene, engine fully up by then.
+			// type name -> method to postfix -> postfix handler; each fires on
+			// the main thread early in the respective scene, engine fully up.
 			string[][] targets =
 			{
-				new[] { "_Scripts.Managers.GameManager, Assembly-CSharp", "Awake" },
-				new[] { "_Scripts.Managers.SaveLoadManager, Assembly-CSharp", "Awake" },
-				new[] { "_Scripts.AMVCC.Controllers.MainMenuController, Assembly-CSharp", "Awake" },
+				new[] { "_Scripts.Managers.GameManager, Assembly-CSharp", "Awake", "BootHookPostfix" },
+				new[] { "_Scripts.Managers.SaveLoadManager, Assembly-CSharp", "Awake", "BootHookPostfix" },
+				new[] { "_Scripts.AMVCC.Controllers.MainMenuController, Assembly-CSharp", "Awake", "BootHookPostfix" },
+				// every choice scene has a SceneController; its Awake is the
+				// choice-point capture trigger (Phase 3)
+				new[] { "_Scripts.AMVCC.Controllers.SceneController, Assembly-CSharp", "Awake", "ChoiceScenePostfix" },
 			};
 			foreach (string[] t in targets)
 			{
@@ -86,9 +89,51 @@ namespace Doorstop
 					continue;
 				}
 				harmony.Patch(method,
-					postfix: new HarmonyMethod(typeof(Entrypoint), "BootHookPostfix"));
-				ModLog.Info("Patched " + type.Name + "." + t[1] + " (postfix -> create host)");
+					postfix: new HarmonyMethod(typeof(Entrypoint), t[2]));
+				ModLog.Info("Patched " + type.Name + "." + t[1] + " (postfix -> " + t[2] + ")");
 			}
+			PatchSaveGate(harmony);
+		}
+
+		// Save-game gate (normally a no-op): while the dev autoload harness
+		// runs (Recorder.DevBlockGameSaves), stop the game's own save entry
+		// points from writing into Saves/. The harness loads a save directly,
+		// bypassing the slot bookkeeping that decides WHERE autosaves go, so
+		// without this the game would drop files into odd places.
+		private static bool _saveGateLogged;
+
+		private static void PatchSaveGate(Harmony harmony)
+		{
+			Type slm = Type.GetType("_Scripts.Managers.SaveLoadManager, Assembly-CSharp");
+			if (slm == null)
+			{
+				return;
+			}
+			foreach (MethodInfo m in slm.GetMethods(
+				BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+			{
+				if ((m.Name == "SaveGame" && m.GetParameters().Length == 4)
+					|| (m.Name == "SaveChapterState" && m.GetParameters().Length == 0))
+				{
+					harmony.Patch(m,
+						prefix: new HarmonyMethod(typeof(Entrypoint), "SaveGatePrefix"));
+					ModLog.Info("Patched " + slm.Name + "." + m.Name + " (save gate prefix)");
+				}
+			}
+		}
+
+		private static bool SaveGatePrefix()
+		{
+			if (!Recorder.DevBlockGameSaves)
+			{
+				return true;
+			}
+			if (!_saveGateLogged)
+			{
+				_saveGateLogged = true;
+				ModLog.Info("DEV: game saves blocked (harness mode; Saves/ stays untouched)");
+			}
+			return false;
 		}
 
 		// Runs on the main thread, engine fully up, at the end of Awake() of
@@ -99,6 +144,13 @@ namespace Doorstop
 		{
 			ModLog.Info("Game boot hook reached - engine is up");
 			TryCreateHost();
+		}
+
+		// Harmony postfix on SceneController.Awake: a choice scene just
+		// appeared on screen. Hand it to the recorder (Phase 3).
+		private static void ChoiceScenePostfix()
+		{
+			Recorder.OnChoiceSceneShown();
 		}
 
 		private static void TryCreateHost()

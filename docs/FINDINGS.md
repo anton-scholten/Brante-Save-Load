@@ -191,3 +191,64 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
 - The game's exe is `The Life and Suffering of Sir Brante.exe` (not `Brante.exe`).
 - Test-run hygiene: `timeout`-killing the Proton wrapper orphans the Wine game process
   (black screen). Kill the `…Sir Brante.exe` processes themselves, then `wineserver -k`.
+
+## Phase 3 capture facts (verified in-game, 23 Oct 2026)
+
+- **Choice buttons are serialized INACTIVE** in the choice scene file. The show
+  animation switches them on at the end (`EndAnimationHelper.EndAnimation()`
+  activates the panel; the game then collects them with `FindObjectsOfType`).
+  Consequence for the recorder: `FindObjectsOfType<ParameterButtonChanger>()`
+  finds *nothing* at `SceneController.Awake` (and for a while after), but
+  `Resources.FindObjectsOfTypeAll<…>()` filtered by `gameObject.scene.IsValid()`
+  returns them immediately — their texts (`ButtonTextKey`) are plain serialized
+  fields and readable while inactive. This makes sidecar choice texts available
+  at capture time, no polling needed (the polling coroutine remains as fallback).
+- **Never call `SaveData`**: both overloads (`SaveData(int,int,SceneStates)` and
+  `SaveData(SaveLoadHelper)`) write `Autosave.dat` into the game's `Saves/` as a
+  side effect. The recorder mirrors the ~25 field copies instead — same values,
+  zero game save code invoked.
+- **`SaveLoadManager.Instance` can be dead mid-game.** `SaveLoadManager` is not
+  `DontDestroyOnLoad` (its own private `Start()` hides `SaveLoadBase.Start()`,
+  which is what would have done it), so it dies when the main-menu scene unloads;
+  `Singleton<T>.OnDestroy`-style cleanup leaves `Instance` Unity-fake-null.
+  Resolve with a `FindObjectOfType` fallback (its only needed member,
+  the `ChapterName` lookup table, is a constant — a verbatim copy ships as
+  fallback). `GameManager`/`ParametersManager`/`KeyChapterParametersController`/
+  `CharacterParametersSerializeHelper` were alive at capture; same fallback
+  applied to all.
+- **`LoadGame` overloads differ in slot bookkeeping**: `LoadGame(int slotId)`
+  also sets `_currentSaveFile` and `_currentSaveSlotInfo` (which decides WHERE
+  later autosaves are written); `LoadGame(SaveLoadHelper)` does not. Loading a
+  save with the bare overload made a subsequent game autosave drop
+  `Autosave.dat`/`testSave.txt` at the `Saves/` root (observed; removed again).
+  Phase 4 must set slot info (or block autosave) when loading snapshots.
+- **Vanilla load sequence** (fully C#-drivable, no Bolt needed for the plumbing):
+  1. `SaveSlot.OnPointerClick` → `LoadGame(slotId)` → `InitializeData` +
+     broadcast `LoadGameComplete` → `LoadWindow` handler loads the
+     `GameLoadingScreen` scene additively (and unloads itself);
+  2. player clicks Continue → broadcast `StartSceneTransitionEvent` →
+     `SceneTransitionDissolve` (Animator trigger) → its animation event calls
+     `LoadScene()` → broadcast `SceneTransitionCompleteEvent`;
+  3. `GameLoadingScreenBehaviour.AutomaticSceneLoad`:
+     - `LastOpenScene == "MainMenu"` → flow-machine `Click`;
+     - scene in `ShowedScenesList` **with `IsShowed=true`** → flow-machine
+       `Click` (continue *past* the scene);
+     - **`IsShowed=false` → `GameManager.LoadScene(LastOpenScene)`** (re-open
+       the scene — exactly what a snapshot taken at a choice scene needs, since
+       the capture happens before `SceneShowChecker.OnEnable` flips the flag);
+  4. loading screen unloads itself either way.
+  The dev harness replays steps 1–3 minus the UI clicks; it doubles as the dry
+  run for Phase 4's loader.
+- `GameManager.OnSceneAnimationStart` is invoked by `UIManager` on page-turn
+  finish (`OnFinishPageTurnEvent`) / popup close; `SceneController`'s handler
+  only plays the scene SFX — it does **not** create the buttons (they were
+  already in the scene, inactive, per above).
+- **Wine/Doorstop without a launch option (verified)**: the exe statically
+  imports only `UnityPlayer.dll` + `KERNEL32.dll`; `UnityPlayer.dll` imports
+  `WINHTTP.dll` (Doorstop's hook point; also `VERSION.dll`, `WINMM.dll`).
+  Wine's builtin-first policy loads its own winhttp unless told otherwise; a
+  per-app override in the Proton prefix's `user.reg`
+  (`[Software\\Wine\\AppDefaults\\The Life and Suffering of Sir Brante.exe\\DllOverrides]`
+  → `"winhttp"="native,builtin"`) makes the proxy load — verified by starting
+  the game with no `WINEDLLOVERRIDES` and seeing the mod log. `install.sh`
+  writes/removes this entry (only while the game is not running).

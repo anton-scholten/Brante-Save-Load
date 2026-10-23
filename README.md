@@ -35,14 +35,16 @@ have already rolled by the time a choice is visible. Details in
 Requires: the game (Steam), a .NET SDK (≥ 6) for building. Runs under Proton or
 native Windows. The installer places three things in the game folder — a symlink
 to `BranteLoadAny/`, `doorstop_config.ini` and `winhttp.dll` (Doorstop, the same
-bootstrap BepInEx uses, without BepInEx) — and
-`./tools/install.sh --uninstall` removes exactly those.
+bootstrap BepInEx uses, without BepInEx) — plus, under Proton, a per-app Wine
+`DllOverrides` entry in the game's compat-data prefix so the proxy DLL is picked
+up automatically. `./tools/install.sh --uninstall` removes exactly those.
 
-### Proton (Steam Play) — one extra step
+### Proton (Steam Play)
 
-Under Proton, Wine must be told to use the bundled `winhttp.dll` instead of its own,
-or Doorstop never starts (the game then simply runs unmodded). Set this as the
-game's launch option in Steam:
+Nothing to do: the installer registers the Wine override in the game's Proton
+prefix, so the mod starts with the game. If that step reported *no prefix found*
+(or the override did not stick), fall back to setting the game's launch option
+in Steam:
 
 ```
 WINEDLLOVERRIDES=winhttp=n,b %command%

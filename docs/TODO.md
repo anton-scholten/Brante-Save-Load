@@ -41,22 +41,45 @@ The plan, as approved, with status. Phases 0–1 are done; the rest is ahead.
   menu was observed; the pause window is only relevant in-game anyway)
 - [ ] timing of autosave calls — dropped: informational only, our hook point is
   scene-load based and does not depend on it
-- [x] Proton needs `WINEDLLOVERRIDES=winhttp=n,b` (documented in README + installer)
+- [x] Proton: installer now writes a per-app Wine `DllOverrides` entry into the
+  game's Proton prefix (`user.reg`), so no launch option is needed; the launch
+  option `WINEDLLOVERRIDES=winhttp=n,b` remains as documented fallback (README)
 
-## Phase 3 — choice-point capture
+## Phase 3 — choice-point capture (done, 23 Oct 2026)
 
-- [ ] Hook choice-scene appearance (Harmony patch on `SceneController` or sceneLoaded)
-- [ ] Snapshot the full `SaveLoadHelper` state into the mod's own folder
-- [ ] Sidecar metadata: timestamp, chapter, year/age, scene name, localized scene
-      title, the texts of the offered choices
-- [ ] Dedup: skip if an identical state (same scene + same stats) already recorded
-- [ ] Never write to the game's `Saves/` folder (structural: separate code path)
+- [x] Hook choice-scene appearance: Harmony postfix on `SceneController.Awake`
+  (fires for every choice scene, main thread, state final — the chosen answer's
+  effects only apply on click, and `ShowedScenesList` still has the scene as
+  *not* `IsShowed`, which is exactly what makes the loader re-open it)
+- [x] Snapshot the full `SaveLoadHelper` (field-by-field mirror of the game's
+  `SaveData`, but **no** game save code called and no file I/O outside
+  `<persistentDataPath>/BranteLoadAny/Snapshots/`) — 17 KB BinaryFormatter blob,
+  byte-identical format to the game's own saves
+- [x] Sidecar `.meta.txt`: timestamp, hero/age/year/turn/season, chapter,
+  localized scene title, and every offered choice text
+- [x] Dedup: SHA1 over the blob in the filename (`<scene>_t<turn>_<hash10>.dat`);
+  identical state → "unchanged, skipped" (verified)
+- [x] `Saves/` untouched, structurally (own code path) and enforced at runtime
+  for the dev harness by a save-gate Harmony prefix (verified: root stays clean)
+- Verified in-game via the dev autoload harness (marker file → loads newest
+  autosave through the game's *own* loading-screen/dissolve/`AutomaticSceneLoad`
+  sequence — which also rehearses Phase 4's load path)
 
 ## Phase 4 — settings button + choice list UI
 
 - [ ] Button in the pause/settings window (spawned programmatically, no prefab edits)
 - [ ] Scrollable list: chapter, choice text(s), date; newest first; delete + refresh
 - [ ] Click → confirm → `LoadGame(snapshot)` through the game's own loading screen
+- Learned from Phase 3's harness (apply here):
+  - vanilla load sequence = `LoadGame` → `GameLoadingScreen` scene → broadcast
+    `StartSceneTransitionEvent` → dissolve animation event →
+    `SceneTransitionCompleteEvent` → `AutomaticSceneLoad` (IsShowed=false →
+    `LoadScene(LastOpenScene)`, true → flow-machine `Click`)
+  - `LoadGame(int slotId)` is the overload that also sets `_currentSaveSlotInfo`
+    (where autosaves are written); `LoadGame(SaveLoadHelper)` does NOT — a later
+    autosave would drop files in odd places. Phase 4 must set slot info too.
+  - `SaveLoadManager.Instance` can be dead mid-game (it dies with the main-menu
+    scene in some paths) — resolve with a `FindObjectOfType` fallback
 
 ## Phase 5 — separate manual save/load
 
