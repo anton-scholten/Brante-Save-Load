@@ -37,7 +37,11 @@ native Windows. The installer places three things in the game folder — a symli
 to `BranteLoadAny/`, `doorstop_config.ini` and `winhttp.dll` (Doorstop, the same
 bootstrap BepInEx uses, without BepInEx) — plus, under Proton, a per-app Wine
 `DllOverrides` entry in the game's compat-data prefix so the proxy DLL is picked
-up automatically. `./tools/install.sh --uninstall` removes exactly those.
+up automatically. `./tools/install.sh --uninstall` removes exactly those,
+including the Wine override in the prefix. The game also survives the mod
+being half-removed: with `doorstop_config.ini`/`winhttp.dll` left behind but
+`BranteLoadAny/` gone, Doorstop fails silently and the game runs unmodded
+(verified).
 
 ### Proton (Steam Play)
 

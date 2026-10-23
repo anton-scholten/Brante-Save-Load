@@ -112,16 +112,42 @@ wine_override_add() {
     return 0
 }
 
+# Is the game actually running? Matches real game processes (Wine's exe,
+# Steam's helper, Proton's python) but skips anything in our own parent
+# chain: a caller - test harness, wrapper script - may quote the exe name
+# in its own command line, which must not count as the game running.
+game_running() {
+    local pid ppid chain=" $$ "
+    ppid="$PPID"
+    while [[ -n "$ppid" && "$ppid" -gt 1 ]]; do
+        chain="$chain$ppid "
+        ppid="$(awk '/^PPid:/{print $2}' "/proc/$ppid/status" 2>/dev/null)"
+    done
+    for pid in $(pgrep -f "Sir Brante\.exe" 2>/dev/null); do
+        case "$chain" in *" $pid "*) continue;; esac
+        return 0
+    done
+    return 1
+}
+
 wine_override_del() {
     local p
     while read -r p; do
         grep -qF "$WINE_SECTION" "$p/user.reg" || continue
-        awk -v hdr="$WINE_SECTION" '
-            $0 == hdr { skip = 1; next }
+        # Prefix match on the header: once wineserver has rewritten user.reg,
+        # the section header carries a key-count suffix ("...] 12345"), so an
+        # exact line match would silently skip the removal. The header is
+        # passed via ENVIRON because awk -v would interpret the backslashes.
+        HDR="$WINE_SECTION" awk '
+            index($0, ENVIRON["HDR"]) == 1 { skip = 1; next }
             skip && /^\[/ { skip = 0 }
             skip { next }
             { print }
         ' "$p/user.reg" > "$p/user.reg.tmp" && mv "$p/user.reg.tmp" "$p/user.reg"
+        if grep -qF "$WINE_SECTION" "$p/user.reg"; then
+            echo "FAILED to remove the Wine override from $p" >&2
+            return 1
+        fi
         echo "Removed Wine override from $p"
         return 0
     done < <(wine_prefixes)
@@ -143,6 +169,11 @@ if [[ "$MODE" == "uninstall" ]]; then
             echo "Nothing at $path"
         fi
     done
+    if game_running; then
+        echo "WARNING: the game is running. The Wine override edit in user.reg"
+        echo "may be overwritten when Wine exits - re-run --uninstall after"
+        echo "closing the game if the override reappears."
+    fi
     wine_override_del
     echo "Uninstalled. The game's own files were never touched."
     exit 0
@@ -158,7 +189,7 @@ if [[ ! -f "$SRC/$MOD_NAME.dll" ]]; then
     exit 1
 fi
 
-if pgrep -f "The Life and Suffering of Sir Brante.exe" >/dev/null 2>&1; then
+if game_running; then
     echo "The game appears to be running; close it before installing." >&2
     exit 1
 fi
