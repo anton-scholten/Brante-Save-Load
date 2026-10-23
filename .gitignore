@@ -1,0 +1,5 @@
+# The built DLLs ARE committed (like Besiege-Sand's SandAssembly.dll):
+# Mod.xml-style consumers get a runnable folder straight from the repo.
+# Only logs and temp files are ignored.
+BranteLoadAny/BranteLoadAny.log
+*.tmp
