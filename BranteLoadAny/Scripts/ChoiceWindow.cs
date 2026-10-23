@@ -13,14 +13,15 @@ using _Scripts.Managers;
 
 namespace Doorstop
 {
-	// Phase 4: the player-facing "load any choice" feature.
+	// Phase 4/5: the player-facing save list.
 	//
 	//  - a button injected into the game's own pause window (WindowPause,
 	//    opened with Esc / UIManager.ShowPauseMenu),
-	//  - a scrollable list of the recorded choice points (Recorder's
-	//    snapshot dir, newest first, title + meta from the .meta.txt sidecar),
-	//  - Phase 5: a second tab with the five manual save slots (Recorder's
-	//    slot dir), same confirm dialog and same load flow,
+	//  - one window with two tabs, both shown as a sortable table:
+	//      "Choice points" - the automatic snapshots taken at every choice,
+	//      "Saved games"   - the manual saves made with "Save now",
+	//    one row per save, a click on a header sorts by that column, the
+	//    x on the far right deletes the row, the table scrolls,
 	//  - confirm -> the game's own load sequence, exactly what clicking
 	//    Continue on the loading screen does:
 	//      LoadGame(helper) -> GameLoadingScreen (additive) ->
@@ -40,6 +41,7 @@ namespace Doorstop
 		private static readonly Color ColDim = new Color(0f, 0f, 0f, 0.65f);
 		private static readonly Color ColPanel = new Color(0.93f, 0.89f, 0.79f);
 		private static readonly Color ColItem = new Color(0.84f, 0.79f, 0.68f);
+		private static readonly Color ColItemAlt = new Color(0.88f, 0.84f, 0.74f);
 		private static readonly Color ColButtonDark = new Color(0.30f, 0.26f, 0.20f, 0.95f);
 		private static readonly Color ColLoadButton = new Color(0.55f, 0.30f, 0.25f);
 		private static readonly Color ColCancelButton = new Color(0.55f, 0.53f, 0.48f);
@@ -47,16 +49,56 @@ namespace Doorstop
 		private static readonly Color ColTextLight = new Color(0.95f, 0.92f, 0.82f);
 		private static readonly Color ColTextDark = new Color(0.12f, 0.10f, 0.08f);
 
-		private enum ListMode { Choices, Slots }
+		private enum ListMode { Choices, Saved }
 
-		private enum Pending { LoadChoice, DeleteChoice, SaveSlot, LoadSlot, DeleteSlot }
+		private enum Pending { Load, Delete, SaveNow }
+
+		// Table columns, left to right. Choice is the flexible one.
+		private enum Col { Saved, Chapter, Hero, Age, Year, Season, Turn, Scene, Choice }
+
+		private static readonly string[] ColNames =
+		{ "Saved", "Chapter", "Hero", "Age", "Year", "Season", "Turn", "Scene", "Choice" };
+
+		// Preferred widths in px; Choice takes whatever is left.
+		private static readonly float[] ColWidths =
+		{ 170f, 80f, 150f, 60f, 70f, 80f, 60f, 110f, 200f };
+
+		private const float RowHeight = 44f;
+		private const float HeaderHeight = 36f;
+		private const float DeleteWidth = 52f;
+
+		private sealed class SaveEntry
+		{
+			public string Dat;
+			public string Title;
+			public DateTime Saved;
+			public int Chapter;
+			public string Hero;
+			public int Age;
+			public int Year;
+			public int Season;
+			public int Turn;
+			public string Scene;
+
+			public string Choice
+			{
+				get { return string.IsNullOrEmpty(Title) ? Scene : Title; }
+			}
+		}
 
 		private static GameObject _injectedButton;
 		private static GameObject _canvas;
+		private static ScrollRect _scrollRect;
 		private static Transform _itemContainer;
+		private static Transform _headerRow;
+		private static TextMeshProUGUI[] _headerLabels;
 		private static Image _tabChoicesImg;
-		private static Image _tabSlotsImg;
+		private static Image _tabSavedImg;
+		private static GameObject _saveNowBtn;
 		private static ListMode _mode = ListMode.Choices;
+		private static Col _sortCol = Col.Saved;
+		private static bool _sortAsc;
+		private static List<SaveEntry> _entries = new List<SaveEntry>();
 		private static GameObject _confirmPanel;
 		private static TextMeshProUGUI _confirmText;
 		private static TextMeshProUGUI _confirmLoadLabel;
@@ -64,7 +106,6 @@ namespace Doorstop
 		private static Pending _pendingAction;
 		private static string _pendingPath;
 		private static string _pendingTitle;
-		private static int _pendingSlot;
 		private static int _lastItemCount;
 		private static string _firstItemPath;
 		private static string _firstItemTitle;
@@ -164,10 +205,10 @@ namespace Doorstop
 		}
 
 		// ------------------------------------------------------------------
-		// The choice list window
+		// The save window
 		// ------------------------------------------------------------------
 
-		// Returns the number of items shown (used by the dev UI test).
+		// Returns the number of saves shown (used by the dev UI test).
 		public static int Open()
 		{
 			if (_canvas == null)
@@ -178,14 +219,16 @@ namespace Doorstop
 			UpdateTabs();
 			int n = RefreshItems();
 			_lastItemCount = n;
+			if (_scrollRect != null)
+			{
+				_scrollRect.verticalNormalizedPosition = 1f;
+			}
 			_canvas.SetActive(true);
-			// Build the layout and TMP meshes NOW: items are created with a
-			// zero-width rect (the VerticalLayoutGroup sizes them on the
-			// first canvas rebuild), and without this flush the item text
-			// painted seconds late in practice (observed: row image visible,
-			// its text only after a later SetActive forced a rebuild).
+			// Build the layout and TMP meshes NOW: rows are created at zero
+			// width and only sized by the layout groups on the first canvas
+			// rebuild; without this flush the text paints seconds late.
 			Canvas.ForceUpdateCanvases();
-			ModLog.Info("ChoiceWindow: opened (" + n + " snapshot(s))");
+			ModLog.Info("ChoiceWindow: opened (" + n + " save(s))");
 			return n;
 		}
 
@@ -266,26 +309,29 @@ namespace Doorstop
 			Stretch(x.rectTransform);
 
 			_tabChoicesImg = BuildTab(panel.transform, "TabChoices", "Choice points", -146f, ListMode.Choices);
-			_tabSlotsImg = BuildTab(panel.transform, "TabSlots", "Save slots", 146f, ListMode.Slots);
-			UpdateTabs();
+			_tabSavedImg = BuildTab(panel.transform, "TabSaved", "Saved games", 146f, ListMode.Saved);
 
-			// Scroll area (viewport + scroll rect + content).
+			BuildHeader(panel.transform);
+
+			// Scroll area: viewport + scroll rect + content + scrollbar.
 			GameObject scroll = CreateUiObject("Scroll", panel.transform);
 			RectTransform srt = scroll.GetComponent<RectTransform>();
 			srt.anchorMin = new Vector2(0f, 0f);
 			srt.anchorMax = new Vector2(1f, 1f);
 			srt.offsetMin = new Vector2(22f, 86f);
-			srt.offsetMax = new Vector2(-22f, -124f);
-			ScrollRect scrollRect = scroll.AddComponent<ScrollRect>();
-			scrollRect.horizontal = false;
-			scrollRect.vertical = true;
-			scrollRect.movementType = ScrollRect.MovementType.Clamped;
-			scrollRect.scrollSensitivity = 30f;
+			srt.offsetMax = new Vector2(-22f, -162f);
+			_scrollRect = scroll.AddComponent<ScrollRect>();
+			_scrollRect.horizontal = false;
+			_scrollRect.vertical = true;
+			_scrollRect.movementType = ScrollRect.MovementType.Clamped;
+			_scrollRect.scrollSensitivity = 30f;
 
 			GameObject viewport = CreateUiObject("Viewport", scroll.transform);
-			Stretch(viewport.GetComponent<RectTransform>());
+			RectTransform vrt = viewport.GetComponent<RectTransform>();
+			Stretch(vrt);
+			vrt.offsetMax = new Vector2(-24f, 0f); // room for the scrollbar
 			viewport.AddComponent<RectMask2D>();
-			scrollRect.viewport = viewport.GetComponent<RectTransform>();
+			_scrollRect.viewport = vrt;
 
 			GameObject content = CreateUiObject("Content", viewport.transform);
 			RectTransform cont = content.GetComponent<RectTransform>();
@@ -295,20 +341,151 @@ namespace Doorstop
 			cont.anchoredPosition = Vector2.zero;
 			cont.sizeDelta = Vector2.zero;
 			VerticalLayoutGroup vlg = content.AddComponent<VerticalLayoutGroup>();
-			vlg.padding = new RectOffset(8, 8, 8, 8);
-			vlg.spacing = 8f;
+			vlg.padding = new RectOffset(6, 6, 4, 4);
+			vlg.spacing = 4f;
 			vlg.childAlignment = TextAnchor.UpperCenter;
 			vlg.childControlWidth = true;
-			vlg.childControlHeight = false;
+			vlg.childControlHeight = true;
 			vlg.childForceExpandWidth = true;
 			vlg.childForceExpandHeight = false;
 			ContentSizeFitter fitter = content.AddComponent<ContentSizeFitter>();
 			fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 			fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-			scrollRect.content = cont;
+			_scrollRect.content = cont;
 			_itemContainer = content.transform;
 
+			BuildScrollbar(scroll.transform);
+
+			// Save now (saved-games tab only).
+			_saveNowBtn = CreateUiObject("SaveNow", panel.transform);
+			RectTransform nrt = _saveNowBtn.GetComponent<RectTransform>();
+			nrt.anchorMin = new Vector2(0f, 0f);
+			nrt.anchorMax = new Vector2(0f, 0f);
+			nrt.pivot = new Vector2(0f, 0f);
+			nrt.anchoredPosition = new Vector2(22f, 20f);
+			nrt.sizeDelta = new Vector2(260f, 52f);
+			Image nimg = _saveNowBtn.AddComponent<Image>();
+			nimg.color = ColLoadButton;
+			Button nbtn = _saveNowBtn.AddComponent<Button>();
+			nbtn.targetGraphic = nimg;
+			nbtn.onClick.AddListener(delegate { Ask(Pending.SaveNow, "", ""); });
+			TextMeshProUGUI nlabel = AddLabel(_saveNowBtn.transform, "Label",
+				"Save now", 24f, ColTextLight, true);
+			Stretch(nlabel.rectTransform);
+
 			BuildConfirm(panel.transform);
+			UpdateTabs();
+		}
+
+		private static void BuildScrollbar(Transform scroll)
+		{
+			GameObject track = CreateUiObject("Scrollbar", scroll);
+			RectTransform trt = track.GetComponent<RectTransform>();
+			trt.anchorMin = new Vector2(1f, 0f);
+			trt.anchorMax = new Vector2(1f, 1f);
+			trt.pivot = new Vector2(1f, 0.5f);
+			trt.offsetMin = new Vector2(-18f, 0f);
+			trt.offsetMax = new Vector2(-6f, 0f);
+			Image timg = track.AddComponent<Image>();
+			timg.color = new Color(0f, 0f, 0f, 0.12f);
+			Scrollbar sb = track.AddComponent<Scrollbar>();
+			sb.direction = Scrollbar.Direction.BottomToTop;
+
+			GameObject handle = CreateUiObject("Handle", track.transform);
+			Stretch(handle.GetComponent<RectTransform>());
+			Image himg = handle.AddComponent<Image>();
+			himg.color = ColButtonDark;
+			sb.targetGraphic = himg;
+			sb.handleRect = handle.GetComponent<RectTransform>();
+
+			_scrollRect.verticalScrollbar = sb;
+			_scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+		}
+
+		// Column header: fixed above the scroll area, same cell widths as
+		// the rows. Clicking a header sorts by that column.
+		private static void BuildHeader(Transform panel)
+		{
+			GameObject header = CreateUiObject("Header", panel);
+			RectTransform hrt = header.GetComponent<RectTransform>();
+			hrt.anchorMin = new Vector2(0f, 1f);
+			hrt.anchorMax = new Vector2(1f, 1f);
+			hrt.pivot = new Vector2(0.5f, 1f);
+			hrt.offsetMin = new Vector2(22f, -(122f + HeaderHeight));
+			hrt.offsetMax = new Vector2(-46f, -122f);
+			HorizontalLayoutGroup hlg = header.AddComponent<HorizontalLayoutGroup>();
+			hlg.padding = new RectOffset(6, 6, 0, 0);
+			hlg.spacing = 0f;
+			hlg.childControlWidth = true;
+			hlg.childControlHeight = true;
+			hlg.childForceExpandWidth = false;
+			hlg.childForceExpandHeight = true;
+			_headerRow = header.transform;
+
+			_headerLabels = new TextMeshProUGUI[ColNames.Length];
+			for (int i = 0; i < ColNames.Length; i++)
+			{
+				Col col = (Col)i;
+				GameObject cell = CreateUiObject("Head_" + ColNames[i], header.transform);
+				Image img = cell.AddComponent<Image>();
+				img.color = ColButtonDark;
+				Button btn = cell.AddComponent<Button>();
+				btn.targetGraphic = img;
+				btn.onClick.AddListener(delegate { SetSort(col); });
+				LayoutElement le = cell.AddComponent<LayoutElement>();
+				le.preferredWidth = ColWidths[i];
+				if (col == Col.Choice)
+				{
+					le.flexibleWidth = 1f;
+				}
+				TextMeshProUGUI label = AddLabel(cell.transform, "Label", ColNames[i], 19f, ColTextLight, col != Col.Choice && col != Col.Hero && col != Col.Scene);
+				label.overflowMode = TextOverflowModes.Ellipsis;
+				label.enableWordWrapping = false;
+				Stretch(label.rectTransform);
+				label.rectTransform.offsetMin = new Vector2(8f, 0f);
+				label.rectTransform.offsetMax = new Vector2(-8f, 0f);
+				_headerLabels[i] = label;
+			}
+			// Blank cell over the delete column, so headers line up with rows.
+			GameObject spacer = CreateUiObject("Head_Delete", header.transform);
+			Image simg = spacer.AddComponent<Image>();
+			simg.color = ColButtonDark;
+			LayoutElement sle = spacer.AddComponent<LayoutElement>();
+			sle.preferredWidth = DeleteWidth;
+		}
+
+		private static void SetSort(Col col)
+		{
+			if (_sortCol == col)
+			{
+				_sortAsc = !_sortAsc;
+			}
+			else
+			{
+				_sortCol = col;
+				_sortAsc = true;
+			}
+			SortEntries();
+			UpdateHeader();
+			BuildRows();
+			Canvas.ForceUpdateCanvases();
+		}
+
+		private static void UpdateHeader()
+		{
+			if (_headerLabels == null)
+			{
+				return;
+			}
+			for (int i = 0; i < _headerLabels.Length; i++)
+			{
+				string text = ColNames[i];
+				if ((Col)i == _sortCol)
+				{
+					text += _sortAsc ? " ^" : " v";
+				}
+				_headerLabels[i].text = text;
+			}
 		}
 
 		private static Image BuildTab(Transform panel, string name, string text, float x, ListMode mode)
@@ -335,21 +512,29 @@ namespace Doorstop
 			CancelConfirm();
 			UpdateTabs();
 			_lastItemCount = RefreshItems();
+			if (_scrollRect != null)
+			{
+				_scrollRect.verticalNormalizedPosition = 1f;
+			}
 			Canvas.ForceUpdateCanvases();
 		}
 
 		private static void UpdateTabs()
 		{
-			if (_tabChoicesImg == null || _tabSlotsImg == null)
+			if (_tabChoicesImg == null || _tabSavedImg == null)
 			{
 				return;
 			}
 			_tabChoicesImg.color = _mode == ListMode.Choices ? ColLoadButton : ColCancelButton;
-			_tabSlotsImg.color = _mode == ListMode.Slots ? ColLoadButton : ColCancelButton;
+			_tabSavedImg.color = _mode == ListMode.Saved ? ColLoadButton : ColCancelButton;
+			if (_saveNowBtn != null)
+			{
+				_saveNowBtn.SetActive(_mode == ListMode.Saved);
+			}
 		}
 
-		// Confirm dialog: covers the panel (blocks item clicks), shows the
-		// pending choice point's title, Load / Cancel.
+		// Confirm dialog: covers the panel (blocks row clicks), shows the
+		// pending save's title, Load / Delete / Save.
 		private static void BuildConfirm(Transform panel)
 		{
 			_confirmPanel = CreateUiObject("Confirm", panel);
@@ -368,13 +553,13 @@ namespace Doorstop
 			brt.pivot = new Vector2(0.5f, 0.5f);
 			brt.anchoredPosition = Vector2.zero;
 			// Tall enough for title + blank + choice + blank + note
-			// without ellipsizing (see the delete dialog's long note).
+			// without ellipsizing.
 			brt.sizeDelta = new Vector2(640f, 380f);
 			Image bimg = box.AddComponent<Image>();
 			bimg.color = new Color(0.96f, 0.94f, 0.88f);
 
 			_confirmText = AddLabel(box.transform, "Msg",
-				"Load this choice point?", 24f, ColTextDark, false);
+				"Are you sure?", 24f, ColTextDark, false);
 			_confirmText.alignment = TextAlignmentOptions.TopLeft;
 			_confirmText.enableWordWrapping = true;
 			RectTransform mrt = _confirmText.rectTransform;
@@ -419,41 +604,30 @@ namespace Doorstop
 		}
 
 		// Opens the confirm dialog for one action. path/title describe the
-		// entry; slot is the slot number for the Slot actions.
-		private static void Ask(Pending action, string path, string title, int slot)
+		// save.
+		private static void Ask(Pending action, string path, string title)
 		{
 			_pendingAction = action;
 			_pendingPath = path;
 			_pendingTitle = title;
-			_pendingSlot = slot;
 			string body;
 			string label;
 			switch (action)
 			{
-				case Pending.LoadChoice:
-					body = "Load this choice point?\n\n" + title
+				case Pending.Load:
+					body = "Load this save?\n\n" + title
 						+ "\n\nYour original save will not be modified.";
 					label = "Load";
 					break;
-				case Pending.DeleteChoice:
-					body = "Remove this choice point from the list?\n\n" + title
-						+ "\n\nThe snapshot file is deleted. Your game saves are not touched.";
+				case Pending.Delete:
+					body = "Remove this save from the list?\n\n" + title
+						+ "\n\nThe file is deleted. Your game saves are not touched.";
 					label = "Delete";
-					break;
-				case Pending.SaveSlot:
-					body = "Save the current game into Slot " + slot + "?\n\n"
-						+ "Anything already in this slot is replaced. Your game saves are not touched.";
-					label = "Save";
-					break;
-				case Pending.LoadSlot:
-					body = "Load Slot " + slot + "?\n\n" + title
-						+ "\n\nYour original save will not be modified.";
-					label = "Load";
 					break;
 				default:
-					body = "Remove Slot " + slot + " from the list?\n\n"
-						+ "The slot's save file is deleted. Your game saves are not touched.";
-					label = "Delete";
+					body = "Save the current game now?\n\n"
+						+ "It is added to the list as a new row. Your game saves are not touched.";
+					label = "Save";
 					break;
 			}
 			if (_confirmText != null)
@@ -470,44 +644,43 @@ namespace Doorstop
 			}
 			// Paint the new text immediately (see Open's flush note).
 			Canvas.ForceUpdateCanvases();
-			ModLog.Info("ChoiceWindow: " + action + " requested for " + Path.GetFileName(path));
+			ModLog.Info("ChoiceWindow: " + action + " requested"
+				+ (string.IsNullOrEmpty(path) ? "" : " for " + Path.GetFileName(path)));
 		}
 
 		private static void RunPending()
 		{
 			switch (_pendingAction)
 			{
-				case Pending.LoadChoice:
-				case Pending.LoadSlot:
+				case Pending.Load:
 					LoadSnapshot(_pendingPath);
 					break;
-				case Pending.DeleteChoice:
-				case Pending.DeleteSlot:
+				case Pending.Delete:
 					DeleteSnapshot(_pendingPath);
 					break;
-				case Pending.SaveSlot:
-					SaveToSlot(_pendingSlot);
+				case Pending.SaveNow:
+					SaveNow();
 					break;
 			}
 		}
 
-		private static void SaveToSlot(int slot)
+		private static void SaveNow()
 		{
 			CancelConfirm();
 			try
 			{
-				Recorder.SaveSlot(slot);
+				Recorder.SaveManual();
 			}
 			catch (Exception e)
 			{
-				ModLog.Error("ChoiceWindow: saving slot " + slot + " failed:\n" + e);
+				ModLog.Error("ChoiceWindow: manual save failed:\n" + e);
 			}
 			_lastItemCount = RefreshItems();
 			Canvas.ForceUpdateCanvases();
 		}
 
-		// Removes a snapshot or slot file + sidecar and refreshes the list.
-		// Only ever touches the mod's own folders.
+		// Removes a save file + sidecar and refreshes the list. Only ever
+		// touches the mod's own folders.
 		private static void DeleteSnapshot(string datPath)
 		{
 			try
@@ -519,7 +692,7 @@ namespace Doorstop
 				{
 					File.Delete(sidecar);
 				}
-				ModLog.Info("ChoiceWindow: removed snapshot " + Path.GetFileName(datPath));
+				ModLog.Info("ChoiceWindow: removed " + Path.GetFileName(datPath));
 			}
 			catch (Exception e)
 			{
@@ -528,7 +701,7 @@ namespace Doorstop
 			CancelConfirm();
 			_lastItemCount = RefreshItems();
 			Canvas.ForceUpdateCanvases();
-			ModLog.Info("ChoiceWindow: " + _lastItemCount + " snapshot(s) remain");
+			ModLog.Info("ChoiceWindow: " + _lastItemCount + " save(s) remain");
 		}
 
 		private static void CancelConfirm()
@@ -540,109 +713,86 @@ namespace Doorstop
 		}
 
 		// ------------------------------------------------------------------
-		// Snapshot list
+		// Table data
 		// ------------------------------------------------------------------
 
-		// (Re)builds the item list from the snapshot dir, newest first.
-		// Returns the item count.
+		// Reloads the current tab's saves from disk, re-sorts and rebuilds
+		// the rows. Returns the number of saves.
 		private static int RefreshItems()
 		{
 			if (_itemContainer == null)
 			{
 				return 0;
 			}
-			for (int i = _itemContainer.childCount - 1; i >= 0; i--)
-			{
-				UnityEngine.Object.Destroy(_itemContainer.GetChild(i).gameObject);
-			}
-			_firstItemPath = null;
-			_firstItemTitle = null;
+			string dir = _mode == ListMode.Saved ? Recorder.SlotDir : Recorder.SnapshotDir;
+			_entries = ReadEntries(dir);
+			SortEntries();
+			UpdateHeader();
+			BuildRows();
+			return _entries.Count;
+		}
 
-			if (_mode == ListMode.Slots)
+		// Reads every save in the folder. The save file itself is the
+		// source of truth for the table values (same deserialiser the load
+		// uses); the sidecar only supplies the localised choice title.
+		private static List<SaveEntry> ReadEntries(string dir)
+		{
+			List<SaveEntry> list = new List<SaveEntry>();
+			if (!Directory.Exists(dir))
 			{
-				return RefreshSlots();
+				return list;
 			}
-
-			string dir = Recorder.SnapshotDir;
-			List<string> files = new List<string>();
+			string[] files;
 			try
 			{
-				if (Directory.Exists(dir))
-				{
-					files.AddRange(Directory.GetFiles(dir, "*.dat"));
-				}
+				files = Directory.GetFiles(dir, "*.dat");
 			}
 			catch (Exception e)
 			{
-				ModLog.Error("ChoiceWindow: cannot list snapshots:\n" + e);
-			}
-			files.Sort(delegate (string a, string b)
-			{
-				return File.GetLastWriteTimeUtc(b).CompareTo(File.GetLastWriteTimeUtc(a));
-			});
-
-			if (files.Count == 0)
-			{
-				TextMeshProUGUI empty = AddLabel(_itemContainer, "Empty",
-					"No choice points recorded yet.", 22f, ColTextDark, false);
-				// Stretch width from the top (default centre anchors would
-				// give a zero-width rect, see CreateItem).
-				RectTransform ert = empty.rectTransform;
-				ert.anchorMin = new Vector2(0f, 1f);
-				ert.anchorMax = new Vector2(1f, 1f);
-				ert.pivot = new Vector2(0.5f, 1f);
-				ert.sizeDelta = new Vector2(0f, 60f);
-				return 0;
+				ModLog.Error("ChoiceWindow: cannot list saves:\n" + e);
+				return list;
 			}
 			foreach (string f in files)
 			{
-				string title;
-				string meta;
-				ReadMeta(f, out title, out meta);
-				CreateItem(f, title, title + "\n" + meta);
-			}
-			return files.Count;
-		}
-
-		// Lists the manual save slots: one row per slot, empty ones too.
-		// Returns the number of occupied slots.
-		private static int RefreshSlots()
-		{
-			int used = 0;
-			for (int i = 1; i <= Recorder.SlotCount; i++)
-			{
-				string path = Recorder.SlotPath(i);
-				if (!File.Exists(path))
+				try
 				{
-					CreateEmptySlotRow(i, path);
-					continue;
+					SaveLoadHelper h;
+					using (FileStream fs = File.OpenRead(f))
+					{
+						h = (SaveLoadHelper)new BinaryFormatter().Deserialize(fs);
+					}
+					SaveEntry e = new SaveEntry();
+					e.Dat = f;
+					e.Title = ReadTitle(f);
+					e.Saved = File.GetLastWriteTime(f);
+					e.Chapter = h.Chapter;
+					e.Hero = h.HeroName ?? "";
+					e.Age = h.HeroAge;
+					e.Year = h.Year;
+					e.Season = h.Season;
+					e.Turn = h.Turn;
+					e.Scene = h.LastOpenScene ?? "";
+					list.Add(e);
 				}
-				string title;
-				string meta;
-				ReadMeta(path, out title, out meta);
-				CreateSlotRow(i, path, title, "Slot " + i + " \u00b7 " + title + "\n" + meta);
-				used++;
+				catch (Exception e)
+				{
+					ModLog.Error("ChoiceWindow: cannot read save " + f + ":\n" + e);
+				}
 			}
-			return used;
+			return list;
 		}
 
-		// Parses the Recorder's .meta.txt sidecar for display purposes.
-		private static void ReadMeta(string datPath, out string title, out string meta)
+		// The localised scene title from the sidecar, without the key tag.
+		private static string ReadTitle(string datPath)
 		{
-			title = Path.GetFileNameWithoutExtension(datPath);
-			meta = "";
 			string sidecar = Path.Combine(Path.GetDirectoryName(datPath),
 				Path.GetFileNameWithoutExtension(datPath) + ".meta.txt");
 			try
 			{
 				if (!File.Exists(sidecar))
 				{
-					return;
+					return "";
 				}
-				string scene = "";
-				string recorded = "";
-				string hero = "";
-				string chapter = "";
 				foreach (string raw in File.ReadAllLines(sidecar))
 				{
 					string line = raw.Trim();
@@ -654,134 +804,144 @@ namespace Doorstop
 						{
 							v = v.Substring(0, key);
 						}
-						title = v.Trim();
-					}
-					else if (line.StartsWith("scene=", StringComparison.Ordinal))
-					{
-						scene = line.Substring(6);
-					}
-					else if (line.StartsWith("recorded=", StringComparison.Ordinal))
-					{
-						recorded = line.Substring(9);
-					}
-					else if (line.StartsWith("hero=", StringComparison.Ordinal))
-					{
-						hero = line.Substring(5).Replace("  ", " \u00b7 ");
-					}
-					else if (line.StartsWith("chapter=", StringComparison.Ordinal))
-					{
-						string v = line.Substring(8);
-						int paren = v.IndexOf(" (", StringComparison.Ordinal);
-						chapter = (paren > 0 ? "Ch." + v.Substring(0, paren) : v);
+						return v.Trim();
 					}
 				}
-				List<string> parts = new List<string>();
-				if (chapter.Length > 0)
-				{
-					parts.Add(chapter);
-				}
-				if (hero.Length > 0)
-				{
-					parts.Add(hero);
-				}
-				if (recorded.Length > 0)
-				{
-					parts.Add(recorded);
-				}
-				if (parts.Count == 0 && scene.Length > 0)
-				{
-					parts.Add(scene);
-				}
-				meta = string.Join(" \u00b7 ", parts.ToArray());
 			}
 			catch (Exception e)
 			{
-				ModLog.Error("ChoiceWindow: meta read failed for " + datPath + ":\n" + e);
+				ModLog.Error("ChoiceWindow: title read failed for " + datPath + ":\n" + e);
+			}
+			return "";
+		}
+
+		private static void SortEntries()
+		{
+			Col col = _sortCol;
+			bool asc = _sortAsc;
+			_entries.Sort(delegate (SaveEntry a, SaveEntry b)
+			{
+				int r = SortKey(a, col).CompareTo(SortKey(b, col));
+				if (r == 0)
+				{
+					r = string.CompareOrdinal(a.Dat, b.Dat);
+				}
+				return asc ? r : -r;
+			});
+		}
+
+		private static IComparable SortKey(SaveEntry e, Col col)
+		{
+			switch (col)
+			{
+				case Col.Saved: return e.Saved;
+				case Col.Chapter: return e.Chapter;
+				case Col.Hero: return e.Hero.ToLowerInvariant();
+				case Col.Age: return e.Age;
+				case Col.Year: return e.Year;
+				case Col.Season: return e.Season;
+				case Col.Turn: return e.Turn;
+				case Col.Scene: return e.Scene;
+				default: return e.Choice.ToLowerInvariant();
 			}
 		}
 
-		private static void CreateItem(string path, string title, string display)
+		// (Re)builds the table rows from _entries, in their current order.
+		private static void BuildRows()
 		{
-			string p = path;
-			string t = title;
-			GameObject item = CreateRow(display, delegate { Ask(Pending.LoadChoice, p, t, 0); }, -80f);
-			AddSideButton(item.transform, -8f, 60f, "\u00d7", 30f, ColDeleteButton,
-				delegate { Ask(Pending.DeleteChoice, p, t, 0); });
+			for (int i = _itemContainer.childCount - 1; i >= 0; i--)
+			{
+				GameObject old = _itemContainer.GetChild(i).gameObject;
+				old.SetActive(false);
+				UnityEngine.Object.Destroy(old);
+			}
+			_firstItemPath = null;
+			_firstItemTitle = null;
+
+			if (_entries.Count == 0)
+			{
+				string text = _mode == ListMode.Saved
+					? "No saved games yet. Use \"Save now\" below."
+					: "No choice points recorded yet.";
+				TextMeshProUGUI empty = AddLabel(_itemContainer, "Empty", text, 22f, ColTextDark, true);
+				LayoutElement le = empty.gameObject.AddComponent<LayoutElement>();
+				le.preferredHeight = 60f;
+				return;
+			}
+			for (int i = 0; i < _entries.Count; i++)
+			{
+				CreateRow(_entries[i], i);
+			}
+		}
+
+		private static void CreateRow(SaveEntry e, int index)
+		{
+			string p = e.Dat;
+			string t = e.Choice;
+			GameObject row = CreateUiObject("Row", _itemContainer);
+			LayoutElement rle = row.AddComponent<LayoutElement>();
+			rle.preferredHeight = RowHeight;
+			Image img = row.AddComponent<Image>();
+			img.color = index % 2 == 0 ? ColItem : ColItemAlt;
+			Button btn = row.AddComponent<Button>();
+			btn.targetGraphic = img;
+			btn.onClick.AddListener(delegate { Ask(Pending.Load, p, t); });
+			HorizontalLayoutGroup hlg = row.AddComponent<HorizontalLayoutGroup>();
+			hlg.padding = new RectOffset(6, 6, 6, 6);
+			hlg.spacing = 0f;
+			hlg.childControlWidth = true;
+			hlg.childControlHeight = true;
+			hlg.childForceExpandWidth = false;
+			hlg.childForceExpandHeight = true;
+
+			string[] values =
+			{
+				e.Saved.ToString("yyyy-MM-dd HH:mm"),
+				e.Chapter.ToString(),
+				e.Hero,
+				e.Age.ToString(),
+				e.Year.ToString(),
+				e.Season.ToString(),
+				e.Turn.ToString(),
+				e.Scene,
+				e.Choice
+			};
+			for (int i = 0; i < values.Length; i++)
+			{
+				Col col = (Col)i;
+				bool centred = col != Col.Hero && col != Col.Scene && col != Col.Choice;
+				TextMeshProUGUI cell = AddLabel(row.transform, "Cell", values[i], 19f, ColTextDark, centred);
+				cell.overflowMode = TextOverflowModes.Ellipsis;
+				cell.enableWordWrapping = false;
+				cell.margin = new Vector4(6f, 0f, 6f, 0f);
+				LayoutElement le = cell.gameObject.AddComponent<LayoutElement>();
+				le.preferredWidth = ColWidths[i];
+				if (col == Col.Choice)
+				{
+					le.flexibleWidth = 1f;
+				}
+			}
+
+			// Delete x at the far right. As a child of the row it sits above
+			// the row's own button, so a click reaches only this one.
+			string dp = e.Dat;
+			string dt = e.Choice;
+			GameObject del = CreateUiObject("Delete", row.transform);
+			LayoutElement dle = del.AddComponent<LayoutElement>();
+			dle.preferredWidth = DeleteWidth;
+			Image dimg = del.AddComponent<Image>();
+			dimg.color = ColDeleteButton;
+			Button dbtn = del.AddComponent<Button>();
+			dbtn.targetGraphic = dimg;
+			dbtn.onClick.AddListener(delegate { Ask(Pending.Delete, dp, dt); });
+			TextMeshProUGUI dlabel = AddLabel(del.transform, "Label", "\u00d7", 30f, ColTextLight, true);
+			Stretch(dlabel.rectTransform);
 
 			if (_firstItemPath == null)
 			{
-				_firstItemPath = path;
-				_firstItemTitle = title;
+				_firstItemPath = e.Dat;
+				_firstItemTitle = e.Choice;
 			}
-		}
-
-		private static void CreateSlotRow(int slot, string path, string title, string display)
-		{
-			int s = slot;
-			string p = path;
-			string t = title;
-			GameObject item = CreateRow(display, delegate { Ask(Pending.LoadSlot, p, t, s); }, -150f);
-			AddSideButton(item.transform, -76f, 70f, "Save", 20f, ColLoadButton,
-				delegate { Ask(Pending.SaveSlot, p, t, s); });
-			AddSideButton(item.transform, -8f, 60f, "\u00d7", 30f, ColDeleteButton,
-				delegate { Ask(Pending.DeleteSlot, p, t, s); });
-		}
-
-		private static void CreateEmptySlotRow(int slot, string path)
-		{
-			int s = slot;
-			string p = path;
-			CreateRow("Slot " + slot + " \u00b7 empty\nClick to save the current game here",
-				delegate { Ask(Pending.SaveSlot, p, "", s); }, -80f);
-		}
-
-		// A clickable list row. textRight is how far the text stops short of
-		// the row's right edge (room for the side buttons).
-		private static GameObject CreateRow(string display, UnityEngine.Events.UnityAction onClick, float textRight)
-		{
-			GameObject item = CreateUiObject("Item", _itemContainer);
-			item.GetComponent<RectTransform>().sizeDelta = new Vector2(0f, 84f);
-			Image img = item.AddComponent<Image>();
-			img.color = ColItem;
-			Button btn = item.AddComponent<Button>();
-			btn.targetGraphic = img;
-			btn.onClick.AddListener(onClick);
-
-			TextMeshProUGUI label = AddLabel(item.transform, "Text", display, 20f, ColTextDark, false);
-			label.alignment = TextAlignmentOptions.Center;
-			label.enableWordWrapping = true;
-			label.overflowMode = TextOverflowModes.Ellipsis;
-			// Stretch FIRST: offsets are relative to the anchors, and with the
-			// default centre anchors offsetMin/Max would collapse the rect to
-			// nothing (observed: item row rendered, text invisible).
-			RectTransform lrt = label.rectTransform;
-			lrt.anchorMin = Vector2.zero;
-			lrt.anchorMax = Vector2.one;
-			lrt.offsetMin = new Vector2(16f, 6f);
-			lrt.offsetMax = new Vector2(textRight, -6f);
-			return item;
-		}
-
-		// A small button at the row's right edge. As a child of the row it
-		// renders (and raycasts) on top, so a click on it reaches only this
-		// button, never the row's own handler.
-		private static void AddSideButton(Transform row, float right, float width, string text,
-			float fontSize, Color color, UnityEngine.Events.UnityAction onClick)
-		{
-			GameObject go = CreateUiObject("Side", row);
-			RectTransform rt = go.GetComponent<RectTransform>();
-			rt.anchorMin = new Vector2(1f, 0f);
-			rt.anchorMax = new Vector2(1f, 1f);
-			rt.pivot = new Vector2(1f, 0.5f);
-			rt.anchoredPosition = new Vector2(right, 0f);
-			rt.sizeDelta = new Vector2(width, -14f);
-			Image img = go.AddComponent<Image>();
-			img.color = color;
-			Button btn = go.AddComponent<Button>();
-			btn.targetGraphic = img;
-			btn.onClick.AddListener(onClick);
-			TextMeshProUGUI label = AddLabel(go.transform, "Label", text, fontSize, ColTextLight, true);
-			Stretch(label.rectTransform);
 		}
 
 		// ------------------------------------------------------------------
@@ -792,7 +952,7 @@ namespace Doorstop
 		{
 			if (string.IsNullOrEmpty(datPath))
 			{
-				ModLog.Error("ChoiceWindow: no snapshot selected");
+				ModLog.Error("ChoiceWindow: no save selected");
 				return;
 			}
 			if (ModHost.Current == null)
@@ -805,7 +965,7 @@ namespace Doorstop
 
 		private static IEnumerator LoadFlow(string datPath)
 		{
-			// Read the snapshot first: if it fails, the window stays open
+			// Read the save first: if it fails, the window stays open
 			// and the player can pick another one.
 			SaveLoadHelper helper = null;
 			try
@@ -817,14 +977,14 @@ namespace Doorstop
 			}
 			catch (Exception e)
 			{
-				ModLog.Error("ChoiceWindow: cannot read snapshot " + datPath + ":\n" + e);
+				ModLog.Error("ChoiceWindow: cannot read save " + datPath + ":\n" + e);
 				yield break;
 			}
 
-			ModLog.Info("ChoiceWindow: loading snapshot " + Path.GetFileName(datPath)
+			ModLog.Info("ChoiceWindow: loading " + Path.GetFileName(datPath)
 				+ " (scene=" + helper.LastOpenScene + ")");
-			// From here on the game's own Saves/ stays frozen for the rest of
-			// the session: a rewind must never overwrite the original
+			// From here on the game's own Saves/ stays frozen for the rest
+			// of the session: a rewind must never overwrite the original
 			// timeline. (See Entrypoint.PatchSaveGate.)
 			Recorder.BlockGameSaves = true;
 
@@ -896,9 +1056,9 @@ namespace Doorstop
 
 		// Driven by ModHost after the dev autoload has opened a choice
 		// scene: opens the pause menu, injects the button, opens the list,
-		// then simulates the two clicks a player would make (item -> Load)
-		// through the same UnityEvent handlers the real buttons use.
-		// Pauses between steps so a screenshotper can catch each state.
+		// then simulates the clicks a player would make (row -> Load,
+		// x -> Delete) through the same UnityEvent handlers the real
+		// buttons use. Pauses between steps so a screenshot can catch each state.
 		public static void DevTest()
 		{
 			try
@@ -937,22 +1097,22 @@ namespace Doorstop
 				ModLog.Error("DEV UITEST: nothing to load");
 				yield break;
 			}
-			// State B: the choice list.
-			ModLog.Info("DEV UITEST: state B - choice list (3s)");
+			// State B: the choice table.
+			ModLog.Info("DEV UITEST: state B - choice table (3s)");
 			yield return new WaitForSeconds(3f);
 
-			// Simulated click 1: the item (its onClick -> Ask(LoadChoice)).
-			Ask(Pending.LoadChoice, _firstItemPath, _firstItemTitle, 0);
+			// Simulated click 1: the row (its onClick -> Ask(Load)).
+			Ask(Pending.Load, _firstItemPath, _firstItemTitle);
 			// State C: the confirm dialog (load).
 			ModLog.Info("DEV UITEST: state C - confirm dialog (3s)");
 			yield return new WaitForSeconds(3f);
 
-			// State D: the delete confirm. With 2+ items, exercise the real
-			// Delete button end-to-end (the seeded duplicate goes first, so
-			// the original test snapshot survives); with a single item just
-			// show the dialog and cancel - the list must not end up empty.
+			// State D: the delete confirm. With 2+ rows, exercise the real
+			// x button end-to-end (the seeded duplicate goes first, so the
+			// original test snapshot survives); with a single row just show
+			// the dialog and cancel - the list must not end up empty.
 			CancelConfirm();
-			Ask(Pending.DeleteChoice, _firstItemPath, _firstItemTitle, 0);
+			Ask(Pending.Delete, _firstItemPath, _firstItemTitle);
 			ModLog.Info("DEV UITEST: state D - delete confirm (3s)");
 			yield return new WaitForSeconds(3f);
 			if (_lastItemCount >= 2 && _confirmLoadBtn != null)
@@ -964,7 +1124,7 @@ namespace Doorstop
 			{
 				CancelConfirm();
 			}
-			Ask(Pending.LoadChoice, _firstItemPath, _firstItemTitle, 0);
+			Ask(Pending.Load, _firstItemPath, _firstItemTitle);
 
 			// Simulated click 2: the confirm dialog's Load button (the real
 			// Button component, so the mode-dispatching handler runs).

@@ -45,22 +45,15 @@ namespace Doorstop
 			}
 		}
 
-		// Phase 5: the player's own named slots (manual save). Same snapshot
-		// format as the choice points, kept in a separate folder so the
-		// choice list and the slot list never see each other's files.
-		public const int SlotCount = 5;
-
+		// Phase 5: the player's own manual saves. Same snapshot format as the
+		// choice points, kept in a separate folder so the two lists never see
+		// each other's files.
 		public static string SlotDir
 		{
 			get
 			{
 				return Path.Combine(Application.persistentDataPath, "BranteLoadAny", "Slots");
 			}
-		}
-
-		public static string SlotPath(int slot)
-		{
-			return Path.Combine(SlotDir, "slot" + slot + ".dat");
 		}
 
 		// Called from ModHost.Start (engine fully up). Proves the plumbing
@@ -135,17 +128,18 @@ namespace Doorstop
 			ModLog.Info("Choice point recorded: " + baseName + " (" + blob.Length + " bytes)");
 		}
 
-		// Manual save into one of the mod's slots. Writes only into the
-		// slot folder; the game's Saves/ is never touched.
-		public static void SaveSlot(int slot)
+		// Manual save: a new entry in the mod's own folder every time. Never
+		// touches the game's Saves/ folder.
+		public static void SaveManual()
 		{
 			SaveLoadHelper helper = BuildHelper();
 			byte[] blob = Serialize(helper);
 			string scene = string.IsNullOrEmpty(helper.LastOpenScene) ? "(unknown)" : helper.LastOpenScene;
 			Directory.CreateDirectory(SlotDir);
-			File.WriteAllBytes(SlotPath(slot), blob);
-			WriteSidecar(SlotDir, "slot" + slot, scene, helper);
-			ModLog.Info("Slot " + slot + " saved (" + blob.Length + " bytes, scene " + scene + ")");
+			string baseName = "save_" + DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
+			File.WriteAllBytes(Path.Combine(SlotDir, baseName + ".dat"), blob);
+			WriteSidecar(SlotDir, baseName, scene, helper);
+			ModLog.Info("Manual save " + baseName + " written (" + blob.Length + " bytes, scene " + scene + ")");
 		}
 
 		// Mirrors SaveLoadManager.SaveData(int, int, SceneStates) field by

@@ -109,19 +109,23 @@ The plan, as approved, with status. Phases 0–4 are done; 5–7 are ahead.
     rebuild), and without the flush the item text painted 2+ seconds late
     (observed in screenshots).
 
-## Phase 5 — separate manual save/load (implemented, in-game check pending)
+## Phase 5 — separate manual save/load (done, 23 Oct 2026)
 
-- [x] "Save now" / "Load" for the mod's own slots (same snapshot format):
-  five slots in `<persistentDataPath>/BranteLoadAny/Slots/` (`slot1.dat`…,
-  plus `.meta.txt` sidecars), written by `Recorder.SaveSlot`
-- [x] Slots live in the same list window as a second tab ("Save slots"),
-  next to "Choice points". Empty row click → save here; occupied row click →
-  load; `Save` button → overwrite; `×` → remove the slot's files
-- [x] Every save/load/remove goes through the confirm dialog; nothing is
-  written to the game's `Saves/` folder (the save gate still applies to
-  the game's own save calls)
-- [x] Documented as independent of the game's slots in README
-- [ ] In-game pass: save a slot, load it, overwrite, remove (not yet run)
+- [x] "Save now" / load / remove for the mod's own saves (same snapshot
+  format), stored in `<persistentDataPath>/BranteLoadAny/Slots/` as
+  `save_<timestamp>.dat` with `.meta.txt` sidecars (`Recorder.SaveManual`)
+- [x] Lives in the same window as a second tab ("Saved games"), next to
+  "Choice points". Every save/load/remove goes through the confirm dialog
+- [x] Nothing is written to the game's `Saves/` folder
+- [x] Documented as independent of the game's saves in README
+- [x] In-game pass (23 Oct 2026): save, load, overwrite, remove all ran
+  without errors (log checked)
+- [x] Save screen rebuilt as sortable tables (both tabs): one row per save,
+  column headers sort (click again to reverse), × far right deletes, rows
+  scroll with a scrollbar. Table values are read from the save file itself
+
+Note: the fixed five slots of the first version were replaced by unlimited
+saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
 
 ## Phase 6 — existing saves (choice history reconstruction)
 

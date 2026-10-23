@@ -18,11 +18,13 @@ never touches the game's saves.
   rest of the session (your progress is captured as new choice snapshots
   instead), and the save you had before installing the mod remains exactly as
   you left it — loadable from the game's own menu at any time.
-- **Your own save slots.** The same window has a **"Save slots"** tab with five
-  slots of its own. Save the current game into a slot, load it back later, or
-  overwrite or remove it. These are kept in the mod's folder, separate from the
-  game's save slots: using them never changes your game saves, and the game's
-  saves never change them.
+- **Your own saves.** The same window has a **"Saved games"** tab. Press
+  **"Save now"** to store the current game as a new row, load any row later, or
+  remove it. Both tabs are tables: click a column header to sort by it (saved
+  date, chapter, hero, age, year, season, turn, scene, choice), and use the
+  × on the right to remove a row. These are kept in the mod's folder, separate
+  from the game's saves: using them never changes your game saves, and the
+  game's saves never change them.
 - **Existing saves.** (Planned, see docs/TODO.md) reconstruct the list of choices
   you took in a playthrough started before the mod was installed.
 
