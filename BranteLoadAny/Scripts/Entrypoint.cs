@@ -72,10 +72,10 @@ namespace Doorstop
 				// every choice scene has a SceneController; its Awake is the
 				// choice-point capture trigger (Phase 3)
 				new[] { "_Scripts.AMVCC.Controllers.SceneController, Assembly-CSharp", "Awake", "ChoiceScenePostfix" },
-				// the pause menu toggling = our moment to (re)inject the
-				// "Load any choice" button (Phase 4); fires only when the
-				// engine is up, so the Unity API is safe here
-				new[] { "_Scripts.Managers.UIManager, Assembly-CSharp", "ShowPauseMenu", "PauseMenuPostfix" },
+				// a window was shown = the book may just have been built;
+				// (re)add the "Load any choice" tab to it. Fires only when
+				// the engine is up, so the Unity API is safe here
+				new[] { "_Scripts.Managers.UIManager, Assembly-CSharp", "ShowWindow", "BookPostfix" },
 			};
 			foreach (string[] t in targets)
 			{
@@ -159,11 +159,11 @@ namespace Doorstop
 			Recorder.OnChoiceSceneShown();
 		}
 
-		// Harmony postfix on UIManager.ShowPauseMenu: the pause window just
-		// toggled - make sure our "Load any choice" button is in it (Phase 4).
-		private static void PauseMenuPostfix()
+		// Harmony postfix on UIManager.ShowWindow: a window was just shown -
+		// if it is the book, add the "Load any choice" tab to it (Phase 6).
+		private static void BookPostfix()
 		{
-			ChoiceWindow.EnsureInjected();
+			ChoiceWindow.EnsureBookTab();
 		}
 
 		private static void TryCreateHost()

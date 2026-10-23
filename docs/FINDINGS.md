@@ -293,3 +293,17 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
   text then painted **2+ seconds late** in practice; `Canvas.ForceUpdateCanvases()`
   right after building/refreshing the list (and after swapping confirm-dialog
   text) makes the first paint correct.
+
+## Save-table fields (Phase 5 table, checked against the decompile)
+
+- `Chapter` (0–5) is the life stage. `ChapterName` gives its key:
+  `Chapter0/1.Childhood`, `Chapter2.Teen`, `Chapter3.Youth`, `Chapter4.Peace`,
+  `Chapter5.War` (the revolt).
+- `Season` is NOT a life stage. It is a counter 1–5 inside a turn
+  (`IncreaceTurn.cs`: `Season++` up to 5, then back to 1 with `Turn++`).
+- `Turn` counts those 5-step cycles; `Year` is the in-game year, separate.
+- `LastOpenScene` looks like `01.03.01`: the first pair matches the chapter
+  (`01` = chapter 1), the middle number advances with the story. It is not
+  computed from turn or season.
+- The book's chapter tabs are `DestinyWindow.Tabs` (`Btn1`…`Btn5`); the
+  "Load any choice" tab is a copy of `Tabs[0]` added after `UIManager.ShowWindow`.

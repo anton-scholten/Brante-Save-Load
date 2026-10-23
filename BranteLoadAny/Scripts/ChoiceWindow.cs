@@ -7,21 +7,22 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using _Scripts.AMVCC.Views.Windows;
+using _Scripts.AMVCC.Views.Windows.Destiny;
 using _Scripts.Helpers;
 using _Scripts.Managers;
 
 namespace Doorstop
 {
-	// Phase 4/5: the player-facing save list.
+	// The player-facing save list.
 	//
-	//  - a button injected into the game's own pause window (WindowPause,
-	//    opened with Esc / UIManager.ShowPauseMenu),
-	//  - one window with two tabs, both shown as a sortable table:
-	//      "Choice points" - the automatic snapshots taken at every choice,
-	//      "Saved games"   - the manual saves made with "Save now",
-	//    one row per save, a click on a header sorts by that column, the
-	//    x on the far right deletes the row, the table scrolls,
+	//  - a "Load any choice" tab injected into the book (the Destiny window),
+	//    next to the chapter I tab (copy of it, so it looks like the rest of
+	//    the book); see InjectBookTab,
+	//  - one table with every save: automatic choice-point snapshots and
+	//    manual "Save now" saves, one row each. Click a header to sort by it
+	//    (click again to reverse). Manual rows have their own colour.
+	//    The x on the far right deletes a row; while its confirmation is
+	//    open the row carries a red dashed outline.
 	//  - confirm -> the game's own load sequence, exactly what clicking
 	//    Continue on the loading screen does:
 	//      LoadGame(helper) -> GameLoadingScreen (additive) ->
@@ -30,49 +31,52 @@ namespace Doorstop
 	//    (the sequence documented in docs/FINDINGS.md, "Phase 3 capture
 	//    facts"; the dev autoload harness replays the same dance).
 	//
-	// After a snapshot load, Recorder.BlockGameSaves stays on for the rest
-	// of the session: the game's own Saves/ (the player's original timeline)
+	// After a save load, Recorder.BlockGameSaves stays on for the rest of
+	// the session: the game's own Saves/ (the player's original timeline)
 	// must never be touched by a rewind; progress past the rewind point is
 	// captured as new choice-point snapshots instead.
 	public static class ChoiceWindow
 	{
-		// Layout/colour constants - parchment style of the game, values
-		// chosen to be readable; polish is Phase 7.
+		// Colours - parchment style of the game.
 		private static readonly Color ColDim = new Color(0f, 0f, 0f, 0.65f);
 		private static readonly Color ColPanel = new Color(0.93f, 0.89f, 0.79f);
-		private static readonly Color ColItem = new Color(0.84f, 0.79f, 0.68f);
-		private static readonly Color ColItemAlt = new Color(0.88f, 0.84f, 0.74f);
+		private static readonly Color ColAuto = new Color(0.84f, 0.79f, 0.68f);
+		private static readonly Color ColAutoAlt = new Color(0.88f, 0.84f, 0.75f);
+		private static readonly Color ColManual = new Color(1f, 0.96f, 0.66f);
+		private static readonly Color ColManualAlt = new Color(1f, 0.93f, 0.55f);
 		private static readonly Color ColButtonDark = new Color(0.30f, 0.26f, 0.20f, 0.95f);
 		private static readonly Color ColLoadButton = new Color(0.55f, 0.30f, 0.25f);
 		private static readonly Color ColCancelButton = new Color(0.55f, 0.53f, 0.48f);
 		private static readonly Color ColDeleteButton = new Color(0.45f, 0.20f, 0.18f);
 		private static readonly Color ColTextLight = new Color(0.95f, 0.92f, 0.82f);
 		private static readonly Color ColTextDark = new Color(0.12f, 0.10f, 0.08f);
-
-		private enum ListMode { Choices, Saved }
+		private static readonly Color ColDashRed = new Color(0.85f, 0.10f, 0.10f);
 
 		private enum Pending { Load, Delete, SaveNow }
 
 		// Table columns, left to right. Choice is the flexible one.
-		private enum Col { Saved, Chapter, Hero, Age, Year, Season, Turn, Scene, Choice }
+		private enum Col { Type, Saved, Chapter, Hero, Age, Year, Season, Turn, Scene, Choice }
 
 		private static readonly string[] ColNames =
-		{ "Saved", "Chapter", "Hero", "Age", "Year", "Season", "Turn", "Scene", "Choice" };
+		{ "Save type", "Saved", "Chapter", "Hero", "Age", "Year", "Season", "Turn", "Scene", "Choice" };
 
-		// Preferred widths in px; Choice takes whatever is left.
+		// Preferred widths in reference px; Choice takes whatever is left.
 		private static readonly float[] ColWidths =
-		{ 170f, 80f, 150f, 60f, 70f, 80f, 60f, 110f, 200f };
+		{ 130f, 180f, 170f, 150f, 70f, 80f, 100f, 80f, 120f, 200f };
 
 		private const float RowHeight = 44f;
 		private const float HeaderHeight = 36f;
-		private const float DeleteWidth = 52f;
+		private const float DeleteWidth = 64f;
+		private const float PanelWidth = 1860f;
 
 		private sealed class SaveEntry
 		{
 			public string Dat;
+			public string Kind;
 			public string Title;
 			public DateTime Saved;
 			public int Chapter;
+			public string ChapterName;
 			public string Hero;
 			public int Age;
 			public int Year;
@@ -86,16 +90,16 @@ namespace Doorstop
 			}
 		}
 
-		private static GameObject _injectedButton;
 		private static GameObject _canvas;
 		private static ScrollRect _scrollRect;
 		private static Transform _itemContainer;
-		private static Transform _headerRow;
 		private static TextMeshProUGUI[] _headerLabels;
-		private static Image _tabChoicesImg;
-		private static Image _tabSavedImg;
+		private static Image[] _sortIcons;
+		private static Sprite _triUp;
+		private static Sprite _triDown;
+		private static Sprite _dashH;
+		private static Sprite _dashV;
 		private static GameObject _saveNowBtn;
-		private static ListMode _mode = ListMode.Choices;
 		private static Col _sortCol = Col.Saved;
 		private static bool _sortAsc;
 		private static List<SaveEntry> _entries = new List<SaveEntry>();
@@ -106,102 +110,88 @@ namespace Doorstop
 		private static Pending _pendingAction;
 		private static string _pendingPath;
 		private static string _pendingTitle;
+		private static GameObject _markObj;
 		private static int _lastItemCount;
 		private static string _firstItemPath;
 		private static string _firstItemTitle;
 
 		// ------------------------------------------------------------------
-		// Pause-window button
+		// Book tab
 		// ------------------------------------------------------------------
 
-		// Idempotent; called at host start and from the ShowPauseMenu
-		// postfix. Safe to call while the pause window is inactive (children
-		// of inactive objects can be created fine).
-		public static void EnsureInjected()
+		// Called after the game shows a window (UIManager.ShowWindow
+		// postfix). Adds the "Load any choice" tab to the book next to the
+		// chapter I tab. Idempotent; the book is rebuilt on each open, so
+		// the tab is added again each time.
+		public static void EnsureBookTab()
 		{
 			try
 			{
-				if (_injectedButton != null)
+				DestinyWindow[] books = UnityEngine.Object.FindObjectsOfType<DestinyWindow>();
+				foreach (DestinyWindow book in books)
 				{
-					return;
+					InjectBookTab(book);
 				}
-				UIManager ui = UIManager.Initiate;
-				if (ui == null || ui.PauseWindow == null)
-				{
-					// Not up yet - the ShowPauseMenu postfix retries.
-					return;
-				}
-				GameObject pause = ui.PauseWindow;
-				if (!pause.scene.IsValid())
-				{
-					ModLog.Error("ChoiceWindow: PauseWindow is a prefab asset, not a scene object ('"
-						+ pause.name + "') - cannot inject");
-					return;
-				}
-				DumpPauseLayout(pause);
-				BuildButton(pause.transform);
-				ModLog.Info("ChoiceWindow: button injected into pause window '" + pause.name + "'");
 			}
 			catch (Exception e)
 			{
-				ModLog.Error("ChoiceWindow: injection failed:\n" + e);
+				ModLog.Error("ChoiceWindow: book tab injection failed:\n" + e);
 			}
 		}
 
-		// One-shot layout dump so placement decisions are based on what the
-		// running game actually contains, not on decompiled field names.
-		private static void DumpPauseLayout(GameObject pause)
+		private static void InjectBookTab(DestinyWindow book)
 		{
-			WindowPause wp = pause.GetComponent<WindowPause>();
-			ModLog.Info("ChoiceWindow: PauseWindow='" + pause.name + "' scene='" + pause.scene.name
-				+ "' active=" + pause.activeSelf + " WindowPause=" + (wp != null)
-				+ " children=" + pause.transform.childCount);
-			for (int i = 0; i < pause.transform.childCount; i++)
+			if (book.Tabs == null || book.Tabs.Count == 0 || book.Tabs[0] == null)
 			{
-				Transform c = pause.transform.GetChild(i);
-				RectTransform r = c as RectTransform;
-				ModLog.Info("  child[" + i + "] '" + c.name + "' active=" + c.gameObject.activeSelf
-					+ (r != null
-						? (" anchor=" + r.anchorMin + ".." + r.anchorMax
-							+ " pos=" + r.anchoredPosition + " size=" + r.sizeDelta)
-						: ""));
+				ModLog.Error("ChoiceWindow: book has no chapter tabs - tab not added");
+				return;
 			}
-			// Canvas hierarchy the window draws in (for our sorting order).
-			Canvas[] canvases = Resources.FindObjectsOfTypeAll<Canvas>();
-			int shown = 0;
-			for (int i = 0; i < canvases.Length && shown < 12; i++)
+			GameObject first = book.Tabs[0];
+			Transform parent = first.transform.parent;
+			if (parent.Find("BranteLoadAny_Tab") != null)
 			{
-				if (!canvases[i].gameObject.scene.IsValid())
+				return;
+			}
+
+			RectTransform src = first.GetComponent<RectTransform>();
+			GameObject tab = UnityEngine.Object.Instantiate(first, parent);
+			tab.name = "BranteLoadAny_Tab";
+			RectTransform rt = tab.GetComponent<RectTransform>();
+			// Right of the chapter I tab with a gap, same anchor and pivot.
+			float gap = 16f;
+			float width = Mathf.Max(src.rect.width, 240f);
+			rt.sizeDelta = new Vector2(width, src.sizeDelta.y);
+			rt.anchoredPosition = new Vector2(
+				src.anchoredPosition.x + (1f - src.pivot.x) * src.rect.width + gap + src.pivot.x * width,
+				src.anchoredPosition.y);
+
+			Button btn = tab.GetComponent<Button>();
+			if (btn != null)
+			{
+				btn.onClick = new Button.ButtonClickedEvent();
+				btn.onClick.AddListener(delegate { Open(); });
+				btn.interactable = true;
+			}
+			TextMeshProUGUI label = tab.GetComponentInChildren<TextMeshProUGUI>(true);
+			if (label != null)
+			{
+				label.text = "Load any choice";
+				label.overflowMode = TextOverflowModes.Ellipsis;
+				label.enableWordWrapping = false;
+			}
+			tab.SetActive(true);
+
+			ModLog.Info("ChoiceWindow: book tab added right of '" + first.name + "' (x="
+				+ rt.anchoredPosition.x + ", width=" + width + ")");
+			for (int i = 0; i < book.Tabs.Count; i++)
+			{
+				if (book.Tabs[i] != null)
 				{
-					continue;
+					RectTransform t = book.Tabs[i].GetComponent<RectTransform>();
+					ModLog.Info("  tab[" + i + "] '" + book.Tabs[i].name + "' pos=" + t.anchoredPosition
+						+ " size=" + t.rect.size);
 				}
-				ModLog.Info("  canvas '" + canvases[i].gameObject.name + "' order="
-					+ canvases[i].sortingOrder + " mode=" + canvases[i].renderMode);
-				shown++;
 			}
-		}
-
-		private static void BuildButton(Transform parent)
-		{
-			_injectedButton = CreateUiObject("BranteLoadAny_ChoiceButton", parent);
-			// Bottom centre of the pause window, 14px above its lower edge.
-			// Adjusted after the first in-game layout dump if it collides.
-			RectTransform rt = _injectedButton.GetComponent<RectTransform>();
-			rt.anchorMin = new Vector2(0.5f, 0f);
-			rt.anchorMax = new Vector2(0.5f, 0f);
-			rt.pivot = new Vector2(0.5f, 0f);
-			rt.anchoredPosition = new Vector2(0f, 14f);
-			rt.sizeDelta = new Vector2(340f, 46f);
-
-			Image img = _injectedButton.AddComponent<Image>();
-			img.color = ColButtonDark;
-			Button btn = _injectedButton.AddComponent<Button>();
-			btn.targetGraphic = img;
-			btn.onClick.AddListener(delegate { Open(); });
-
-			TextMeshProUGUI label = AddLabel(_injectedButton.transform, "Label",
-				"Load any choice", 21f, ColTextLight, true);
-			Stretch(label.rectTransform);
 		}
 
 		// ------------------------------------------------------------------
@@ -215,8 +205,6 @@ namespace Doorstop
 			{
 				BuildCanvas();
 			}
-			_mode = ListMode.Choices;
-			UpdateTabs();
 			int n = RefreshItems();
 			_lastItemCount = n;
 			if (_scrollRect != null)
@@ -234,10 +222,7 @@ namespace Doorstop
 
 		public static void Close()
 		{
-			if (_confirmPanel != null)
-			{
-				_confirmPanel.SetActive(false);
-			}
+			CancelConfirm();
 			if (_canvas != null)
 			{
 				_canvas.SetActive(false);
@@ -253,12 +238,19 @@ namespace Doorstop
 			Canvas canvas = _canvas.AddComponent<Canvas>();
 			canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 			canvas.sortingOrder = 8000; // above the game's UI (see dump log)
+			// Width is always the reference width (1920 units), whatever the
+			// display's resolution or aspect ratio; height follows the screen.
 			CanvasScaler scaler = _canvas.AddComponent<CanvasScaler>();
 			scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
 			scaler.referenceResolution = new Vector2(1920f, 1080f);
-			scaler.matchWidthOrHeight = 0.5f;
+			scaler.matchWidthOrHeight = 1f;
 			_canvas.AddComponent<GraphicRaycaster>();
 			_canvas.SetActive(false);
+
+			_triUp = MakeTriangle(true);
+			_triDown = MakeTriangle(false);
+			_dashH = MakeDash(true);
+			_dashV = MakeDash(false);
 
 			// Dim backdrop: blocks clicks to the game; click = close.
 			GameObject dim = CreateUiObject("Dim", _canvas.transform);
@@ -270,14 +262,14 @@ namespace Doorstop
 			dimBtn.transition = Selectable.Transition.None;
 			dimBtn.onClick.AddListener(Close);
 
-			// Panel.
+			// Panel: fixed reference width, height from the screen.
 			GameObject panel = CreateUiObject("Panel", _canvas.transform);
 			RectTransform prt = panel.GetComponent<RectTransform>();
-			prt.anchorMin = new Vector2(0.5f, 0.5f);
-			prt.anchorMax = new Vector2(0.5f, 0.5f);
+			prt.anchorMin = new Vector2(0.5f, 0.03f);
+			prt.anchorMax = new Vector2(0.5f, 0.97f);
 			prt.pivot = new Vector2(0.5f, 0.5f);
 			prt.anchoredPosition = Vector2.zero;
-			prt.sizeDelta = new Vector2(1120f, 760f);
+			prt.sizeDelta = new Vector2(PanelWidth, 0f);
 			Image pimg = panel.AddComponent<Image>();
 			pimg.color = ColPanel;
 
@@ -305,11 +297,7 @@ namespace Doorstop
 			Button cbtn = closeBtn.AddComponent<Button>();
 			cbtn.targetGraphic = cimg;
 			cbtn.onClick.AddListener(Close);
-			TextMeshProUGUI x = AddLabel(closeBtn.transform, "X", "\u00d7", 32f, ColTextLight, true);
-			Stretch(x.rectTransform);
-
-			_tabChoicesImg = BuildTab(panel.transform, "TabChoices", "Choice points", -146f, ListMode.Choices);
-			_tabSavedImg = BuildTab(panel.transform, "TabSaved", "Saved games", 146f, ListMode.Saved);
+			AddCross(closeBtn.transform, 26f, 4f, ColTextLight);
 
 			BuildHeader(panel.transform);
 
@@ -356,7 +344,7 @@ namespace Doorstop
 
 			BuildScrollbar(scroll.transform);
 
-			// Save now (saved-games tab only).
+			// Save now (bottom left).
 			_saveNowBtn = CreateUiObject("SaveNow", panel.transform);
 			RectTransform nrt = _saveNowBtn.GetComponent<RectTransform>();
 			nrt.anchorMin = new Vector2(0f, 0f);
@@ -368,13 +356,12 @@ namespace Doorstop
 			nimg.color = ColLoadButton;
 			Button nbtn = _saveNowBtn.AddComponent<Button>();
 			nbtn.targetGraphic = nimg;
-			nbtn.onClick.AddListener(delegate { Ask(Pending.SaveNow, "", ""); });
+			nbtn.onClick.AddListener(delegate { Ask(Pending.SaveNow, "", "", null); });
 			TextMeshProUGUI nlabel = AddLabel(_saveNowBtn.transform, "Label",
 				"Save now", 24f, ColTextLight, true);
 			Stretch(nlabel.rectTransform);
 
 			BuildConfirm(panel.transform);
-			UpdateTabs();
 		}
 
 		private static void BuildScrollbar(Transform scroll)
@@ -403,7 +390,8 @@ namespace Doorstop
 		}
 
 		// Column header: fixed above the scroll area, same cell widths as
-		// the rows. Clicking a header sorts by that column.
+		// the rows. Clicking a header sorts by that column; the triangle
+		// shows the direction.
 		private static void BuildHeader(Transform panel)
 		{
 			GameObject header = CreateUiObject("Header", panel);
@@ -420,9 +408,9 @@ namespace Doorstop
 			hlg.childControlHeight = true;
 			hlg.childForceExpandWidth = false;
 			hlg.childForceExpandHeight = true;
-			_headerRow = header.transform;
 
 			_headerLabels = new TextMeshProUGUI[ColNames.Length];
+			_sortIcons = new Image[ColNames.Length];
 			for (int i = 0; i < ColNames.Length; i++)
 			{
 				Col col = (Col)i;
@@ -438,13 +426,29 @@ namespace Doorstop
 				{
 					le.flexibleWidth = 1f;
 				}
-				TextMeshProUGUI label = AddLabel(cell.transform, "Label", ColNames[i], 19f, ColTextLight, col != Col.Choice && col != Col.Hero && col != Col.Scene);
+				TextMeshProUGUI label = AddLabel(cell.transform, "Label", ColNames[i], 19f, ColTextLight,
+					col != Col.Choice);
 				label.overflowMode = TextOverflowModes.Ellipsis;
 				label.enableWordWrapping = false;
-				Stretch(label.rectTransform);
-				label.rectTransform.offsetMin = new Vector2(8f, 0f);
-				label.rectTransform.offsetMax = new Vector2(-8f, 0f);
+				RectTransform lrt = label.rectTransform;
+				Stretch(lrt);
+				lrt.offsetMin = new Vector2(8f, 0f);
+				lrt.offsetMax = new Vector2(-22f, 0f); // room for the triangle
 				_headerLabels[i] = label;
+
+				// Filled triangle, full text height, centred vertically.
+				GameObject icon = CreateUiObject("Sort", cell.transform);
+				RectTransform irt = icon.GetComponent<RectTransform>();
+				irt.anchorMin = new Vector2(1f, 0.5f);
+				irt.anchorMax = new Vector2(1f, 0.5f);
+				irt.pivot = new Vector2(1f, 0.5f);
+				irt.anchoredPosition = new Vector2(-8f, 0f);
+				irt.sizeDelta = new Vector2(14f, 14f);
+				Image iimg = icon.AddComponent<Image>();
+				iimg.color = ColTextLight;
+				iimg.raycastTarget = false;
+				iimg.enabled = false;
+				_sortIcons[i] = iimg;
 			}
 			// Blank cell over the delete column, so headers line up with rows.
 			GameObject spacer = CreateUiObject("Head_Delete", header.transform);
@@ -477,59 +481,11 @@ namespace Doorstop
 			{
 				return;
 			}
-			for (int i = 0; i < _headerLabels.Length; i++)
+			for (int i = 0; i < _sortIcons.Length; i++)
 			{
-				string text = ColNames[i];
-				if ((Col)i == _sortCol)
-				{
-					text += _sortAsc ? " ^" : " v";
-				}
-				_headerLabels[i].text = text;
-			}
-		}
-
-		private static Image BuildTab(Transform panel, string name, string text, float x, ListMode mode)
-		{
-			GameObject go = CreateUiObject(name, panel);
-			RectTransform rt = go.GetComponent<RectTransform>();
-			rt.anchorMin = new Vector2(0.5f, 1f);
-			rt.anchorMax = new Vector2(0.5f, 1f);
-			rt.pivot = new Vector2(0.5f, 1f);
-			rt.anchoredPosition = new Vector2(x, -70f);
-			rt.sizeDelta = new Vector2(260f, 44f);
-			Image img = go.AddComponent<Image>();
-			Button btn = go.AddComponent<Button>();
-			btn.targetGraphic = img;
-			btn.onClick.AddListener(delegate { SetMode(mode); });
-			TextMeshProUGUI label = AddLabel(go.transform, "Label", text, 22f, ColTextLight, true);
-			Stretch(label.rectTransform);
-			return img;
-		}
-
-		private static void SetMode(ListMode mode)
-		{
-			_mode = mode;
-			CancelConfirm();
-			UpdateTabs();
-			_lastItemCount = RefreshItems();
-			if (_scrollRect != null)
-			{
-				_scrollRect.verticalNormalizedPosition = 1f;
-			}
-			Canvas.ForceUpdateCanvases();
-		}
-
-		private static void UpdateTabs()
-		{
-			if (_tabChoicesImg == null || _tabSavedImg == null)
-			{
-				return;
-			}
-			_tabChoicesImg.color = _mode == ListMode.Choices ? ColLoadButton : ColCancelButton;
-			_tabSavedImg.color = _mode == ListMode.Saved ? ColLoadButton : ColCancelButton;
-			if (_saveNowBtn != null)
-			{
-				_saveNowBtn.SetActive(_mode == ListMode.Saved);
+				bool active = (Col)i == _sortCol;
+				_sortIcons[i].enabled = active;
+				_sortIcons[i].sprite = _sortAsc ? _triUp : _triDown;
 			}
 		}
 
@@ -579,7 +535,6 @@ namespace Doorstop
 			limg.color = ColLoadButton;
 			_confirmLoadBtn = loadBtn.AddComponent<Button>();
 			_confirmLoadBtn.targetGraphic = limg;
-			// One button, several actions (see Ask).
 			_confirmLoadBtn.onClick.AddListener(delegate { RunPending(); });
 			TextMeshProUGUI lt = AddLabel(loadBtn.transform, "Label", "Load", 24f, ColTextLight, true);
 			Stretch(lt.rectTransform);
@@ -604,9 +559,11 @@ namespace Doorstop
 		}
 
 		// Opens the confirm dialog for one action. path/title describe the
-		// save.
-		private static void Ask(Pending action, string path, string title)
+		// save; row is the table row it came from (marked while the dialog
+		// is open), or null.
+		private static void Ask(Pending action, string path, string title, GameObject row)
 		{
+			ClearMark();
 			_pendingAction = action;
 			_pendingPath = path;
 			_pendingTitle = title;
@@ -637,6 +594,10 @@ namespace Doorstop
 			if (_confirmLoadLabel != null)
 			{
 				_confirmLoadLabel.text = label;
+			}
+			if (row != null)
+			{
+				MarkRow(row);
 			}
 			if (_confirmPanel != null)
 			{
@@ -706,36 +667,92 @@ namespace Doorstop
 
 		private static void CancelConfirm()
 		{
+			ClearMark();
 			if (_confirmPanel != null)
 			{
 				_confirmPanel.SetActive(false);
 			}
 		}
 
+		// Red dashed outline around the row whose delete is being confirmed.
+		// Four tiled strips, layout-ignored, drawn on top of the row.
+		private static void MarkRow(GameObject row)
+		{
+			const float t = 3f;
+			GameObject mark = CreateUiObject("DeleteMark", row.transform);
+			Stretch(mark.GetComponent<RectTransform>());
+			LayoutElement le = mark.AddComponent<LayoutElement>();
+			le.ignoreLayout = true;
+			AddDashStrip(mark.transform, "Top", true, 1f, t, _dashH);
+			AddDashStrip(mark.transform, "Bottom", true, 0f, t, _dashH);
+			AddDashStrip(mark.transform, "Left", false, 0f, t, _dashV);
+			AddDashStrip(mark.transform, "Right", false, 1f, t, _dashV);
+			_markObj = mark;
+		}
+
+		// A full-length strip along one edge: horizontal ones sit at the top
+		// (edge 1) or bottom (edge 0), vertical ones at the right (1) or left (0).
+		private static void AddDashStrip(Transform parent, string name, bool horizontal, float edge,
+			float thick, Sprite sprite)
+		{
+			GameObject go = CreateUiObject(name, parent);
+			RectTransform rt = go.GetComponent<RectTransform>();
+			if (horizontal)
+			{
+				rt.anchorMin = new Vector2(0f, edge);
+				rt.anchorMax = new Vector2(1f, edge);
+				rt.pivot = new Vector2(0.5f, edge);
+				rt.sizeDelta = new Vector2(0f, thick);
+			}
+			else
+			{
+				rt.anchorMin = new Vector2(edge, 0f);
+				rt.anchorMax = new Vector2(edge, 1f);
+				rt.pivot = new Vector2(edge, 0.5f);
+				rt.sizeDelta = new Vector2(thick, 0f);
+			}
+			rt.anchoredPosition = Vector2.zero;
+			Image img = go.AddComponent<Image>();
+			img.sprite = sprite;
+			img.type = Image.Type.Tiled;
+			img.color = ColDashRed;
+			img.raycastTarget = false;
+		}
+
+		private static void ClearMark()
+		{
+			if (_markObj != null)
+			{
+				_markObj.SetActive(false);
+				UnityEngine.Object.Destroy(_markObj);
+			}
+			_markObj = null;
+		}
+
 		// ------------------------------------------------------------------
 		// Table data
 		// ------------------------------------------------------------------
 
-		// Reloads the current tab's saves from disk, re-sorts and rebuilds
-		// the rows. Returns the number of saves.
+		// Reloads every save from disk, re-sorts and rebuilds the rows.
+		// Returns the number of saves.
 		private static int RefreshItems()
 		{
 			if (_itemContainer == null)
 			{
 				return 0;
 			}
-			string dir = _mode == ListMode.Saved ? Recorder.SlotDir : Recorder.SnapshotDir;
-			_entries = ReadEntries(dir);
+			_entries = ReadEntries(Recorder.SnapshotDir, "Auto");
+			_entries.AddRange(ReadEntries(Recorder.SlotDir, "Manual"));
 			SortEntries();
 			UpdateHeader();
 			BuildRows();
 			return _entries.Count;
 		}
 
-		// Reads every save in the folder. The save file itself is the
+		// Reads every save in one folder. The save file itself is the
 		// source of truth for the table values (same deserialiser the load
 		// uses); the sidecar only supplies the localised choice title.
-		private static List<SaveEntry> ReadEntries(string dir)
+		private static List<SaveEntry> ReadEntries(string dir, string kind)
 		{
 			List<SaveEntry> list = new List<SaveEntry>();
 			if (!Directory.Exists(dir))
@@ -761,18 +778,20 @@ namespace Doorstop
 					{
 						h = (SaveLoadHelper)new BinaryFormatter().Deserialize(fs);
 					}
-					SaveEntry e = new SaveEntry();
-					e.Dat = f;
-					e.Title = ReadTitle(f);
-					e.Saved = File.GetLastWriteTime(f);
-					e.Chapter = h.Chapter;
-					e.Hero = h.HeroName ?? "";
-					e.Age = h.HeroAge;
-					e.Year = h.Year;
-					e.Season = h.Season;
-					e.Turn = h.Turn;
-					e.Scene = h.LastOpenScene ?? "";
-					list.Add(e);
+					SaveEntry entry = new SaveEntry();
+					entry.Dat = f;
+					entry.Kind = kind;
+					entry.Title = ReadTitle(f);
+					entry.Saved = File.GetLastWriteTime(f);
+					entry.Chapter = h.Chapter;
+					entry.ChapterName = StageName(h.ChapterName);
+					entry.Hero = h.HeroName ?? "";
+					entry.Age = h.HeroAge;
+					entry.Year = h.Year;
+					entry.Season = h.Season;
+					entry.Turn = h.Turn;
+					entry.Scene = h.LastOpenScene ?? "";
+					list.Add(entry);
 				}
 				catch (Exception e)
 				{
@@ -780,6 +799,17 @@ namespace Doorstop
 				}
 			}
 			return list;
+		}
+
+		// "Chapter1.Childhood" -> "Childhood".
+		private static string StageName(string chapterKey)
+		{
+			if (string.IsNullOrEmpty(chapterKey))
+			{
+				return "";
+			}
+			int dot = chapterKey.IndexOf('.');
+			return dot >= 0 ? chapterKey.Substring(dot + 1) : chapterKey;
 		}
 
 		// The localised scene title from the sidecar, without the key tag.
@@ -834,6 +864,7 @@ namespace Doorstop
 		{
 			switch (col)
 			{
+				case Col.Type: return e.Kind;
 				case Col.Saved: return e.Saved;
 				case Col.Chapter: return e.Chapter;
 				case Col.Hero: return e.Hero.ToLowerInvariant();
@@ -849,6 +880,7 @@ namespace Doorstop
 		// (Re)builds the table rows from _entries, in their current order.
 		private static void BuildRows()
 		{
+			ClearMark();
 			for (int i = _itemContainer.childCount - 1; i >= 0; i--)
 			{
 				GameObject old = _itemContainer.GetChild(i).gameObject;
@@ -860,10 +892,9 @@ namespace Doorstop
 
 			if (_entries.Count == 0)
 			{
-				string text = _mode == ListMode.Saved
-					? "No saved games yet. Use \"Save now\" below."
-					: "No choice points recorded yet.";
-				TextMeshProUGUI empty = AddLabel(_itemContainer, "Empty", text, 22f, ColTextDark, true);
+				TextMeshProUGUI empty = AddLabel(_itemContainer, "Empty",
+					"No saves yet. Choice points are recorded automatically; use \"Save now\" below.",
+					22f, ColTextDark, true);
 				LayoutElement le = empty.gameObject.AddComponent<LayoutElement>();
 				le.preferredHeight = 60f;
 				return;
@@ -876,16 +907,20 @@ namespace Doorstop
 
 		private static void CreateRow(SaveEntry e, int index)
 		{
+			bool manual = e.Kind == "Manual";
+			Color bg = manual
+				? (index % 2 == 0 ? ColManual : ColManualAlt)
+				: (index % 2 == 0 ? ColAuto : ColAutoAlt);
 			string p = e.Dat;
 			string t = e.Choice;
 			GameObject row = CreateUiObject("Row", _itemContainer);
 			LayoutElement rle = row.AddComponent<LayoutElement>();
 			rle.preferredHeight = RowHeight;
 			Image img = row.AddComponent<Image>();
-			img.color = index % 2 == 0 ? ColItem : ColItemAlt;
+			img.color = bg;
 			Button btn = row.AddComponent<Button>();
 			btn.targetGraphic = img;
-			btn.onClick.AddListener(delegate { Ask(Pending.Load, p, t); });
+			btn.onClick.AddListener(delegate { Ask(Pending.Load, p, t, null); });
 			HorizontalLayoutGroup hlg = row.AddComponent<HorizontalLayoutGroup>();
 			hlg.padding = new RectOffset(6, 6, 6, 6);
 			hlg.spacing = 0f;
@@ -896,8 +931,9 @@ namespace Doorstop
 
 			string[] values =
 			{
+				e.Kind,
 				e.Saved.ToString("yyyy-MM-dd HH:mm"),
-				e.Chapter.ToString(),
+				e.Chapter + (e.ChapterName.Length > 0 ? " " + e.ChapterName : ""),
 				e.Hero,
 				e.Age.ToString(),
 				e.Year.ToString(),
@@ -909,11 +945,10 @@ namespace Doorstop
 			for (int i = 0; i < values.Length; i++)
 			{
 				Col col = (Col)i;
-				bool centred = col != Col.Hero && col != Col.Scene && col != Col.Choice;
-				TextMeshProUGUI cell = AddLabel(row.transform, "Cell", values[i], 19f, ColTextDark, centred);
+				TextMeshProUGUI cell = AddLabel(row.transform, "Cell", values[i], 19f, ColTextDark,
+					col != Col.Hero && col != Col.Choice);
 				cell.overflowMode = TextOverflowModes.Ellipsis;
 				cell.enableWordWrapping = false;
-				cell.margin = new Vector4(6f, 0f, 6f, 0f);
 				LayoutElement le = cell.gameObject.AddComponent<LayoutElement>();
 				le.preferredWidth = ColWidths[i];
 				if (col == Col.Choice)
@@ -922,8 +957,9 @@ namespace Doorstop
 				}
 			}
 
-			// Delete x at the far right. As a child of the row it sits above
-			// the row's own button, so a click reaches only this one.
+			// Delete at the far right: a red cell with a drawn x. As a child
+			// of the row it sits above the row's own button, so a click
+			// reaches only this one.
 			string dp = e.Dat;
 			string dt = e.Choice;
 			GameObject del = CreateUiObject("Delete", row.transform);
@@ -933,9 +969,8 @@ namespace Doorstop
 			dimg.color = ColDeleteButton;
 			Button dbtn = del.AddComponent<Button>();
 			dbtn.targetGraphic = dimg;
-			dbtn.onClick.AddListener(delegate { Ask(Pending.Delete, dp, dt); });
-			TextMeshProUGUI dlabel = AddLabel(del.transform, "Label", "\u00d7", 30f, ColTextLight, true);
-			Stretch(dlabel.rectTransform);
+			dbtn.onClick.AddListener(delegate { Ask(Pending.Delete, dp, dt, row); });
+			AddCross(del.transform, 24f, 4f, ColTextLight);
 
 			if (_firstItemPath == null)
 			{
@@ -1055,23 +1090,14 @@ namespace Doorstop
 		// ------------------------------------------------------------------
 
 		// Driven by ModHost after the dev autoload has opened a choice
-		// scene: opens the pause menu, injects the button, opens the list,
-		// then simulates the clicks a player would make (row -> Load,
-		// x -> Delete) through the same UnityEvent handlers the real
-		// buttons use. Pauses between steps so a screenshot can catch each state.
+		// scene: opens the list, then simulates the clicks a player would
+		// make (row -> Load, x -> Delete) through the same UnityEvent
+		// handlers the real buttons use. Pauses between steps so a
+		// screenshot can catch each state.
 		public static void DevTest()
 		{
 			try
 			{
-				ModLog.Info("DEV UITEST: opening pause menu");
-				UIManager ui = UIManager.Initiate;
-				if (ui == null)
-				{
-					ModLog.Error("DEV UITEST: no UIManager");
-					return;
-				}
-				ui.ShowPauseMenu();
-				EnsureInjected();
 				if (ModHost.Current != null)
 				{
 					ModHost.Current.StartCoroutine(DevTestRoutine());
@@ -1085,10 +1111,6 @@ namespace Doorstop
 
 		private static IEnumerator DevTestRoutine()
 		{
-			// State A: pause window with the injected button.
-			ModLog.Info("DEV UITEST: state A - pause menu with button (3s)");
-			yield return new WaitForSeconds(3f);
-
 			int n = Open();
 			ModLog.Info("DEV UITEST: window open with " + n + " item(s); first='"
 				+ (_firstItemTitle ?? "<none>") + "'");
@@ -1097,23 +1119,22 @@ namespace Doorstop
 				ModLog.Error("DEV UITEST: nothing to load");
 				yield break;
 			}
-			// State B: the choice table.
-			ModLog.Info("DEV UITEST: state B - choice table (3s)");
+			// State A: the table.
+			ModLog.Info("DEV UITEST: state A - table (3s)");
 			yield return new WaitForSeconds(3f);
 
 			// Simulated click 1: the row (its onClick -> Ask(Load)).
-			Ask(Pending.Load, _firstItemPath, _firstItemTitle);
-			// State C: the confirm dialog (load).
-			ModLog.Info("DEV UITEST: state C - confirm dialog (3s)");
+			Ask(Pending.Load, _firstItemPath, _firstItemTitle, null);
+			ModLog.Info("DEV UITEST: state B - load confirm (3s)");
 			yield return new WaitForSeconds(3f);
 
-			// State D: the delete confirm. With 2+ rows, exercise the real
+			// State C: the delete confirm. With 2+ rows, exercise the real
 			// x button end-to-end (the seeded duplicate goes first, so the
-			// original test snapshot survives); with a single row just show
-			// the dialog and cancel - the list must not end up empty.
+			// original test save survives); with a single row just show the
+			// dialog and cancel - the list must not end up empty.
 			CancelConfirm();
-			Ask(Pending.Delete, _firstItemPath, _firstItemTitle);
-			ModLog.Info("DEV UITEST: state D - delete confirm (3s)");
+			Ask(Pending.Delete, _firstItemPath, _firstItemTitle, null);
+			ModLog.Info("DEV UITEST: state C - delete confirm (3s)");
 			yield return new WaitForSeconds(3f);
 			if (_lastItemCount >= 2 && _confirmLoadBtn != null)
 			{
@@ -1124,7 +1145,7 @@ namespace Doorstop
 			{
 				CancelConfirm();
 			}
-			Ask(Pending.Load, _firstItemPath, _firstItemTitle);
+			Ask(Pending.Load, _firstItemPath, _firstItemTitle, null);
 
 			// Simulated click 2: the confirm dialog's Load button (the real
 			// Button component, so the mode-dispatching handler runs).
@@ -1142,6 +1163,82 @@ namespace Doorstop
 		// ------------------------------------------------------------------
 		// Small UI helpers
 		// ------------------------------------------------------------------
+
+		// Filled triangle, pointing up or down, sized for the header text.
+		private static Sprite MakeTriangle(bool up)
+		{
+			const int w = 56;
+			const int h = 56;
+			Texture2D tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+			Color32[] px = new Color32[w * h];
+			for (int y = 0; y < h; y++)
+			{
+				float frac = (y + 0.5f) / h;
+				float half = (up ? frac : 1f - frac) * w * 0.5f;
+				for (int x = 0; x < w; x++)
+				{
+					bool on = Mathf.Abs(x + 0.5f - w * 0.5f) <= half;
+					px[y * w + x] = on ? new Color32(255, 255, 255, 255) : new Color32(0, 0, 0, 0);
+				}
+			}
+			tex.SetPixels32(px);
+			tex.filterMode = FilterMode.Bilinear;
+			tex.wrapMode = TextureWrapMode.Clamp;
+			tex.Apply();
+			return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 100f);
+		}
+
+		// One repeating dash pattern: 10px on, 6px off, 3px thick.
+		private static Sprite MakeDash(bool horizontal)
+		{
+			const int period = 16;
+			const int thick = 3;
+			int w = horizontal ? period : thick;
+			int h = horizontal ? thick : period;
+			Texture2D tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+			Color32[] px = new Color32[w * h];
+			for (int y = 0; y < h; y++)
+			{
+				for (int x = 0; x < w; x++)
+				{
+					int along = horizontal ? x : y;
+					bool on = along % period < 10;
+					px[y * w + x] = on ? new Color32(255, 255, 255, 255) : new Color32(0, 0, 0, 0);
+				}
+			}
+			tex.SetPixels32(px);
+			tex.filterMode = FilterMode.Point;
+			tex.wrapMode = TextureWrapMode.Repeat;
+			tex.Apply();
+			return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 100f);
+		}
+
+		// A drawn x (two bars), centred in the parent, so it does not depend
+		// on any font glyph.
+		private static void AddCross(Transform parent, float size, float thick, Color color)
+		{
+			GameObject cross = CreateUiObject("Cross", parent);
+			RectTransform crt = cross.GetComponent<RectTransform>();
+			crt.anchorMin = new Vector2(0.5f, 0.5f);
+			crt.anchorMax = new Vector2(0.5f, 0.5f);
+			crt.pivot = new Vector2(0.5f, 0.5f);
+			crt.anchoredPosition = Vector2.zero;
+			crt.sizeDelta = new Vector2(size, size);
+			for (int i = 0; i < 2; i++)
+			{
+				GameObject bar = CreateUiObject("Bar" + i, cross.transform);
+				RectTransform brt = bar.GetComponent<RectTransform>();
+				brt.anchorMin = new Vector2(0.5f, 0.5f);
+				brt.anchorMax = new Vector2(0.5f, 0.5f);
+				brt.pivot = new Vector2(0.5f, 0.5f);
+				brt.anchoredPosition = Vector2.zero;
+				brt.sizeDelta = new Vector2(size * 1.4f, thick);
+				brt.localRotation = Quaternion.Euler(0f, 0f, i == 0 ? 45f : -45f);
+				Image img = bar.AddComponent<Image>();
+				img.color = color;
+				img.raycastTarget = false;
+			}
+		}
 
 		private static GameObject CreateUiObject(string name, Transform parent)
 		{

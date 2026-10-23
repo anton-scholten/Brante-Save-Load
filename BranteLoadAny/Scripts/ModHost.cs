@@ -30,9 +30,6 @@ namespace Doorstop
 			Probe("Start", RunProbes);
 			ProbeGameManagers();
 			Recorder.Arm();
-			// Best effort: inject the pause-menu button early (Phase 4).
-			// If UIManager isn't up yet, the ShowPauseMenu postfix retries.
-			ChoiceWindow.EnsureInjected();
 			StartCoroutine(DevAutoload());
 		}
 
