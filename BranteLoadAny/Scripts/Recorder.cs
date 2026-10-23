@@ -45,6 +45,24 @@ namespace Doorstop
 			}
 		}
 
+		// Phase 5: the player's own named slots (manual save). Same snapshot
+		// format as the choice points, kept in a separate folder so the
+		// choice list and the slot list never see each other's files.
+		public const int SlotCount = 5;
+
+		public static string SlotDir
+		{
+			get
+			{
+				return Path.Combine(Application.persistentDataPath, "BranteLoadAny", "Slots");
+			}
+		}
+
+		public static string SlotPath(int slot)
+		{
+			return Path.Combine(SlotDir, "slot" + slot + ".dat");
+		}
+
 		// Called from ModHost.Start (engine fully up). Proves the plumbing
 		// (state copy + BinaryFormatter round-trip) before the first real
 		// capture; at the main menu some managers may not exist yet, which
@@ -112,9 +130,22 @@ namespace Doorstop
 			}
 			Directory.CreateDirectory(SnapshotDir);
 			File.WriteAllBytes(dat, blob);
-			WriteSidecar(baseName, scene, helper);
+			WriteSidecar(SnapshotDir, baseName, scene, helper);
 			TryFillChoices(baseName);
 			ModLog.Info("Choice point recorded: " + baseName + " (" + blob.Length + " bytes)");
+		}
+
+		// Manual save into one of the mod's slots. Writes only into the
+		// slot folder; the game's Saves/ is never touched.
+		public static void SaveSlot(int slot)
+		{
+			SaveLoadHelper helper = BuildHelper();
+			byte[] blob = Serialize(helper);
+			string scene = string.IsNullOrEmpty(helper.LastOpenScene) ? "(unknown)" : helper.LastOpenScene;
+			Directory.CreateDirectory(SlotDir);
+			File.WriteAllBytes(SlotPath(slot), blob);
+			WriteSidecar(SlotDir, "slot" + slot, scene, helper);
+			ModLog.Info("Slot " + slot + " saved (" + blob.Length + " bytes, scene " + scene + ")");
 		}
 
 		// Mirrors SaveLoadManager.SaveData(int, int, SceneStates) field by
@@ -284,7 +315,7 @@ namespace Doorstop
 			return inScenes.ToArray();
 		}
 
-		private static void WriteSidecar(string baseName, string scene, SaveLoadHelper helper)
+		private static void WriteSidecar(string dir, string baseName, string scene, SaveLoadHelper helper)
 		{
 			StringBuilder sb = new StringBuilder();
 			sb.AppendLine("scene=" + scene);
@@ -308,7 +339,7 @@ namespace Doorstop
 			{
 				sb.AppendLine("  [" + b.ButtonIndex + "] " + T(b.ButtonTextKey));
 			}
-			File.WriteAllText(Path.Combine(SnapshotDir, baseName + ".meta.txt"), sb.ToString());
+			File.WriteAllText(Path.Combine(dir, baseName + ".meta.txt"), sb.ToString());
 		}
 
 		// Waits until the choice buttons are actually on screen, then appends

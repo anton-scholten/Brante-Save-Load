@@ -109,5 +109,6 @@ work here (black/`BadMatch` on the X1 root).
 ## Open work
 
 - [docs/TODO.md](docs/TODO.md): what remains of the plan.
-- Phase 5 (the mod's own named save slots) is next; Phase 6 (reconstructing
-  pre-mod choice history) and Phase 7 (polish) follow.
+- Phase 5 (the mod's own save slots) is implemented; its in-game pass is still
+  to be run. Phase 6 (reconstructing pre-mod choice history) and Phase 7
+  (polish) follow.

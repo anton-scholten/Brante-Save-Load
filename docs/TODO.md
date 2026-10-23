@@ -109,10 +109,19 @@ The plan, as approved, with status. Phases 0–4 are done; 5–7 are ahead.
     rebuild), and without the flush the item text painted 2+ seconds late
     (observed in screenshots).
 
-## Phase 5 — separate manual save/load
+## Phase 5 — separate manual save/load (implemented, in-game check pending)
 
-- [ ] "Save now" / "Load" for the mod's own named slots (same snapshot format)
-- [ ] Documented as independent of the game's slots in README
+- [x] "Save now" / "Load" for the mod's own slots (same snapshot format):
+  five slots in `<persistentDataPath>/BranteLoadAny/Slots/` (`slot1.dat`…,
+  plus `.meta.txt` sidecars), written by `Recorder.SaveSlot`
+- [x] Slots live in the same list window as a second tab ("Save slots"),
+  next to "Choice points". Empty row click → save here; occupied row click →
+  load; `Save` button → overwrite; `×` → remove the slot's files
+- [x] Every save/load/remove goes through the confirm dialog; nothing is
+  written to the game's `Saves/` folder (the save gate still applies to
+  the game's own save calls)
+- [x] Documented as independent of the game's slots in README
+- [ ] In-game pass: save a slot, load it, overwrite, remove (not yet run)
 
 ## Phase 6 — existing saves (choice history reconstruction)
 

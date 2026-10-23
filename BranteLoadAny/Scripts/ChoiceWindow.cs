@@ -19,6 +19,8 @@ namespace Doorstop
 	//    opened with Esc / UIManager.ShowPauseMenu),
 	//  - a scrollable list of the recorded choice points (Recorder's
 	//    snapshot dir, newest first, title + meta from the .meta.txt sidecar),
+	//  - Phase 5: a second tab with the five manual save slots (Recorder's
+	//    slot dir), same confirm dialog and same load flow,
 	//  - confirm -> the game's own load sequence, exactly what clicking
 	//    Continue on the loading screen does:
 	//      LoadGame(helper) -> GameLoadingScreen (additive) ->
@@ -45,16 +47,24 @@ namespace Doorstop
 		private static readonly Color ColTextLight = new Color(0.95f, 0.92f, 0.82f);
 		private static readonly Color ColTextDark = new Color(0.12f, 0.10f, 0.08f);
 
+		private enum ListMode { Choices, Slots }
+
+		private enum Pending { LoadChoice, DeleteChoice, SaveSlot, LoadSlot, DeleteSlot }
+
 		private static GameObject _injectedButton;
 		private static GameObject _canvas;
 		private static Transform _itemContainer;
+		private static Image _tabChoicesImg;
+		private static Image _tabSlotsImg;
+		private static ListMode _mode = ListMode.Choices;
 		private static GameObject _confirmPanel;
 		private static TextMeshProUGUI _confirmText;
 		private static TextMeshProUGUI _confirmLoadLabel;
 		private static Button _confirmLoadBtn;
+		private static Pending _pendingAction;
 		private static string _pendingPath;
 		private static string _pendingTitle;
-		private static bool _pendingIsDelete;
+		private static int _pendingSlot;
 		private static int _lastItemCount;
 		private static string _firstItemPath;
 		private static string _firstItemTitle;
@@ -164,6 +174,8 @@ namespace Doorstop
 			{
 				BuildCanvas();
 			}
+			_mode = ListMode.Choices;
+			UpdateTabs();
 			int n = RefreshItems();
 			_lastItemCount = n;
 			_canvas.SetActive(true);
@@ -253,13 +265,17 @@ namespace Doorstop
 			TextMeshProUGUI x = AddLabel(closeBtn.transform, "X", "\u00d7", 32f, ColTextLight, true);
 			Stretch(x.rectTransform);
 
+			_tabChoicesImg = BuildTab(panel.transform, "TabChoices", "Choice points", -146f, ListMode.Choices);
+			_tabSlotsImg = BuildTab(panel.transform, "TabSlots", "Save slots", 146f, ListMode.Slots);
+			UpdateTabs();
+
 			// Scroll area (viewport + scroll rect + content).
 			GameObject scroll = CreateUiObject("Scroll", panel.transform);
 			RectTransform srt = scroll.GetComponent<RectTransform>();
 			srt.anchorMin = new Vector2(0f, 0f);
 			srt.anchorMax = new Vector2(1f, 1f);
 			srt.offsetMin = new Vector2(22f, 86f);
-			srt.offsetMax = new Vector2(-22f, -84f);
+			srt.offsetMax = new Vector2(-22f, -124f);
 			ScrollRect scrollRect = scroll.AddComponent<ScrollRect>();
 			scrollRect.horizontal = false;
 			scrollRect.vertical = true;
@@ -293,6 +309,43 @@ namespace Doorstop
 			_itemContainer = content.transform;
 
 			BuildConfirm(panel.transform);
+		}
+
+		private static Image BuildTab(Transform panel, string name, string text, float x, ListMode mode)
+		{
+			GameObject go = CreateUiObject(name, panel);
+			RectTransform rt = go.GetComponent<RectTransform>();
+			rt.anchorMin = new Vector2(0.5f, 1f);
+			rt.anchorMax = new Vector2(0.5f, 1f);
+			rt.pivot = new Vector2(0.5f, 1f);
+			rt.anchoredPosition = new Vector2(x, -70f);
+			rt.sizeDelta = new Vector2(260f, 44f);
+			Image img = go.AddComponent<Image>();
+			Button btn = go.AddComponent<Button>();
+			btn.targetGraphic = img;
+			btn.onClick.AddListener(delegate { SetMode(mode); });
+			TextMeshProUGUI label = AddLabel(go.transform, "Label", text, 22f, ColTextLight, true);
+			Stretch(label.rectTransform);
+			return img;
+		}
+
+		private static void SetMode(ListMode mode)
+		{
+			_mode = mode;
+			CancelConfirm();
+			UpdateTabs();
+			_lastItemCount = RefreshItems();
+			Canvas.ForceUpdateCanvases();
+		}
+
+		private static void UpdateTabs()
+		{
+			if (_tabChoicesImg == null || _tabSlotsImg == null)
+			{
+				return;
+			}
+			_tabChoicesImg.color = _mode == ListMode.Choices ? ColLoadButton : ColCancelButton;
+			_tabSlotsImg.color = _mode == ListMode.Slots ? ColLoadButton : ColCancelButton;
 		}
 
 		// Confirm dialog: covers the panel (blocks item clicks), shows the
@@ -341,18 +394,8 @@ namespace Doorstop
 			limg.color = ColLoadButton;
 			_confirmLoadBtn = loadBtn.AddComponent<Button>();
 			_confirmLoadBtn.targetGraphic = limg;
-			// One button, two modes (see AskConfirm / AskConfirmDelete).
-			_confirmLoadBtn.onClick.AddListener(delegate
-			{
-				if (_pendingIsDelete)
-				{
-					DeleteSnapshot(_pendingPath);
-				}
-				else
-				{
-					LoadSnapshot(_pendingPath);
-				}
-			});
+			// One button, several actions (see Ask).
+			_confirmLoadBtn.onClick.AddListener(delegate { RunPending(); });
 			TextMeshProUGUI lt = AddLabel(loadBtn.transform, "Label", "Load", 24f, ColTextLight, true);
 			Stretch(lt.rectTransform);
 			_confirmLoadLabel = lt;
@@ -375,19 +418,51 @@ namespace Doorstop
 			_confirmPanel.SetActive(false);
 		}
 
-		private static void AskConfirm(string path, string title)
+		// Opens the confirm dialog for one action. path/title describe the
+		// entry; slot is the slot number for the Slot actions.
+		private static void Ask(Pending action, string path, string title, int slot)
 		{
+			_pendingAction = action;
 			_pendingPath = path;
 			_pendingTitle = title;
-			_pendingIsDelete = false;
+			_pendingSlot = slot;
+			string body;
+			string label;
+			switch (action)
+			{
+				case Pending.LoadChoice:
+					body = "Load this choice point?\n\n" + title
+						+ "\n\nYour original save will not be modified.";
+					label = "Load";
+					break;
+				case Pending.DeleteChoice:
+					body = "Remove this choice point from the list?\n\n" + title
+						+ "\n\nThe snapshot file is deleted. Your game saves are not touched.";
+					label = "Delete";
+					break;
+				case Pending.SaveSlot:
+					body = "Save the current game into Slot " + slot + "?\n\n"
+						+ "Anything already in this slot is replaced. Your game saves are not touched.";
+					label = "Save";
+					break;
+				case Pending.LoadSlot:
+					body = "Load Slot " + slot + "?\n\n" + title
+						+ "\n\nYour original save will not be modified.";
+					label = "Load";
+					break;
+				default:
+					body = "Remove Slot " + slot + " from the list?\n\n"
+						+ "The slot's save file is deleted. Your game saves are not touched.";
+					label = "Delete";
+					break;
+			}
 			if (_confirmText != null)
 			{
-				_confirmText.text = "Load this choice point?\n\n" + title
-					+ "\n\nYour original save will not be modified.";
+				_confirmText.text = body;
 			}
 			if (_confirmLoadLabel != null)
 			{
-				_confirmLoadLabel.text = "Load";
+				_confirmLoadLabel.text = label;
 			}
 			if (_confirmPanel != null)
 			{
@@ -395,40 +470,50 @@ namespace Doorstop
 			}
 			// Paint the new text immediately (see Open's flush note).
 			Canvas.ForceUpdateCanvases();
-			ModLog.Info("ChoiceWindow: confirm requested for " + Path.GetFileName(path));
+			ModLog.Info("ChoiceWindow: " + action + " requested for " + Path.GetFileName(path));
 		}
 
-		// Same dialog, delete mode: removes the snapshot file + sidecar and
-		// refreshes the list. Only ever touches the mod's own folder.
-		private static void AskConfirmDelete(string path, string title)
+		private static void RunPending()
 		{
-			_pendingPath = path;
-			_pendingTitle = title;
-			_pendingIsDelete = true;
-			if (_confirmText != null)
+			switch (_pendingAction)
 			{
-				_confirmText.text = "Remove this choice point from the list?\n\n" + title
-					+ "\n\nThe snapshot file is deleted. Your game saves are not touched.";
+				case Pending.LoadChoice:
+				case Pending.LoadSlot:
+					LoadSnapshot(_pendingPath);
+					break;
+				case Pending.DeleteChoice:
+				case Pending.DeleteSlot:
+					DeleteSnapshot(_pendingPath);
+					break;
+				case Pending.SaveSlot:
+					SaveToSlot(_pendingSlot);
+					break;
 			}
-			if (_confirmLoadLabel != null)
-			{
-				_confirmLoadLabel.text = "Delete";
-			}
-			if (_confirmPanel != null)
-			{
-				_confirmPanel.SetActive(true);
-			}
-			// Paint the new text immediately (see Open's flush note).
-			Canvas.ForceUpdateCanvases();
-			ModLog.Info("ChoiceWindow: delete confirm requested for " + Path.GetFileName(path));
 		}
 
+		private static void SaveToSlot(int slot)
+		{
+			CancelConfirm();
+			try
+			{
+				Recorder.SaveSlot(slot);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: saving slot " + slot + " failed:\n" + e);
+			}
+			_lastItemCount = RefreshItems();
+			Canvas.ForceUpdateCanvases();
+		}
+
+		// Removes a snapshot or slot file + sidecar and refreshes the list.
+		// Only ever touches the mod's own folders.
 		private static void DeleteSnapshot(string datPath)
 		{
 			try
 			{
 				File.Delete(datPath);
-				string sidecar = Path.Combine(Recorder.SnapshotDir,
+				string sidecar = Path.Combine(Path.GetDirectoryName(datPath),
 					Path.GetFileNameWithoutExtension(datPath) + ".meta.txt");
 				if (File.Exists(sidecar))
 				{
@@ -473,6 +558,11 @@ namespace Doorstop
 			_firstItemPath = null;
 			_firstItemTitle = null;
 
+			if (_mode == ListMode.Slots)
+			{
+				return RefreshSlots();
+			}
+
 			string dir = Recorder.SnapshotDir;
 			List<string> files = new List<string>();
 			try
@@ -514,12 +604,34 @@ namespace Doorstop
 			return files.Count;
 		}
 
+		// Lists the manual save slots: one row per slot, empty ones too.
+		// Returns the number of occupied slots.
+		private static int RefreshSlots()
+		{
+			int used = 0;
+			for (int i = 1; i <= Recorder.SlotCount; i++)
+			{
+				string path = Recorder.SlotPath(i);
+				if (!File.Exists(path))
+				{
+					CreateEmptySlotRow(i, path);
+					continue;
+				}
+				string title;
+				string meta;
+				ReadMeta(path, out title, out meta);
+				CreateSlotRow(i, path, title, "Slot " + i + " \u00b7 " + title + "\n" + meta);
+				used++;
+			}
+			return used;
+		}
+
 		// Parses the Recorder's .meta.txt sidecar for display purposes.
 		private static void ReadMeta(string datPath, out string title, out string meta)
 		{
 			title = Path.GetFileNameWithoutExtension(datPath);
 			meta = "";
-			string sidecar = Path.Combine(Recorder.SnapshotDir,
+			string sidecar = Path.Combine(Path.GetDirectoryName(datPath),
 				Path.GetFileNameWithoutExtension(datPath) + ".meta.txt");
 			try
 			{
@@ -590,15 +702,50 @@ namespace Doorstop
 
 		private static void CreateItem(string path, string title, string display)
 		{
+			string p = path;
+			string t = title;
+			GameObject item = CreateRow(display, delegate { Ask(Pending.LoadChoice, p, t, 0); }, -80f);
+			AddSideButton(item.transform, -8f, 60f, "\u00d7", 30f, ColDeleteButton,
+				delegate { Ask(Pending.DeleteChoice, p, t, 0); });
+
+			if (_firstItemPath == null)
+			{
+				_firstItemPath = path;
+				_firstItemTitle = title;
+			}
+		}
+
+		private static void CreateSlotRow(int slot, string path, string title, string display)
+		{
+			int s = slot;
+			string p = path;
+			string t = title;
+			GameObject item = CreateRow(display, delegate { Ask(Pending.LoadSlot, p, t, s); }, -150f);
+			AddSideButton(item.transform, -76f, 70f, "Save", 20f, ColLoadButton,
+				delegate { Ask(Pending.SaveSlot, p, t, s); });
+			AddSideButton(item.transform, -8f, 60f, "\u00d7", 30f, ColDeleteButton,
+				delegate { Ask(Pending.DeleteSlot, p, t, s); });
+		}
+
+		private static void CreateEmptySlotRow(int slot, string path)
+		{
+			int s = slot;
+			string p = path;
+			CreateRow("Slot " + slot + " \u00b7 empty\nClick to save the current game here",
+				delegate { Ask(Pending.SaveSlot, p, "", s); }, -80f);
+		}
+
+		// A clickable list row. textRight is how far the text stops short of
+		// the row's right edge (room for the side buttons).
+		private static GameObject CreateRow(string display, UnityEngine.Events.UnityAction onClick, float textRight)
+		{
 			GameObject item = CreateUiObject("Item", _itemContainer);
 			item.GetComponent<RectTransform>().sizeDelta = new Vector2(0f, 84f);
 			Image img = item.AddComponent<Image>();
 			img.color = ColItem;
 			Button btn = item.AddComponent<Button>();
 			btn.targetGraphic = img;
-			string p = path;
-			string t = title;
-			btn.onClick.AddListener(delegate { AskConfirm(p, t); });
+			btn.onClick.AddListener(onClick);
 
 			TextMeshProUGUI label = AddLabel(item.transform, "Text", display, 20f, ColTextDark, false);
 			label.alignment = TextAlignmentOptions.Center;
@@ -611,33 +758,30 @@ namespace Doorstop
 			lrt.anchorMin = Vector2.zero;
 			lrt.anchorMax = Vector2.one;
 			lrt.offsetMin = new Vector2(16f, 6f);
-			lrt.offsetMax = new Vector2(-80f, -6f); // leave room for the [x]
+			lrt.offsetMax = new Vector2(textRight, -6f);
+			return item;
+		}
 
-			// Delete [x] at the row's right edge. As a child of the row it
-			// renders (and raycasts) on top, so a click on it reaches only
-			// this button, never the row's Load handler.
-			GameObject del = CreateUiObject("Delete", item.transform);
-			RectTransform drt = del.GetComponent<RectTransform>();
-			drt.anchorMin = new Vector2(1f, 0f);
-			drt.anchorMax = new Vector2(1f, 1f);
-			drt.pivot = new Vector2(1f, 0.5f);
-			drt.anchoredPosition = new Vector2(-8f, 0f);
-			drt.sizeDelta = new Vector2(60f, -14f);
-			Image dimg = del.AddComponent<Image>();
-			dimg.color = ColDeleteButton;
-			Button dbtn = del.AddComponent<Button>();
-			dbtn.targetGraphic = dimg;
-			string dp = path;
-			string dt2 = title;
-			dbtn.onClick.AddListener(delegate { AskConfirmDelete(dp, dt2); });
-			TextMeshProUGUI dlabel = AddLabel(del.transform, "Label", "\u00d7", 30f, ColTextLight, true);
-			Stretch(dlabel.rectTransform);
-
-			if (_firstItemPath == null)
-			{
-				_firstItemPath = path;
-				_firstItemTitle = title;
-			}
+		// A small button at the row's right edge. As a child of the row it
+		// renders (and raycasts) on top, so a click on it reaches only this
+		// button, never the row's own handler.
+		private static void AddSideButton(Transform row, float right, float width, string text,
+			float fontSize, Color color, UnityEngine.Events.UnityAction onClick)
+		{
+			GameObject go = CreateUiObject("Side", row);
+			RectTransform rt = go.GetComponent<RectTransform>();
+			rt.anchorMin = new Vector2(1f, 0f);
+			rt.anchorMax = new Vector2(1f, 1f);
+			rt.pivot = new Vector2(1f, 0.5f);
+			rt.anchoredPosition = new Vector2(right, 0f);
+			rt.sizeDelta = new Vector2(width, -14f);
+			Image img = go.AddComponent<Image>();
+			img.color = color;
+			Button btn = go.AddComponent<Button>();
+			btn.targetGraphic = img;
+			btn.onClick.AddListener(onClick);
+			TextMeshProUGUI label = AddLabel(go.transform, "Label", text, fontSize, ColTextLight, true);
+			Stretch(label.rectTransform);
 		}
 
 		// ------------------------------------------------------------------
@@ -797,8 +941,8 @@ namespace Doorstop
 			ModLog.Info("DEV UITEST: state B - choice list (3s)");
 			yield return new WaitForSeconds(3f);
 
-			// Simulated click 1: the item (its onClick -> AskConfirm).
-			AskConfirm(_firstItemPath, _firstItemTitle);
+			// Simulated click 1: the item (its onClick -> Ask(LoadChoice)).
+			Ask(Pending.LoadChoice, _firstItemPath, _firstItemTitle, 0);
 			// State C: the confirm dialog (load).
 			ModLog.Info("DEV UITEST: state C - confirm dialog (3s)");
 			yield return new WaitForSeconds(3f);
@@ -808,7 +952,7 @@ namespace Doorstop
 			// the original test snapshot survives); with a single item just
 			// show the dialog and cancel - the list must not end up empty.
 			CancelConfirm();
-			AskConfirmDelete(_firstItemPath, _firstItemTitle);
+			Ask(Pending.DeleteChoice, _firstItemPath, _firstItemTitle, 0);
 			ModLog.Info("DEV UITEST: state D - delete confirm (3s)");
 			yield return new WaitForSeconds(3f);
 			if (_lastItemCount >= 2 && _confirmLoadBtn != null)
@@ -820,7 +964,7 @@ namespace Doorstop
 			{
 				CancelConfirm();
 			}
-			AskConfirm(_firstItemPath, _firstItemTitle);
+			Ask(Pending.LoadChoice, _firstItemPath, _firstItemTitle, 0);
 
 			// Simulated click 2: the confirm dialog's Load button (the real
 			// Button component, so the mode-dispatching handler runs).
