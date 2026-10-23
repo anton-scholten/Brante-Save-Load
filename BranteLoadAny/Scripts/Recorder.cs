@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
@@ -48,12 +49,59 @@ namespace Doorstop
 		// Phase 5: the player's own manual saves. Same snapshot format as the
 		// choice points, kept in a separate folder so the two lists never see
 		// each other's files.
-		public static string SlotDir
+		// One folder per in-game main save (= one playthrough). The game
+		// names each one "<Hero>_<timestamp>" when a new game starts, so the
+		// same hero name can exist several times; the ID is what tells them
+		// apart.
+		public static string RunsDir
 		{
 			get
 			{
-				return Path.Combine(Application.persistentDataPath, "BranteLoadAny", "Slots");
+				return Path.Combine(Application.persistentDataPath, "BranteLoadAny", "Runs");
 			}
+		}
+
+		// The current main save's ID, or "" when the game has none yet.
+		public static string CurrentRunId()
+		{
+			try
+			{
+				SaveLoadManager slm = SaveLoadManager.Instance;
+				if (slm == null)
+				{
+					slm = UnityEngine.Object.FindObjectOfType<SaveLoadManager>();
+				}
+				if (slm == null)
+				{
+					return "";
+				}
+				FieldInfo info = typeof(SaveLoadManager).GetField("_currentSaveSlotInfo",
+					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+				SaveSlotInfo slot = info != null ? info.GetValue(slm) as SaveSlotInfo : null;
+				if (slot != null && !string.IsNullOrEmpty(slot.Id))
+				{
+					return slot.Id;
+				}
+				FieldInfo file = typeof(SaveLoadManager).GetField("_currentSaveFile",
+					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+				SaveLoadHelper cur = file != null ? file.GetValue(slm) as SaveLoadHelper : null;
+				if (cur != null && cur.SlotInfo != null && !string.IsNullOrEmpty(cur.SlotInfo.Id))
+				{
+					return cur.SlotInfo.Id;
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: reading the current save ID failed:\n" + e);
+			}
+			return "";
+		}
+
+		// <RunsDir>/<run>/<kind>, kind = "Auto" (choice points) or "Manual".
+		public static string RunDir(string runId, string kind)
+		{
+			string run = string.IsNullOrEmpty(runId) ? "_no_save" : Sanitize(runId);
+			return Path.Combine(RunsDir, run, kind);
 		}
 
 		// Called from ModHost.Start (engine fully up). Proves the plumbing
@@ -113,18 +161,19 @@ namespace Doorstop
 			}
 			string hash = Sha1(blob).Substring(0, 10);
 			string baseName = Sanitize(scene) + "_t" + helper.Turn + "_" + hash;
-			string dat = Path.Combine(SnapshotDir, baseName + ".dat");
+			string dir = RunDir(helper.SlotInfo.Id, "Auto");
+			string dat = Path.Combine(dir, baseName + ".dat");
 			if (File.Exists(dat))
 			{
 				ModLog.Info("Choice point unchanged, skipped: " + baseName);
 				// Idempotent: fill in choice texts if a previous run did not.
-				TryFillChoices(baseName);
+				TryFillChoices(dir, baseName);
 				return;
 			}
-			Directory.CreateDirectory(SnapshotDir);
+			Directory.CreateDirectory(dir);
 			File.WriteAllBytes(dat, blob);
-			WriteSidecar(SnapshotDir, baseName, scene, helper);
-			TryFillChoices(baseName);
+			WriteSidecar(dir, baseName, scene, helper);
+			TryFillChoices(dir, baseName);
 			ModLog.Info("Choice point recorded: " + baseName + " (" + blob.Length + " bytes)");
 		}
 
@@ -135,11 +184,12 @@ namespace Doorstop
 			SaveLoadHelper helper = BuildHelper();
 			byte[] blob = Serialize(helper);
 			string scene = string.IsNullOrEmpty(helper.LastOpenScene) ? "(unknown)" : helper.LastOpenScene;
-			Directory.CreateDirectory(SlotDir);
+			string dir = RunDir(helper.SlotInfo.Id, "Manual");
+			Directory.CreateDirectory(dir);
 			string baseName = "save_" + DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
-			File.WriteAllBytes(Path.Combine(SlotDir, baseName + ".dat"), blob);
-			WriteSidecar(SlotDir, baseName, scene, helper);
-			ModLog.Info("Manual save " + baseName + " written (" + blob.Length + " bytes, scene " + scene + ")");
+			File.WriteAllBytes(Path.Combine(dir, baseName + ".dat"), blob);
+			WriteSidecar(dir, baseName, scene, helper);
+			ModLog.Info("Manual save " + baseName + " written to " + dir + " (" + blob.Length + " bytes, scene " + scene + ")");
 		}
 
 		// Mirrors SaveLoadManager.SaveData(int, int, SceneStates) field by
@@ -167,7 +217,7 @@ namespace Doorstop
 			if (csh == null) throw new InvalidOperationException("CharacterParametersSerializeHelper not alive");
 
 			SaveLoadHelper helper = new SaveLoadHelper();
-			helper.SlotInfo = new SaveSlotInfo { Id = "", Date = "" };
+			helper.SlotInfo = new SaveSlotInfo { Id = CurrentRunId() ?? "", Date = "" };
 			helper.ModelParameters = pm.Parameters;
 			helper.CharacterModel = csh.Characters;
 			helper.ChapterParameters = kpc.AllKeyParameters;
@@ -263,14 +313,14 @@ namespace Doorstop
 		// INACTIVE objects (the show animation switches them on), so read
 		// them regardless of activity; only fall back to waiting for the
 		// animation if they do not exist yet at all.
-		private static void TryFillChoices(string baseName)
+		private static void TryFillChoices(string dir, string baseName)
 		{
 			ParameterButtonChanger[] buttons = CollectButtons();
 			if (buttons.Length > 0)
 			{
 				try
 				{
-					FillChoicesNow(baseName, buttons);
+					FillChoicesNow(dir, baseName, buttons);
 				}
 				catch (Exception e)
 				{
@@ -279,7 +329,7 @@ namespace Doorstop
 			}
 			else if (ModHost.Current != null)
 			{
-				ModHost.Current.StartCoroutine(FillChoicesWhenVisible(baseName));
+				ModHost.Current.StartCoroutine(FillChoicesWhenVisible(dir, baseName));
 			}
 		}
 
@@ -339,7 +389,7 @@ namespace Doorstop
 		// Waits until the choice buttons are actually on screen, then appends
 		// their texts to the sidecar written at capture time. Runs as a
 		// coroutine on the host (see Capture).
-		private static System.Collections.IEnumerator FillChoicesWhenVisible(string baseName)
+		private static System.Collections.IEnumerator FillChoicesWhenVisible(string dir, string baseName)
 		{
 			for (int i = 0; i < 20; i++)
 			{
@@ -352,7 +402,7 @@ namespace Doorstop
 				}
 				try
 				{
-					FillChoicesNow(baseName, buttons);
+					FillChoicesNow(dir, baseName, buttons);
 				}
 				catch (Exception e)
 				{
@@ -378,7 +428,7 @@ namespace Doorstop
 			return n;
 		}
 
-		private static void FillChoicesNow(string baseName, ParameterButtonChanger[] buttons)
+		private static void FillChoicesNow(string dir, string baseName, ParameterButtonChanger[] buttons)
 		{
 			Array.Sort(buttons, (a, b) => a.ButtonIndex.CompareTo(b.ButtonIndex));
 			StringBuilder sb = new StringBuilder();
@@ -386,7 +436,7 @@ namespace Doorstop
 			{
 				sb.AppendLine("  [" + b.ButtonIndex + "] " + T(b.ButtonTextKey));
 			}
-			string path = Path.Combine(SnapshotDir, baseName + ".meta.txt");
+			string path = Path.Combine(dir, baseName + ".meta.txt");
 			string text = File.ReadAllText(path);
 			int cut = text.IndexOf("choices:", StringComparison.Ordinal);
 			if (cut >= 0)

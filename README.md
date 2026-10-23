@@ -8,22 +8,23 @@ never touches the game's saves.
 ## What it does
 
 - **Load any past choice point.** Every time a choice appears on screen, the mod
-  records the exact game state. Open the book and click **"Load any choice"**
-  (the tab next to the chapter I tab), pick any entry from the list, confirm —
-  and the game returns to that exact choice screen. Entries can also be removed from the
-  list (that only deletes the mod's own snapshot file).
+  records the exact game state. Press Esc, click **"Load any choice"** at the
+  bottom of the settings menu, pick any entry from the list, confirm — and the
+  game returns to that exact choice screen. Entries can also be removed from the
+  list (that only deletes the mod's own save file).
 - **Its own snapshots, never the game's saves.** Choice points are recorded into
   the mod's own folder as you reach them. Loading one never touches the game's
   `Saves/`: after a rewind, the game's own autosaves stay switched off for the
   rest of the session (your progress is captured as new choice snapshots
   instead), and the save you had before installing the mod remains exactly as
   you left it — loadable from the game's own menu at any time.
-- **Your own saves.** The same window lists every save in one table: automatic
-  choice points and manual saves (**"Save now"**, shown in a yellow row colour).
-  Click a column header to sort by it, click again to reverse; the table scrolls
-  and the × on the right removes a row. These are kept in the mod's folder, separate
-  from the game's saves: using them never changes your game saves, and the
-  game's saves never change them.
+- **Your own saves.** The same window lists the saves of the **current main save
+  only** in one table: automatic choice points and manual saves (**"Save now"**,
+  shown in a yellow row colour). Click a column header to sort by it, click again
+  to reverse; the table scrolls and the × on the right removes a row. Saves are kept
+  per main save in `BranteLoadAny/Runs/<main save ID>/`, separate from the game's
+  saves: using them never changes your game saves, and the game's saves never
+  change them.
 - **Existing saves.** (Planned, see docs/TODO.md) reconstruct the list of choices
   you took in a playthrough started before the mod was installed.
 

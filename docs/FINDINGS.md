@@ -307,3 +307,16 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
   computed from turn or season.
 - The book's chapter tabs are `DestinyWindow.Tabs` (`Btn1`…`Btn5`); the
   "Load any choice" tab is a copy of `Tabs[0]` added after `UIManager.ShowWindow`.
+
+## Main-save identity (checked against the decompile)
+
+- A new game creates the folder `Saves/<Hero>_<timestamp>` and keeps its
+  `SaveSlotInfo.Id` in `SaveLoadManager._currentSaveSlotInfo`. A loaded save
+  restores that object (`_currentSaveFile`). One playthrough = one ID.
+- Inside one playthrough there is only one rolling `Autosave.dat` plus the
+  per-chapter files, so the same hero name can exist several times (one per
+  playthrough) but a playthrough never has several saves of its own.
+- The mod therefore keys its saves by that ID: `BranteLoadAny/Runs/<ID>/Auto`
+  (choice points) and `.../Manual` ("Save now"). The list shows only the
+  current ID. Older snapshots recorded before this change have no ID and are
+  not listed.

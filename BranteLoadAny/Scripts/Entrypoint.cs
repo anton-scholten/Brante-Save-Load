@@ -72,10 +72,10 @@ namespace Doorstop
 				// every choice scene has a SceneController; its Awake is the
 				// choice-point capture trigger (Phase 3)
 				new[] { "_Scripts.AMVCC.Controllers.SceneController, Assembly-CSharp", "Awake", "ChoiceScenePostfix" },
-				// the HUD (top bar with the chapter badge) was enabled = add
-				// the "Load any choice" tab right of the badge (Phase 6).
-				// Fires only when the engine is up, so the Unity API is safe here
-				new[] { "_Scripts.AMVCC.Views.HudController, Assembly-CSharp", "OnEnable", "HudPostfix" },
+				// the pause/settings menu toggling = our moment to (re)inject
+				// the "Load any choice" button (Phase 4/6); fires only when the
+				// engine is up, so the Unity API is safe here
+				new[] { "_Scripts.Managers.UIManager, Assembly-CSharp", "ShowPauseMenu", "PauseMenuPostfix" },
 			};
 			foreach (string[] t in targets)
 			{
@@ -159,11 +159,11 @@ namespace Doorstop
 			Recorder.OnChoiceSceneShown();
 		}
 
-		// Harmony postfix on HudController.OnEnable: the top bar is up -
-		// add the "Load any choice" tab (Phase 6).
-		private static void HudPostfix()
+		// Harmony postfix on UIManager.ShowPauseMenu: the settings menu
+		// toggled - make sure the "Load any choice" button is in it.
+		private static void PauseMenuPostfix()
 		{
-			ChoiceWindow.EnsureHudTab();
+			ChoiceWindow.EnsurePauseButton();
 		}
 
 		private static void TryCreateHost()

@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using _Scripts.AMVCC.Views;
@@ -36,6 +37,37 @@ namespace Doorstop
 	// the session: the game's own Saves/ (the player's original timeline)
 	// must never be touched by a rewind; progress past the rewind point is
 	// captured as new choice-point snapshots instead.
+	// Turns a cross's bars red while the pointer is on its button.
+	public sealed class CrossHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+	{
+		public Image[] Bars;
+
+		public void OnPointerEnter(PointerEventData eventData)
+		{
+			Paint(new Color(0.85f, 0.10f, 0.10f));
+		}
+
+		public void OnPointerExit(PointerEventData eventData)
+		{
+			Paint(new Color(0.05f, 0.04f, 0.03f));
+		}
+
+		private void Paint(Color c)
+		{
+			if (Bars == null)
+			{
+				return;
+			}
+			foreach (Image bar in Bars)
+			{
+				if (bar != null)
+				{
+					bar.color = c;
+				}
+			}
+		}
+	}
+
 	public static class ChoiceWindow
 	{
 		// Colours - parchment style of the game.
@@ -52,6 +84,7 @@ namespace Doorstop
 		private static readonly Color ColTextLight = new Color(0.95f, 0.92f, 0.82f);
 		private static readonly Color ColTextDark = new Color(0.12f, 0.10f, 0.08f);
 		private static readonly Color ColDashRed = new Color(0.85f, 0.10f, 0.10f);
+		private static readonly Color ColCrossNormal = new Color(0.05f, 0.04f, 0.03f);
 
 		private enum Pending { Load, Delete, SaveNow }
 
@@ -63,12 +96,12 @@ namespace Doorstop
 
 		// Preferred widths in reference px; Choice takes whatever is left.
 		private static readonly float[] ColWidths =
-		{ 130f, 180f, 170f, 150f, 70f, 80f, 100f, 80f, 120f, 200f };
+		{ 130f, 170f, 150f, 130f, 70f, 80f, 100f, 80f, 120f, 200f };
 
 		private const float RowHeight = 44f;
 		private const float HeaderHeight = 36f;
 		private const float DeleteWidth = 64f;
-		private const float PanelWidth = 1860f;
+		private const float PanelWidth = 1360f;
 
 		private sealed class SaveEntry
 		{
@@ -117,88 +150,127 @@ namespace Doorstop
 		private static string _firstItemTitle;
 
 		// ------------------------------------------------------------------
-		// Top-bar tab
+		// Settings (pause) menu button
 		// ------------------------------------------------------------------
 
-		// Called whenever the game's HUD (the top bar with the chapter badge)
-		// is enabled. Adds the "Load any choice" tab right of the chapter
-		// badge. Idempotent.
-		public static void EnsureHudTab()
+		private static GameObject _pauseBtn;
+
+		// Called whenever the pause/settings menu is toggled. Adds the "Load any
+		// choice" button as a copy of the lowest existing menu button (same
+		// look, same font, same hover), with the menu lifted half a step so the
+		// new button sits at the bottom. Idempotent.
+		public static void EnsurePauseButton()
 		{
 			try
 			{
-				HudController hud = UnityEngine.Object.FindObjectOfType<HudController>();
-				if (hud == null)
+				if (_pauseBtn != null)
 				{
 					return;
 				}
-				InjectHudTab(hud);
+				UIManager ui = UIManager.Initiate;
+				if (ui == null || ui.PauseWindow == null || !ui.PauseWindow.scene.IsValid())
+				{
+					return;
+				}
+				AddPauseButton(ui.PauseWindow);
 			}
 			catch (Exception e)
 			{
-				ModLog.Error("ChoiceWindow: top-bar tab injection failed:\n" + e);
+				ModLog.Error("ChoiceWindow: settings button failed:\n" + e);
 			}
 		}
 
-		// The chapter badge is the HUD's private _mainChapterButton.
-		private static GameObject ChapterBadge(HudController hud)
+		// The settings menu is a VerticalLayoutGroup of rows; each row is a
+		// horizontal wrapper around the black frame that holds one button. The
+		// new button is a copy of the lowest row, placed by the same layout.
+		private static bool IsMenuList(Transform t)
 		{
-			FieldInfo f = typeof(HudController).GetField("_mainChapterButton",
-				BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-			GameObject badge = f != null ? f.GetValue(hud) as GameObject : null;
-			return badge;
+			return t.GetComponent<VerticalLayoutGroup>() != null && t.GetComponent<Image>() == null;
 		}
 
-		private static void InjectHudTab(HudController hud)
+		private static void AddPauseButton(GameObject pause)
 		{
-			GameObject badge = ChapterBadge(hud);
-			if (badge == null)
+			// Visible, labelled, full menu width buttons.
+			List<Button> cands = new List<Button>();
+			foreach (Button b in pause.GetComponentsInChildren<Button>(true))
 			{
-				ModLog.Error("ChoiceWindow: chapter badge not found - top-bar tab not added");
+				if (!b.gameObject.activeInHierarchy || b.name.StartsWith("BranteLoadAny", StringComparison.Ordinal)
+					|| b.GetComponentInChildren<TMP_Text>(true) == null)
+				{
+					continue;
+				}
+				RectTransform r = b.GetComponent<RectTransform>();
+				if (r == null || r.rect.width < 300f)
+				{
+					continue;
+				}
+				cands.Add(b);
+			}
+			if (cands.Count == 0)
+			{
+				ModLog.Error("ChoiceWindow: no menu buttons found in the pause window");
 				return;
 			}
-			Canvas canvas = badge.GetComponentInParent<Canvas>();
-			if (canvas == null)
+
+			// The lowest one is the template.
+			Button template = cands[0];
+			foreach (Button b in cands)
 			{
-				return;
-			}
-			Transform root = canvas.transform;
-			Transform existing = root.Find("BranteLoadAny_HudTab");
-			if (existing != null)
-			{
-				existing.gameObject.SetActive(true);
-				return;
+				if (b.transform.position.y < template.transform.position.y)
+				{
+					template = b;
+				}
 			}
 
-			// Right edge of the badge (world), its vertical centre.
-			RectTransform br = badge.GetComponent<RectTransform>();
-			Vector3[] c = new Vector3[4];
-			br.GetWorldCorners(c);
-			float gap = 24f;
-			Vector3 rightMid = new Vector3((c[2].x + c[3].x) * 0.5f + gap, (c[0].y + c[1].y) * 0.5f, 0f);
-			RectTransform canvasRt = (RectTransform)root;
-			Vector3 local = canvasRt.InverseTransformPoint(rightMid);
+			// Its row: the ancestor directly under a VerticalLayoutGroup.
+			// (A black frame is also a vertical layout, but it has its own Image.)
+			Transform row = template.transform;
+			for (int i = 0; i < 6 && row.parent != null && !IsMenuList(row.parent); i++)
+			{
+				row = row.parent;
+			}
+			if (row.parent == null || !IsMenuList(row.parent))
+			{
+				ModLog.Error("ChoiceWindow: menu row layout not found - settings button not added");
+				return;
+			}
+			Transform menu = row.parent;
 
-			GameObject tab = CreateUiObject("BranteLoadAny_HudTab", root);
-			RectTransform rt = tab.GetComponent<RectTransform>();
-			// Anchored to the canvas centre, so anchoredPosition is the canvas-
-			// local position computed above, whatever the screen size.
-			rt.anchorMin = new Vector2(0.5f, 0.5f);
-			rt.anchorMax = new Vector2(0.5f, 0.5f);
-			rt.pivot = new Vector2(0f, 0.5f);
-			rt.anchoredPosition = new Vector2(local.x, local.y);
-			rt.sizeDelta = new Vector2(270f, 64f);
+			GameObject clone = UnityEngine.Object.Instantiate(row.gameObject, menu);
+			clone.name = "BranteLoadAny_LoadAnyRow";
+			clone.transform.SetSiblingIndex(row.GetSiblingIndex() + 1);
+			foreach (Behaviour bh in clone.GetComponentsInChildren<Behaviour>(true))
+			{
+				if (bh.GetType().Name.IndexOf("ocaliz", StringComparison.Ordinal) >= 0)
+				{
+					UnityEngine.Object.Destroy(bh);
+				}
+			}
+			Button cb = clone.GetComponentInChildren<Button>(true);
+			cb.onClick = new Button.ButtonClickedEvent();
+			cb.onClick.AddListener(delegate { Open(); });
+			foreach (TMP_Text t in clone.GetComponentsInChildren<TMP_Text>(true))
+			{
+				t.text = "Load any choice";
+			}
+			_pauseBtn = clone;
 
-			Image img = tab.AddComponent<Image>();
-			img.color = new Color(0.36f, 0.22f, 0.13f);
-			Button btn = tab.AddComponent<Button>();
-			btn.targetGraphic = img;
-			btn.onClick.AddListener(delegate { Open(); });
-			TextMeshProUGUI label = AddLabel(tab.transform, "Label", "Load any choice", 22f, ColTextLight, true);
-			Stretch(label.rectTransform);
-
-			ModLog.Info("ChoiceWindow: top-bar tab added right of the chapter badge '" + badge.name
-				+ "' (canvas '" + canvas.name + "', local x=" + local.x + " y=" + local.y + ")");
+			// Lift the whole settings sheet (its parchment and contents) so the
+			// new bottom row fits inside it. The container has no layout group of
+			// its own, so the move sticks.
+			Transform sheet = menu;
+			while (sheet.parent != null && sheet.parent != pause.transform)
+			{
+				sheet = sheet.parent;
+			}
+			RectTransform srt = sheet.GetComponent<RectTransform>();
+			srt.anchoredPosition = new Vector2(srt.anchoredPosition.x, srt.anchoredPosition.y + 80f);
+			// One row taller, top edge kept: the sheet is a fixed-size panel.
+			srt.sizeDelta = new Vector2(srt.sizeDelta.x, srt.sizeDelta.y + 110f);
+			srt.anchoredPosition = new Vector2(srt.anchoredPosition.x, srt.anchoredPosition.y - 55f);
+			Canvas.ForceUpdateCanvases();
+			ModLog.Info("ChoiceWindow: settings button added as a copy of row '" + row.name
+				+ "' (" + menu.childCount + " rows; sheet '" + sheet.name + "' lifted and extended)");
 		}
 
 		// ------------------------------------------------------------------
@@ -300,11 +372,11 @@ namespace Doorstop
 			crt.anchoredPosition = new Vector2(-14f, -14f);
 			crt.sizeDelta = new Vector2(46f, 46f);
 			Image cimg = closeBtn.AddComponent<Image>();
-			cimg.color = ColButtonDark;
+			cimg.color = Color.clear;
 			Button cbtn = closeBtn.AddComponent<Button>();
 			cbtn.targetGraphic = cimg;
 			cbtn.onClick.AddListener(Close);
-			AddCross(closeBtn.transform, 26f, 4f, ColTextLight);
+			AddCross(closeBtn.transform, 26f, 4f);
 
 			BuildHeader(panel.transform);
 
@@ -748,8 +820,9 @@ namespace Doorstop
 			{
 				return 0;
 			}
-			_entries = ReadEntries(Recorder.SnapshotDir, "Auto");
-			_entries.AddRange(ReadEntries(Recorder.SlotDir, "Manual"));
+			string run = Recorder.CurrentRunId();
+			_entries = ReadEntries(Recorder.RunDir(run, "Auto"), "Auto");
+			_entries.AddRange(ReadEntries(Recorder.RunDir(run, "Manual"), "Manual"));
 			SortEntries();
 			UpdateHeader();
 			BuildRows();
@@ -973,11 +1046,11 @@ namespace Doorstop
 			LayoutElement dle = del.AddComponent<LayoutElement>();
 			dle.preferredWidth = DeleteWidth;
 			Image dimg = del.AddComponent<Image>();
-			dimg.color = ColDeleteButton;
+			dimg.color = Color.clear;
 			Button dbtn = del.AddComponent<Button>();
 			dbtn.targetGraphic = dimg;
 			dbtn.onClick.AddListener(delegate { Ask(Pending.Delete, dp, dt, row); });
-			AddCross(del.transform, 24f, 4f, ColTextLight);
+			AddCross(del.transform, 24f, 4f);
 
 			if (_firstItemPath == null)
 			{
@@ -1167,8 +1240,8 @@ namespace Doorstop
 			}
 		}
 
-		// Dev top-bar test (marker: Snapshots/dev-book.txt): re-adds the tab and
-		// logs where the chapter badge and our tab are, with their parent chain.
+		// Dev settings test (marker: Snapshots/dev-book.txt): opens the pause
+		// menu, adds the button and logs the menu buttons' positions.
 		public static void DevBook()
 		{
 			if (ModHost.Current != null)
@@ -1179,27 +1252,47 @@ namespace Doorstop
 
 		private static IEnumerator DevBookDump()
 		{
+			UIManager ui = UIManager.Initiate;
+			if (ui != null)
+			{
+				ui.ShowPauseMenu();
+			}
 			yield return new WaitForSeconds(2f);
-			EnsureHudTab();
-			HudController hud = UnityEngine.Object.FindObjectOfType<HudController>();
-			GameObject badge = hud != null ? ChapterBadge(hud) : null;
-			if (badge != null)
+			EnsurePauseButton();
+			if (ui != null && ui.PauseWindow != null)
 			{
-				DumpWorld("badge", badge);
+				DumpTree(ui.PauseWindow.transform, 0);
 			}
-			Transform ours = null;
-			if (badge != null)
+			yield return null;
+			Canvas.ForceUpdateCanvases();
+			yield return new WaitForSeconds(12f);
+			Open();
+		}
+
+		private static void DumpTree(Transform t, int depth)
+		{
+			if (depth > 7)
 			{
-				Canvas canvas = badge.GetComponentInParent<Canvas>();
-				ours = canvas != null ? canvas.transform.Find("BranteLoadAny_HudTab") : null;
+				return;
 			}
-			if (ours != null)
+			string comps = "";
+			foreach (Component c in t.GetComponents<Component>())
 			{
-				DumpWorld("ours", ours.gameObject);
+				if (c is Transform)
+				{
+					continue;
+				}
+				comps += " " + c.GetType().Name;
 			}
-			else
+			TMP_Text tt = t.GetComponent<TMP_Text>();
+			RectTransform rt = t as RectTransform;
+			ModLog.Info("DEV TREE: " + new string('-', depth * 2) + t.name + (t.gameObject.activeSelf ? "" : " (off)")
+				+ (tt != null ? " text='" + tt.text + "'" : "")
+				+ (rt != null ? " pos=" + rt.anchoredPosition + " size=" + rt.rect.size : "")
+				+ " [" + comps.Trim() + "]");
+			for (int i = 0; i < t.childCount; i++)
 			{
-				ModLog.Info("DEV BOOK: our tab was not created");
+				DumpTree(t.GetChild(i), depth + 1);
 			}
 		}
 
@@ -1285,8 +1378,8 @@ namespace Doorstop
 		}
 
 		// A drawn x (two bars), centred in the parent, so it does not depend
-		// on any font glyph.
-		private static void AddCross(Transform parent, float size, float thick, Color color)
+		// on any font glyph. Black; the parent turns it red on hover.
+		private static void AddCross(Transform parent, float size, float thick)
 		{
 			GameObject cross = CreateUiObject("Cross", parent);
 			RectTransform crt = cross.GetComponent<RectTransform>();
@@ -1295,6 +1388,7 @@ namespace Doorstop
 			crt.pivot = new Vector2(0.5f, 0.5f);
 			crt.anchoredPosition = Vector2.zero;
 			crt.sizeDelta = new Vector2(size, size);
+			Image[] bars = new Image[2];
 			for (int i = 0; i < 2; i++)
 			{
 				GameObject bar = CreateUiObject("Bar" + i, cross.transform);
@@ -1305,10 +1399,12 @@ namespace Doorstop
 				brt.anchoredPosition = Vector2.zero;
 				brt.sizeDelta = new Vector2(size * 1.4f, thick);
 				brt.localRotation = Quaternion.Euler(0f, 0f, i == 0 ? 45f : -45f);
-				Image img = bar.AddComponent<Image>();
-				img.color = color;
-				img.raycastTarget = false;
+				bars[i] = bar.AddComponent<Image>();
+				bars[i].color = ColCrossNormal;
+				bars[i].raycastTarget = false;
 			}
+			CrossHover hover = parent.gameObject.AddComponent<CrossHover>();
+			hover.Bars = bars;
 		}
 
 		private static GameObject CreateUiObject(string name, Transform parent)
