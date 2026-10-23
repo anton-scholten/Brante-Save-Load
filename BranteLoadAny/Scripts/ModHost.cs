@@ -8,9 +8,11 @@ using _Scripts.Managers;
 
 namespace Doorstop
 {
-	// The mod's host object. Phase 2 = runtime probe: logs what the
-	// decompile says about the game so the two can be compared. Later
-	// phases add the snapshot recorder and the choice-list UI here.
+	// The mod's host object. Created by the first Awake postfix (engine
+	// fully up). Probes what the decompile says about the game, arms the
+	// snapshot recorder, and runs the dev autoload/UI-test coroutines.
+	// The features themselves live in companion statics (Recorder,
+	// ChoiceWindow); this component is their Unity-side anchor.
 	public class ModHost : MonoBehaviour
 	{
 		// The one live host; lets static code (Recorder) start coroutines.
@@ -28,6 +30,9 @@ namespace Doorstop
 			Probe("Start", RunProbes);
 			ProbeGameManagers();
 			Recorder.Arm();
+			// Best effort: inject the pause-menu button early (Phase 4).
+			// If UIManager isn't up yet, the ShowPauseMenu postfix retries.
+			ChoiceWindow.EnsureInjected();
 			StartCoroutine(DevAutoload());
 		}
 
@@ -151,7 +156,7 @@ namespace Doorstop
 			// The harness bypasses the game's slot bookkeeping (which decides
 			// WHERE autosaves are written), so block the game's own saves for
 			// the rest of this run - Saves/ must stay untouched.
-			Recorder.DevBlockGameSaves = true;
+			Recorder.BlockGameSaves = true;
 			string scene = DevAutoloadDo();
 			if (string.IsNullOrEmpty(scene))
 			{
@@ -188,6 +193,17 @@ namespace Doorstop
 				if (opened.IsValid() && opened.isLoaded)
 				{
 					ModLog.Info("DEV AUTOLOAD: scene " + scene + " is open");
+					// Phase 4 UI test: a second marker drives the choice-list
+					// window (open -> list -> simulated clicks -> load).
+					string uitest = Path.Combine(Recorder.SnapshotDir, "dev-uitest.txt");
+					if (File.Exists(uitest))
+					{
+						try { File.Delete(uitest); }
+						catch (Exception) { }
+						ModLog.Info("DEV UITEST: marker found - starting UI test in 3s");
+						yield return new WaitForSeconds(3f);
+						ChoiceWindow.DevTest();
+					}
 					yield break;
 				}
 			}

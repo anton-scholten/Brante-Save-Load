@@ -8,11 +8,16 @@ never touches the game's saves.
 ## What it does
 
 - **Load any past choice point.** Every time a choice appears on screen, the mod
-  records the exact game state. Open the mod's list from the settings/pause window,
-  click any entry, and the game returns to that exact choice screen.
-- **Its own save/load.** The mod's snapshots live in their own folder, written and
-  read by the mod's own code. The game's saves and its Load window keep working,
-  unchanged; the two systems cannot interfere with each other.
+  records the exact game state. Press Esc, click **"Load any choice"** at the
+  bottom of the settings window, pick any entry from the list, confirm — and the
+  game returns to that exact choice screen. Entries can also be removed from the
+  list (that only deletes the mod's own snapshot file).
+- **Its own snapshots, never the game's saves.** Choice points are recorded into
+  the mod's own folder as you reach them. Loading one never touches the game's
+  `Saves/`: after a rewind, the game's own autosaves stay switched off for the
+  rest of the session (your progress is captured as new choice snapshots
+  instead), and the save you had before installing the mod remains exactly as
+  you left it — loadable from the game's own menu at any time.
 - **Existing saves.** (Planned, see docs/TODO.md) reconstruct the list of choices
   you took in a playthrough started before the mod was installed.
 

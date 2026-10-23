@@ -89,6 +89,10 @@ set +e
     -r:"$MANAGED/System.Core.dll" \
     -r:"$MANAGED/UnityEngine.dll" \
     -r:"$MANAGED/UnityEngine.CoreModule.dll" \
+    -r:"$MANAGED/UnityEngine.TextRenderingModule.dll" \
+    -r:"$MANAGED/UnityEngine.UIModule.dll" \
+    -r:"$MANAGED/UnityEngine.UI.dll" \
+    -r:"$MANAGED/Unity.TextMeshPro.dll" \
     -r:"$MANAGED/Assembly-CSharp.dll" \
     -r:"$HARMONY" \
     "$SRC_DIR"/*.cs

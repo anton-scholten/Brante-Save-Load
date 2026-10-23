@@ -72,6 +72,10 @@ namespace Doorstop
 				// every choice scene has a SceneController; its Awake is the
 				// choice-point capture trigger (Phase 3)
 				new[] { "_Scripts.AMVCC.Controllers.SceneController, Assembly-CSharp", "Awake", "ChoiceScenePostfix" },
+				// the pause menu toggling = our moment to (re)inject the
+				// "Load any choice" button (Phase 4); fires only when the
+				// engine is up, so the Unity API is safe here
+				new[] { "_Scripts.Managers.UIManager, Assembly-CSharp", "ShowPauseMenu", "PauseMenuPostfix" },
 			};
 			foreach (string[] t in targets)
 			{
@@ -95,11 +99,12 @@ namespace Doorstop
 			PatchSaveGate(harmony);
 		}
 
-		// Save-game gate (normally a no-op): while the dev autoload harness
-		// runs (Recorder.DevBlockGameSaves), stop the game's own save entry
-		// points from writing into Saves/. The harness loads a save directly,
-		// bypassing the slot bookkeeping that decides WHERE autosaves go, so
-		// without this the game would drop files into odd places.
+		// Save-game gate (normally a no-op): while Recorder.BlockGameSaves is
+		// set (dev autoload harness, or after loading a choice snapshot),
+		// stop the game's own save entry points from writing into Saves/.
+		// Loading a snapshot bypasses the slot bookkeeping that decides WHERE
+		// autosaves go, so without this the game would drop files into odd
+		// places - and a snapshot load must never touch the original save.
 		private static bool _saveGateLogged;
 
 		private static void PatchSaveGate(Harmony harmony)
@@ -124,14 +129,15 @@ namespace Doorstop
 
 		private static bool SaveGatePrefix()
 		{
-			if (!Recorder.DevBlockGameSaves)
+			if (!Recorder.BlockGameSaves)
 			{
 				return true;
 			}
 			if (!_saveGateLogged)
 			{
 				_saveGateLogged = true;
-				ModLog.Info("DEV: game saves blocked (harness mode; Saves/ stays untouched)");
+				ModLog.Info("Game saves blocked for this session (Saves/ stays untouched; "
+					+ "progress is kept via choice-point snapshots)");
 			}
 			return false;
 		}
@@ -151,6 +157,13 @@ namespace Doorstop
 		private static void ChoiceScenePostfix()
 		{
 			Recorder.OnChoiceSceneShown();
+		}
+
+		// Harmony postfix on UIManager.ShowPauseMenu: the pause window just
+		// toggled - make sure our "Load any choice" button is in it (Phase 4).
+		private static void PauseMenuPostfix()
+		{
+			ChoiceWindow.EnsureInjected();
 		}
 
 		private static void TryCreateHost()

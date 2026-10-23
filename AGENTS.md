@@ -22,6 +22,8 @@ BranteLoadAny/               the folder that gets installed into the game dir
     Entrypoint.cs            Doorstop entry: creates the host GameObject
     ModLog.cs                file logger (usable before Unity is up)
     ModHost.cs               the host component; probe first, features after
+    Recorder.cs              choice-point snapshot capture + dedup
+    ChoiceWindow.cs          "Load any choice" pause button + list + load flow
 doorstop/doorstop_config.ini the Doorstop config installed into the game folder
 vendor/                      vendored third-party binaries + their licenses
   doorstop/winhttp.dll       Unity Doorstop 4.6.0 (x64), LGPL-2.1
@@ -90,8 +92,22 @@ to be runnable without a toolchain, same as Besiege-Sand ships its DLL), then
 run `./tools/install.sh`. Read `BranteLoadAny/BranteLoadAny.log` after starting
 the game — that log is the mod's only diagnostic channel.
 
+To test the mod in-game without playing to a choice point, drop marker files
+into the mod's folder inside the Proton prefix
+(`<persistentDataPath>/BranteLoadAny/Snapshots/`): `dev-autoload.txt` replays
+the vanilla load sequence onto the newest autosave, and `dev-uitest.txt`
+(alongside it) then drives the choice-list UI through every state. Kill the
+game's own `…Sir Brante.exe` processes (not just the Proton wrapper) plus
+`wineserver -k` after each run.
+
+To screenshot the running game (Wayland/KDE session):
+`DISPLAY=:1 xwininfo -root -tree | grep -i brante` finds the window's display,
+then `spectacle -b -n -o shot.png` captures the full screen (it includes
+XWayland windows). ImageMagick `import`, `xwd`, and `ffmpeg x11grab` do **not**
+work here (black/`BadMatch` on the X1 root).
+
 ## Open work
 
 - [docs/TODO.md](docs/TODO.md): what remains of the plan.
-- Phase 2 (runtime probe) is next: confirm FINDINGS.md against the running
-  game before writing the snapshot recorder.
+- Phase 5 (the mod's own named save slots) is next; Phase 6 (reconstructing
+  pre-mod choice history) and Phase 7 (polish) follow.

@@ -30,10 +30,12 @@ namespace Doorstop
 	{
 		private static bool _armed;
 
-		// Set by the dev autoload harness: while true, the game's own
-		// SaveGame/SaveChapterState are Harmony-blocked (see Entrypoint)
-		// so the harness can never write into the game's Saves/ folder.
-		public static bool DevBlockGameSaves;
+		// Session-wide switch: while true, the game's own SaveGame/
+		// SaveChapterState are Harmony-blocked (see Entrypoint), so loading
+		// a choice snapshot can never write into the game's Saves/ folder -
+		// the player's original save stays exactly as it was. Set by the
+		// dev autoload harness and by the choice-list load flow.
+		public static bool BlockGameSaves;
 
 		public static string SnapshotDir
 		{

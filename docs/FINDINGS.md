@@ -252,3 +252,44 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
   → `"winhttp"="native,builtin"`) makes the proxy load — verified by starting
   the game with no `WINEDLLOVERRIDES` and seeing the mod log. `install.sh`
   writes/removes this entry (only while the game is not running).
+
+## Phase 4 UI + load facts (verified in-game, 23 Oct 2026)
+
+- `UIManager`: `public static UIManager Initiate { get; private set; }` (set in
+  its own `Awake`). `Update` polls Escape (unless `IsEscButtonBlocked`) →
+  `ShowPauseMenu()` → `PauseWindow.SetActive(!activeSelf)`. There are **no
+  `timeScale` writes anywhere in game code** — "pause" is visual only, so the
+  mod's coroutines keep running while the menu is open.
+- `PauseWindow` is a **public GameObject field** registered in `UIManager.Awake`.
+  The live object is `Window_Pause`, which lives in the **DontDestroyOnLoad
+  scene from boot** — one window present in every scene, not per-scene. It has
+  the `WindowPause` component; its canvas is **WorldSpace, sortingOrder 12**;
+  children: `Bg` (stretched background) + `Buttons` (831.3×881.9 rect centred
+  on the window). Contents (screenshot-verified): a SETTINGS sheet with
+  Music/Sound sliders, "Hidden Consequences" and "Animated Illustrations"
+  toggles, QUIT TO MAIN MENU and RESUME — no Save/Load buttons in the sheet.
+- Canvas inventory at the main menu: `Canvas` order 2, `EarnCanvas` 2,
+  `EventTooltip` 7, `InsurrectionSideTooltip` 8, `ConditionTooltip` 9 (all
+  ScreenSpaceOverlay) plus the pause window's WorldSpace 12 — so a
+  ScreenSpaceOverlay canvas at **sortingOrder 8000 is always on top**.
+- Our injected button is a child of `Window_Pause`: it renders and raycasts on
+  the game's own pause canvas, so it is clickable exactly like the game's own
+  buttons. Placement: bottom centre, 340×46, 14 units above the window's lower
+  edge — below the parchment sheet, clear of RESUME.
+- **In-game load flow (from pause, through the mod's UI)**: `SaveLoadManager.Instance`
+  was **alive** in every test (the feared dead-singleton case did not occur;
+  a `FindObjectOfType` fallback is kept anyway) → `LoadGame(helper)` → 0.5 s →
+  additive `GameLoadingScreen` → wait done → `Messenger.Broadcast("StartSceneTransitionEvent")`
+  → dissolve → `AutomaticSceneLoad` → `LoadScene(LastOpenScene)`. The scene
+  reopens and the recorder's dedup skip on re-capture proves the state
+  round-trips byte-exactly. During the flow the game calls its save entry
+  points (`SaveChapterState`/`SaveGame` Harmony prefixes fired) — this is why
+  a mod snapshot load switches the session-wide save gate on.
+- Dev UI test: marker `Snapshots/dev-uitest.txt` (next to `dev-autoload.txt`)
+  makes `ModHost` drive pause → list → load-confirm → delete-confirm → load
+  through the real `onClick` handlers, holding each state 3 s for screenshots.
+- **Runtime-built TMP/UI lesson**: children created under a freshly built
+  layout (VerticalLayoutGroup etc.) start with a zero-width rect, and the item
+  text then painted **2+ seconds late** in practice; `Canvas.ForceUpdateCanvases()`
+  right after building/refreshing the list (and after swapping confirm-dialog
+  text) makes the first paint correct.
