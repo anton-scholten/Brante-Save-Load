@@ -305,8 +305,14 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
 - `LastOpenScene` looks like `01.03.01`: the first pair matches the chapter
   (`01` = chapter 1), the middle number advances with the story. It is not
   computed from turn or season.
-- The book's chapter tabs are `DestinyWindow.Tabs` (`Btn1`…`Btn5`); the
-  "Save / Load" tab is a copy of `Tabs[0]` added after `UIManager.ShowWindow`.
+- The settings menu is a `VerticalLayoutGroup` of rows (`Buttons > Object6/7`),
+  each a horizontal wrapper around the black frame holding one button. The mod's
+  button is a copy of the lowest row; the `Buttons` sheet is lifted and grown by
+  one row so it fits.
+- Steam Cloud: the app uses Auto-Cloud (Steam docs: `steam_autocloud.vdf` is
+  written by the client into each configured cloud path). The marker exists in
+  the game's `Saves/` folder and Steam's localconfig reports the app as
+  `synchronized`, so the game's saves are already cloud-synced.
 
 ## Main-save identity (checked against the decompile)
 

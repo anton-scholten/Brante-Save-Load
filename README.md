@@ -21,13 +21,26 @@ never touches the game's saves.
 - **Your own saves.** The same window lists the saves of the **current main save
   only** in one table: automatic choice points and manual saves (**"Save now"**,
   shown in a yellow row colour). Click a column header to sort by it, click again
-  to reverse; the table scrolls and the × on the right removes a row. Saves are kept
+  to reverse; the table scrolls and the × on the right removes a row. A choice
+  name too long for its column rests with an ellipsis and then scrolls (marquee)
+  until its end is shown. Saves are kept
   per main save in `Brante-Save-Load/Runs/<main save ID>/`, separate from the game's
   saves: using them never changes your game saves, and the game's saves never
   change them. Saves from older versions of the mod are moved into the new
   per-main-save folders automatically on the next start.
 - **Existing saves.** (Planned, see docs/TODO.md) reconstruct the list of choices
   you took in a playthrough started before the mod was installed.
+
+### Steam Cloud
+
+The game's own saves already use Steam Cloud: Sir Brante is configured for Steam
+**Auto-Cloud** on its `Saves` folder (the Steam client keeps a
+`steam_autocloud.vdf` marker there, and Steam reports the app as synchronized),
+so the game's saves are uploaded and restored by Steam without any mod support.
+The mod's own saves live outside that folder and are not synced — as intended.
+Note that after loading one of the mod's saves the game's own autosaves stay off
+for the session (so the original timeline is never overwritten); the cloud copy
+therefore keeps the last state the game itself saved.
 
 ## Why it works this way
 
