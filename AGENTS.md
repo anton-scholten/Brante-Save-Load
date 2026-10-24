@@ -109,6 +109,7 @@ work here (black/`BadMatch` on the X1 root).
 ## Open work
 
 - [docs/TODO.md](docs/TODO.md): what remains of the plan.
-- Phase 5 (the mod's own save slots) is implemented; its in-game pass is still
-  to be run. Phase 6 (reconstructing pre-mod choice history) and Phase 7
-  (polish) follow.
+- Phases 0–5 are done and verified in-game (the save list is a sortable table;
+  saves live per main save in `BranteLoadAny/Runs/<main save ID>/`, and older
+  ones are migrated at startup). Phase 6 (reconstructing pre-mod choice history)
+  and Phase 7 (polish) follow.
