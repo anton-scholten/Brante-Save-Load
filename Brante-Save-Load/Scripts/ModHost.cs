@@ -221,6 +221,8 @@ namespace Doorstop
 						try { File.Delete(book); }
 						catch (Exception) { }
 						ModLog.Info("DEV BOOK: marker found - opening the book in 3s");
+						ChoiceWindow.DevLanguageSwitch = File.Exists(
+							Path.Combine(Recorder.SnapshotDir, "dev-lang.txt"));
 						yield return new WaitForSeconds(3f);
 						ChoiceWindow.DevBook();
 					}

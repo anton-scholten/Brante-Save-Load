@@ -395,7 +395,19 @@ namespace Doorstop
 				return;
 			}
 			Directory.CreateDirectory(dir);
-			File.WriteAllBytes(dat, blob);
+			// The hash above was taken with an empty ID (stable dedup), but
+			// the stored file carries the real main-save ID: the game derives
+			// its save folder from it (e.g. "Restart chapter" after a death
+			// reads Saves/<ID>/Chapter_N.dat; an empty ID would point at
+			// Saves/ and make the game reset the run).
+			byte[] stored = blob;
+			string runId = CurrentRunId();
+			if (!string.IsNullOrEmpty(runId))
+			{
+				helper.SlotInfo.Id = runId;
+				stored = Serialize(helper);
+			}
+			File.WriteAllBytes(dat, stored);
 			WriteSidecar(dir, baseName, scene, helper);
 			TryFillChoices(dir, baseName);
 			ModLog.Info("Choice point recorded: " + baseName + " (" + blob.Length + " bytes)");
@@ -406,9 +418,14 @@ namespace Doorstop
 		public static void SaveManual()
 		{
 			SaveLoadHelper helper = BuildHelper();
+			string runId = CurrentRunId();
+			if (!string.IsNullOrEmpty(runId))
+			{
+				helper.SlotInfo.Id = runId;
+			}
 			byte[] blob = Serialize(helper);
 			string scene = string.IsNullOrEmpty(helper.LastOpenScene) ? "(unknown)" : helper.LastOpenScene;
-			string dir = RunDir(CurrentRunId(), "Manual");
+			string dir = RunDir(runId, "Manual");
 			Directory.CreateDirectory(dir);
 			string baseName = "save_" + DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
 			File.WriteAllBytes(Path.Combine(dir, baseName + ".dat"), blob);

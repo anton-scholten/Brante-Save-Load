@@ -377,3 +377,18 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
   LoadingScreen_Child, ChildhoodPicture, ChildhoodChapterStart, 01.01.01 Birth,
   01.02.01_2 Hide and Seek, 01.02.01 The Great Descent, 01.03.01 The Lot of
   Suffering, 01.04.01 Gloria's Rhymes, 01.05.01 The Newborn's Cry (pending).
+
+## The main-save ID inside a save is load-bearing (found 24 Oct 2026)
+
+- `SaveLoadManager.GetSaveFolderPath(helper)` = `Saves/<helper.SlotInfo.Id>/`.
+  "Restart chapter" after a death (`GoToNextDeathScene` -> `DeathWindowBehaviour`
+  -> `SaveLoadManager.LoadChapterState`) reads `Chapter_N.dat` through it, for
+  **`_currentSaveFile`** — the save that was loaded, not a global path.
+- A save with an empty `SlotInfo.Id` therefore makes the game look in `Saves/`
+  itself; the file is missing and `LoadGame(path, chapter)` falls back to
+  `ResetToDefault` — the whole run is reset.
+- The mod empties the ID when hashing a snapshot (so identical states hash the
+  same), but now writes the real ID into the stored file and sets it on the
+  loaded helper, so the game can find its own chapter files.
+- Consequence of the save gate: after a rewind the chapter files are still the
+  original timeline's, so a chapter restart goes back to that chapter's start.

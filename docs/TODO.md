@@ -161,6 +161,22 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
 
 ## Phase 7 — polish
 
-- [ ] Edge cases: chapter transitions, death scenes, Iron Man mode, language switch
-- [ ] Achievement side-effects on load (expected: none harmful; verify)
-- [ ] In-game test pass, README final, design doc
+- [x] Death / "Restart chapter" (real bug, fixed 24 Oct 2026): the game reads
+  `Saves/<main save ID>/Chapter_N.dat`, and the ID comes from the loaded save.
+  Mod snapshots stored an empty ID (for byte-stable dedup), so after a rewind
+  the game would look for `Saves/Chapter_N.dat` — missing — and fall back to a
+  default save, resetting the run. New snapshots store the real ID, and the load
+  flow fills it in for old ones (verified in-game: `main save=Biggie_10/23/…`).
+- [x] Language switch: the window is rebuilt when the game language changes, so
+  the labels get the language's font. Our own strings are English only (the
+  game has no keys for them) — known limitation.
+- [ ] Chapter transitions: after a rewind the game's chapter files stay frozen
+  (the save gate), so "Restart chapter" jumps to the ORIGINAL chapter start, not
+  the rewound one. Needs a decision: keep (protects the original timeline) or
+  let the rewound timeline write its own chapter files into `Saves/` (forbidden).
+- [ ] Iron Man mode: the game disables chapter replay there; the mod ignores
+  that by design. Decide and document (not a bug).
+- [ ] Achievement side-effects on load (expected: none harmful; verify).
+- [ ] Load a save after switching to a different main save (per-run folders make
+  this testable now).
+- [ ] In-game test pass, README final, design doc.

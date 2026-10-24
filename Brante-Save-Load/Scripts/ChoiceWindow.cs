@@ -269,6 +269,8 @@ namespace Doorstop
 		private static Col _sortCol = Col.Saved;
 		private static bool _sortAsc;
 		private static List<SaveEntry> _entries = new List<SaveEntry>();
+		private static string _builtLanguage;
+		public static bool DevLanguageSwitch;
 		private static GameObject _confirmPanel;
 		private static TextMeshProUGUI _confirmText;
 		private static TextMeshProUGUI _confirmLoadLabel;
@@ -412,6 +414,14 @@ namespace Doorstop
 		// Returns the number of saves shown (used by the dev UI test).
 		public static int Open()
 		{
+			// The labels are built from the game's localisation (and with its
+			// font), so a language change makes them stale: rebuild the window.
+			if (_canvas != null && _builtLanguage.Length > 0 && CurrentLanguage() != _builtLanguage)
+			{
+				ModLog.Info("ChoiceWindow: language changed ('" + _builtLanguage
+					+ "' -> '" + CurrentLanguage() + "'), rebuilding the window");
+				DestroyWindow();
+			}
 			if (_canvas == null)
 			{
 				BuildCanvas();
@@ -592,6 +602,49 @@ namespace Doorstop
 
 			BuildConfirm(panel.transform);
 			BuildHistory(panel.transform);
+			_builtLanguage = CurrentLanguage();
+		}
+
+		// I2's current language code ("" if the manager is not up yet).
+		private static string CurrentLanguage()
+		{
+			try
+			{
+				return I2.Loc.LocalizationManager.CurrentLanguage ?? "";
+			}
+			catch
+			{
+				return "";
+			}
+		}
+
+		// Drops the window and every reference into it, so the next Open()
+		// builds a fresh one in the current language.
+		private static void DestroyWindow()
+		{
+			Close();
+			if (_canvas != null)
+			{
+				UnityEngine.Object.Destroy(_canvas);
+			}
+			_canvas = null;
+			_scrollRect = null;
+			_itemContainer = null;
+			_headerLabels = null;
+			_sortIcons = null;
+			_saveNowBtn = null;
+			_historyBtn = null;
+			_historyPanel = null;
+			_historyList = null;
+			_confirmPanel = null;
+			_confirmText = null;
+			_confirmLoadLabel = null;
+			_confirmLoadBtn = null;
+			_markObj = null;
+			_entries = new List<SaveEntry>();
+			_lastItemCount = 0;
+			_firstItemPath = null;
+			_firstItemTitle = null;
 		}
 
 		// ------------------------------------------------------------------
@@ -1493,13 +1546,24 @@ namespace Doorstop
 			}
 
 			ModLog.Info("ChoiceWindow: loading " + Path.GetFileName(datPath)
-				+ " (scene=" + helper.LastOpenScene + ")");
+				+ " (scene=" + helper.LastOpenScene
+				+ ", main save=" + (helper.SlotInfo != null ? helper.SlotInfo.Id : "") + ")");
 			// The blob has no ID (for stable dedup), so the run comes from
 			// the folder the file sits in.
 			string runId = Recorder.RunIdFromPath(datPath);
 			if (string.IsNullOrEmpty(runId) && helper.SlotInfo != null)
 			{
 				runId = helper.SlotInfo.Id;
+			}
+			if (!string.IsNullOrEmpty(runId))
+			{
+				// Old snapshots carry no ID; the game needs one to find its
+				// own chapter files (see Recorder.Capture).
+				if (helper.SlotInfo == null)
+				{
+					helper.SlotInfo = new SaveSlotInfo();
+				}
+				helper.SlotInfo.Id = runId;
 			}
 			Recorder.PinRunId(runId);
 			// From here on the game's own Saves/ stays frozen for the rest
@@ -1675,6 +1739,29 @@ namespace Doorstop
 			// history panel on top of it.
 			yield return new WaitForSeconds(8f);
 			OpenHistory();
+			yield return new WaitForSeconds(6f);
+			CloseHistory();
+			if (DevLanguageSwitch)
+			{
+				DevSwitchLanguage();
+				yield return new WaitForSeconds(1f);
+				Open();
+			}
+		}
+
+		// Dev: flip the game language, to exercise the window rebuild.
+		private static void DevSwitchLanguage()
+		{
+			try
+			{
+				string to = I2.Loc.LocalizationManager.CurrentLanguage == "Russian" ? "English" : "Russian";
+				ModLog.Info("DEV LANG: switching to " + to);
+				I2.Loc.LocalizationManager.SetLanguageAndCode(to, to == "Russian" ? "ru" : "en", false, true);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("DEV LANG: switch failed:\n" + e);
+			}
 		}
 
 		private static void DumpTree(Transform t, int depth)
