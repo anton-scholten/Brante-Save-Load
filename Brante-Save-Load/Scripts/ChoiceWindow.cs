@@ -215,15 +215,17 @@ namespace Doorstop
 
 		private enum Pending { Load, Delete, SaveNow }
 
-		// Table columns, left to right. Choice is the flexible one.
-		private enum Col { Type, Saved, Chapter, Hero, Age, Year, Season, Turn, Scene, Choice }
+		// Table columns, left to right. Choice is the flexible one. The hero
+		// is not a column: the list only shows the current main save, so the
+		// name is the same on every row.
+		private enum Col { Type, Saved, Chapter, Age, Year, Season, Turn, Scene, Choice }
 
 		private static readonly string[] ColNames =
-		{ "Save type", "Saved", "Chapter", "Hero", "Age", "Year", "Season", "Turn", "Scene", "Choice" };
+		{ "Save type", "Saved", "Chapter", "Age", "Year", "Season", "Turn", "Scene", "Choice" };
 
 		// Preferred widths in reference px; Choice takes whatever is left.
 		private static readonly float[] ColWidths =
-		{ 130f, 170f, 150f, 130f, 70f, 80f, 100f, 80f, 120f, 200f };
+		{ 130f, 170f, 150f, 70f, 80f, 100f, 80f, 120f, 200f };
 
 		private const float RowHeight = 44f;
 		private const float HeaderHeight = 36f;
@@ -1105,7 +1107,6 @@ namespace Doorstop
 				case Col.Type: return e.Kind;
 				case Col.Saved: return e.Saved;
 				case Col.Chapter: return e.Chapter;
-				case Col.Hero: return e.Hero.ToLowerInvariant();
 				case Col.Age: return e.Age;
 				case Col.Year: return e.Year;
 				case Col.Season: return e.Season;
@@ -1171,8 +1172,8 @@ namespace Doorstop
 			{
 				e.Kind,
 				e.Saved.ToString("yyyy-MM-dd HH:mm"),
-				e.Chapter + (e.ChapterName.Length > 0 ? " " + e.ChapterName : ""),
-				e.Hero,
+				// Shown by name; the column still sorts on the chapter number.
+				e.ChapterName.Length > 0 ? e.ChapterName : e.Chapter.ToString(),
 				e.Age.ToString(),
 				e.Year.ToString(),
 				e.Season.ToString(),
@@ -1198,7 +1199,7 @@ namespace Doorstop
 					cellParent = mask.transform;
 				}
 				TextMeshProUGUI cell = AddLabel(cellParent, "Cell", values[i], 19f, ColTextDark,
-					col != Col.Hero && !scrolls);
+					!scrolls);
 				cell.overflowMode = TextOverflowModes.Ellipsis;
 				cell.enableWordWrapping = false;
 				if (scrolls)

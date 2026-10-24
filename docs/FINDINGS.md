@@ -309,10 +309,20 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
   each a horizontal wrapper around the black frame holding one button. The mod's
   button is a copy of the lowest row; the `Buttons` sheet is lifted and grown by
   one row so it fits.
-- Steam Cloud: the app uses Auto-Cloud (Steam docs: `steam_autocloud.vdf` is
-  written by the client into each configured cloud path). The marker exists in
-  the game's `Saves/` folder and Steam's localconfig reports the app as
-  `synchronized`, so the game's saves are already cloud-synced.
+- Steam Cloud does NOT sync this game (checked 23 Oct 2026). The path config is
+  right: Steam's `appcache/appinfo.vdf` holds, for app 1272160, root
+  `WinAppDataLocalLow`, path `SEVER/The Life and Suffering of Sir Brante/Saves`,
+  pattern `*.dat` — and the client writes its `steam_autocloud.vdf` marker into
+  that folder on every launch (inside the Proton prefix too). But Steam never
+  uploads anything: `logs/cloud_log.txt` says, for every launch and exit,
+  `AutoCloud is disabled. Run "testappcloudpaths 1272160" in the console to
+  enable it` and `Sync Disabled`, the cloud change number stays 0, and no
+  `userdata/<id>/1272160/` folder is ever created. Cloud enablement is a
+  Steamworks setting of the app (developer side); a mod cannot turn it on.
+  Second, smaller problem: the game puts each playthrough in a subfolder
+  (`Saves/<Hero>_<date>/…`, the ID contains "/" from a date string), so the
+  Auto-Cloud path must be marked recursive or `*.dat` only matches the marker
+  file at the top of `Saves/`.
 
 ## Main-save identity (checked against the decompile)
 

@@ -129,8 +129,12 @@ The plan, as approved, with status. Phases 0–4 are done; 5–7 are ahead.
   scroll with a scrollbar. Table values are read from the save file itself
 - [x] List polish (verified in-game 23 Oct 2026): "Save / Load" naming,
   centred "Save now", long choice names scroll (marquee) after an ellipsis
-- [x] Steam Cloud investigated: the game's own saves already sync via Steam
-  Auto-Cloud; the mod's saves deliberately do not (see FINDINGS)
+- [x] Steam Cloud investigated (23 Oct 2026): the app's Auto-Cloud path is
+  correct, but Steam reports AutoCloud disabled for app 1272160 and syncs
+  nothing. Enabling it is a Steamworks (developer) setting; the path would
+  also need "recursive" because saves live in per-playthrough subfolders
+- [x] Table columns: chapter shown by name (sorted by number), hero column
+  dropped (one hero per list)
 
 Note: the fixed five slots of the first version were replaced by unlimited
 saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.

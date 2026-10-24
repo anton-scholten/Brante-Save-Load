@@ -33,14 +33,21 @@ never touches the game's saves.
 
 ### Steam Cloud
 
-The game's own saves already use Steam Cloud: Sir Brante is configured for Steam
-**Auto-Cloud** on its `Saves` folder (the Steam client keeps a
-`steam_autocloud.vdf` marker there, and Steam reports the app as synchronized),
-so the game's saves are uploaded and restored by Steam without any mod support.
-The mod's own saves live outside that folder and are not synced — as intended.
-Note that after loading one of the mod's saves the game's own autosaves stay off
-for the session (so the original timeline is never overwritten); the cloud copy
-therefore keeps the last state the game itself saved.
+The game's saves do **not** currently reach Steam Cloud. Steam's own cloud log
+reports `AutoCloud is disabled` for the game, it allocates no cloud storage for it
+(no `userdata/<id>/1272160` folder; cloud change number stays 0), so nothing is
+uploaded or downloaded.
+
+The save location itself is correct: the game's Auto-Cloud path in Steam's app
+cache is `AppData\LocalLow\SEVER\The Life and Suffering of Sir Brante\Saves`
+with pattern `*.dat`, which is exactly where the game writes. Turning the sync on
+is a Steamworks setting of the game, which only the developer can change. If they
+do, the path must also be marked *recursive*: the game keeps each playthrough in a
+subfolder (`Saves/<Hero>_<date>/`), which a non-recursive `*.dat` pattern would
+miss.
+
+Until Steam syncs them, copy the `Saves` folder between computers by hand. The
+mod's own saves (in `Brante-Save-Load/`) are not meant to be synced.
 
 ## Why it works this way
 
