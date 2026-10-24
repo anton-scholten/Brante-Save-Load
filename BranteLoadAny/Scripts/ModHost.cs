@@ -30,6 +30,7 @@ namespace Doorstop
 			Probe("Start", RunProbes);
 			ProbeGameManagers();
 			Recorder.Arm();
+			Recorder.MigrateLegacy();
 			StartCoroutine(DevAutoload());
 		}
 
@@ -274,6 +275,7 @@ namespace Doorstop
 				}
 				ModLog.Info("DEV AUTOLOAD: " + newest + " -> hero '" + helper.HeroName
 					+ "', scene '" + helper.LastOpenScene + "', turn " + helper.Turn);
+				Recorder.PinRunId(helper.SlotInfo != null ? helper.SlotInfo.Id : null);
 				SaveLoadManager.Instance.LoadGame(helper);
 				return helper.LastOpenScene;
 			}

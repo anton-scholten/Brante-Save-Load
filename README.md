@@ -24,7 +24,8 @@ never touches the game's saves.
   to reverse; the table scrolls and the × on the right removes a row. Saves are kept
   per main save in `BranteLoadAny/Runs/<main save ID>/`, separate from the game's
   saves: using them never changes your game saves, and the game's saves never
-  change them.
+  change them. Saves from older versions of the mod are moved into the new
+  per-main-save folders automatically on the next start.
 - **Existing saves.** (Planned, see docs/TODO.md) reconstruct the list of choices
   you took in a playthrough started before the mod was installed.
 

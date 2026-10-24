@@ -862,7 +862,10 @@ namespace Doorstop
 					entry.Dat = f;
 					entry.Kind = kind;
 					entry.Title = ReadTitle(f);
-					entry.Saved = File.GetLastWriteTime(f);
+					// The sidecar holds the real capture time; the file's own
+					// timestamp can be newer (e.g. after the run-folder move).
+					DateTime recorded = ReadRecorded(f);
+					entry.Saved = recorded != DateTime.MinValue ? recorded : File.GetLastWriteTime(f);
 					entry.Chapter = h.Chapter;
 					entry.ChapterName = StageName(h.ChapterName);
 					entry.Hero = h.HeroName ?? "";
@@ -890,6 +893,34 @@ namespace Doorstop
 			}
 			int dot = chapterKey.IndexOf('.');
 			return dot >= 0 ? chapterKey.Substring(dot + 1) : chapterKey;
+		}
+
+		// The sidecar's "recorded=" timestamp, or DateTime.MinValue.
+		private static DateTime ReadRecorded(string datPath)
+		{
+			string sidecar = Path.Combine(Path.GetDirectoryName(datPath),
+				Path.GetFileNameWithoutExtension(datPath) + ".meta.txt");
+			try
+			{
+				if (!File.Exists(sidecar))
+				{
+					return DateTime.MinValue;
+				}
+				foreach (string raw in File.ReadAllLines(sidecar))
+				{
+					string line = raw.Trim();
+					if (line.StartsWith("recorded=", StringComparison.Ordinal))
+					{
+						return DateTime.ParseExact(line.Substring(9), "yyyy-MM-dd HH:mm:ss",
+							System.Globalization.CultureInfo.InvariantCulture);
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: recorded-time read failed for " + datPath + ":\n" + e);
+			}
+			return DateTime.MinValue;
 		}
 
 		// The localised scene title from the sidecar, without the key tag.
@@ -1098,6 +1129,14 @@ namespace Doorstop
 
 			ModLog.Info("ChoiceWindow: loading " + Path.GetFileName(datPath)
 				+ " (scene=" + helper.LastOpenScene + ")");
+			// The blob has no ID (for stable dedup), so the run comes from
+			// the folder the file sits in.
+			string runId = Recorder.RunIdFromPath(datPath);
+			if (string.IsNullOrEmpty(runId) && helper.SlotInfo != null)
+			{
+				runId = helper.SlotInfo.Id;
+			}
+			Recorder.PinRunId(runId);
 			// From here on the game's own Saves/ stays frozen for the rest
 			// of the session: a rewind must never overwrite the original
 			// timeline. (See Entrypoint.PatchSaveGate.)

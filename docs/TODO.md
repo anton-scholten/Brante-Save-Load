@@ -119,6 +119,9 @@ The plan, as approved, with status. Phases 0–4 are done; 5–7 are ahead.
 - [x] Nothing is written to the game's `Saves/` folder
 - [x] Documented as independent of the game's saves in README
 - [x] Saves keyed by main-save ID (`BranteLoadAny/Runs/<ID>/`), list shows the current run only
+- [x] Existing saves migrated into the run folders at startup (`Recorder.MigrateLegacy`):
+  matched by hero name when exactly one main save exists; verified in-game (21 moved, 0 kept)
+- [x] Run pinned on load, so saves stay in the right folder after loading a snapshot
 - [x] In-game pass (23 Oct 2026): save, load, overwrite, remove all ran
   without errors (log checked)
 - [x] Save screen rebuilt as sortable tables (both tabs): one row per save,

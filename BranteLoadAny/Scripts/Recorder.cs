@@ -61,8 +61,43 @@ namespace Doorstop
 			}
 		}
 
+		// The main save the mod last loaded, used when the game's own
+		// bookkeeping has lost it (a snapshot load restores the state, but the
+		// game's SaveLoadManager can be recreated with an empty slot info).
+		private static string _pinnedRunId;
+		private static bool _idProblemLogged;
+
+		public static void PinRunId(string id)
+		{
+			if (!string.IsNullOrEmpty(id))
+			{
+				_pinnedRunId = id;
+				ModLog.Info("Recorder: main save pinned to " + id);
+			}
+		}
+
 		// The current main save's ID, or "" when the game has none yet.
 		public static string CurrentRunId()
+		{
+			string live = LiveRunId();
+			if (!string.IsNullOrEmpty(live))
+			{
+				_pinnedRunId = live;
+				return live;
+			}
+			if (!string.IsNullOrEmpty(_pinnedRunId))
+			{
+				return _pinnedRunId;
+			}
+			if (!_idProblemLogged)
+			{
+				_idProblemLogged = true;
+				ModLog.Info("Recorder: no current main save ID (game has no save loaded yet)");
+			}
+			return "";
+		}
+
+		private static string LiveRunId()
 		{
 			try
 			{
@@ -95,6 +130,175 @@ namespace Doorstop
 				ModLog.Error("Recorder: reading the current save ID failed:\n" + e);
 			}
 			return "";
+		}
+
+		// One-off move of the saves written before run folders existed. Those
+		// files carry no main-save ID, so each is matched to the game's own
+		// save by hero name, and only when that hero name belongs to exactly
+		// one main save on disk. Anything ambiguous stays where it is.
+		public static void MigrateLegacy()
+		{
+			try
+			{
+				Dictionary<string, HashSet<string>> idsByHero = new Dictionary<string, HashSet<string>>();
+				string saves = Path.Combine(Application.persistentDataPath, "Saves");
+				if (Directory.Exists(saves))
+				{
+					foreach (string f in Directory.GetFiles(saves, "Autosave.dat", SearchOption.AllDirectories))
+					{
+						try
+						{
+							SaveLoadHelper h = ReadHelper(f);
+							string id = h.SlotInfo != null ? h.SlotInfo.Id : null;
+							if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(h.HeroName))
+							{
+								continue;
+							}
+							HashSet<string> set;
+							if (!idsByHero.TryGetValue(h.HeroName, out set))
+							{
+								set = new HashSet<string>();
+								idsByHero[h.HeroName] = set;
+							}
+							set.Add(id);
+						}
+						catch (Exception e)
+						{
+							ModLog.Error("Migration: cannot read game save " + f + ":\n" + e);
+						}
+					}
+				}
+
+				List<string[]> legacy = new List<string[]>();
+				AddLegacy(legacy, SnapshotDir, "Auto");
+				AddLegacy(legacy, Path.Combine(Application.persistentDataPath, "BranteLoadAny", "Slots"), "Manual");
+				AddLegacy(legacy, RunDir(null, "Auto"), "Auto");
+				AddLegacy(legacy, RunDir(null, "Manual"), "Manual");
+				if (legacy.Count == 0)
+				{
+					return;
+				}
+
+				int moved = 0;
+				int kept = 0;
+				foreach (string[] item in legacy)
+				{
+					string path = item[0];
+					string kind = item[1];
+					try
+					{
+						SaveLoadHelper h = ReadHelper(path);
+						HashSet<string> ids;
+						if (string.IsNullOrEmpty(h.HeroName)
+							|| !idsByHero.TryGetValue(h.HeroName, out ids) || ids.Count != 1)
+						{
+							kept++;
+							ModLog.Info("Migration: kept " + Path.GetFileName(path)
+								+ " (no single main save for hero '" + h.HeroName + "')");
+							continue;
+						}
+						string id = null;
+						foreach (string one in ids)
+						{
+							id = one;
+						}
+						string dir = RunDir(id, kind);
+						string dest = Path.Combine(dir, Path.GetFileName(path));
+						Directory.CreateDirectory(dir);
+						// The file is moved untouched: its name carries the
+						// content hash the recorder dedups by.
+						if (!File.Exists(dest))
+						{
+							File.Move(path, dest);
+							string side = SidecarOf(path);
+							if (File.Exists(side))
+							{
+								File.Move(side, SidecarOf(dest));
+							}
+						}
+						else
+						{
+							// Already there (an identical state); drop the copy.
+							File.Delete(path);
+							string side = SidecarOf(path);
+							if (File.Exists(side))
+							{
+								File.Delete(side);
+							}
+						}
+						moved++;
+					}
+					catch (Exception e)
+					{
+						kept++;
+						ModLog.Error("Migration: " + path + " failed:\n" + e);
+					}
+				}
+				DeleteIfEmpty(RunDir(null, "Manual"));
+				DeleteIfEmpty(RunDir(null, "Auto"));
+				DeleteIfEmpty(Path.GetDirectoryName(RunDir(null, "Auto")));
+				ModLog.Info("Migration: " + moved + " legacy save(s) moved into run folders, " + kept + " kept");
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Migration failed:\n" + e);
+			}
+		}
+
+		private static void AddLegacy(List<string[]> list, string dir, string kind)
+		{
+			if (!Directory.Exists(dir))
+			{
+				return;
+			}
+			foreach (string f in Directory.GetFiles(dir, "*.dat"))
+			{
+				list.Add(new string[] { f, kind });
+			}
+		}
+
+		private static string SidecarOf(string datPath)
+		{
+			return Path.Combine(Path.GetDirectoryName(datPath),
+				Path.GetFileNameWithoutExtension(datPath) + ".meta.txt");
+		}
+
+		private static void DeleteIfEmpty(string dir)
+		{
+			if (Directory.Exists(dir) && Directory.GetFileSystemEntries(dir).Length == 0)
+			{
+				Directory.Delete(dir);
+			}
+		}
+
+		private static SaveLoadHelper ReadHelper(string path)
+		{
+			using (FileStream fs = File.OpenRead(path))
+			{
+				return (SaveLoadHelper)new BinaryFormatter().Deserialize(fs);
+			}
+		}
+
+		// The run folder a save file lives in, or "" if it is not under
+		// RunsDir (e.g. a file from the old layout).
+		public static string RunIdFromPath(string datPath)
+		{
+			try
+			{
+				string runs = Path.GetFullPath(RunsDir).TrimEnd(Path.DirectorySeparatorChar);
+				string full = Path.GetFullPath(datPath);
+				if (!full.StartsWith(runs + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+				{
+					return "";
+				}
+				string rest = full.Substring(runs.Length + 1);
+				int sep = rest.IndexOf(Path.DirectorySeparatorChar);
+				return sep > 0 ? rest.Substring(0, sep) : "";
+			}
+			catch
+			{
+				return "";
+			}
 		}
 
 		// <RunsDir>/<run>/<kind>, kind = "Auto" (choice points) or "Manual".
@@ -161,7 +365,7 @@ namespace Doorstop
 			}
 			string hash = Sha1(blob).Substring(0, 10);
 			string baseName = Sanitize(scene) + "_t" + helper.Turn + "_" + hash;
-			string dir = RunDir(helper.SlotInfo.Id, "Auto");
+			string dir = RunDir(CurrentRunId(), "Auto");
 			string dat = Path.Combine(dir, baseName + ".dat");
 			if (File.Exists(dat))
 			{
@@ -184,7 +388,7 @@ namespace Doorstop
 			SaveLoadHelper helper = BuildHelper();
 			byte[] blob = Serialize(helper);
 			string scene = string.IsNullOrEmpty(helper.LastOpenScene) ? "(unknown)" : helper.LastOpenScene;
-			string dir = RunDir(helper.SlotInfo.Id, "Manual");
+			string dir = RunDir(CurrentRunId(), "Manual");
 			Directory.CreateDirectory(dir);
 			string baseName = "save_" + DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
 			File.WriteAllBytes(Path.Combine(dir, baseName + ".dat"), blob);
@@ -217,7 +421,9 @@ namespace Doorstop
 			if (csh == null) throw new InvalidOperationException("CharacterParametersSerializeHelper not alive");
 
 			SaveLoadHelper helper = new SaveLoadHelper();
-			helper.SlotInfo = new SaveSlotInfo { Id = CurrentRunId() ?? "", Date = "" };
+			// Kept empty and stable so identical states produce byte-identical
+			// blobs; the main save is carried by the folder, not the file.
+			helper.SlotInfo = new SaveSlotInfo { Id = "", Date = "" };
 			helper.ModelParameters = pm.Parameters;
 			helper.CharacterModel = csh.Characters;
 			helper.ChapterParameters = kpc.AllKeyParameters;

@@ -320,3 +320,24 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
   (choice points) and `.../Manual` ("Save now"). The list shows only the
   current ID. Older snapshots recorded before this change have no ID and are
   not listed.
+
+## Run-folder migration (implemented, verified in-game 23 Oct 2026)
+
+- Saves recorded before run folders existed had no main-save ID. `Recorder.MigrateLegacy()`
+  (started from `ModHost.Start`) moves `Snapshots/*.dat` (choice points) and the old
+  `Slots/*.dat` (manual saves) into `Runs/<ID>/{Auto,Manual}/`, plus whatever sat in
+  `Runs/_no_save/`.
+- Matching: each legacy file is read, its `HeroName` looked up in the index built from the
+  game's own `Saves/**/Autosave.dat` files. Only a hero name with exactly ONE main save on
+  disk is migrated; anything ambiguous stays put and is logged. On the test machine all 21
+  files matched `Biggie_10/23/2026103816AM` (0 kept).
+- Files are MOVED untouched: the file name carries the content hash the recorder dedups by,
+  and rewriting the blob would change that hash and duplicate every choice point.
+- `SlotInfo.Id` inside the blob stays empty (stable dedup); the run comes from the folder.
+- Loading a save pins the run for the session (`Recorder.PinRunId`): a snapshot restores the
+  game state, but the game's own `SaveLoadManager` bookkeeping can be empty afterwards, and a
+  load through `LoadGame(SaveLoadHelper)` does not update `_currentSaveSlotInfo`. The run ID
+  for a UI load is taken from the file's folder (`RunIdFromPath`), for the dev autoload from
+  the loaded `SlotInfo.Id`.
+- The table's "Saved" time comes from the sidecar's `recorded=` line, not the file timestamp
+  (the first, rewriting migration reset those).
