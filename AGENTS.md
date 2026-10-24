@@ -40,7 +40,9 @@ docs/                        FINDINGS (what the game's code does), DESIGN, TODO
 ./tools/install.sh           # build + install: symlink Brante-Save-Load/, write
                              # doorstop_config.ini + winhttp.dll into the game dir
 ./tools/install.sh --copy    # copy instead of symlink
-./tools/install.sh --uninstall
+./tools/install.sh --uninstall                    # keep the player's data
+./tools/install.sh --uninstall --restore-backup   # put the pre-mod save back
+./tools/install.sh --uninstall --purge            # delete the mod's data
 ```
 
 The build needs the game installed (it compiles against the game's own

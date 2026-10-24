@@ -422,6 +422,7 @@ namespace Doorstop
 
 		private static string BackupReadme(string id)
 		{
+			string saves = Path.Combine(Application.persistentDataPath, "Saves");
 			return "Saves from before the Brante-Save-Load mod rewound the game\r\n"
 				+ "===============================================================\r\n\r\n"
 				+ "This folder is a copy of the game's own save \"" + id + "\", taken by the\r\n"
@@ -431,9 +432,11 @@ namespace Doorstop
 				+ "timeline you had before using the mod.\r\n\r\n"
 				+ "To restore it:\r\n"
 				+ "  1. Close the game.\r\n"
-				+ "  2. Open the game's save folder:\r\n"
-				+ "       %USERPROFILE%\\AppData\\LocalLow\\SEVER\\The Life and Suffering of Sir Brante\\Saves\\\r\n"
-				+ "     and delete (or rename) the folder named:\r\n"
+				+ "  2. Open the game's save folder (on this machine: " + saves + "):\r\n"
+				+ "     Windows: %USERPROFILE%\\AppData\\LocalLow\\SEVER\\The Life and Suffering of Sir Brante\\Saves\\\r\n"
+				+ "     Proton/Linux: inside the game's prefix, .../compatdata/1272160/pfx/drive_c/users/steamuser/AppData/LocalLow/SEVER/...\r\n"
+				+ "     macOS (native build): ~/Library/Application Support/SEVER/The Life and Suffering of Sir Brante/Saves/\r\n"
+				+ "     Delete (or rename) the folder named:\r\n"
 				+ "       " + id + "\r\n"
 				+ "  3. Copy the files in THIS folder back into a folder with that same name\r\n"
 				+ "     (one level up from here, so that ...\\Saves\\" + id + "\\Autosave.dat exists).\r\n"
@@ -1033,12 +1036,25 @@ namespace Doorstop
 			}
 		}
 
+		// Illegal on Windows, plus the Unix ones, so a save id maps to the
+		// same folder name whichever platform the game runs on.
+		private static readonly char[] BadNameChars =
+		{
+			'\0', '/', '\\', ':', '*', '?', '"', '<', '>', '|', '\n', '\r', '\t'
+		};
+
 		private static string Sanitize(string name)
 		{
+			if (string.IsNullOrEmpty(name))
+			{
+				return "";
+			}
 			StringBuilder sb = new StringBuilder(name.Length);
 			foreach (char c in name)
 			{
-				sb.Append(Array.IndexOf(Path.GetInvalidFileNameChars(), c) >= 0 ? '_' : c);
+				bool bad = Array.IndexOf(BadNameChars, c) >= 0
+					|| Array.IndexOf(Path.GetInvalidFileNameChars(), c) >= 0;
+				sb.Append(bad ? '_' : c);
 			}
 			return sb.ToString();
 		}

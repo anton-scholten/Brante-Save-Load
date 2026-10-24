@@ -43,6 +43,41 @@ never touches the game's saves.
   scenes were shown, not which answer was clicked, so earlier choice points
   cannot be restored from it.
 
+### Platforms
+
+The game itself ships a Windows build, so on Linux it runs through Proton and
+the mod works inside the same Windows environment (paths are resolved by Unity
+and by `Path.Combine`, never hard-coded, and file names are sanitised with the
+union of Windows and Unix rules so a save maps to the same folder everywhere).
+The bundled Doorstop is the Windows build (`winhttp.dll`); native Linux or macOS
+builds of the game would need that platform's Doorstop binary, which is not
+included — under Steam Play nothing else is required.
+
+To install on Windows without the bash installer, copy three things into the
+game folder (next to `The Life and Suffering of Sir Brante.exe`):
+
+1. the `Brante-Save-Load/` folder from this repo,
+2. `doorstop/doorstop_config.ini`,
+3. `vendor/doorstop/winhttp.dll`.
+
+Then start the game and check `Brante-Save-Load/Brante-Save-Load.log`.
+
+### What uninstall does
+
+`./tools/install.sh --uninstall` removes only what the mod put into the game
+folder (the folder/link, `doorstop_config.ini`, `winhttp.dll`) and the Proton
+Wine override. It does **not** touch your saves: the game's own saves stay in
+`Saves/`, and the mod's saves plus the pre-mod backup copies stay in
+`Brante-Save-Load/` (the command prints the exact path).
+
+Two optional flags change that, and both are explicit on purpose:
+
+- `--restore-backup` copies each `Backups/<save>/` back into the game's `Saves/`
+  folder, moving the current (rewound) save to `Brante-Save-Load/PreRestore/`
+  first, so neither version is lost.
+- `--purge` deletes the mod's whole data folder (choice points, manual saves,
+  backups). Use it after `--restore-backup` to get a clean uninstall.
+
 ### Steam Cloud
 
 The game's saves do **not** currently reach Steam Cloud. Steam's own cloud log

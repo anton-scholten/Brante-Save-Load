@@ -187,4 +187,8 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
 - [ ] Achievement side-effects on load (expected: none harmful; verify).
 - [ ] Load a save after switching to a different main save (per-run folders make
   this testable now).
+- [x] Cross-platform paths: sanitiser uses the union of Windows/Unix rules, all
+  paths go through `Path.Combine`/`Path.DirectorySeparatorChar`, backup README
+  lists the Windows, Proton and macOS locations. Uninstall gained
+  `--restore-backup` and `--purge` (tested against a throwaway prefix).
 - [ ] In-game test pass, README final, design doc.

@@ -29,14 +29,22 @@ SRC="$REPO_DIR/$MOD_NAME"
 
 MODE="link"
 BUILD=1
+RESTORE=0
+PURGE=0
 for arg in "$@"; do
     case "$arg" in
-        --uninstall) MODE="uninstall"; BUILD=0 ;;
-        --copy)      MODE="copy" ;;
-        --no-build)  BUILD=0 ;;
+        --uninstall)      MODE="uninstall"; BUILD=0 ;;
+        --copy)           MODE="copy" ;;
+        --no-build)       BUILD=0 ;;
+        --restore-backup) RESTORE=1 ;;
+        --purge)          PURGE=1 ;;
         *) echo "Unknown option: $arg" >&2; exit 1 ;;
     esac
 done
+if [[ $RESTORE -eq 1 || $PURGE -eq 1 ]] && [[ "$MODE" != "uninstall" ]]; then
+    echo "--restore-backup and --purge only apply to --uninstall." >&2
+    exit 1
+fi
 
 find_game() {
     if [[ -n "${BRANTE_DIR:-}" ]]; then echo "$BRANTE_DIR"; return; fi
@@ -153,12 +161,75 @@ wine_override_del() {
     done < <(wine_prefixes)
 }
 
+# The mod's data folder (saves + backups) lives in the game's per-user data
+# directory, inside the Proton prefix on Linux. One per prefix that has run the
+# game. The old name is still checked so pre-rename data is found.
+data_dirs() {
+    local p d
+    while read -r p; do
+        for d in "$p"/drive_c/users/*/AppData/LocalLow/"SEVER/The Life and Suffering of Sir Brante"/Brante-Save-Load \
+                 "$p"/drive_c/users/*/AppData/LocalLow/"SEVER/The Life and Suffering of Sir Brante"/BranteLoadAny; do
+            [[ -d "$d" ]] && echo "$d"
+        done
+    done < <(wine_prefixes) | awk '!seen[$0]++'
+}
+
+# Puts the copies taken before the first rewind back into the game's Saves/.
+# The current (rewound) save is moved to Brante-Save-Load/PreRestore/ first, so
+# nothing is lost either way.
+restore_backups() {
+    local data pd saves backups b id rel r f target stamp moved
+    while read -r data; do
+        pd="$(dirname "$data")"
+        saves="$pd/Saves"
+        backups="$data/Backups"
+        [[ -d "$backups" && -d "$saves" ]] || continue
+        for b in "$backups"/*/; do
+            [[ -d "$b" ]] || continue
+            id="$(basename "$b")"
+            rel=""
+            while read -r f; do
+                r="${f#"$saves"/}"
+                r="${r%/Autosave.dat}"
+                if [[ "${r//\//_}" == "$id" ]]; then rel="$r"; break; fi
+            done < <(find "$saves" -name Autosave.dat 2>/dev/null)
+            [[ -n "$rel" ]] || rel="$id"   # the save folder is gone; recreate it
+            target="$saves/$rel"
+            stamp="$(date +%Y%m%d_%H%M%S)"
+            if [[ -d "$target" ]]; then
+                moved="$data/PreRestore/$(echo "$rel" | tr '/' '_')-$stamp"
+                mkdir -p "$data/PreRestore"
+                mv "$target" "$moved"
+                echo "Moved the current save out of the way: $moved"
+            fi
+            mkdir -p "$target"
+            find "$b" -maxdepth 1 -type f ! -name 'README.txt' -exec cp -f {} "$target/" \;
+            echo "Restored the pre-mod save into $target"
+        done
+    done < <(data_dirs)
+}
+
+purge_data() {
+    local data
+    while read -r data; do
+        rm -rf "$data"
+        echo "Deleted the mod's data (saves and backups): $data"
+    done < <(data_dirs)
+}
+
 DEST="$GAME/$MOD_NAME"
 LEGACY="$GAME/BranteLoadAny"   # the mod's old name, cleaned up if left behind
 DOORSTOP_INI="$GAME/doorstop_config.ini"
 WINHTTP="$GAME/winhttp.dll"
 
 if [[ "$MODE" == "uninstall" ]]; then
+    if [[ $RESTORE -eq 1 ]] && game_running; then
+        echo "The game appears to be running; close it before restoring a backup." >&2
+        exit 1
+    fi
+    if [[ $RESTORE -eq 1 ]]; then
+        restore_backups
+    fi
     for path in "$DEST" "$LEGACY" "$DOORSTOP_INI" "$WINHTTP"; do
         if [[ -L "$path" ]]; then
             rm "$path"; echo "Removed symlink $path"
@@ -176,7 +247,20 @@ if [[ "$MODE" == "uninstall" ]]; then
         echo "closing the game if the override reappears."
     fi
     wine_override_del
+    if [[ $PURGE -eq 1 ]]; then
+        purge_data
+    fi
     echo "Uninstalled. The game's own files were never touched."
+    if [[ $PURGE -eq 1 ]]; then
+        echo "The mod's saves and backups were deleted (--purge)."
+    else
+        while read -r data; do
+            echo "The mod's own data is still here: $data"
+            echo "  (choice points and manual saves in Runs/, pre-mod copies in Backups/)"
+        done < <(data_dirs)
+        echo "Restore the pre-mod save and remove the mod:  ./tools/install.sh --uninstall --restore-backup --purge"
+        echo "Just delete the mod's own saves:              ./tools/install.sh --uninstall --purge"
+    fi
     exit 0
 fi
 
