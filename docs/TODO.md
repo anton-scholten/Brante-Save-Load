@@ -127,6 +127,10 @@ The plan, as approved, with status. Phases 0–4 are done; 5–7 are ahead.
 - [x] Save screen rebuilt as sortable tables (both tabs): one row per save,
   column headers sort (click again to reverse), × far right deletes, rows
   scroll with a scrollbar. Table values are read from the save file itself
+- [x] List polish (verified in-game 23 Oct 2026): "Save / Load" naming,
+  centred "Save now", long choice names scroll (marquee) after an ellipsis
+- [x] Steam Cloud investigated: the game's own saves already sync via Steam
+  Auto-Cloud; the mod's saves deliberately do not (see FINDINGS)
 
 Note: the fixed five slots of the first version were replaced by unlimited
 saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
