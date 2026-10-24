@@ -203,6 +203,16 @@ namespace Doorstop
 						yield return new WaitForSeconds(3f);
 						ChoiceWindow.DevTest();
 					}
+					// Phase 6: dump the scene path the playthrough has taken.
+					string history = Path.Combine(Recorder.SnapshotDir, "dev-history.txt");
+					if (File.Exists(history))
+					{
+						try { File.Delete(history); }
+						catch (Exception) { }
+						yield return new WaitForSeconds(1f);
+						ModLog.Info("DEV HISTORY: marker found - dumping the scene path");
+						History.Dump();
+					}
 					// Phase 6 book test: a marker opens the book and logs the
 					// menu layout dump (the "Save / Load" button placement).
 					string book = Path.Combine(Recorder.SnapshotDir, "dev-book.txt");

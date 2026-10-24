@@ -263,6 +263,9 @@ namespace Doorstop
 		private static Sprite _dashH;
 		private static Sprite _dashV;
 		private static GameObject _saveNowBtn;
+		private static GameObject _historyBtn;
+		private static GameObject _historyPanel;
+		private static Transform _historyList;
 		private static Col _sortCol = Col.Saved;
 		private static bool _sortAsc;
 		private static List<SaveEntry> _entries = new List<SaveEntry>();
@@ -569,7 +572,214 @@ namespace Doorstop
 				"Save now", 24f, ColTextLight, true);
 			Stretch(nlabel.rectTransform);
 
+			// History (bottom right): the scene path this playthrough took,
+			// as recorded by the game itself (Phase 6).
+			_historyBtn = CreateUiObject("HistoryBtn", panel.transform);
+			RectTransform hrt2 = _historyBtn.GetComponent<RectTransform>();
+			hrt2.anchorMin = new Vector2(1f, 0f);
+			hrt2.anchorMax = new Vector2(1f, 0f);
+			hrt2.pivot = new Vector2(1f, 0f);
+			hrt2.anchoredPosition = new Vector2(-22f, 20f);
+			hrt2.sizeDelta = new Vector2(220f, 52f);
+			Image himg2 = _historyBtn.AddComponent<Image>();
+			himg2.color = ColButtonDark;
+			Button hbtn2 = _historyBtn.AddComponent<Button>();
+			hbtn2.targetGraphic = himg2;
+			hbtn2.onClick.AddListener(OpenHistory);
+			TextMeshProUGUI hlabel = AddLabel(_historyBtn.transform, "Label",
+				"History", 24f, ColTextLight, true);
+			Stretch(hlabel.rectTransform);
+
 			BuildConfirm(panel.transform);
+			BuildHistory(panel.transform);
+		}
+
+		// ------------------------------------------------------------------
+		// History panel (Phase 6)
+		// ------------------------------------------------------------------
+
+		// The game records the scenes a playthrough has passed through, in
+		// order (ShowedScenesList). This shows that path; it is read-only,
+		// because the save does not record which answer was clicked.
+		private static void BuildHistory(Transform panel)
+		{
+			_historyPanel = CreateUiObject("HistoryPanel", panel);
+			Stretch(_historyPanel.GetComponent<RectTransform>());
+			Image overlay = _historyPanel.AddComponent<Image>();
+			overlay.color = new Color(0f, 0f, 0f, 0.55f);
+
+			GameObject box = CreateUiObject("Box", _historyPanel.transform);
+			RectTransform brt = box.GetComponent<RectTransform>();
+			brt.anchorMin = new Vector2(0.5f, 0.5f);
+			brt.anchorMax = new Vector2(0.5f, 0.5f);
+			brt.pivot = new Vector2(0.5f, 0.5f);
+			brt.anchoredPosition = Vector2.zero;
+			brt.sizeDelta = new Vector2(980f, 700f);
+			Image bimg = box.AddComponent<Image>();
+			bimg.color = ColPanel;
+
+			TextMeshProUGUI title = AddLabel(box.transform, "Title",
+				"Playthrough", 32f, ColTextDark, false);
+			title.alignment = TextAlignmentOptions.MidlineLeft;
+			RectTransform trt = title.rectTransform;
+			trt.anchorMin = new Vector2(0f, 1f);
+			trt.anchorMax = new Vector2(1f, 1f);
+			trt.pivot = new Vector2(0.5f, 1f);
+			trt.anchoredPosition = new Vector2(-60f, -12f);
+			trt.sizeDelta = new Vector2(-120f, 46f);
+
+			TextMeshProUGUI sub = AddLabel(box.transform, "Sub",
+				"Scenes this main save has been through, in order (recorded by the game).",
+				19f, ColTextDark, false);
+			RectTransform srt2 = sub.rectTransform;
+			srt2.anchorMin = new Vector2(0f, 1f);
+			srt2.anchorMax = new Vector2(1f, 1f);
+			srt2.pivot = new Vector2(0.5f, 1f);
+			srt2.anchoredPosition = new Vector2(0f, -58f);
+			srt2.sizeDelta = new Vector2(-120f, 30f);
+
+			// Scrollable list.
+			GameObject scroll = CreateUiObject("Scroll", box.transform);
+			RectTransform srt = scroll.GetComponent<RectTransform>();
+			srt.anchorMin = new Vector2(0f, 0f);
+			srt.anchorMax = new Vector2(1f, 1f);
+			srt.offsetMin = new Vector2(26f, 96f);
+			srt.offsetMax = new Vector2(-26f, -96f);
+			ScrollRect sc = scroll.AddComponent<ScrollRect>();
+			sc.horizontal = false;
+			sc.vertical = true;
+			sc.movementType = ScrollRect.MovementType.Clamped;
+			sc.scrollSensitivity = 30f;
+
+			GameObject viewport = CreateUiObject("Viewport", scroll.transform);
+			Stretch(viewport.GetComponent<RectTransform>());
+			viewport.AddComponent<RectMask2D>();
+			sc.viewport = viewport.GetComponent<RectTransform>();
+
+			GameObject content = CreateUiObject("Content", viewport.transform);
+			RectTransform cont = content.GetComponent<RectTransform>();
+			cont.anchorMin = new Vector2(0f, 1f);
+			cont.anchorMax = new Vector2(1f, 1f);
+			cont.pivot = new Vector2(0.5f, 1f);
+			cont.anchoredPosition = Vector2.zero;
+			cont.sizeDelta = Vector2.zero;
+			VerticalLayoutGroup vlg = content.AddComponent<VerticalLayoutGroup>();
+			vlg.padding = new RectOffset(4, 4, 4, 4);
+			vlg.spacing = 4f;
+			vlg.childControlWidth = true;
+			vlg.childControlHeight = true;
+			vlg.childForceExpandWidth = true;
+			vlg.childForceExpandHeight = false;
+			ContentSizeFitter fitter = content.AddComponent<ContentSizeFitter>();
+			fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+			fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+			sc.content = cont;
+			_historyList = content.transform;
+
+			GameObject close = CreateUiObject("Close", box.transform);
+			RectTransform crt = close.GetComponent<RectTransform>();
+			crt.anchorMin = new Vector2(0.5f, 0f);
+			crt.anchorMax = new Vector2(0.5f, 0f);
+			crt.pivot = new Vector2(0.5f, 0f);
+			crt.anchoredPosition = new Vector2(0f, 24f);
+			crt.sizeDelta = new Vector2(240f, 52f);
+			Image cimg = close.AddComponent<Image>();
+			cimg.color = ColCancelButton;
+			Button cbtn = close.AddComponent<Button>();
+			cbtn.targetGraphic = cimg;
+			cbtn.onClick.AddListener(CloseHistory);
+			TextMeshProUGUI cl = AddLabel(close.transform, "Label", "Close", 24f, ColTextLight, true);
+			Stretch(cl.rectTransform);
+
+			_historyPanel.SetActive(false);
+		}
+
+		private static void OpenHistory()
+		{
+			if (_historyPanel == null)
+			{
+				return;
+			}
+			int n = RefreshHistory();
+			_historyPanel.SetActive(true);
+			_historyPanel.transform.SetAsLastSibling();
+			Canvas.ForceUpdateCanvases();
+			ModLog.Info("ChoiceWindow: history opened (" + n + " scene(s))");
+		}
+
+		private static void CloseHistory()
+		{
+			if (_historyPanel != null)
+			{
+				_historyPanel.SetActive(false);
+			}
+		}
+
+		// (Re)builds the history rows; returns how many are shown.
+		private static int RefreshHistory()
+		{
+			if (_historyList == null)
+			{
+				return 0;
+			}
+			for (int i = _historyList.childCount - 1; i >= 0; i--)
+			{
+				GameObject old = _historyList.GetChild(i).gameObject;
+				old.SetActive(false);
+				UnityEngine.Object.Destroy(old);
+			}
+			List<History.Entry> entries = History.FromCurrentGame();
+			if (entries.Count == 0)
+			{
+				entries = History.FromNewestSave();
+			}
+			int shown = 0;
+			foreach (History.Entry e in entries)
+			{
+				// Scenes without a title are the game's machinery (loading
+				// screens, disclaimers); the story path is what matters.
+				if (string.IsNullOrEmpty(e.Title))
+				{
+					continue;
+				}
+				shown++;
+				GameObject row = CreateUiObject("HistRow", _historyList);
+				LayoutElement rle = row.AddComponent<LayoutElement>();
+				rle.preferredHeight = 42f;
+				Image img = row.AddComponent<Image>();
+				img.color = shown % 2 == 0 ? ColAutoAlt : ColAuto;
+
+				TextMeshProUGUI label = AddLabel(row.transform, "Text",
+					shown + ".  " + e.Title
+					+ (e.HasSnapshot ? "   [save available]" : "")
+					+ (e.IsShowed ? "" : "   [current]"),
+					19f, ColTextDark, false);
+				label.overflowMode = TextOverflowModes.Ellipsis;
+				label.enableWordWrapping = false;
+				RectTransform lrt = label.rectTransform;
+				lrt.anchorMin = Vector2.zero;
+				lrt.anchorMax = Vector2.one;
+				lrt.offsetMin = new Vector2(10f, 0f);
+				lrt.offsetMax = new Vector2(-170f, 0f);
+
+				TextMeshProUGUI id = AddLabel(row.transform, "Scene", e.SceneName,
+					17f, new Color(0.35f, 0.30f, 0.24f), false);
+				RectTransform irt = id.rectTransform;
+				irt.anchorMin = new Vector2(1f, 0f);
+				irt.anchorMax = new Vector2(1f, 1f);
+				irt.pivot = new Vector2(1f, 0.5f);
+				irt.offsetMin = new Vector2(-160f, 0f);
+				irt.offsetMax = new Vector2(-10f, 0f);
+				id.alignment = TextAlignmentOptions.MidlineRight;
+			}
+			if (shown == 0)
+			{
+				TextMeshProUGUI empty = AddLabel(_historyList, "Empty",
+					"Nothing recorded yet.", 20f, ColTextDark, true);
+				LayoutElement le = empty.gameObject.AddComponent<LayoutElement>();
+				le.preferredHeight = 50f;
+			}
+			return shown;
 		}
 
 		private static void BuildScrollbar(Transform scroll)
@@ -1461,6 +1671,10 @@ namespace Doorstop
 			Canvas.ForceUpdateCanvases();
 			yield return new WaitForSeconds(12f);
 			Open();
+			// Dev: leave time for a screenshot of the saves table, then the
+			// history panel on top of it.
+			yield return new WaitForSeconds(8f);
+			OpenHistory();
 		}
 
 		private static void DumpTree(Transform t, int depth)

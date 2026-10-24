@@ -28,8 +28,12 @@ never touches the game's saves.
   saves: using them never changes your game saves, and the game's saves never
   change them. Saves from older versions of the mod are moved into the new
   per-main-save folders automatically on the next start.
-- **Existing saves.** (Planned, see docs/TODO.md) reconstruct the list of choices
-  you took in a playthrough started before the mod was installed.
+- **Playthrough history.** The game records every scene the current save has
+  passed through. **History** in the same window lists that path in order,
+  including the part played before the mod was installed, and marks the scenes
+  the mod already has a save for. It is read-only: the game's save records which
+  scenes were shown, not which answer was clicked, so earlier choice points
+  cannot be restored from it.
 
 ### Steam Cloud
 

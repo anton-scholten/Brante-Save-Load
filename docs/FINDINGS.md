@@ -357,3 +357,23 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
   the loaded `SlotInfo.Id`.
 - The table's "Saved" time comes from the sidecar's `recorded=` line, not the file timestamp
   (the first, rewriting migration reset those).
+
+## Playthrough record: `ShowedScenesList` (Phase 6, checked 24 Oct 2026)
+
+- `[Serializable] ShowedScenes { string SceneName; bool IsShowed; }`; the save
+  and `GameManager` both hold `List<ShowedScenes>`.
+- `GameManager` appends a scene when it is opened (skipping names already in the
+  list) and the per-scene behaviour flips `IsShowed` when the scene is actually
+  shown (`SceneShowChecker`, `ChapterCutscene`, …). The list is therefore the
+  ordered path of the playthrough.
+- The last entry is the scene on screen and is still `pending` at capture time —
+  the same not-yet-shown flag the loader relies on to re-open a choice scene.
+- Naming: story scenes are `<chapter>.<scene>.<n>` (e.g. `01.05.01`); the
+  machinery uses plain names (`Disclaimer`, `Cutscene_1`, `Intro`,
+  `LoadingScreen_Child`, `ChildhoodPicture`, `ChildhoodChapterStart`). Titles are
+  `<scene>_Title` localisation keys; machinery scenes mostly have none, so
+  "has a title" is a good filter for story scenes.
+- A real save (childhood, turn 5) had 12 entries: Disclaimer, Cutscene_1, Intro,
+  LoadingScreen_Child, ChildhoodPicture, ChildhoodChapterStart, 01.01.01 Birth,
+  01.02.01_2 Hide and Seek, 01.02.01 The Great Descent, 01.03.01 The Lot of
+  Suffering, 01.04.01 Gloria's Rhymes, 01.05.01 The Newborn's Cry (pending).

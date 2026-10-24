@@ -139,13 +139,25 @@ The plan, as approved, with status. Phases 0–4 are done; 5–7 are ahead.
 Note: the fixed five slots of the first version were replaced by unlimited
 saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
 
-## Phase 6 — existing saves (choice history reconstruction)
+## Phase 6 — playthrough history (done, 24 Oct 2026)
 
-- [ ] Parse the user's current save: `ShowedScenesList` records the scene path taken
-- [ ] Present it as a list (what was chosen where, as far as scenes encode it)
-- [ ] Decide (after Phase 2 data): replay-based loading of pre-mod choice points —
-      only feasible if chapters replay deterministically; otherwise ship the list
-      as history and loadable-from-now-on
+- [x] Parsed the current save: `ShowedScenesList` is an ordered list of
+  `{SceneName, IsShowed}` that the game appends to when a scene opens
+  (`History.cs`). It is the path the playthrough has taken, including the part
+  played before the mod was installed. `IsShowed` flips when the scene is
+  actually shown; the newest entry is still `pending` (that is also what makes
+  the game's loader re-open it).
+- [x] Shown as a read-only **History** panel in the Save / Load window
+  ("Playthrough"): numbered list, localised title (`<scene>_Title`), scene id,
+  `[save available]` when the mod has a snapshot for that scene, `[current]`
+  for the scene on screen. Game machinery scenes (no title key) are skipped.
+- [x] Panel loading of pre-mod choice points: **decided against**. The save
+  records that a scene was shown, not which answer was clicked, and the state
+  needed to restore an earlier choice no longer exists in the save (the
+  game keeps one rolling autosave, and chapter-start files only). Replaying
+  through Bolt to rebuild it would depend on dice and event triggers, so the
+  list ships as history and loading applies from the moment the mod is
+  installed.
 
 ## Phase 7 — polish
 
