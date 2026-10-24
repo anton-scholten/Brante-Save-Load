@@ -204,7 +204,7 @@ namespace Doorstop
 						ChoiceWindow.DevTest();
 					}
 					// Phase 6 book test: a marker opens the book and logs the
-					// tab layout (the "Load any choice" tab placement).
+					// menu layout dump (the "Save / Load" button placement).
 					string book = Path.Combine(Recorder.SnapshotDir, "dev-book.txt");
 					if (File.Exists(book))
 					{

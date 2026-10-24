@@ -17,9 +17,8 @@ namespace Doorstop
 {
 	// The player-facing save list.
 	//
-	//  - a "Load any choice" tab injected into the book (the Destiny window),
-	//    next to the chapter I tab (copy of it, so it looks like the rest of
-	//    the book); see InjectBookTab,
+	//  - a "Save / Load" button in the settings menu, a copy of the menu's own
+	//    rows so it looks and behaves like them; see AddPauseButton,
 	//  - one table with every save: automatic choice-point snapshots and
 	//    manual "Save now" saves, one row each. Click a header to sort by it
 	//    (click again to reverse). Manual rows have their own colour.
@@ -37,6 +36,134 @@ namespace Doorstop
 	// the session: the game's own Saves/ (the player's original timeline)
 	// must never be touched by a rewind; progress past the rewind point is
 	// captured as new choice-point snapshots instead.
+	// Scrolls a too-long row text (a "marquee"): it first rests showing as
+	// much as fits plus TMP's ellipsis, then slides right-to-left (the text
+	// moves left) until the end is visible, pauses, and starts over.
+	public sealed class Marquee : MonoBehaviour
+	{
+		public RectTransform Viewport;
+		public TextMeshProUGUI Text;
+		public float Padding = 8f;
+		public float Speed = 28f;
+		public float Delay = 2f;      // rest before the first move
+		public float EndPause = 1.6f; // pause with the end in view
+
+		private float _full;
+		private float _view;
+		private float _offset;
+		private float _timer;
+		private int _phase;           // 0 rest, 1 scrolling, 2 end pause
+		private bool _measured;
+
+		private void OnEnable()
+		{
+			_measured = false;
+			_offset = 0f;
+			_phase = 0;
+			_timer = -Delay;
+		}
+
+		private void Update()
+		{
+			if (Text == null || Viewport == null)
+			{
+				return;
+			}
+			if (!_measured)
+			{
+				Measure();
+				if (!_measured)
+				{
+					return; // layout not built yet
+				}
+				if (_full <= Visible() + 0.5f)
+				{
+					return; // fits: plain text, no animation
+				}
+			}
+			if (_full <= Visible() + 0.5f)
+			{
+				return;
+			}
+			float dt = Time.unscaledDeltaTime;
+			switch (_phase)
+			{
+				case 0:
+					_timer += dt;
+					if (_timer >= 0f)
+					{
+						_phase = 1;
+						ShowFull();
+					}
+					break;
+				case 1:
+					_offset += Speed * dt;
+					if (_offset >= _full - Visible())
+					{
+						_offset = _full - Visible();
+						_phase = 2;
+						_timer = 0f;
+					}
+					Place();
+					break;
+				default:
+					_timer += dt;
+					if (_timer >= EndPause)
+					{
+						_phase = 0;
+						_timer = -Delay;
+						_offset = 0f;
+						ShowEllipsis();
+					}
+					break;
+			}
+		}
+
+		private float Visible()
+		{
+			return Mathf.Max(1f, _view - 2f * Padding);
+		}
+
+		private void Measure()
+		{
+			_view = Viewport.rect.width;
+			if (_view <= 1f)
+			{
+				return;
+			}
+			Text.enableWordWrapping = false;
+			Text.overflowMode = TextOverflowModes.Ellipsis;
+			ShowEllipsis();
+			Text.ForceMeshUpdate();
+			_full = Text.GetPreferredValues(Text.text).x;
+			_measured = true;
+		}
+
+		// Resting look: clipped at the cell, the rest replaced by "…".
+		private void ShowEllipsis()
+		{
+			RectTransform rt = Text.rectTransform;
+			Text.overflowMode = TextOverflowModes.Ellipsis;
+			rt.sizeDelta = new Vector2(Visible(), rt.sizeDelta.y);
+			rt.anchoredPosition = new Vector2(Padding, rt.anchoredPosition.y);
+		}
+
+		// Whole text, scrolled by _offset.
+		private void ShowFull()
+		{
+			RectTransform rt = Text.rectTransform;
+			Text.overflowMode = TextOverflowModes.Overflow;
+			rt.sizeDelta = new Vector2(_full, rt.sizeDelta.y);
+			Place();
+		}
+
+		private void Place()
+		{
+			RectTransform rt = Text.rectTransform;
+			rt.anchoredPosition = new Vector2(Padding - _offset, rt.anchoredPosition.y);
+		}
+	}
+
 	// Turns a cross's bars red while the pointer is on its button.
 	public sealed class CrossHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 	{
@@ -251,7 +378,7 @@ namespace Doorstop
 			cb.onClick.AddListener(delegate { Open(); });
 			foreach (TMP_Text t in clone.GetComponentsInChildren<TMP_Text>(true))
 			{
-				t.text = "Load any choice";
+				t.text = "Save / Load";
 			}
 			_pauseBtn = clone;
 
@@ -354,7 +481,7 @@ namespace Doorstop
 
 			// Title.
 			TextMeshProUGUI title = AddLabel(panel.transform, "Title",
-				"Load any choice", 34f, ColTextDark, false);
+				"Save / Load", 34f, ColTextDark, false);
 			title.alignment = TextAlignmentOptions.MidlineLeft;
 			RectTransform trt = title.rectTransform;
 			trt.anchorMin = new Vector2(0f, 1f);
@@ -423,13 +550,13 @@ namespace Doorstop
 
 			BuildScrollbar(scroll.transform);
 
-			// Save now (bottom left).
+			// Save now (bottom centre).
 			_saveNowBtn = CreateUiObject("SaveNow", panel.transform);
 			RectTransform nrt = _saveNowBtn.GetComponent<RectTransform>();
-			nrt.anchorMin = new Vector2(0f, 0f);
-			nrt.anchorMax = new Vector2(0f, 0f);
-			nrt.pivot = new Vector2(0f, 0f);
-			nrt.anchoredPosition = new Vector2(22f, 20f);
+			nrt.anchorMin = new Vector2(0.5f, 0f);
+			nrt.anchorMax = new Vector2(0.5f, 0f);
+			nrt.pivot = new Vector2(0.5f, 0f);
+			nrt.anchoredPosition = new Vector2(0f, 20f);
 			nrt.sizeDelta = new Vector2(260f, 52f);
 			Image nimg = _saveNowBtn.AddComponent<Image>();
 			nimg.color = ColLoadButton;
@@ -1056,15 +1183,42 @@ namespace Doorstop
 			for (int i = 0; i < values.Length; i++)
 			{
 				Col col = (Col)i;
-				TextMeshProUGUI cell = AddLabel(row.transform, "Cell", values[i], 19f, ColTextDark,
-					col != Col.Hero && col != Col.Choice);
+				bool scrolls = col == Col.Choice;
+				Transform cellParent = row.transform;
+				GameObject mask = null;
+				if (scrolls)
+				{
+					// The choice name scrolls when it is too long: a clipped
+					// cell holding the full text (see Marquee).
+					mask = CreateUiObject("ChoiceCell", row.transform);
+					LayoutElement mle = mask.AddComponent<LayoutElement>();
+					mle.preferredWidth = ColWidths[i];
+					mle.flexibleWidth = 1f;
+					mask.AddComponent<RectMask2D>();
+					cellParent = mask.transform;
+				}
+				TextMeshProUGUI cell = AddLabel(cellParent, "Cell", values[i], 19f, ColTextDark,
+					col != Col.Hero && !scrolls);
 				cell.overflowMode = TextOverflowModes.Ellipsis;
 				cell.enableWordWrapping = false;
-				LayoutElement le = cell.gameObject.AddComponent<LayoutElement>();
-				le.preferredWidth = ColWidths[i];
-				if (col == Col.Choice)
+				if (scrolls)
 				{
-					le.flexibleWidth = 1f;
+					RectTransform crt = cell.rectTransform;
+					crt.anchorMin = new Vector2(0f, 0f);
+					crt.anchorMax = new Vector2(0f, 1f);
+					crt.pivot = new Vector2(0f, 0.5f);
+					crt.anchoredPosition = Vector2.zero;
+					crt.sizeDelta = Vector2.zero;
+					Marquee mq = mask.AddComponent<Marquee>();
+					mq.Viewport = mask.GetComponent<RectTransform>();
+					mq.Text = cell;
+					// Stagger the rows so the table does not move in lockstep.
+					mq.Delay = 1.2f + 0.35f * (index % 5);
+				}
+				else
+				{
+					LayoutElement le = cell.gameObject.AddComponent<LayoutElement>();
+					le.preferredWidth = ColWidths[i];
 				}
 			}
 

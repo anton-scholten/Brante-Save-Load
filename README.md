@@ -8,7 +8,7 @@ never touches the game's saves.
 ## What it does
 
 - **Load any past choice point.** Every time a choice appears on screen, the mod
-  records the exact game state. Press Esc, click **"Load any choice"** at the
+  records the exact game state. Press Esc, click **"Save / Load"** at the
   bottom of the settings menu, pick any entry from the list, confirm — and the
   game returns to that exact choice screen. Entries can also be removed from the
   list (that only deletes the mod's own save file).

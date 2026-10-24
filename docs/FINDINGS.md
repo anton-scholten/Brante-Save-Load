@@ -306,7 +306,7 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
   (`01` = chapter 1), the middle number advances with the story. It is not
   computed from turn or season.
 - The book's chapter tabs are `DestinyWindow.Tabs` (`Btn1`…`Btn5`); the
-  "Load any choice" tab is a copy of `Tabs[0]` added after `UIManager.ShowWindow`.
+  "Save / Load" tab is a copy of `Tabs[0]` added after `UIManager.ShowWindow`.
 
 ## Main-save identity (checked against the decompile)
 
