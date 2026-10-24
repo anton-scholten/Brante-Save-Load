@@ -152,10 +152,6 @@ namespace Doorstop
 			}
 			try { File.Delete(marker); } catch { }
 			ModLog.Info("DEV AUTOLOAD: marker found, loading newest autosave");
-			// The harness bypasses the game's slot bookkeeping (which decides
-			// WHERE autosaves are written), so block the game's own saves for
-			// the rest of this run - Saves/ must stay untouched.
-			Recorder.BlockGameSaves = true;
 			string scene = DevAutoloadDo();
 			if (string.IsNullOrEmpty(scene))
 			{
@@ -269,6 +265,14 @@ namespace Doorstop
 				DateTime newestTime = DateTime.MinValue;
 				foreach (string f in Directory.GetFiles(saves, "Autosave.dat", SearchOption.AllDirectories))
 				{
+					// A file directly in Saves/ is not in a save folder (the
+					// game wrote it without a slot); it is not a real save.
+					if (string.Equals(Path.GetDirectoryName(Path.GetFullPath(f)),
+						Path.GetFullPath(saves).TrimEnd(Path.DirectorySeparatorChar),
+						StringComparison.OrdinalIgnoreCase))
+					{
+						continue;
+					}
 					DateTime t = File.GetLastWriteTimeUtc(f);
 					if (t > newestTime)
 					{
@@ -295,7 +299,22 @@ namespace Doorstop
 					helper.IronManMode = true;
 					ModLog.Info("DEV IRONMAN: forcing IronManMode on the loaded save");
 				}
+				// The blob's id can be missing; the folder name is reliable.
+				string fromPath = Recorder.IdFromSavePath(newest);
+				if (helper.SlotInfo == null || string.IsNullOrEmpty(helper.SlotInfo.Id))
+				{
+					if (helper.SlotInfo == null)
+					{
+						helper.SlotInfo = new SaveSlotInfo { Id = fromPath };
+					}
+					else
+					{
+						helper.SlotInfo.Id = fromPath;
+					}
+				}
+				ModLog.Info("DEV AUTOLOAD: main save '" + helper.SlotInfo.Id + "'");
 				Recorder.PinRunId(helper.SlotInfo != null ? helper.SlotInfo.Id : null);
+				Recorder.AdoptAsCurrentSave(SaveLoadManager.Instance, helper);
 				SaveLoadManager.Instance.LoadGame(helper);
 				return helper.LastOpenScene;
 			}

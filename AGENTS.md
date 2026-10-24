@@ -59,9 +59,16 @@ and `--uninstall` removes exactly what was installed.
 ## Rules that are not obvious
 
 - **The game's save system is BinaryFormatter** over a `[Serializable]` class
-  (`SaveLoadHelper`) that holds the entire game state. Never write to the game's
-  `Saves/` folder — the mod keeps its snapshots in its own folder (see DESIGN.md
-  once it exists) precisely so the two systems cannot interfere.
+  (`SaveLoadHelper`) that holds the entire game state. The mod never writes into
+  the game's `Saves/` folder itself, but it does let the *game* keep saving
+  there after a rewind (as it would after loading from its own menu) — after
+  copying that save folder to `Backups/<save>/` once. Never delete or rewrite
+  that backup; it is the only copy of the pre-mod timeline.
+- **A save's folder comes from `SlotInfo.Id`**, which contains slashes
+  (`Biggie_10/23/2026103816AM`), so it is a nested path. After a mod load the
+  game's slot bookkeeping can be empty, which would drop autosaves into `Saves/`
+  itself; `Recorder.EnsureSlotId` (prefix on the save calls) and
+  `Recorder.FixSaveFolder` (postfix on `GetSaveFolderPath`) repair that.
 - **`SaveLoadManager.LoadGame(SaveLoadHelper)` is public** — that is the mod's
   load path. It restores all singletons and resumes via `LastOpenScene`.
 - **Choice scenes are additive scenes containing `ParameterButtonChanger`

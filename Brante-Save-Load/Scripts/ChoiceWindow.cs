@@ -32,10 +32,10 @@ namespace Doorstop
 	//    (the sequence documented in docs/FINDINGS.md, "Phase 3 capture
 	//    facts"; the dev autoload harness replays the same dance).
 	//
-	// After a save load, Recorder.BlockGameSaves stays on for the rest of
-	// the session: the game's own Saves/ (the player's original timeline)
-	// must never be touched by a rewind; progress past the rewind point is
-	// captured as new choice-point snapshots instead.
+	// Loading a save backs up the game's own save folder once and then lets
+	// the game save normally again (autosaves, chapter files), exactly as it
+	// would after loading an older save from its own menu - so a chapter
+	// restart after a death continues the rewound timeline.
 	// Scrolls a too-long row text (a "marquee"): it first rests showing as
 	// much as fits plus TMP's ellipsis, then slides right-to-left (the text
 	// moves left) until the end is visible, pauses, and starts over.
@@ -1620,33 +1620,43 @@ namespace Doorstop
 				+ ", main save=" + (helper.SlotInfo != null ? helper.SlotInfo.Id : "")
 				+ ", ironman=" + helper.IronManMode + ")");
 			// The blob has no ID (for stable dedup), so the run comes from
-			// the folder the file sits in.
+			// the folder the file sits in; the game needs the REAL id (it
+			// contains slashes) to find its own save folder.
 			string runId = Recorder.RunIdFromPath(datPath);
 			if (string.IsNullOrEmpty(runId) && helper.SlotInfo != null)
 			{
 				runId = helper.SlotInfo.Id;
 			}
-			if (!string.IsNullOrEmpty(runId))
+			// A raw id keeps its slashes; a folder name from RunsDir is
+			// sanitised. Only ever adopt a raw one - otherwise the game would
+			// create a second save folder under a mangled name.
+			string realId = Recorder.RealRunId(runId);
+			if (string.IsNullOrEmpty(realId))
 			{
-				// Old snapshots carry no ID; the game needs one to find its
-				// own chapter files (see Recorder.Capture).
+				realId = Recorder.LiveRealId();
+			}
+			if (string.IsNullOrEmpty(realId))
+			{
+				string blobId = helper.SlotInfo != null ? helper.SlotInfo.Id : "";
+				realId = blobId != null && blobId.IndexOf('/') >= 0 ? blobId : "";
+			}
+			if (!string.IsNullOrEmpty(realId))
+			{
 				if (helper.SlotInfo == null)
 				{
 					helper.SlotInfo = new SaveSlotInfo();
 				}
-				helper.SlotInfo.Id = runId;
+				helper.SlotInfo.Id = realId;
 			}
+			// Keep the pre-mod timeline instead of letting the game's saves
+			// overwrite it in place (see Recorder.BackupOriginalSave).
+			Recorder.BackupOriginalSave(realId);
 			if (File.Exists(Path.Combine(Recorder.SnapshotDir, "dev-ironman.txt")))
 			{
 				helper.IronManMode = true;
 				ModLog.Info("DEV IRONMAN: loading the save as an Iron Man game");
 			}
 			Recorder.PinRunId(runId);
-			// From here on the game's own Saves/ stays frozen for the rest
-			// of the session: a rewind must never overwrite the original
-			// timeline. (See Entrypoint.PatchSaveGate.)
-			Recorder.BlockGameSaves = true;
-
 			Close();
 			try
 			{
@@ -1672,6 +1682,7 @@ namespace Doorstop
 				ModLog.Error("ChoiceWindow: SaveLoadManager not found - load aborted");
 				yield break;
 			}
+			Recorder.AdoptAsCurrentSave(slm, helper);
 			try
 			{
 				slm.LoadGame(helper);

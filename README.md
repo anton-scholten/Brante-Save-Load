@@ -12,12 +12,14 @@ never touches the game's saves.
   bottom of the settings menu, pick any entry from the list, confirm — and the
   game returns to that exact choice screen. Entries can also be removed from the
   list (that only deletes the mod's own save file).
-- **Its own snapshots, never the game's saves.** Choice points are recorded into
-  the mod's own folder as you reach them. Loading one never touches the game's
-  `Saves/`: after a rewind, the game's own autosaves stay switched off for the
-  rest of the session (your progress is captured as new choice snapshots
-  instead), and the save you had before installing the mod remains exactly as
-  you left it — loadable from the game's own menu at any time.
+- **Its own snapshots, and a backup of the game's save.** Choice points are
+  recorded into the mod's own folder as you reach them. Before the mod loads one
+  of its saves for the first time it copies the game's own save folder to
+  `Brante-Save-Load/Backups/<save>/` (with a `README.txt` saying how to put it
+  back). After that the game saves normally again, exactly as it would after
+  loading an older save from its own menu — so autosaves keep working, and a
+  chapter restart after a death continues *your* timeline rather than an
+  abandoned one.
 - **Your own saves.** The same window lists the saves of the **current main save
   only** in one table: automatic choice points and manual saves (**"Save now"**,
   shown in a yellow row colour). Click a column header to sort by it, click again

@@ -172,10 +172,14 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   the game's eleven languages (`Loc.cs`); the game's own keys are used for
   chapter names and scene titles, so those follow the language too. Verified
   in-game in Russian.
-- [ ] Chapter transitions: after a rewind the game's chapter files stay frozen
-  (the save gate), so "Restart chapter" jumps to the ORIGINAL chapter start, not
-  the rewound one. Needs a decision: keep (protects the original timeline) or
-  let the rewound timeline write its own chapter files into `Saves/` (forbidden).
+- [x] Chapter restarts after a rewind (24 Oct 2026): the save gate was removed.
+  The mod now copies the game's own save folder to
+  `Brante-Save-Load/Backups/<save>/` once (with a `README.txt` telling the
+  player how to restore it), then lets the game save normally again, so
+  autosaves, chapter starts and (if enabled) cloud follow the rewound timeline.
+  Slot-id repair hooks keep those files inside the save's own folder instead of
+  `Saves/` itself. Verified in-game: no stray files in `Saves/`, autosave
+  updated inside the save folder.
 - [x] Iron Man mode (24 Oct 2026): the game disables its own chapter-load menu
   in Iron Man; the mod's window ignores that and keeps working (verified by
   loading a save with `IronManMode` forced on: scene reopens, no errors). The

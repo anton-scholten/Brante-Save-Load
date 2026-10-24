@@ -392,3 +392,22 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
   loaded helper, so the game can find its own chapter files.
 - Consequence of the save gate: after a rewind the chapter files are still the
   original timeline's, so a chapter restart goes back to that chapter's start.
+
+## Letting the game save again after a rewind (24 Oct 2026)
+
+- Loading a save through `LoadGame(SaveLoadHelper)` does NOT update
+  `_currentSaveSlotInfo` (only `LoadGame(int slotId)` does). `SaveData` builds its
+  path from that field, so a save right after a mod load lands in `Saves/` itself
+  (`Autosave.dat` next to the save folders).
+- Also, `SaveGame` is called by the game shortly after a load (scene transition),
+  so this happens within seconds, not only on a manual save.
+- Fix: a prefix on `SaveGame`/`SaveChapterState` forces a slot id when the mod
+  knows the real one, and a postfix on `GetSaveFolderPath` redirects a bare
+  `Saves/` (or a mangled `Biggie_10_23_…` folder) to the real
+  `Saves/<id>/`. Verified: nothing is written at `Saves/` root any more.
+- The real id contains slashes (`Biggie_10/23/2026103816AM`) and can be derived
+  from a save path (`Recorder.IdFromSavePath`) even when the blob's `SlotInfo.Id`
+  is empty; that is how the dev harness adopts it.
+- Before the first rewind the mod copies `Saves/<id>/` (minus Steam's
+  `steam_autocloud.vdf`) to `Brante-Save-Load/Backups/<id>/` and writes a
+  `README.txt` with restore steps.

@@ -31,13 +31,6 @@ namespace Doorstop
 	{
 		private static bool _armed;
 
-		// Session-wide switch: while true, the game's own SaveGame/
-		// SaveChapterState are Harmony-blocked (see Entrypoint), so loading
-		// a choice snapshot can never write into the game's Saves/ folder -
-		// the player's original save stays exactly as it was. Set by the
-		// dev autoload harness and by the choice-list load flow.
-		public static bool BlockGameSaves;
-
 		public static string SnapshotDir
 		{
 			get
@@ -276,6 +269,322 @@ namespace Doorstop
 			using (FileStream fs = File.OpenRead(path))
 			{
 				return (SaveLoadHelper)new BinaryFormatter().Deserialize(fs);
+			}
+		}
+
+		// The real (unsanitised) main-save ID, e.g. "Biggie_10/23/2026103816AM".
+		// The game needs it verbatim for its own save folder; a folder name
+		// from RunsDir is sanitised, so it is matched against the game's saves.
+		public static string RealRunId(string runFolderOrId)
+		{
+			if (string.IsNullOrEmpty(runFolderOrId))
+			{
+				return "";
+			}
+			try
+			{
+				string saves = Path.Combine(Application.persistentDataPath, "Saves");
+				if (!Directory.Exists(saves))
+				{
+					return "";
+				}
+				string want = Sanitize(runFolderOrId);
+				int seen = 0;
+				foreach (string f in Directory.GetFiles(saves, "Autosave.dat", SearchOption.AllDirectories))
+				{
+					seen++;
+					try
+					{
+						SaveLoadHelper h = ReadHelper(f);
+						string id = h.SlotInfo != null ? h.SlotInfo.Id : null;
+						if (!string.IsNullOrEmpty(id) && Sanitize(id) == want)
+						{
+							return id;
+						}
+					}
+					catch
+					{
+						// unreadable save: skip
+					}
+				}
+				if (!_realIdLogged)
+				{
+					_realIdLogged = true;
+					ModLog.Info("Recorder: no match for '" + want + "' among " + seen + " game save(s)");
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: looking up the main save ID failed:\n" + e);
+			}
+			return "";
+		}
+
+		// The main-save id encoded in a game save path:
+		//   .../Saves/Biggie_10/23/2026103816AM/Autosave.dat -> "Biggie_10/23/2026103816AM"
+		// ("" when the file sits directly in Saves/, i.e. not in a save folder).
+		public static string IdFromSavePath(string autosavePath)
+		{
+			try
+			{
+				string root = Path.GetFullPath(Path.Combine(Application.persistentDataPath, "Saves"));
+				string full = Path.GetFullPath(autosavePath);
+				string dir = Path.GetDirectoryName(full);
+				if (string.IsNullOrEmpty(dir) || !dir.StartsWith(root + Path.DirectorySeparatorChar,
+					StringComparison.OrdinalIgnoreCase))
+				{
+					return "";
+				}
+				return dir.Substring(root.Length + 1);
+			}
+			catch
+			{
+				return "";
+			}
+		}
+
+		// The raw id of the save the game currently has loaded ("" if none).
+		public static string LiveRealId()
+		{
+			try
+			{
+				SaveLoadManager slm = SaveLoadManager.Instance;
+				if (slm == null)
+				{
+					slm = UnityEngine.Object.FindObjectOfType<SaveLoadManager>();
+				}
+				if (slm == null)
+				{
+					return "";
+				}
+				FieldInfo f = typeof(SaveLoadManager).GetField("_currentSaveFile",
+					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+				SaveLoadHelper cur = f != null ? f.GetValue(slm) as SaveLoadHelper : null;
+				if (cur == null || cur.SlotInfo == null)
+				{
+					return "";
+				}
+				return cur.SlotInfo.Id ?? "";
+			}
+			catch
+			{
+				return "";
+			}
+		}
+
+		// Copies the game's own save folder aside, once, before the first
+		// rewind. From then on the game saves normally into its own folder
+		// (as it would after loading an older save from its own menu), so the
+		// pre-mod timeline is kept here instead of being silently replaced.
+		public static void BackupOriginalSave(string id)
+		{
+			try
+			{
+				if (string.IsNullOrEmpty(id))
+				{
+					return;
+				}
+				string src = Path.Combine(Application.persistentDataPath, "Saves", id);
+				if (!Directory.Exists(src))
+				{
+					return;
+				}
+				string dst = Path.Combine(Application.persistentDataPath, "Brante-Save-Load",
+					"Backups", Sanitize(id));
+				if (Directory.Exists(dst))
+				{
+					return;
+				}
+				Directory.CreateDirectory(dst);
+				int copied = 0;
+				foreach (string f in Directory.GetFiles(src, "*", SearchOption.AllDirectories))
+				{
+					if (string.Equals(Path.GetFileName(f), "steam_autocloud.vdf",
+						StringComparison.OrdinalIgnoreCase))
+					{
+						continue; // Steam's own marker, not game data
+					}
+					string rel = f.Substring(src.Length).TrimStart(
+						Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+					string target = Path.Combine(dst, rel);
+					Directory.CreateDirectory(Path.GetDirectoryName(target));
+					File.Copy(f, target, false);
+					copied++;
+				}
+				File.WriteAllText(Path.Combine(dst, "README.txt"), BackupReadme(id));
+				ModLog.Info("Backed up the game's own save (" + copied + " file(s)) to " + dst);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Backup of the game's own save failed:\n" + e);
+			}
+		}
+
+		private static string BackupReadme(string id)
+		{
+			return "Saves from before the Brante-Save-Load mod rewound the game\r\n"
+				+ "===============================================================\r\n\r\n"
+				+ "This folder is a copy of the game's own save \"" + id + "\", taken by the\r\n"
+				+ "Brante-Save-Load mod right before it first loaded one of its own saves.\r\n"
+				+ "From that moment on the game saved normally again, so the timeline you\r\n"
+				+ "have in the game now is the rewound one; this is the only copy of the\r\n"
+				+ "timeline you had before using the mod.\r\n\r\n"
+				+ "To restore it:\r\n"
+				+ "  1. Close the game.\r\n"
+				+ "  2. Open the game's save folder:\r\n"
+				+ "       %USERPROFILE%\\AppData\\LocalLow\\SEVER\\The Life and Suffering of Sir Brante\\Saves\\\r\n"
+				+ "     and delete (or rename) the folder named:\r\n"
+				+ "       " + id + "\r\n"
+				+ "  3. Copy the files in THIS folder back into a folder with that same name\r\n"
+				+ "     (one level up from here, so that ...\\Saves\\" + id + "\\Autosave.dat exists).\r\n"
+				+ "  4. Start the game and continue / load from its own menu.\r\n\r\n"
+				+ "The mod's own saves are not affected by any of this: they live in\r\n"
+				+ "Brante-Save-Load\\Runs\\ and are only removed from the mod's window.\r\n";
+		}
+
+		// The id the loaded save belongs to; used to repair the game's slot
+		// bookkeeping if it is empty when the game saves (which would drop
+		// files into Saves/ itself).
+		private static string _adoptedId;
+		private static bool _realIdLogged;
+		private static bool _repairLogged;
+
+		// Called from a prefix on SaveLoadManager.SaveGame/SaveChapterState:
+		// only fills in a MISSING id, never changes a real one.
+		public static void EnsureSlotId(object slmObj)
+		{
+			try
+			{
+				SaveLoadManager slm = slmObj as SaveLoadManager;
+				if (slm == null)
+				{
+					return;
+				}
+				// The adopted id is the normal source; the live save is the
+				// fallback for a save that happens before the mod adopted one.
+				string id = _adoptedId;
+				if (string.IsNullOrEmpty(id))
+				{
+					id = RealRunId(CurrentRunId());
+				}
+				if (string.IsNullOrEmpty(id))
+				{
+					return;
+				}
+				FieldInfo f = typeof(SaveLoadManager).GetField("_currentSaveSlotInfo",
+					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+				if (f == null)
+				{
+					return;
+				}
+				SaveSlotInfo slot = new SaveSlotInfo { Id = id };
+				f.SetValue(slm, slot);
+				// The chapter files are written through _currentSaveFile.
+				FieldInfo cf = typeof(SaveLoadManager).GetField("_currentSaveFile",
+					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+				SaveLoadHelper cur = cf != null ? cf.GetValue(slm) as SaveLoadHelper : null;
+				if (cur != null)
+				{
+					if (cur.SlotInfo == null)
+					{
+						cur.SlotInfo = new SaveSlotInfo();
+					}
+					cur.SlotInfo.Id = id;
+				}
+				if (!_repairLogged)
+				{
+					_repairLogged = true;
+					ModLog.Info("Save repair: the game's slot id was empty, set to " + id);
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: save repair failed:\n" + e);
+			}
+		}
+
+		// Last line of defence: SaveLoadManager.GetSaveFolderPath() returns
+		// the bare Saves/ folder when the slot id is empty, which would drop
+		// autosaves and chapter files next to the save folders. Corrected in
+		// place, only when it points at the root and a run is known.
+		public static void FixSaveFolder(ref string path)
+		{
+			try
+			{
+				if (string.IsNullOrEmpty(path))
+				{
+					return;
+				}
+				string root = Path.Combine(Application.persistentDataPath, "Saves");
+				bool isRoot = string.Equals(path.TrimEnd('\\', '/'), root.TrimEnd('\\', '/'),
+					StringComparison.OrdinalIgnoreCase);
+				bool mangled = !isRoot && !Directory.Exists(path)
+					&& !string.IsNullOrEmpty(_adoptedId)
+					&& Sanitize(_adoptedId).Equals(
+						Path.GetFileName(path.TrimEnd('\\', '/')), StringComparison.OrdinalIgnoreCase);
+				if (!isRoot && !mangled)
+				{
+					return;
+				}
+				string id = _adoptedId;
+				if (string.IsNullOrEmpty(id))
+				{
+					id = RealRunId(CurrentRunId());
+				}
+				if (string.IsNullOrEmpty(id))
+				{
+					return;
+				}
+				path = Path.Combine(root, id);
+				if (!_repairLogged)
+				{
+					_repairLogged = true;
+					ModLog.Info("Save repair: save folder was the bare Saves/ or a mangled name, "
+						+ "redirected to " + path);
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: save folder repair failed:\n" + e);
+			}
+		}
+
+		// Points the game's slot bookkeeping at the save we just loaded, so
+		// its own autosaves and chapter files go to that save's folder (they
+		// would otherwise land in Saves/ itself).
+		public static void AdoptAsCurrentSave(SaveLoadManager slm, SaveLoadHelper helper)
+		{
+			try
+			{
+				if (slm == null)
+				{
+					slm = UnityEngine.Object.FindObjectOfType<SaveLoadManager>();
+				}
+				if (slm == null)
+				{
+					ModLog.Info("Recorder: no SaveLoadManager to adopt the save slot on");
+					return;
+				}
+				if (helper == null || helper.SlotInfo == null
+					|| string.IsNullOrEmpty(helper.SlotInfo.Id))
+				{
+					// Nothing trustworthy to adopt; keep the previous one so a
+					// known-good id is never replaced by an empty one.
+					ModLog.Info("Recorder: loaded save has no main-save id; keeping the previous one");
+					return;
+				}
+				FieldInfo f = typeof(SaveLoadManager).GetField("_currentSaveSlotInfo",
+					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+				if (f != null)
+				{
+					f.SetValue(slm, helper.SlotInfo);
+				}
+				_adoptedId = helper.SlotInfo.Id;
+				ModLog.Info("Game saves continue into Saves/" + helper.SlotInfo.Id);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: adopting the save slot failed:\n" + e);
 			}
 		}
 

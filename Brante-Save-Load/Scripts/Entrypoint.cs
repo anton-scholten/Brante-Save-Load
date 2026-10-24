@@ -96,18 +96,13 @@ namespace Doorstop
 					postfix: new HarmonyMethod(typeof(Entrypoint), t[2]));
 				ModLog.Info("Patched " + type.Name + "." + t[1] + " (postfix -> " + t[2] + ")");
 			}
-			PatchSaveGate(harmony);
+			PatchSaveRepair(harmony);
 		}
 
-		// Save-game gate (normally a no-op): while Recorder.BlockGameSaves is
-		// set (dev autoload harness, or after loading a choice snapshot),
-		// stop the game's own save entry points from writing into Saves/.
-		// Loading a snapshot bypasses the slot bookkeeping that decides WHERE
-		// autosaves go, so without this the game would drop files into odd
-		// places - and a snapshot load must never touch the original save.
-		private static bool _saveGateLogged;
-
-		private static void PatchSaveGate(Harmony harmony)
+		// The game's save calls are left alone, but if its slot bookkeeping is
+		// empty at that moment (it can be, after a mod load) the files would
+		// land in Saves/ itself. The prefix only fills in a MISSING id.
+		private static void PatchSaveRepair(Harmony harmony)
 		{
 			Type slm = Type.GetType("_Scripts.Managers.SaveLoadManager, Assembly-CSharp");
 			if (slm == null)
@@ -121,25 +116,29 @@ namespace Doorstop
 					|| (m.Name == "SaveChapterState" && m.GetParameters().Length == 0))
 				{
 					harmony.Patch(m,
-						prefix: new HarmonyMethod(typeof(Entrypoint), "SaveGatePrefix"));
-					ModLog.Info("Patched " + slm.Name + "." + m.Name + " (save gate prefix)");
+						prefix: new HarmonyMethod(typeof(Entrypoint), "SaveRepairPrefix"));
+					ModLog.Info("Patched " + slm.Name + "." + m.Name + " (slot repair prefix)");
 				}
+			}
+			// The single funnel every save path uses to find its folder.
+			MethodInfo folder = slm.GetMethod("GetSaveFolderPath",
+				BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			if (folder != null)
+			{
+				harmony.Patch(folder,
+					postfix: new HarmonyMethod(typeof(Entrypoint), "SaveFolderPostfix"));
+				ModLog.Info("Patched " + slm.Name + ".GetSaveFolderPath (folder repair postfix)");
 			}
 		}
 
-		private static bool SaveGatePrefix()
+		private static void SaveFolderPostfix(ref string __result)
 		{
-			if (!Recorder.BlockGameSaves)
-			{
-				return true;
-			}
-			if (!_saveGateLogged)
-			{
-				_saveGateLogged = true;
-				ModLog.Info("Game saves blocked for this session (Saves/ stays untouched; "
-					+ "progress is kept via choice-point snapshots)");
-			}
-			return false;
+			Recorder.FixSaveFolder(ref __result);
+		}
+
+		private static void SaveRepairPrefix(object __instance)
+		{
+			Recorder.EnsureSlotId(__instance);
 		}
 
 		// Runs on the main thread, engine fully up, at the end of Awake() of
