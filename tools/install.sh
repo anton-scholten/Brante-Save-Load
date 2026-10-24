@@ -11,7 +11,7 @@
 #
 # What gets installed:
 #   game folder:
-#     BranteLoadAny        -> symlink/copy of the repo's BranteLoadAny/
+#     Brante-Save-Load     -> symlink/copy of the repo's Brante-Save-Load/
 #     doorstop_config.ini  -> from repo doorstop/ (edited once, then yours)
 #     winhttp.dll          -> Doorstop's proxy DLL (from vendor/doorstop/)
 #   Proton prefix (if the game has one):
@@ -24,7 +24,7 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MOD_NAME="BranteLoadAny"
+MOD_NAME="Brante-Save-Load"
 SRC="$REPO_DIR/$MOD_NAME"
 
 MODE="link"
@@ -102,7 +102,7 @@ wine_override_add() {
         echo "the game now starts modded without any launch option."
         if pgrep -x wineserver >/dev/null 2>&1; then
             echo "Note: a wineserver is still running. If the override does not"
-            echo "stick (check BranteLoadAny/BranteLoadAny.log after one run),"
+            echo "stick (check Brante-Save-Load/Brante-Save-Load.log after one run),"
             echo "close everything Proton and re-run ./tools/install.sh --no-build."
         fi
         return 0
@@ -154,11 +154,12 @@ wine_override_del() {
 }
 
 DEST="$GAME/$MOD_NAME"
+LEGACY="$GAME/BranteLoadAny"   # the mod's old name, cleaned up if left behind
 DOORSTOP_INI="$GAME/doorstop_config.ini"
 WINHTTP="$GAME/winhttp.dll"
 
 if [[ "$MODE" == "uninstall" ]]; then
-    for path in "$DEST" "$DOORSTOP_INI" "$WINHTTP"; do
+    for path in "$DEST" "$LEGACY" "$DOORSTOP_INI" "$WINHTTP"; do
         if [[ -L "$path" ]]; then
             rm "$path"; echo "Removed symlink $path"
         elif [[ -f "$path" ]]; then
@@ -197,11 +198,14 @@ fi
 # Install the Doorstop bootstrap. Steam verifies game files, so these three
 # entries are exactly what a 'verify integrity' pass would not expect - the
 # uninstaller (or Steam's verify) removes them cleanly.
+# A link from the mod's old name would keep the game loading the old DLL.
+[[ -L "$LEGACY" ]] && rm "$LEGACY" && echo "Removed the old $LEGACY link"
+
 if [[ "$MODE" == "copy" ]]; then
     rm -rf "$DEST"
     mkdir -p "$DEST"
     cp -f "$SRC/$MOD_NAME.dll" "$SRC/0Harmony.dll" "$DEST/"
-    [[ -f "$SRC/BranteLoadAny.log" ]] && rm -f "$DEST/BranteLoadAny.log"
+    [[ -f "$SRC/$MOD_NAME.log" ]] && rm -f "$DEST/$MOD_NAME.log"
     echo "Copied mod to $DEST"
 else
     [[ -L "$DEST" ]] && rm "$DEST"
@@ -223,7 +227,7 @@ Done. Next:
      Wine override, so no launch option is needed (if that step reported no
      prefix, use:  WINEDLLOVERRIDES=winhttp=n,b %command%).
   2. Read the probe log:
-       cat BranteLoadAny/BranteLoadAny.log
+       cat Brante-Save-Load/Brante-Save-Load.log
      (in the game folder; with a symlink it is in the repo)
 
 Note: Doorstop only injects C# code. It does not modify game logic by itself.

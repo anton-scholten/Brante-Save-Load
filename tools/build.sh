@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Compiles BranteLoadAny.dll for The Life and Suffering of Sir Brante.
+# Compiles Brante-Save-Load.dll for The Life and Suffering of Sir Brante.
 #
 #   ./tools/build.sh            build the mod assembly
 #   ./tools/build.sh --check    compile to a temp file only, write nothing
@@ -17,9 +17,9 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SRC_DIR="$REPO_DIR/BranteLoadAny/Scripts"
-OUT="$REPO_DIR/BranteLoadAny/BranteLoadAny.dll"
-BUILD_DIR="${TMPDIR:-/tmp}/brante-loadany-build"
+SRC_DIR="$REPO_DIR/Brante-Save-Load/Scripts"
+OUT="$REPO_DIR/Brante-Save-Load/Brante-Save-Load.dll"
+BUILD_DIR="${TMPDIR:-/tmp}/brante-save-load-build"
 
 CHECK_ONLY=0
 if [[ "${1:-}" == "--check" ]]; then
@@ -76,7 +76,7 @@ echo "Game:    $GAME"
 echo "Managed: $MANAGED"
 
 mkdir -p "$BUILD_DIR"
-TMP_OUT="$BUILD_DIR/BranteLoadAny.$$.dll"
+TMP_OUT="$BUILD_DIR/Brante-Save-Load.$$.dll"
 trap 'rm -f "$TMP_OUT"' EXIT
 
 # -nostdlib: the game's mscorlib is the framework. Referencing the game's own
@@ -109,6 +109,6 @@ if [[ $CHECK_ONLY -eq 1 ]]; then
     echo "Build OK (check only; $(stat -c%s "$TMP_OUT") bytes, not installed)"
 else
     mv -f "$TMP_OUT" "$OUT"
-    cp -f "$HARMONY" "$REPO_DIR/BranteLoadAny/0Harmony.dll"
+    cp -f "$HARMONY" "$REPO_DIR/Brante-Save-Load/0Harmony.dll"
     echo "Build OK -> $OUT (+ 0Harmony.dll copied alongside)"
 fi

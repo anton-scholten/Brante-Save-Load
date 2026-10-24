@@ -61,7 +61,7 @@ namespace Doorstop
 
 		private static void PatchGameBootMethods()
 		{
-			var harmony = new Harmony("brante.loadanychoice");
+			var harmony = new Harmony("brante.save-load");
 			// type name -> method to postfix -> postfix handler; each fires on
 			// the main thread early in the respective scene, engine fully up.
 			string[][] targets =
@@ -176,7 +176,7 @@ namespace Doorstop
 			GameObject go = null;
 			try
 			{
-				go = new GameObject("BranteLoadAny");
+				go = new GameObject("Brante-Save-Load");
 				UnityEngine.Object.DontDestroyOnLoad(go);
 				go.AddComponent<ModHost>();
 				_hostCreated = true;

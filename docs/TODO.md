@@ -30,7 +30,7 @@ The plan, as approved, with status. Phases 0–4 are done; 5–7 are ahead.
   - Working path: `AssemblyLoad` hook → Harmony postfix on
     `GameManager`/`SaveLoadManager`/`MainMenuController.Awake` → host GameObject created
     in the first of those, engine fully up. ~20s from game start to probe output.
-- [x] Probe results (all confirmed in `BranteLoadAny/BranteLoadAny.log`):
+- [x] Probe results (all confirmed in `Brante-Save-Load/Brante-Save-Load.log`):
   - `log.txt` empty (0 bytes) in a real session — dead code, mod records choices itself
   - `persistentDataPath` = `C:/users/steamuser/AppData/LocalLow/SEVER/…` (Proton prefix)
   - `SaveLoadManager.LoadGame(SaveLoadHelper)` present at runtime, instances of
@@ -54,7 +54,7 @@ The plan, as approved, with status. Phases 0–4 are done; 5–7 are ahead.
   *not* `IsShowed`, which is exactly what makes the loader re-open it)
 - [x] Snapshot the full `SaveLoadHelper` (field-by-field mirror of the game's
   `SaveData`, but **no** game save code called and no file I/O outside
-  `<persistentDataPath>/BranteLoadAny/Snapshots/`) — 17 KB BinaryFormatter blob,
+  `<persistentDataPath>/Brante-Save-Load/Snapshots/`) — 17 KB BinaryFormatter blob,
   byte-identical format to the game's own saves
 - [x] Sidecar `.meta.txt`: timestamp, hero/age/year/turn/season, chapter,
   localized scene title, and every offered choice text
@@ -112,13 +112,13 @@ The plan, as approved, with status. Phases 0–4 are done; 5–7 are ahead.
 ## Phase 5 — separate manual save/load (done, 23 Oct 2026)
 
 - [x] "Save now" / load / remove for the mod's own saves (same snapshot
-  format), stored in `<persistentDataPath>/BranteLoadAny/Slots/` as
+  format), stored in `<persistentDataPath>/Brante-Save-Load/Slots/` as
   `save_<timestamp>.dat` with `.meta.txt` sidecars (`Recorder.SaveManual`)
 - [x] Lives in the same window as a second tab ("Saved games"), next to
   "Choice points". Every save/load/remove goes through the confirm dialog
 - [x] Nothing is written to the game's `Saves/` folder
 - [x] Documented as independent of the game's saves in README
-- [x] Saves keyed by main-save ID (`BranteLoadAny/Runs/<ID>/`), list shows the current run only
+- [x] Saves keyed by main-save ID (`Brante-Save-Load/Runs/<ID>/`), list shows the current run only
 - [x] Existing saves migrated into the run folders at startup (`Recorder.MigrateLegacy`):
   matched by hero name when exactly one main save exists; verified in-game (21 moved, 0 kept)
 - [x] Run pinned on load, so saves stay in the right folder after loading a snapshot

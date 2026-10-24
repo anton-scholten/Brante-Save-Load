@@ -194,7 +194,7 @@ namespace Doorstop
 			List<Button> cands = new List<Button>();
 			foreach (Button b in pause.GetComponentsInChildren<Button>(true))
 			{
-				if (!b.gameObject.activeInHierarchy || b.name.StartsWith("BranteLoadAny", StringComparison.Ordinal)
+				if (!b.gameObject.activeInHierarchy || b.name.StartsWith("BranteSaveLoad_", StringComparison.Ordinal)
 					|| b.GetComponentInChildren<TMP_Text>(true) == null)
 				{
 					continue;
@@ -237,7 +237,7 @@ namespace Doorstop
 			Transform menu = row.parent;
 
 			GameObject clone = UnityEngine.Object.Instantiate(row.gameObject, menu);
-			clone.name = "BranteLoadAny_LoadAnyRow";
+			clone.name = "BranteSaveLoad_LoadAnyRow";
 			clone.transform.SetSiblingIndex(row.GetSiblingIndex() + 1);
 			foreach (Behaviour bh in clone.GetComponentsInChildren<Behaviour>(true))
 			{
@@ -310,7 +310,7 @@ namespace Doorstop
 
 		private static void BuildCanvas()
 		{
-			_canvas = CreateUiObject("BranteLoadAny_ChoiceWindow", null);
+			_canvas = CreateUiObject("BranteSaveLoad_ChoiceWindow", null);
 			// Our own overlay canvas: independent of the game's window
 			// layout, destroyed only by us (survives scene transitions).
 			UnityEngine.Object.DontDestroyOnLoad(_canvas);

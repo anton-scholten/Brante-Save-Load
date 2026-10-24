@@ -24,7 +24,7 @@ namespace Doorstop
 	//
 	// Deliberate differences from the game's SaveData():
 	//  - no file I/O into the game's Saves/ folder (structural isolation:
-	//    we only ever write into <persistentDataPath>/BranteLoadAny/)
+	//    we only ever write into <persistentDataPath>/Brante-Save-Load/)
 	//  - SlotInfo kept empty and stable so identical states produce
 	//    byte-identical blobs, which makes dedup exact
 	public static class Recorder
@@ -42,7 +42,7 @@ namespace Doorstop
 		{
 			get
 			{
-				return Path.Combine(Application.persistentDataPath, "BranteLoadAny", "Snapshots");
+				return Path.Combine(Application.persistentDataPath, "Brante-Save-Load", "Snapshots");
 			}
 		}
 
@@ -57,7 +57,7 @@ namespace Doorstop
 		{
 			get
 			{
-				return Path.Combine(Application.persistentDataPath, "BranteLoadAny", "Runs");
+				return Path.Combine(Application.persistentDataPath, "Brante-Save-Load", "Runs");
 			}
 		}
 
@@ -171,7 +171,7 @@ namespace Doorstop
 
 				List<string[]> legacy = new List<string[]>();
 				AddLegacy(legacy, SnapshotDir, "Auto");
-				AddLegacy(legacy, Path.Combine(Application.persistentDataPath, "BranteLoadAny", "Slots"), "Manual");
+				AddLegacy(legacy, Path.Combine(Application.persistentDataPath, "Brante-Save-Load", "Slots"), "Manual");
 				AddLegacy(legacy, RunDir(null, "Auto"), "Auto");
 				AddLegacy(legacy, RunDir(null, "Manual"), "Manual");
 				if (legacy.Count == 0)
@@ -306,6 +306,26 @@ namespace Doorstop
 		{
 			string run = string.IsNullOrEmpty(runId) ? "_no_save" : Sanitize(runId);
 			return Path.Combine(RunsDir, run, kind);
+		}
+
+		// One-off rename of the mod's data folder after the mod was renamed
+		// from BranteLoadAny. Runs before anything else touches the folder.
+		public static void MigrateDataDir()
+		{
+			try
+			{
+				string oldDir = Path.Combine(Application.persistentDataPath, "BranteLoadAny");
+				string newDir = Path.Combine(Application.persistentDataPath, "Brante-Save-Load");
+				if (Directory.Exists(oldDir) && !Directory.Exists(newDir))
+				{
+					Directory.Move(oldDir, newDir);
+					ModLog.Info("Moved mod data folder to " + newDir);
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Moving the mod data folder failed:\n" + e);
+			}
 		}
 
 		// Called from ModHost.Start (engine fully up). Proves the plumbing

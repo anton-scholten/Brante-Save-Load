@@ -4,7 +4,7 @@ using System.IO;
 namespace Doorstop
 {
 	// File logger usable from the Doorstop entry point, before any Unity
-	// system exists. Appends to BranteLoadAny.log next to the assembly.
+	// system exists. Appends to Brante-Save-Load.log next to the assembly.
 	public static class ModLog
 	{
 		private static readonly object _lock = new object();
@@ -17,7 +17,7 @@ namespace Doorstop
 				if (_path == null)
 				{
 					string dir = System.IO.Path.GetDirectoryName(typeof(ModLog).Assembly.Location);
-					_path = System.IO.Path.Combine(dir ?? ".", "BranteLoadAny.log");
+					_path = System.IO.Path.Combine(dir ?? ".", "Brante-Save-Load.log");
 				}
 				return _path;
 			}

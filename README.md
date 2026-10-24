@@ -1,4 +1,4 @@
-# Brante — Load Any Choice
+# Brante — Save / Load
 
 A mod for [The Life and Suffering of Sir Brante](https://store.steampowered.com/app/1272160/)
 that lets you **return to any choice you have already reached** — no more losing an
@@ -22,7 +22,7 @@ never touches the game's saves.
   only** in one table: automatic choice points and manual saves (**"Save now"**,
   shown in a yellow row colour). Click a column header to sort by it, click again
   to reverse; the table scrolls and the × on the right removes a row. Saves are kept
-  per main save in `BranteLoadAny/Runs/<main save ID>/`, separate from the game's
+  per main save in `Brante-Save-Load/Runs/<main save ID>/`, separate from the game's
   saves: using them never changes your game saves, and the game's saves never
   change them. Saves from older versions of the mod are moved into the new
   per-main-save folders automatically on the next start.
@@ -47,13 +47,13 @@ have already rolled by the time a choice is visible. Details in
 
 Requires: the game (Steam), a .NET SDK (≥ 6) for building. Runs under Proton or
 native Windows. The installer places three things in the game folder — a symlink
-to `BranteLoadAny/`, `doorstop_config.ini` and `winhttp.dll` (Doorstop, the same
+to `Brante-Save-Load/`, `doorstop_config.ini` and `winhttp.dll` (Doorstop, the same
 bootstrap BepInEx uses, without BepInEx) — plus, under Proton, a per-app Wine
 `DllOverrides` entry in the game's compat-data prefix so the proxy DLL is picked
 up automatically. `./tools/install.sh --uninstall` removes exactly those,
 including the Wine override in the prefix. The game also survives the mod
 being half-removed: with `doorstop_config.ini`/`winhttp.dll` left behind but
-`BranteLoadAny/` gone, Doorstop fails silently and the game runs unmodded
+`Brante-Save-Load/` gone, Doorstop fails silently and the game runs unmodded
 (verified).
 
 ### Proton (Steam Play)
@@ -67,7 +67,7 @@ in Steam:
 WINEDLLOVERRIDES=winhttp=n,b %command%
 ```
 
-You can check it worked by looking at `BranteLoadAny/BranteLoadAny.log` in the game
+You can check it worked by looking at `Brante-Save-Load/Brante-Save-Load.log` in the game
 folder after starting the game — it should show the mod's first lines within
 seconds.
 

@@ -15,15 +15,15 @@ how the game works and where every fact used by the mod came from.
 ## Layout
 
 ```
-BranteLoadAny/               the folder that gets installed into the game dir
-  BranteLoadAny.dll          built by tools/build.sh; the Doorstop entry assembly
+Brante-Save-Load/            the folder that gets installed into the game dir
+  Brante-Save-Load.dll       built by tools/build.sh; the Doorstop entry assembly
   0Harmony.dll               vendored Harmony (copied by the build from vendor/)
   Scripts/*.cs               the source
     Entrypoint.cs            Doorstop entry: creates the host GameObject
     ModLog.cs                file logger (usable before Unity is up)
     ModHost.cs               the host component; probe first, features after
     Recorder.cs              choice-point snapshot capture + dedup
-    ChoiceWindow.cs          "Load any choice" pause button + list + load flow
+    ChoiceWindow.cs          save list window + settings button + load flow
 doorstop/doorstop_config.ini the Doorstop config installed into the game folder
 vendor/                      vendored third-party binaries + their licenses
   doorstop/winhttp.dll       Unity Doorstop 4.6.0 (x64), LGPL-2.1
@@ -37,7 +37,7 @@ docs/                        FINDINGS (what the game's code does), DESIGN, TODO
 
 ```sh
 ./tools/build.sh             # after editing any .cs  (dotnet SDK >= 6 required)
-./tools/install.sh           # build + install: symlink BranteLoadAny/, write
+./tools/install.sh           # build + install: symlink Brante-Save-Load/, write
                              # doorstop_config.ini + winhttp.dll into the game dir
 ./tools/install.sh --copy    # copy instead of symlink
 ./tools/install.sh --uninstall
@@ -87,14 +87,14 @@ and `--uninstall` removes exactly what was installed.
 ## Workflow the owner expects
 
 Finish each change with `./tools/build.sh` succeeding, then commit (including
-the rebuilt `BranteLoadAny/BranteLoadAny.dll` — the repo's mod folder is meant
+the rebuilt `Brante-Save-Load/Brante-Save-Load.dll` — the repo's mod folder is meant
 to be runnable without a toolchain, same as Besiege-Sand ships its DLL), then
-run `./tools/install.sh`. Read `BranteLoadAny/BranteLoadAny.log` after starting
+run `./tools/install.sh`. Read `Brante-Save-Load/Brante-Save-Load.log` after starting
 the game — that log is the mod's only diagnostic channel.
 
 To test the mod in-game without playing to a choice point, drop marker files
 into the mod's folder inside the Proton prefix
-(`<persistentDataPath>/BranteLoadAny/Snapshots/`): `dev-autoload.txt` replays
+(`<persistentDataPath>/Brante-Save-Load/Snapshots/`): `dev-autoload.txt` replays
 the vanilla load sequence onto the newest autosave, and `dev-uitest.txt`
 (alongside it) then drives the choice-list UI through every state. Kill the
 game's own `…Sir Brante.exe` processes (not just the Proton wrapper) plus
@@ -110,6 +110,6 @@ work here (black/`BadMatch` on the X1 root).
 
 - [docs/TODO.md](docs/TODO.md): what remains of the plan.
 - Phases 0–5 are done and verified in-game (the save list is a sortable table;
-  saves live per main save in `BranteLoadAny/Runs/<main save ID>/`, and older
+  saves live per main save in `Brante-Save-Load/Runs/<main save ID>/`, and older
   ones are migrated at startup). Phase 6 (reconstructing pre-mod choice history)
   and Phase 7 (polish) follow.

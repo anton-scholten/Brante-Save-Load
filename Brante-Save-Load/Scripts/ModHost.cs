@@ -29,6 +29,7 @@ namespace Doorstop
 		{
 			Probe("Start", RunProbes);
 			ProbeGameManagers();
+			Recorder.MigrateDataDir();
 			Recorder.Arm();
 			Recorder.MigrateLegacy();
 			StartCoroutine(DevAutoload());
@@ -36,7 +37,7 @@ namespace Doorstop
 
 		private void RunProbes()
 		{
-			ModLog.Info("=== BranteLoadAny probe ===");
+			ModLog.Info("=== Brante-Save-Load probe ===");
 			ModLog.Info("Unity " + Application.unityVersion + ", platform " + Application.platform);
 			ModLog.Info("persistentDataPath: " + Application.persistentDataPath);
 			ProbeSaves();
@@ -135,7 +136,7 @@ namespace Doorstop
 		}
 
 		// DEV-ONLY test harness (not part of the player-facing mod): if
-		// <persistentDataPath>/BranteLoadAny/Snapshots/dev-autoload.txt
+		// <persistentDataPath>/Brante-Save-Load/Snapshots/dev-autoload.txt
 		// exists shortly after boot, load the newest autosave and play out
 		// the game's OWN load sequence (loading screen -> dissolve ->
 		// AutomaticSceneLoad) without any UI interaction - used to exercise

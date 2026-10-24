@@ -175,7 +175,7 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
    `_Scripts.Managers.GameManager`, `_Scripts.Managers.SaveLoadManager` and
    `_Scripts.AMVCC.Controllers.MainMenuController` (Harmony is pure IL work, safe here).
 3. First of those `Awake()`s runs ~12s later on the main thread, engine fully up. Its
-   postfix creates the host `GameObject` (`new GameObject("BranteLoadAny")` +
+   postfix creates the host `GameObject` (`new GameObject("Brante-Save-Load")` +
    `DontDestroyOnLoad` + `AddComponent<ModHost>`) — first-ever Unity API call, works.
 4. Probe results from that host:
    - `Unity 2018.3.0f2`, platform `WindowsPlayer`.
@@ -316,7 +316,7 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
 - Inside one playthrough there is only one rolling `Autosave.dat` plus the
   per-chapter files, so the same hero name can exist several times (one per
   playthrough) but a playthrough never has several saves of its own.
-- The mod therefore keys its saves by that ID: `BranteLoadAny/Runs/<ID>/Auto`
+- The mod therefore keys its saves by that ID: `Brante-Save-Load/Runs/<ID>/Auto`
   (choice points) and `.../Manual` ("Save now"). The list shows only the
   current ID. Older snapshots recorded before this change have no ID and are
   not listed.
