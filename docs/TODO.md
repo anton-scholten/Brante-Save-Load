@@ -167,15 +167,19 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   the game would look for `Saves/Chapter_N.dat` — missing — and fall back to a
   default save, resetting the run. New snapshots store the real ID, and the load
   flow fills it in for old ones (verified in-game: `main save=Biggie_10/23/…`).
-- [x] Language switch: the window is rebuilt when the game language changes, so
-  the labels get the language's font. Our own strings are English only (the
-  game has no keys for them) — known limitation.
+- [x] Language switch and translations (24 Oct 2026): the window rebuilds when
+  the game language changes, and every string the mod shows is translated into
+  the game's eleven languages (`Loc.cs`); the game's own keys are used for
+  chapter names and scene titles, so those follow the language too. Verified
+  in-game in Russian.
 - [ ] Chapter transitions: after a rewind the game's chapter files stay frozen
   (the save gate), so "Restart chapter" jumps to the ORIGINAL chapter start, not
   the rewound one. Needs a decision: keep (protects the original timeline) or
   let the rewound timeline write its own chapter files into `Saves/` (forbidden).
-- [ ] Iron Man mode: the game disables chapter replay there; the mod ignores
-  that by design. Decide and document (not a bug).
+- [x] Iron Man mode (24 Oct 2026): the game disables its own chapter-load menu
+  in Iron Man; the mod's window ignores that and keeps working (verified by
+  loading a save with `IronManMode` forced on: scene reopens, no errors). The
+  game's autosaves stay blocked after a rewind as in a normal run.
 - [ ] Achievement side-effects on load (expected: none harmful; verify).
 - [ ] Load a save after switching to a different main save (per-run folders make
   this testable now).

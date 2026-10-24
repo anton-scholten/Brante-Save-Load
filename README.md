@@ -28,6 +28,12 @@ never touches the game's saves.
   saves: using them never changes your game saves, and the game's saves never
   change them. Saves from older versions of the mod are moved into the new
   per-main-save folders automatically on the next start.
+- **In your language.** The mod's own window follows the game language and is
+  translated into all eleven languages the game ships (English, Russian, German,
+  French, Spanish, Italian, Polish, Turkish, Japanese, Korean, Simplified
+  Chinese): switch the language in the settings and the window rebuilds.
+- **Iron Man included.** The game disables its own save/load menu in Iron Man;
+  the mod's window keeps working there, so a permadeath run can still be rewound.
 - **Playthrough history.** The game records every scene the current save has
   passed through. **History** in the same window lists that path in order,
   including the part played before the mod was installed, and marks the scenes

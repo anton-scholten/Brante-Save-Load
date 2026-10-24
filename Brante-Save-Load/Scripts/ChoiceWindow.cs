@@ -220,12 +220,25 @@ namespace Doorstop
 		// name is the same on every row.
 		private enum Col { Type, Saved, Chapter, Age, Year, Season, Turn, Scene, Choice }
 
-		private static readonly string[] ColNames =
-		{ "Save type", "Saved", "Chapter", "Age", "Year", "Season", "Turn", "Scene", "Choice" };
+		private static string ColName(Col c)
+		{
+			switch (c)
+			{
+				case Col.Type: return Loc.T(Loc.K.ColType);
+				case Col.Saved: return Loc.T(Loc.K.ColSaved);
+				case Col.Chapter: return Loc.T(Loc.K.ColChapter);
+				case Col.Age: return Loc.T(Loc.K.ColAge);
+				case Col.Year: return Loc.T(Loc.K.ColYear);
+				case Col.Season: return Loc.T(Loc.K.ColSeason);
+				case Col.Turn: return Loc.T(Loc.K.ColTurn);
+				case Col.Scene: return Loc.T(Loc.K.ColScene);
+				default: return Loc.T(Loc.K.ColChoice);
+			}
+		}
 
 		// Preferred widths in reference px; Choice takes whatever is left.
 		private static readonly float[] ColWidths =
-		{ 130f, 170f, 150f, 70f, 80f, 100f, 80f, 120f, 200f };
+		{ 130f, 170f, 150f, 115f, 80f, 100f, 80f, 120f, 200f };
 
 		private const float RowHeight = 44f;
 		private const float HeaderHeight = 36f;
@@ -240,6 +253,7 @@ namespace Doorstop
 			public DateTime Saved;
 			public int Chapter;
 			public string ChapterName;
+			public string ChapterKey;
 			public string Hero;
 			public int Age;
 			public int Year;
@@ -249,7 +263,18 @@ namespace Doorstop
 
 			public string Choice
 			{
-				get { return string.IsNullOrEmpty(Title) ? Scene : Title; }
+				get
+				{
+					// Titles are localised at display time, so a language
+					// switch also changes them (they were captured in whatever
+					// language was active then).
+					string live = TitleOf(Scene);
+					if (!string.IsNullOrEmpty(live))
+					{
+						return live;
+					}
+					return string.IsNullOrEmpty(Title) ? Scene : Title;
+				}
 			}
 		}
 
@@ -385,7 +410,7 @@ namespace Doorstop
 			cb.onClick.AddListener(delegate { Open(); });
 			foreach (TMP_Text t in clone.GetComponentsInChildren<TMP_Text>(true))
 			{
-				t.text = "Save / Load";
+				t.text = Loc.T(Loc.K.Title);
 			}
 			_pauseBtn = clone;
 
@@ -496,7 +521,7 @@ namespace Doorstop
 
 			// Title.
 			TextMeshProUGUI title = AddLabel(panel.transform, "Title",
-				"Save / Load", 34f, ColTextDark, false);
+				Loc.T(Loc.K.Title), 34f, ColTextDark, false);
 			title.alignment = TextAlignmentOptions.MidlineLeft;
 			RectTransform trt = title.rectTransform;
 			trt.anchorMin = new Vector2(0f, 1f);
@@ -579,7 +604,7 @@ namespace Doorstop
 			nbtn.targetGraphic = nimg;
 			nbtn.onClick.AddListener(delegate { Ask(Pending.SaveNow, "", "", null); });
 			TextMeshProUGUI nlabel = AddLabel(_saveNowBtn.transform, "Label",
-				"Save now", 24f, ColTextLight, true);
+				Loc.T(Loc.K.SaveNow), 24f, ColTextLight, true);
 			Stretch(nlabel.rectTransform);
 
 			// History (bottom right): the scene path this playthrough took,
@@ -597,7 +622,7 @@ namespace Doorstop
 			hbtn2.targetGraphic = himg2;
 			hbtn2.onClick.AddListener(OpenHistory);
 			TextMeshProUGUI hlabel = AddLabel(_historyBtn.transform, "Label",
-				"History", 24f, ColTextLight, true);
+				Loc.T(Loc.K.History), 24f, ColTextLight, true);
 			Stretch(hlabel.rectTransform);
 
 			BuildConfirm(panel.transform);
@@ -672,7 +697,7 @@ namespace Doorstop
 			bimg.color = ColPanel;
 
 			TextMeshProUGUI title = AddLabel(box.transform, "Title",
-				"Playthrough", 32f, ColTextDark, false);
+				Loc.T(Loc.K.Playthrough), 32f, ColTextDark, false);
 			title.alignment = TextAlignmentOptions.MidlineLeft;
 			RectTransform trt = title.rectTransform;
 			trt.anchorMin = new Vector2(0f, 1f);
@@ -682,8 +707,7 @@ namespace Doorstop
 			trt.sizeDelta = new Vector2(-120f, 46f);
 
 			TextMeshProUGUI sub = AddLabel(box.transform, "Sub",
-				"Scenes this main save has been through, in order (recorded by the game).",
-				19f, ColTextDark, false);
+				Loc.T(Loc.K.PlaythroughSub), 19f, ColTextDark, false);
 			RectTransform srt2 = sub.rectTransform;
 			srt2.anchorMin = new Vector2(0f, 1f);
 			srt2.anchorMax = new Vector2(1f, 1f);
@@ -741,7 +765,7 @@ namespace Doorstop
 			Button cbtn = close.AddComponent<Button>();
 			cbtn.targetGraphic = cimg;
 			cbtn.onClick.AddListener(CloseHistory);
-			TextMeshProUGUI cl = AddLabel(close.transform, "Label", "Close", 24f, ColTextLight, true);
+			TextMeshProUGUI cl = AddLabel(close.transform, "Label", Loc.T(Loc.K.Close), 24f, ColTextLight, true);
 			Stretch(cl.rectTransform);
 
 			_historyPanel.SetActive(false);
@@ -804,8 +828,8 @@ namespace Doorstop
 
 				TextMeshProUGUI label = AddLabel(row.transform, "Text",
 					shown + ".  " + e.Title
-					+ (e.HasSnapshot ? "   [save available]" : "")
-					+ (e.IsShowed ? "" : "   [current]"),
+					+ (e.HasSnapshot ? "   [" + Loc.T(Loc.K.SaveAvailable) + "]" : "")
+					+ (e.IsShowed ? "" : "   [" + Loc.T(Loc.K.Current) + "]"),
 					19f, ColTextDark, false);
 				label.overflowMode = TextOverflowModes.Ellipsis;
 				label.enableWordWrapping = false;
@@ -828,7 +852,7 @@ namespace Doorstop
 			if (shown == 0)
 			{
 				TextMeshProUGUI empty = AddLabel(_historyList, "Empty",
-					"Nothing recorded yet.", 20f, ColTextDark, true);
+					Loc.T(Loc.K.NothingYet), 20f, ColTextDark, true);
 				LayoutElement le = empty.gameObject.AddComponent<LayoutElement>();
 				le.preferredHeight = 50f;
 			}
@@ -880,12 +904,12 @@ namespace Doorstop
 			hlg.childForceExpandWidth = false;
 			hlg.childForceExpandHeight = true;
 
-			_headerLabels = new TextMeshProUGUI[ColNames.Length];
-			_sortIcons = new Image[ColNames.Length];
-			for (int i = 0; i < ColNames.Length; i++)
+			_headerLabels = new TextMeshProUGUI[ColWidths.Length];
+			_sortIcons = new Image[ColWidths.Length];
+			for (int i = 0; i < ColWidths.Length; i++)
 			{
 				Col col = (Col)i;
-				GameObject cell = CreateUiObject("Head_" + ColNames[i], header.transform);
+				GameObject cell = CreateUiObject("Head_" + col, header.transform);
 				Image img = cell.AddComponent<Image>();
 				img.color = ColButtonDark;
 				Button btn = cell.AddComponent<Button>();
@@ -897,7 +921,7 @@ namespace Doorstop
 				{
 					le.flexibleWidth = 1f;
 				}
-				TextMeshProUGUI label = AddLabel(cell.transform, "Label", ColNames[i], 19f, ColTextLight,
+				TextMeshProUGUI label = AddLabel(cell.transform, "Label", ColName(col), 19f, ColTextLight,
 					col != Col.Choice);
 				label.overflowMode = TextOverflowModes.Ellipsis;
 				label.enableWordWrapping = false;
@@ -1007,7 +1031,7 @@ namespace Doorstop
 			_confirmLoadBtn = loadBtn.AddComponent<Button>();
 			_confirmLoadBtn.targetGraphic = limg;
 			_confirmLoadBtn.onClick.AddListener(delegate { RunPending(); });
-			TextMeshProUGUI lt = AddLabel(loadBtn.transform, "Label", "Load", 24f, ColTextLight, true);
+			TextMeshProUGUI lt = AddLabel(loadBtn.transform, "Label", Loc.T(Loc.K.Load), 24f, ColTextLight, true);
 			Stretch(lt.rectTransform);
 			_confirmLoadLabel = lt;
 
@@ -1023,7 +1047,7 @@ namespace Doorstop
 			Button xbtn = cancelBtn.AddComponent<Button>();
 			xbtn.targetGraphic = ximg;
 			xbtn.onClick.AddListener(CancelConfirm);
-			TextMeshProUGUI xt = AddLabel(cancelBtn.transform, "Label", "Cancel", 24f, ColTextLight, true);
+			TextMeshProUGUI xt = AddLabel(cancelBtn.transform, "Label", Loc.T(Loc.K.Cancel), 24f, ColTextLight, true);
 			Stretch(xt.rectTransform);
 
 			_confirmPanel.SetActive(false);
@@ -1043,19 +1067,16 @@ namespace Doorstop
 			switch (action)
 			{
 				case Pending.Load:
-					body = "Load this save?\n\n" + title
-						+ "\n\nYour original save will not be modified.";
-					label = "Load";
+					body = string.Format(Loc.T(Loc.K.ConfirmLoad), title);
+					label = Loc.T(Loc.K.Load);
 					break;
 				case Pending.Delete:
-					body = "Remove this save from the list?\n\n" + title
-						+ "\n\nThe file is deleted. Your game saves are not touched.";
-					label = "Delete";
+					body = string.Format(Loc.T(Loc.K.ConfirmDelete), title);
+					label = Loc.T(Loc.K.Delete);
 					break;
 				default:
-					body = "Save the current game now?\n\n"
-						+ "It is added to the list as a new row. Your game saves are not touched.";
-					label = "Save";
+					body = Loc.T(Loc.K.ConfirmSave);
+					label = Loc.T(Loc.K.Save);
 					break;
 			}
 			if (_confirmText != null)
@@ -1259,6 +1280,7 @@ namespace Doorstop
 					DateTime recorded = ReadRecorded(f);
 					entry.Saved = recorded != DateTime.MinValue ? recorded : File.GetLastWriteTime(f);
 					entry.Chapter = h.Chapter;
+					entry.ChapterKey = h.ChapterName ?? "";
 					entry.ChapterName = StageName(h.ChapterName);
 					entry.Hero = h.HeroName ?? "";
 					entry.Age = h.HeroAge;
@@ -1285,6 +1307,54 @@ namespace Doorstop
 			}
 			int dot = chapterKey.IndexOf('.');
 			return dot >= 0 ? chapterKey.Substring(dot + 1) : chapterKey;
+		}
+
+		// The chapter, translated from its key ("Chapter1.Childhood"), with
+		// the stripped name and then the number as fallbacks.
+		private static string ChapterText(SaveEntry e)
+		{
+			string t = Translate(e.ChapterKey);
+			if (!string.IsNullOrEmpty(t) && t != e.ChapterKey)
+			{
+				return t;
+			}
+			if (e.ChapterName.Length > 0)
+			{
+				return e.ChapterName;
+			}
+			return e.Chapter.ToString();
+		}
+
+		// A game localisation key in the current language, key as fallback.
+		private static string Translate(string key)
+		{
+			try
+			{
+				string t = I2.Loc.LocalizationManager.GetTranslation(key);
+				return string.IsNullOrEmpty(t) ? key : t;
+			}
+			catch
+			{
+				return key;
+			}
+		}
+
+		// The scene's title in the current language, "" if the key is missing.
+		private static string TitleOf(string scene)
+		{
+			if (string.IsNullOrEmpty(scene))
+			{
+				return "";
+			}
+			try
+			{
+				string t = I2.Loc.LocalizationManager.GetTranslation(scene + "_Title");
+				return string.IsNullOrEmpty(t) || t == scene + "_Title" ? "" : t;
+			}
+			catch
+			{
+				return "";
+			}
 		}
 
 		// The sidecar's "recorded=" timestamp, or DateTime.MinValue.
@@ -1395,8 +1465,7 @@ namespace Doorstop
 			if (_entries.Count == 0)
 			{
 				TextMeshProUGUI empty = AddLabel(_itemContainer, "Empty",
-					"No saves yet. Choice points are recorded automatically; use \"Save now\" below.",
-					22f, ColTextDark, true);
+					Loc.T(Loc.K.EmptySaves), 22f, ColTextDark, true);
 				LayoutElement le = empty.gameObject.AddComponent<LayoutElement>();
 				le.preferredHeight = 60f;
 				return;
@@ -1433,10 +1502,11 @@ namespace Doorstop
 
 			string[] values =
 			{
-				e.Kind,
+				e.Kind == "Manual" ? Loc.T(Loc.K.TypeManual) : Loc.T(Loc.K.TypeAuto),
 				e.Saved.ToString("yyyy-MM-dd HH:mm"),
-				// Shown by name; the column still sorts on the chapter number.
-				e.ChapterName.Length > 0 ? e.ChapterName : e.Chapter.ToString(),
+				// Shown by name (translated); the column still sorts on the
+				// chapter number.
+				ChapterText(e),
 				e.Age.ToString(),
 				e.Year.ToString(),
 				e.Season.ToString(),
@@ -1547,7 +1617,8 @@ namespace Doorstop
 
 			ModLog.Info("ChoiceWindow: loading " + Path.GetFileName(datPath)
 				+ " (scene=" + helper.LastOpenScene
-				+ ", main save=" + (helper.SlotInfo != null ? helper.SlotInfo.Id : "") + ")");
+				+ ", main save=" + (helper.SlotInfo != null ? helper.SlotInfo.Id : "")
+				+ ", ironman=" + helper.IronManMode + ")");
 			// The blob has no ID (for stable dedup), so the run comes from
 			// the folder the file sits in.
 			string runId = Recorder.RunIdFromPath(datPath);
@@ -1564,6 +1635,11 @@ namespace Doorstop
 					helper.SlotInfo = new SaveSlotInfo();
 				}
 				helper.SlotInfo.Id = runId;
+			}
+			if (File.Exists(Path.Combine(Recorder.SnapshotDir, "dev-ironman.txt")))
+			{
+				helper.IronManMode = true;
+				ModLog.Info("DEV IRONMAN: loading the save as an Iron Man game");
 			}
 			Recorder.PinRunId(runId);
 			// From here on the game's own Saves/ stays frozen for the rest

@@ -288,6 +288,13 @@ namespace Doorstop
 				}
 				ModLog.Info("DEV AUTOLOAD: " + newest + " -> hero '" + helper.HeroName
 					+ "', scene '" + helper.LastOpenScene + "', turn " + helper.Turn);
+				// Dev: run the loaded save as an Iron Man game, so the mod's
+				// load path can be exercised in that mode.
+				if (File.Exists(Path.Combine(Recorder.SnapshotDir, "dev-ironman.txt")))
+				{
+					helper.IronManMode = true;
+					ModLog.Info("DEV IRONMAN: forcing IronManMode on the loaded save");
+				}
 				Recorder.PinRunId(helper.SlotInfo != null ? helper.SlotInfo.Id : null);
 				SaveLoadManager.Instance.LoadGame(helper);
 				return helper.LastOpenScene;
