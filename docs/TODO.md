@@ -93,13 +93,11 @@ The plan, as approved, with status. Phases 0–4 are done; 5–7 are ahead.
   screenshots. Delete is exercised end-to-end only when ≥2 snapshots exist
   (a seeded duplicate is deleted; the original must survive).
 - Learned (deviations from the plan):
-  - The plan's "Phase 4 must set slot info too" is **replaced** by session-wide
-    save blocking (`Recorder.BlockGameSaves`, set by the load flow and enforced
-    by the save-gate Harmony prefix): pointing the slot bookkeeping at the
-    original slot would let a later autosave overwrite the pre-rewind timeline;
-    pointing it at a new slot would write into `Saves/` (forbidden) and clutter
-    the game's Load window. Blocked autosaves + new choice snapshots cover
-    progress after a rewind instead.
+  - The plan's "Phase 4 must set slot info too" was **replaced** (23 Oct) by
+    session-wide save blocking (`Recorder.BlockGameSaves` + a save-gate prefix).
+    That in turn was **replaced on 24 Oct** by a one-time backup of the game's
+    save folder plus normal saving, because the block left chapter starts stale
+    and broke chapter restarts after a death (see Phase 7).
   - `SaveLoadManager.Instance` was ALIVE in-game in every test (the dead-
     singleton risk from Phase 3 didn't materialise); the `FindObjectOfType`
     fallback is kept anyway.
@@ -182,8 +180,8 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   updated inside the save folder.
 - [x] Iron Man mode (24 Oct 2026): the game disables its own chapter-load menu
   in Iron Man; the mod's window ignores that and keeps working (verified by
-  loading a save with `IronManMode` forced on: scene reopens, no errors). The
-  game's autosaves stay blocked after a rewind as in a normal run.
+  loading a save with `IronManMode` forced on: scene reopens, no errors).
+  Autosaves continue normally after a rewind, as in a normal run.
 - [ ] Achievement side-effects on load (expected: none harmful; verify).
 - [ ] Load a save after switching to a different main save (per-run folders make
   this testable now).

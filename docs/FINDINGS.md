@@ -283,8 +283,10 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
   → dissolve → `AutomaticSceneLoad` → `LoadScene(LastOpenScene)`. The scene
   reopens and the recorder's dedup skip on re-capture proves the state
   round-trips byte-exactly. During the flow the game calls its save entry
-  points (`SaveChapterState`/`SaveGame` Harmony prefixes fired) — this is why
-  a mod snapshot load switches the session-wide save gate on.
+  points (`SaveChapterState`/`SaveGame` Harmony prefixes fired) — that is why,
+  until 24 Oct 2026, a mod snapshot load switched the session-wide save gate on.
+  The gate has since been replaced by a one-time backup of the game's save
+  folder plus normal saving (see "Letting the game save again after a rewind").
 - Dev UI test: marker `Snapshots/dev-uitest.txt` (next to `dev-autoload.txt`)
   makes `ModHost` drive pause → list → load-confirm → delete-confirm → load
   through the real `onClick` handlers, holding each state 3 s for screenshots.
@@ -390,8 +392,9 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
 - The mod empties the ID when hashing a snapshot (so identical states hash the
   same), but now writes the real ID into the stored file and sets it on the
   loaded helper, so the game can find its own chapter files.
-- Consequence of the save gate: after a rewind the chapter files are still the
-  original timeline's, so a chapter restart goes back to that chapter's start.
+- While the save gate existed (before 24 Oct 2026), chapter files stayed the
+  original timeline's, so a chapter restart went back to that timeline's
+  chapter start. Saving is now normal, so this no longer applies.
 
 ## Letting the game save again after a rewind (24 Oct 2026)
 
