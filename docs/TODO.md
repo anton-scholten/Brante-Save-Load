@@ -269,6 +269,13 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   table when a sidecar holds a key or an empty entry, blank rows are never drawn,
   the explore view says "pick an answer to continue" and scrolls to the newest
   column; documentation (README, AGENTS, TODO, BRANCHES) brought up to date.
+- [x] Tree fixes (28 Oct 2026): vertical lines hung below their end point (top
+  pivot placed at the lower end), so spines missed the answers; the taken path
+  now leaves from the node's edge instead of striking through its text; blank
+  answers close up instead of leaving gaps; only loadable nodes react to hover;
+  the current scene is marked; explore picks on an earlier played scene cut the
+  path there; horizontal scrollbar, and the wheel scrolls sideways while the
+  tree fits vertically. Verified in-game with `dev-book.txt`.
 - [ ] Achievement side-effects on load (verify).
 - [ ] Full in-game pass on a played run: chapter transition, death -> restart
   chapter, explore + load from the panel.

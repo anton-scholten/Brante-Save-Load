@@ -60,6 +60,30 @@ namespace Doorstop
 		}
 	}
 
+	// The history tree is wide, not tall: while it fits vertically, the mouse
+	// wheel scrolls it sideways (wheel down = towards the newest column).
+	// Unity's ScrollRect only does that when vertical scrolling is switched
+	// off, and then the wrong way round. Sits on the viewport, so it gets the
+	// event before the ScrollRect above it.
+	public sealed class TreeWheel : MonoBehaviour, IScrollHandler
+	{
+		public ScrollRect Scroll;
+
+		public void OnScroll(PointerEventData eventData)
+		{
+			if (Scroll == null || Scroll.content == null || Scroll.viewport == null)
+			{
+				return;
+			}
+			bool fitsVertically = Scroll.content.rect.height <= Scroll.viewport.rect.height + 0.5f;
+			if (fitsVertically && Mathf.Abs(eventData.scrollDelta.y) > Mathf.Abs(eventData.scrollDelta.x))
+			{
+				eventData.scrollDelta = new Vector2(eventData.scrollDelta.y, 0f);
+			}
+			Scroll.OnScroll(eventData);
+		}
+	}
+
 	// Scrolls a too-long row text (a "marquee"): it first rests showing as
 	// much as fits plus TMP's ellipsis, then slides right-to-left (the text
 	// moves left) until the end is visible, pauses, and starts over.
@@ -345,6 +369,7 @@ namespace Doorstop
 			public string Title = "";
 			public string SnapshotPath = "";
 			public bool Preview;
+			public bool Current;    // the scene on screen (the pending entry)
 			public List<History.Choice> Choices = new List<History.Choice>();
 
 			public bool HasSnapshot
@@ -731,6 +756,16 @@ namespace Doorstop
 			_historyBtn = null;
 			_historyPanel = null;
 			_historyList = null;
+			_historyScroll = null;
+			_historyInfo = null;
+			_exploreBtn = null;
+			_exploreLabel = null;
+			_loadHereBtn = null;
+			_explore = false;
+			_exploreCut = -1;
+			_preview.Clear();
+			_overrides.Clear();
+			_tree = new List<TreeCol>();
 			_confirmPanel = null;
 			_confirmText = null;
 			_confirmLoadLabel = null;
@@ -773,7 +808,7 @@ namespace Doorstop
 			trt.anchorMin = new Vector2(0f, 1f);
 			trt.anchorMax = new Vector2(1f, 1f);
 			trt.pivot = new Vector2(0.5f, 1f);
-			trt.anchoredPosition = new Vector2(-60f, -12f);
+			trt.anchoredPosition = new Vector2(0f, -12f);
 			trt.sizeDelta = new Vector2(-120f, 46f);
 
 			TextMeshProUGUI sub = AddLabel(box.transform, "Sub",
@@ -790,7 +825,8 @@ namespace Doorstop
 			RectTransform srt = scroll.GetComponent<RectTransform>();
 			srt.anchorMin = new Vector2(0f, 0f);
 			srt.anchorMax = new Vector2(1f, 1f);
-			srt.offsetMin = new Vector2(26f, 96f);
+			// Bottom edge clears the hover info line (82..108) below it.
+			srt.offsetMin = new Vector2(26f, 112f);
 			srt.offsetMax = new Vector2(-26f, -96f);
 			ScrollRect sc = scroll.AddComponent<ScrollRect>();
 			sc.horizontal = true;
@@ -799,9 +835,34 @@ namespace Doorstop
 			sc.scrollSensitivity = 30f;
 
 			GameObject viewport = CreateUiObject("Viewport", scroll.transform);
-			Stretch(viewport.GetComponent<RectTransform>());
+			RectTransform vrt = viewport.GetComponent<RectTransform>();
+			Stretch(vrt);
+			vrt.offsetMin = new Vector2(0f, 18f); // room for the scrollbar
 			viewport.AddComponent<RectMask2D>();
-			sc.viewport = viewport.GetComponent<RectTransform>();
+			sc.viewport = vrt;
+			viewport.AddComponent<TreeWheel>().Scroll = sc;
+
+			// Horizontal scrollbar: the tree grows to the right, and without
+			// one only dragging reveals the older columns.
+			GameObject track = CreateUiObject("HScrollbar", scroll.transform);
+			RectTransform hst = track.GetComponent<RectTransform>();
+			hst.anchorMin = new Vector2(0f, 0f);
+			hst.anchorMax = new Vector2(1f, 0f);
+			hst.pivot = new Vector2(0.5f, 0f);
+			hst.offsetMin = new Vector2(0f, 0f);
+			hst.offsetMax = new Vector2(0f, 12f);
+			Image htimg = track.AddComponent<Image>();
+			htimg.color = new Color(0f, 0f, 0f, 0.12f);
+			Scrollbar hsb = track.AddComponent<Scrollbar>();
+			hsb.direction = Scrollbar.Direction.LeftToRight;
+			GameObject handle = CreateUiObject("Handle", track.transform);
+			Stretch(handle.GetComponent<RectTransform>());
+			Image hhimg = handle.AddComponent<Image>();
+			hhimg.color = ColButtonDark;
+			hsb.targetGraphic = hhimg;
+			hsb.handleRect = handle.GetComponent<RectTransform>();
+			sc.horizontalScrollbar = hsb;
+			sc.horizontalScrollbarVisibility = ScrollRect.ScrollbarVisibility.Permanent;
 
 			// The tree is positioned by hand (columns and lines), so no layout
 			// group and no size fitter here.
@@ -883,6 +944,7 @@ namespace Doorstop
 		private static void ToggleExplore()
 		{
 			_explore = !_explore;
+			_exploreCut = -1;
 			_preview.Clear();
 			_overrides.Clear();
 			ModLog.Info("ChoiceWindow: explore mode " + (_explore ? "on" : "off"));
@@ -925,6 +987,7 @@ namespace Doorstop
 				_historyPanel.SetActive(false);
 			}
 			_explore = false;
+			_exploreCut = -1;
 			_preview.Clear();
 			_overrides.Clear();
 		}
@@ -965,18 +1028,29 @@ namespace Doorstop
 			// the ones the mod captured can be loaded (the rest are pre-mod).
 			// Columns with Preview=true are the explore-mode ones and survive a
 			// re-render until the player closes or toggles the mode.
+			// In explore mode a pick on a played column cuts the played path
+			// there (_exploreCut columns kept) and the preview continues from it.
 			List<TreeCol> cols = new List<TreeCol>();
+			int pendingCol = -1;
 			foreach (History.Entry e in all)
 			{
 				if (e.Choices.Count == 0)
 				{
 					continue;
 				}
+				if (_explore && _exploreCut >= 0 && cols.Count >= _exploreCut)
+				{
+					break;
+				}
 				TreeCol col = new TreeCol();
 				col.Scene = e.SceneName;
 				col.Title = e.Title;
 				col.SnapshotPath = e.SnapshotPath;
 				col.Choices = e.Choices;
+				if (!e.IsShowed)
+				{
+					pendingCol = cols.Count;
+				}
 				string picked;
 				if (_overrides.TryGetValue(e.SceneName, out picked))
 				{
@@ -986,6 +1060,10 @@ namespace Doorstop
 					}
 				}
 				cols.Add(col);
+			}
+			if (pendingCol >= 0)
+			{
+				cols[pendingCol].Current = true;
 			}
 			foreach (TreeCol preview in _preview)
 			{
@@ -1005,10 +1083,15 @@ namespace Doorstop
 				return 0;
 			}
 
+			// Blank answers are never drawn, and the rows close up around them
+			// (a gap would look like a missing answer).
+			List<List<int>> visible = new List<List<int>>();
 			int rows = 0;
 			foreach (TreeCol c in cols)
 			{
-				rows = Mathf.Max(rows, c.Choices.Count);
+				List<int> v = VisibleChoices(c);
+				visible.Add(v);
+				rows = Mathf.Max(rows, v.Count);
 			}
 			float width = 30f + cols.Count * TreeColW;
 			float height = TreeTop + rows * TreeRowH + 20f;
@@ -1017,31 +1100,41 @@ namespace Doorstop
 			for (int i = 0; i < cols.Count; i++)
 			{
 				TreeCol e = cols[i];
+				List<int> shown = visible[i];
 				float x = 30f + i * TreeColW;
+				// Outside explore mode only captured decisions do anything; the
+				// rest are drawn as plain, non-interactive history.
+				bool clickable = _explore || e.HasSnapshot;
+				if (!_explore && e.HasSnapshot)
+				{
+					_historyLoadable++;
+				}
 
 				// Column header: the scene's title.
-				TextMeshProUGUI head = AddLabel(_historyList, "Head", e.Title,
+				string headText = e.Title;
+				if (e.Current)
+				{
+					headText += "  • " + Loc.T(Loc.K.Current);
+				}
+				TextMeshProUGUI head = AddLabel(_historyList, "Head", headText,
 					18f, e.Preview ? new Color(0.45f, 0.40f, 0.32f) : ColTextDark, false);
 				Wrap(head, x, 6f, TreeNodeW + TreeNodeX, 44f);
 				head.enableWordWrapping = true;
 				head.overflowMode = TextOverflowModes.Ellipsis;
 
-				// Choices, top to bottom; the chosen one carries the dark path.
-				int chosenY = -1;
-				float spineTop = TreeTop + (TreeRowH - TreeNodeH) * 0.5f;
-				float spineBottom = spineTop + (e.Choices.Count - 1) * TreeRowH;
-				AddLine(x + 16f, spineTop + TreeNodeH * 0.5f, x + 16f,
-					spineBottom + TreeNodeH * 0.5f, ColTreeLine, 3f);
-
-				for (int k = 0; k < e.Choices.Count; k++)
+				// The spine joins the node centres of this column.
+				if (shown.Count > 1)
 				{
+					AddLine(x + 16f, RowCentre(0), x + 16f, RowCentre(shown.Count - 1), ColTreeLine, 3f);
+				}
+
+				// Choices, top to bottom; the chosen one carries the dark path.
+				for (int r = 0; r < shown.Count; r++)
+				{
+					int k = shown[r];
 					History.Choice c = e.Choices[k];
-					if (string.IsNullOrEmpty(c.Text) || c.Text.Trim().Length == 0)
-					{
-						continue;   // never draw a blank answer row
-					}
-					float y = TreeTop + k * TreeRowH;
-					float cy = y + TreeNodeH * 0.5f;
+					float y = TreeTop + r * TreeRowH;
+					float cy = RowCentre(r);
 					Color line = c.Chosen ? ColTreeChosen : ColTreeLine;
 					AddLine(x + 16f, cy, x + TreeNodeX, cy, line, c.Chosen ? 5f : 3f);
 
@@ -1056,28 +1149,30 @@ namespace Doorstop
 					nimg.color = c.Chosen ? ColTreeChosenBg : ColAuto;
 					// Explore mode: picking any answer extends the path. Otherwise
 					// clicking loads that decision's save (captured scenes only).
-					Button nb = node.AddComponent<Button>();
-					nb.targetGraphic = nimg;
-					int colIndex = i;
-					int choiceIndex = k;
-					string path = e.SnapshotPath;
-					string title = e.Title;
-					if (_explore)
+					if (clickable)
 					{
-						nb.onClick.AddListener(delegate { Explore(colIndex, choiceIndex); });
-					}
-					else if (e.HasSnapshot)
-					{
-						nb.onClick.AddListener(delegate
+						Button nb = node.AddComponent<Button>();
+						nb.targetGraphic = nimg;
+						int colIndex = i;
+						int choiceIndex = k;
+						string path = e.SnapshotPath;
+						string title = e.Title;
+						if (_explore)
 						{
-							CloseHistory();
-							Ask(Pending.Load, path, title, null);
-						});
-						_historyLoadable++;
+							nb.onClick.AddListener(delegate { Explore(colIndex, choiceIndex); });
+						}
+						else
+						{
+							nb.onClick.AddListener(delegate
+							{
+								CloseHistory();
+								Ask(Pending.Load, path, title, null);
+							});
+						}
 					}
 
-					TextMeshProUGUI label = AddLabel(node.transform, "Text",
-						c.Text, 17f, ColTextDark, false);
+					TextMeshProUGUI label = AddLabel(node.transform, "Text", c.Text, 17f,
+						clickable ? ColTextDark : new Color(0.12f, 0.10f, 0.08f, 0.6f), false);
 					RectTransform lrt = label.rectTransform;
 					lrt.anchorMin = Vector2.zero;
 					lrt.anchorMax = Vector2.one;
@@ -1087,38 +1182,35 @@ namespace Doorstop
 					label.enableWordWrapping = false;
 
 					TreeHover hover = node.AddComponent<TreeHover>();
-					hover.Info = c.Text + (c.Chosen ? "   \u2022 " + Loc.T(Loc.K.TreeChosen)
-						: "   \u2022 " + Loc.T(Loc.K.TreeOffered));
+					hover.Info = c.Text + "   • " + Loc.T(c.Chosen ? Loc.K.TreeChosen : Loc.K.TreeOffered)
+						+ (!_explore && e.HasSnapshot ? "   • " + Loc.T(Loc.K.SaveAvailable) : "");
 					hover.OnShow = SetHistoryInfo;
-
-					if (c.Chosen)
-					{
-						chosenY = k;
-					}
 				}
+			}
 
-				// Link this column's answer to the next column.
-				if (chosenY >= 0 && i + 1 < cols.Count)
+			// The taken path between columns: from the chosen node's right edge
+			// to the next column's spine, then along it to that column's chosen
+			// node. Drawn last so the next column's pale spine cannot cover it.
+			for (int i = 0; i + 1 < cols.Count; i++)
+			{
+				int fromRow = ChosenRow(cols[i], visible[i]);
+				if (fromRow < 0)
 				{
-					float fromY = TreeTop + chosenY * TreeRowH + TreeNodeH * 0.5f;
-					int nextChosen = -1;
-					for (int k = 0; k < cols[i + 1].Choices.Count; k++)
-					{
-						if (cols[i + 1].Choices[k].Chosen)
-						{
-							nextChosen = k;
-							break;
-						}
-					}
-					float toY = nextChosen >= 0
-						? TreeTop + nextChosen * TreeRowH + TreeNodeH * 0.5f
-						: TreeTop + TreeNodeH * 0.5f;
-					float nextSpine = x + TreeColW + 16f;
-					AddLine(x + 16f, fromY, nextSpine, fromY, ColTreeChosen, 5f);
-					if (Mathf.Abs(toY - fromY) > 0.5f)
-					{
-						AddLine(nextSpine, fromY, nextSpine, toY, ColTreeChosen, 5f);
-					}
+					continue;
+				}
+				int toRow = Mathf.Max(0, ChosenRow(cols[i + 1], visible[i + 1]));
+				if (visible[i + 1].Count == 0)
+				{
+					continue;
+				}
+				float x = 30f + i * TreeColW;
+				float fromY = RowCentre(fromRow);
+				float toY = RowCentre(toRow);
+				float nextSpine = x + TreeColW + 16f;
+				AddLine(x + TreeNodeX + TreeNodeW, fromY, nextSpine, fromY, ColTreeChosen, 5f);
+				if (Mathf.Abs(toY - fromY) > 0.5f)
+				{
+					AddLine(nextSpine, fromY, nextSpine, toY, ColTreeChosen, 5f);
 				}
 			}
 			UpdateExploreButtons();
@@ -1168,6 +1260,7 @@ namespace Doorstop
 		}
 
 		private static string _lastLoadablePath = "";
+		private static int _exploreCut = -1;   // played columns kept in explore, -1 = all
 
 		// Explore mode: picking an answer moves the preview to that answer's
 		// scene, so the player can walk a path without playing it.
@@ -1205,7 +1298,14 @@ namespace Doorstop
 				}
 				else
 				{
+					// A pick on a played scene leaves the played path there: the
+					// later played columns (and their picks) give way to the preview.
 					_preview.Clear();
+					_exploreCut = colIndex + 1;
+					for (int i = colIndex + 1; i < _tree.Count; i++)
+					{
+						_overrides.Remove(_tree[i].Scene);
+					}
 				}
 
 				string next = SceneEdges.Next(col.Scene);
@@ -1223,6 +1323,40 @@ namespace Doorstop
 			{
 				ModLog.Error("ChoiceWindow: explore failed:\n" + e);
 			}
+		}
+
+		// Indices of the answers that have text, in display order.
+		private static List<int> VisibleChoices(TreeCol col)
+		{
+			List<int> shown = new List<int>();
+			for (int k = 0; k < col.Choices.Count; k++)
+			{
+				string t = col.Choices[k].Text;
+				if (!string.IsNullOrEmpty(t) && t.Trim().Length > 0)
+				{
+					shown.Add(k);
+				}
+			}
+			return shown;
+		}
+
+		// Display row of the chosen answer, -1 when none is chosen.
+		private static int ChosenRow(TreeCol col, List<int> shown)
+		{
+			for (int r = 0; r < shown.Count; r++)
+			{
+				if (col.Choices[shown[r]].Chosen)
+				{
+					return r;
+				}
+			}
+			return -1;
+		}
+
+		// Vertical centre of a node row in the tree's content.
+		private static float RowCentre(int row)
+		{
+			return TreeTop + row * TreeRowH + TreeNodeH * 0.5f;
 		}
 
 		private static int PlayedCount()
@@ -1297,7 +1431,8 @@ namespace Doorstop
 			}
 			else
 			{
-				rt.anchoredPosition = new Vector2(x1 - thickness * 0.5f, -Mathf.Max(y1, y2));
+				// Top pivot: the bar hangs down from the upper end.
+				rt.anchoredPosition = new Vector2(x1 - thickness * 0.5f, -Mathf.Min(y1, y2));
 				rt.sizeDelta = new Vector2(thickness, Mathf.Abs(y2 - y1));
 			}
 			Image img = go.AddComponent<Image>();
@@ -2308,13 +2443,22 @@ namespace Doorstop
 			yield return new WaitForSeconds(8f);
 			OpenHistory();
 			// Dev: exercise explore mode - walk two answers forward.
-			yield return new WaitForSeconds(2f);
+			yield return new WaitForSeconds(6f);
 			ToggleExplore();
 			yield return new WaitForSeconds(1f);
 			for (int step = 0; step < 2 && _tree.Count > 0; step++)
 			{
 				Explore(_tree.Count - 1, 0);
 				yield return new WaitForSeconds(1f);
+			}
+			// Dev: a pick on an earlier played column cuts the path there.
+			int played = PlayedCount();
+			if (played >= 3)
+			{
+				yield return new WaitForSeconds(4f);
+				Explore(played - 3, 0);
+				ModLog.Info("ChoiceWindow: dev explore cut at column " + (played - 3) + ": "
+					+ PlayedCount() + " played + " + _preview.Count + " preview column(s)");
 			}
 			yield return new WaitForSeconds(6f);
 			CloseHistory();
