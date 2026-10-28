@@ -215,8 +215,10 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
 - [x] Bolt graph extraction (`tools/bolt_extract.py`): the game stores each
   machine's graph as JSON in `resources.assets` - 481 graphs extracted in under
   a second, 445 with `LoadScene` literals, 9 with the `Click` event.
-- [ ] Interpret that graph (Click -> switches -> SuperUnit macros -> LoadScene)
-  to produce the complete edge table.
+- [ ] Interpret that graph (Click -> switches -> SuperUnit macros -> LoadScene).
+  Blocked on resolving `SuperUnit.nest.macro` indices, which live in the
+  machine's serialised macro list, not in the graph JSON (no Unity type trees
+  are shipped, so UnityPy cannot read it).
 - [ ] Collect edges by playing (traces do it automatically) as a cross-check; a
   page-advancing driver would allow clicking through a loaded scene instead.
 - [ ] Render the full tree from `data/graph.json`, path highlighted.

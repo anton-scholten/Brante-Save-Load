@@ -157,8 +157,20 @@ custom event. The story flow is: `ParameterButtonChanger.Button_Click` →
 `SwitchOnString`/`SwitchOnInteger` dispatcher → per-chapter `SuperUnit` macros →
 `LoadScene`.
 
-So a complete edge table is reachable **without playing and without a harness**.
-What is still needed is an interpreter for the dispatcher: follow control flow
+**Blocker found while wiring the interpreter:** a `SuperUnit` refers to its macro
+by a small index (`"nest":{"source":"Macro","macro":0}`), and that index is *not*
+inside the graph JSON — it points into the owning machine's serialised macro
+list. UnityPy cannot decode the typetrees of the game's own scripts (no type
+trees are shipped), so the index cannot be resolved from the asset structure.
+Port-signature matching is ambiguous (233 graphs expose `Enter`/`Exit`), and the
+SuperUnit's value ports (`CutsceneName`, `Turn`, …) come from the macro, so they
+cannot be used to disambiguate either. Resolving this needs either:
+- parsing the FlowMachine MonoBehaviour bytes by hand (its macro PPtr array), or
+- Unity type trees (not shipped in a release build).
+
+Everything up to that point is extracted and committed (`data/bolt-graphs.json`).
+
+What would then remain is an interpreter for the dispatcher: follow control flow
 from the `Click` event, evaluate the switches/branches, descend into `SuperUnit`
 macros (resolving `nest.macro` to its graph) and record the `LoadScene` literal.
 The branch conditions (stats/relations) come along for free as strings.
@@ -180,11 +192,14 @@ Online references used for this:
 
 - **Normal play**: every click is traced, so edges accumulate as the game is
   played. That is the cheap, reliable path.
-- **Dev harness**: clicking is *not* possible right after a load in the current
-  harness — the choice buttons stay inactive until the scene's text has been
-  paged through, so `Button_Click` is never reachable. A driver that advances
-  pages (`UIManager` page-turn events) before clicking would be needed; that is
-  the next step if automated coverage is wanted.
+- **Dev harness**: the choice buttons are unreachable right after a load. The
+  book and its `TextController` pager appear only after the scene's own show
+  animation, and paging alone does not make the answer panel (`ControlPanel` /
+  `ChoiseDescription`) appear in the harness — the scene state machine has to be
+  driven too. Attempts so far: `SimpleTextController` (not present), then
+  `TextController.NextPage()` in a 60 s loop (panel never appeared). The inputs
+  gathered (scene hierarchy, components) are in the log; next step would be to
+  drive `SceneStateMachine`/`AutoFlip` instead of only the text pager.
 - **Static Bolt parsing**: still the only way to get *all* edges without
   playing; out of scope (see above).
 
