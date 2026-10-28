@@ -216,7 +216,30 @@ handled outside the chapter macros. It is a set, not an order — ids mostly
 follow the story, but variants break that (`01.02.01_2` Hide and Seek comes
 *before* `01.02.01` The Great Descent in an actual playthrough).
 
-Remaining unknown: the transition order itself. It is not in the flow graphs,
+**Scene titles and answers for every scene (solved).** The I2 localisation table
+is a plain CSV inside `resources.assets` (header
+`Key,Type,Desc,Russian,English,Chinese`), so the game's own text is extractable
+offline:
+
+```sh
+python3 tools/localization.py     # -> data/localization.csv, data/scene-texts.json
+```
+
+17 259 terms; **61 scenes with a title, 50 with their full answer list**, e.g.
+
+```
+01.05.01  The Newborn’s Cry
+          ButtonDescription1  You run to Father’s study as fast as you can …
+030.040.030_Preparation  Before the March
+```
+
+That means the tree does not need the unplayed-branch edges at all for the
+"current playthrough" view: the played path comes from `ShowedScenesList` (exact,
+in order), the alternatives at each step come from this table, and the answer
+actually taken comes from the recorded `chosen=`/next snapshot.
+
+Remaining unknown (only for *unplayed* branches beyond one step): the transition
+order itself. It is not in the flow graphs,
 not in the scene files as a table (1 of 25), and not in a Bolt state machine. The
 most likely holder is the C# `SceneStateMachine` per scene (its serialised event
 fields) or the story `TextBlock` data. Traces already record the true order for

@@ -227,8 +227,14 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   switch (it only routes chapter/finals). Exported the game's own scene
   catalogue per chapter (`tools/bolt_scenes.py` -> `data/scene-catalog.json`,
   75 scenes).
-- [ ] Find the transition order/source: C# `SceneStateMachine` fields or story
-  `TextBlock` data; traces give the order for paths actually played.
+- [x] Extract the localisation table (`tools/localization.py`): scene titles and
+  every answer's text for 61 scenes, offline - no need to play a scene to know
+  what it offers.
+- [ ] Ship `data/scene-texts.json` with the mod and render the **full played
+  path**: one column per scene in `ShowedScenesList`, all its answers from that
+  table, the taken one highlighted (recorded `chosen=`), loadable ones clickable.
+- [ ] Find the transition order/source (only needed for unplayed branches beyond
+  one step): C# `SceneStateMachine` fields or story `TextBlock` data.
 - [ ] Collect edges by playing (traces do it automatically) as a cross-check; a
   page-advancing driver would allow clicking through a loaded scene instead.
 - [ ] Render the full tree from `data/graph.json`, path highlighted.
