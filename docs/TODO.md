@@ -208,6 +208,11 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   the option -> next event edges are still missing; `trace.log` supplies them.
 - [x] Trace logging (`Runs/<save>/trace.log`): every scene load and click, so
   the missing graph edges (choice -> next scene) can be merged from play.
-- [ ] Merge traces into the branch data (script), then render the full tree with
-  the current save's path highlighted.
+- [x] Merge tool (`tools/build_graph.py`): joins traces, snapshots and the
+  community sheet into `data/graph.json` — scene ids ↔ event titles by title
+  key, and choice → next scene edges from `trace.log`. Verified with a
+  synthetic trace; the real save has 3 events mapped and 0 edges yet.
+- [ ] Collect edges by playing (traces do it automatically); a page-advancing
+  driver would allow clicking through a loaded scene instead.
+- [ ] Render the full tree from `data/graph.json`, path highlighted.
 - [ ] In-game test pass, README final, design doc.

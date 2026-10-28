@@ -222,40 +222,29 @@ namespace Doorstop
 						yield return new WaitForSeconds(3f);
 						ChoiceWindow.DevTest();
 					}
-					// Dev: click the first offered choice (records the branch
-					// taken and moves the story on).
+					// Dev: click the first choice that becomes visible (the
+					// buttons are inactive until the show animation finishes).
 					string click = Path.Combine(Recorder.SnapshotDir, "dev-click.txt");
 					if (File.Exists(click))
 					{
 						try { File.Delete(click); }
 						catch (Exception) { }
-						yield return new WaitForSeconds(3f);
-						// The buttons are inactive until the show animation;
-						// FindObjectsOfType would miss them.
-						List<ParameterButtonChanger> found = new List<ParameterButtonChanger>();
-						foreach (ParameterButtonChanger b in
-							Resources.FindObjectsOfTypeAll<ParameterButtonChanger>())
+						ParameterButtonChanger btn = null;
+						for (int tries = 0; tries < 40 && btn == null; tries++)
 						{
-							if (b != null && b.gameObject.scene.IsValid())
-							{
-								found.Add(b);
-							}
+							yield return new WaitForSeconds(0.5f);
+							btn = FirstVisibleChoice();
 						}
-						// Only visible buttons respond correctly; an inactive
-						// one throws inside the game's own handler.
-						found.RemoveAll(b => !b.gameObject.activeInHierarchy);
-						ParameterButtonChanger[] btns = found.ToArray();
-						if (btns.Length > 0)
+						if (btn != null)
 						{
-							Array.Sort(btns, (a, b) => a.ButtonIndex.CompareTo(b.ButtonIndex));
-							ModLog.Info("DEV CLICK: clicking choice [" + btns[0].ButtonIndex + "] on "
-								+ btns[0].gameObject.name);
-							btns[0].Button_Click();
-							yield return new WaitForSeconds(4f);
+							ModLog.Info("DEV CLICK: clicking choice [" + btn.ButtonIndex + "] on "
+								+ btn.gameObject.name + " in " + btn.gameObject.scene.name);
+							btn.Button_Click();
+							yield return new WaitForSeconds(5f);
 						}
 						else
 						{
-							ModLog.Info("DEV CLICK: no choice buttons");
+							ModLog.Info("DEV CLICK: no visible choice button appeared");
 						}
 					}
 					// Phase 6: dump the scene path the playthrough has taken.
@@ -311,6 +300,19 @@ namespace Doorstop
 			{
 				ModLog.Error("DEV AUTOLOAD: transition broadcast failed:\n" + e);
 			}
+		}
+
+		// The first choice button that is actually visible right now.
+		private static ParameterButtonChanger FirstVisibleChoice()
+		{
+			foreach (ParameterButtonChanger b in Resources.FindObjectsOfTypeAll<ParameterButtonChanger>())
+			{
+				if (b != null && b.gameObject.scene.IsValid() && b.gameObject.activeInHierarchy)
+				{
+					return b;
+				}
+			}
+			return null;
 		}
 
 		// Does the file+reflection part of the dev autoload; no yields in

@@ -1,0 +1,55 @@
+{
+ "schema": 1,
+ "source": {
+  "events": "data/events.json (community sheet by Brian Sirith)",
+  "traces": "Runs/*/trace.log written by Brante-Save-Load"
+ },
+ "scenes": {
+  "01.03.01": {
+   "title": "The Lot of Suffering",
+   "event": "The Lot Of Suffering",
+   "options": [
+    "Accept your punishment",
+    "Deny your guilt",
+    "Demand an explanation"
+   ]
+  },
+  "01.04.01": {
+   "title": "Gloria’s Rhymes",
+   "event": "Gloria's Rhymes",
+   "options": [
+    "Call Father for help",
+    "Complain about your sister",
+    "Redirect her anger to yourself",
+    "Offer to write rhymes with her",
+    "Snatch Nathan from Mother",
+    "Comfort your sister",
+    "Hug Mother",
+    "Leave the room",
+    "Accept your punishment",
+    "Deny your guilt",
+    "Demand an explanation"
+   ]
+  },
+  "01.05.01": {
+   "title": "The Newborn’s Cry",
+   "event": "Newborn’s Cry",
+   "options": [
+    "Call Father for help",
+    "Redirect her anger to yourself",
+    "Snatch Nathan from Mother",
+    "Hug Mother",
+    "Complain about your sister",
+    "Offer to write rhymes with her",
+    "Comfort your sister",
+    "Leave the room"
+   ]
+  }
+ },
+ "events": {
+  "The Lot Of Suffering": "01.03.01",
+  "Gloria's Rhymes": "01.04.01",
+  "Newborn’s Cry": "01.05.01"
+ },
+ "edges": []
+}

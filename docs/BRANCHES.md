@@ -99,6 +99,48 @@ To make the graph complete, edges must be *exercised*:
   reverse-engineering project of its own; the Bolt graph format would have to be
   decoded, and the "next scene" often comes from a Bolt event, not a field.
 
+## Building the graph (automated)
+
+`tools/build_graph.py` joins the three sources and writes `data/graph.json`:
+
+```sh
+python3 tools/build_graph.py                 # auto-detects the Proton prefix
+python3 tools/build_graph.py --runs PATH     # or point at .../Brante-Save-Load/Runs
+```
+
+What it does:
+
+1. reads every `Runs/*/trace.log` (scene loads and clicks);
+2. pairs each `click` with the **first story scene** loaded after it
+   (`GameLoadingScreen`, cutscenes and windows are skipped; story scenes match
+   `NN.NN.NN`), which is the edge: choice → next scene;
+3. reads every snapshot sidecar for the scene's id, title and options, and
+   takes the title from the title **key** (`<scene>_Title`), because an older
+   sidecar could record the previous scene's controller;
+4. matches the community sheet's events to scene ids by title (exact or
+   containment, with option-text overlap as a fallback), one scene per event;
+5. writes `scenes`, `events` (title → scene id) and `edges`
+   (`from`, `fromEvent`, `button`, `text`, `to`, `toEvent`, `count`).
+
+Current result on the test save: **3 events mapped** (`01.03.01` The Lot of
+Suffering, `01.04.01` Gloria's Rhymes, `01.05.01` Newborn's Cry) and **0 edges**,
+because no choice has been clicked since tracing was added.
+
+A synthetic trace (click → loading screen → next story scene) was used to test
+the pairing: both edges resolved with the right option text.
+
+## Getting edges in practice
+
+- **Normal play**: every click is traced, so edges accumulate as the game is
+  played. That is the cheap, reliable path.
+- **Dev harness**: clicking is *not* possible right after a load in the current
+  harness — the choice buttons stay inactive until the scene's text has been
+  paged through, so `Button_Click` is never reachable. A driver that advances
+  pages (`UIManager` page-turn events) before clicking would be needed; that is
+  the next step if automated coverage is wanted.
+- **Static Bolt parsing**: still the only way to get *all* edges without
+  playing; out of scope (see above).
+
 ## Recommended plan
 
 1. Keep collecting `trace.log` from normal play and dev runs; a small merge

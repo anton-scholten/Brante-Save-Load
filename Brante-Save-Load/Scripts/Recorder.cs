@@ -975,10 +975,31 @@ namespace Doorstop
 			}
 		}
 
+		// Buttons of the scene currently on screen only: choice scenes are
+		// additive, so buttons of earlier scenes are still loaded and would
+		// otherwise end up in this scene's choice list.
+		private static ParameterButtonChanger[] InCurrentScene(ParameterButtonChanger[] all, string scene)
+		{
+			if (string.IsNullOrEmpty(scene))
+			{
+				return all;
+			}
+			List<ParameterButtonChanger> keep = new List<ParameterButtonChanger>();
+			foreach (ParameterButtonChanger b in all)
+			{
+				if (b != null && b.gameObject.scene.name == scene)
+				{
+					keep.Add(b);
+				}
+			}
+			return keep.Count > 0 ? keep.ToArray() : all;
+		}
+
 		private static ParameterButtonChanger[] CollectButtons()
 		{
+			string scene = GameManager.Instance != null ? GameManager.Instance.OpenedSceneName : "";
 			ParameterButtonChanger[] active =
-				UnityEngine.Object.FindObjectsOfType<ParameterButtonChanger>();
+				InCurrentScene(UnityEngine.Object.FindObjectsOfType<ParameterButtonChanger>(), scene);
 			if (active.Length > 0)
 			{
 				return active;
@@ -992,7 +1013,8 @@ namespace Doorstop
 			foreach (ParameterButtonChanger b in
 				Resources.FindObjectsOfTypeAll<ParameterButtonChanger>())
 			{
-				if (b != null && b.gameObject.scene.IsValid())
+				if (b != null && b.gameObject.scene.IsValid()
+					&& (string.IsNullOrEmpty(scene) || b.gameObject.scene.name == scene))
 				{
 					inScenes.Add(b);
 				}
@@ -1012,10 +1034,24 @@ namespace Doorstop
 				+ "  turn=" + helper.Turn
 				+ "  season=" + helper.Season);
 			sb.AppendLine("chapter=" + helper.Chapter + " (" + helper.ChapterName + ")");
-			SceneController sc = UnityEngine.Object.FindObjectOfType<SceneController>();
-			if (sc != null)
+			// The scene's own title key, not whatever SceneController is
+			// found: choice scenes are additive, so FindObjectOfType can still
+			// return the previous scene's controller (which made the sidecar
+			// titles off by one).
+			string titleKey = scene + "_Title";
+			string title = T(titleKey);
+			if (string.IsNullOrEmpty(title) || title == titleKey)
 			{
-				sb.AppendLine("title=" + T(sc.TitleKey) + "   [key: " + sc.TitleKey + "]");
+				SceneController sc = UnityEngine.Object.FindObjectOfType<SceneController>();
+				if (sc != null && !string.IsNullOrEmpty(sc.TitleKey))
+				{
+					titleKey = sc.TitleKey;
+					title = T(titleKey);
+				}
+			}
+			if (!string.IsNullOrEmpty(title) && title != titleKey)
+			{
+				sb.AppendLine("title=" + title + "   [key: " + titleKey + "]");
 			}
 			sb.AppendLine("choices:");
 			ParameterButtonChanger[] buttons =

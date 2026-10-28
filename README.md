@@ -45,7 +45,9 @@ never touches the game's saves.
   only records the most recent answer. A dataset of the game's events — all five
   chapters, 175 events with every option, requirement and outcome — lives in
   `data/events.json` (raw sheet in `data/events.csv`, see `docs/BRANCHES.md`);
-  it is the base for showing the full tree later.
+  it is the base for showing the full tree later; `tools/build_graph.py` merges
+  it with the mod's traces to map scenes to events and to record which choice
+  leads where (`data/graph.json`).
 
 ### Platforms
 
