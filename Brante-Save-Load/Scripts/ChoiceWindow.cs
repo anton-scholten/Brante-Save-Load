@@ -873,11 +873,12 @@ namespace Doorstop
 			{
 				all = History.FromNewestSave();
 			}
-			// Only scenes the mod captured have choices and a loadable state.
+			// Every played scene with a known answer list becomes a column; only
+			// the ones the mod captured can be loaded (the rest are pre-mod).
 			List<History.Entry> cols = new List<History.Entry>();
 			foreach (History.Entry e in all)
 			{
-				if (e.HasSnapshot && e.Choices.Count > 0)
+				if (e.Choices.Count > 0)
 				{
 					cols.Add(e);
 				}
@@ -941,17 +942,20 @@ namespace Doorstop
 					Image nimg = node.AddComponent<Image>();
 					nimg.color = c.Chosen ? ColTreeChosenBg : ColAuto;
 					// Clicking loads that decision's save (the state just
-					// before this choice was made).
-					Button nb = node.AddComponent<Button>();
-					nb.targetGraphic = nimg;
-					string path = e.SnapshotPath;
-					string title = e.Title;
-					nb.onClick.AddListener(delegate
+					// before the choice was made) - only for captured scenes.
+					if (e.HasSnapshot)
 					{
-						CloseHistory();
-						Ask(Pending.Load, path, title, null);
-					});
-					_historyLoadable++;
+						Button nb = node.AddComponent<Button>();
+						nb.targetGraphic = nimg;
+						string path = e.SnapshotPath;
+						string title = e.Title;
+						nb.onClick.AddListener(delegate
+						{
+							CloseHistory();
+							Ask(Pending.Load, path, title, null);
+						});
+						_historyLoadable++;
+					}
 
 					TextMeshProUGUI label = AddLabel(node.transform, "Text",
 						c.Text, 17f, ColTextDark, false);

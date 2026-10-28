@@ -230,9 +230,31 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
 - [x] Extract the localisation table (`tools/localization.py`): scene titles and
   every answer's text for 61 scenes, offline - no need to play a scene to know
   what it offers.
-- [ ] Ship `data/scene-texts.json` with the mod and render the **full played
-  path**: one column per scene in `ShowedScenesList`, all its answers from that
-  table, the taken one highlighted (recorded `chosen=`), loadable ones clickable.
+- [x] Full-path tree (28 Oct 2026): the mod ships `scene-texts.tsv` (from
+  `tools/localization.py`) and `SceneTexts.cs` reads it, so the history shows
+  one column per played scene - including scenes from before the mod, which
+  have no snapshot - with every answer and the taken one highlighted. Only
+  captured decisions are clickable.
+
+- [ ] **Path builder (design, not started).** In the tree, let the player click
+  any answer at any step; the view then shows the scene that answer leads to, and
+  they can keep picking until they load the resulting scene. This is the
+  "load any scene by quickly making all the selections" feature.
+  - It needs the missing piece: choice -> next scene edges (see the Bolt notes in
+    BRANCHES.md). Without them the view cannot know where an unplayed answer
+    goes; with them it is only rendering.
+  - Two possible designs:
+    1. **Offline graph** (preferred): `data/graph.json` + a full edge table, so
+       clicking is instant and needs no game state. Requires finishing the
+       transition decode.
+    2. **Live simulation**: load the nearest snapshot, then invoke the game's
+       own `Button_Click` for each chosen answer and let the game advance. Works
+       today for captured scenes, but each step plays the consequence animation
+       (seconds per click) and needs the page-advance driver that is still
+       unresolved.
+  - UI: a toggle in the History panel ("explore"), which unlocks clicking
+    read-only answers; a "load this scene" button appears once the path reaches a
+    scene the mod has a snapshot for, otherwise the path is only a preview.
 - [ ] Find the transition order/source (only needed for unplayed branches beyond
   one step): C# `SceneStateMachine` fields or story `TextBlock` data.
 - [ ] Collect edges by playing (traces do it automatically) as a cross-check; a

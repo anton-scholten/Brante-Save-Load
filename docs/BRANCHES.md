@@ -233,6 +233,10 @@ python3 tools/localization.py     # -> data/localization.csv, data/scene-texts.j
 030.040.030_Preparation  Before the March
 ```
 
+The mod ships this as `scene-texts.tsv` (loaded by `SceneTexts.cs`), which is what
+lets the history list answers for scenes that were played before the mod existed
+and therefore have no snapshot.
+
 That means the tree does not need the unplayed-branch edges at all for the
 "current playthrough" view: the played path comes from `ShowedScenesList` (exact,
 in order), the alternatives at each step come from this table, and the answer

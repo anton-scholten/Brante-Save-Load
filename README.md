@@ -38,9 +38,11 @@ never touches the game's saves.
   the mod's window keeps working there, so a permadeath run can still be rewound.
 - **Playthrough history, as a tree.** The game records every scene the current
   save has passed through. **History** draws that path left to right: one column
-  per decision, the choices offered there stacked underneath, and the answer you
-  picked joined by a darker line. Hovering a choice shows its full text; clicking
-  one loads the save of that decision. Decisions made before the mod was
+  per scene, the answers offered there stacked underneath, and the answer you
+  picked joined by a darker line. The answers come from the game's own
+  translation table, so this works for scenes played before the mod too;
+  hovering shows the full text, and columns the mod has a save for can be
+  clicked to load them. Decisions made before the mod was
   installed can be shown but not reopened — the game keeps no earlier states, and
   only records the most recent answer. A dataset of the game's events — all five
   chapters, 175 events with every option, requirement and outcome — lives in

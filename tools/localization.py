@@ -132,6 +132,27 @@ def main():
     for scene in list(sorted(scenes))[:3]:
         s = scenes[scene]
         print("  %-14s %-28s %d answer(s)" % (scene, s["title"][:28], len(s["buttons"])))
+    # The mod ships a flat TSV: Unity's JsonUtility cannot do dictionaries, and
+    # this is trivial to parse line by line.
+    def esc(text):
+        return (text or "").replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "")
+
+    lines = []
+    for scene in sorted(scenes):
+        entry = scenes[scene]
+        if not entry["title"] and not entry["buttons"]:
+            continue
+        lines.append("S\t%s\t%s" % (scene, esc(entry["title"])))
+        for name in sorted(entry["buttons"]):
+            lines.append("B\t%s\t%s\t%s" % (scene, name, esc(entry["buttons"][name])))
+    tsv = "\n".join(lines) + "\n"
+    for target in (ROOT / "data" / "scene-texts.tsv", game / "Brante-Save-Load" / "scene-texts.tsv"):
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(tsv, encoding="utf-8")
+            print("wrote %s" % target)
+        except OSError as exc:
+            print("could not write %s: %s" % (target, exc))
     print("wrote %s" % path)
     return 0
 

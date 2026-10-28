@@ -104,21 +104,28 @@ namespace Doorstop
 			return list;
 		}
 
-		// The offered choices recorded in the scene's sidecar.
+		// The offered choices: from the scene's sidecar when the mod captured it,
+		// otherwise from the game's own localisation table (SceneTexts), which
+		// covers scenes played before the mod was installed.
 		private static void LoadChoices(Entry e)
 		{
 			e.Choices = new List<Choice>();
-			if (string.IsNullOrEmpty(e.SnapshotPath))
+			string sidecar = string.IsNullOrEmpty(e.SnapshotPath) ? "" :
+				Path.ChangeExtension(e.SnapshotPath, ".meta.txt");
+			if (string.IsNullOrEmpty(sidecar) || !File.Exists(sidecar))
 			{
+				foreach (KeyValuePair<string, string> b in SceneTexts.Buttons(e.SceneName))
+				{
+					Choice c = new Choice();
+					c.Index = e.Choices.Count + 1;
+					c.Name = b.Key;
+					c.Text = b.Value;
+					e.Choices.Add(c);
+				}
 				return;
 			}
-			string sidecar = Path.ChangeExtension(e.SnapshotPath, ".meta.txt");
 			try
 			{
-				if (!File.Exists(sidecar))
-				{
-					return;
-				}
 				foreach (string raw in File.ReadAllLines(sidecar))
 				{
 					string line = raw.Trim();
