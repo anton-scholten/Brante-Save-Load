@@ -255,6 +255,17 @@ def main():
             "count": count,
         })
 
+    # Per-scene successors: choices rarely change the destination (a scene had
+    # 8 consequence texts and one next scene), so one observed transition can
+    # stand in for every option of that scene. Two different targets observed
+    # from the same scene means it really branches (death/final scenes).
+    successors = {}
+    for edge in edges:
+        if not edge["to"]:
+            continue
+        targets = successors.setdefault(edge["from"], {})
+        targets[edge["to"]] = targets.get(edge["to"], 0) + edge["count"]
+
     scenes = {}
     for scene, info in sorted(sidecars.items()):
         scenes[scene] = {
@@ -272,11 +283,15 @@ def main():
         "scenes": scenes,
         "events": mapping,
         "edges": edges,
+        "sceneSuccessors": {k: sorted(v) for k, v in successors.items()},
     }
     out = pathlib.Path(args.out)
     out.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
 
     if not args.quiet:
+        for scene, targets in sorted(successors.items()):
+            print("successor: %s -> %s%s" % (scene, ", ".join(sorted(targets)),
+                  "  (branches)" if len(targets) > 1 else ""))
         clicks = sum(1 for l in trace_lines if l[1] == "click")
         print("clicks: %d, edges resolved: %d, scenes mapped to sheet events: %d"
               % (clicks, len(edges), len(mapping)))
