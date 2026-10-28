@@ -19,7 +19,7 @@ Brante-Save-Load/            the folder that gets installed into the game dir
   Brante-Save-Load.dll       built by tools/build.sh; the Doorstop entry assembly
   0Harmony.dll               vendored Harmony (copied by the build from vendor/)
   scene-texts.tsv            every scene's title and answers (from the game; see data/)
-  scene-edges.tsv            the story's scene chains (from the game; see data/)
+  scene-flow.tsv             every chapter's scene order + conditions (from the game)
   Scripts/*.cs               the source
     Entrypoint.cs            Doorstop entry: Harmony patches, host creation
     ModLog.cs                file logger (usable before Unity is up)
@@ -28,7 +28,7 @@ Brante-Save-Load/            the folder that gets installed into the game dir
     ChoiceWindow.cs          save table, history tree, explore path builder
     History.cs               the save's scene path + offered answers
     SceneTexts.cs            loader for scene-texts.tsv (titles + answers)
-    SceneEdges.cs            loader for scene-edges.tsv (choice -> next scene)
+    SceneFlow.cs             scene-flow.tsv: upcoming scenes, condition evaluator
     Loc.cs                   the UI's own translations (11 languages)
     BoltDump.cs              runtime dump of the choice machine (dev only)
 doorstop/doorstop_config.ini the Doorstop config installed into the game folder
@@ -42,7 +42,8 @@ tools/localization.py        extract titles/answers -> data/, shipped TSV
 tools/bolt_extract.py        dump every Bolt graph as JSON (no UnityPy needed)
 tools/bolt_graph.py          Walk Bolt graphs (macro resolution, LoadScene)
 tools/bolt_scenes.py         scene catalogue per chapter
-tools/bolt_edges.py          scene chains (the transition table) -> shipped TSV
+tools/bolt_story.py          every chapter's scene flow + conditions -> shipped TSV
+tools/bolt_edges.py          direct scene -> scene links only (superseded, data/ only)
 tools/build_graph.py         merge traces + snapshots + event sheet
 data/                        extracted game data (see docs/BRANCHES.md)
 docs/                        FINDINGS (game internals), BRANCHES (choice data), TODO
@@ -75,12 +76,12 @@ and `--uninstall` removes exactly what was installed.
 
 ## Game data files (regenerate, don't hand-edit)
 
-`Brante-Save-Load/scene-texts.tsv` and `scene-edges.tsv` are extracted from the
+`Brante-Save-Load/scene-texts.tsv` and `scene-flow.tsv` are extracted from the
 installed game and shipped with the mod. Regenerate them after a game update with
 
 ```sh
+python3 tools/bolt_story.py       # scene-flow.tsv (needs UnityPy); run first
 python3 tools/localization.py     # scene-texts.tsv (+ data/localization.csv)
-python3 tools/bolt_edges.py       # scene-edges.tsv (needs UnityPy)
 ```
 
 `tools/bolt_*.py` / `tools/localization.py` need the game installed; the Bolt

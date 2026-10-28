@@ -283,6 +283,15 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   "upcoming" columns from `scene-edges.tsv`; the wheel scrolls the tree from
   anywhere in it (the empty viewport was not a raycast target); the table's
   Chapter column drops the "Chapter I." prefix. Verified in-game.
+- [x] Complete flow for all chapters (28 Oct 2026): `tools/bolt_story.py`
+  flattens every chapter macro (including `PeaceChapter`'s four tracks,
+  `Insurrection` and `GameFinals`) into the scene order with time slots, switch
+  labels and branch conditions; `scene-flow.tsv` replaces `scene-edges.tsv`,
+  `SceneFlow.cs` evaluates the conditions against the live game for the
+  upcoming columns and Explore, and `scene-texts.tsv` now covers all 263 story
+  scenes. Chapter 1 verified in-game (upcoming and explore unchanged, every
+  condition parses and evaluates); chapters 4-5 checked offline only, since no
+  save that far exists here.
 - [ ] Achievement side-effects on load (verify).
 - [ ] Full in-game pass on a played run: chapter transition, death -> restart
   chapter, explore + load from the panel.

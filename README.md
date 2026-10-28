@@ -112,12 +112,13 @@ mod's own saves (in `Brante-Save-Load/`) are not meant to be synced.
 
 ### What the mod ships besides the DLL
 
-`scene-texts.tsv` (every scene's title and answers) and `scene-edges.tsv` (the
-story's scene chains) are extracted from your installed copy of the game. They
-are what lets the tree view show answers for scenes played before the mod existed,
-and what lets Explore walk forward through choices. After a game update they can
-be regenerated with `tools/localization.py` and `tools/bolt_edges.py` (see
-`docs/BRANCHES.md`).
+`scene-texts.tsv` (every scene's title and answers, all five chapters) and
+`scene-flow.tsv` (the order in which each chapter reaches its scenes, with the
+conditions on the way) are extracted from your installed copy of the game. They
+are what lets the tree view show answers for scenes played before the mod
+existed, list the scenes still ahead, and let Explore walk forward. After a game
+update they can be regenerated with `tools/bolt_story.py` and
+`tools/localization.py` (see `docs/BRANCHES.md`).
 
 ### Known limitations
 
@@ -128,11 +129,15 @@ be regenerated with `tools/localization.py` and `tools/bolt_edges.py` (see
   next choice scene's save (the game keeps the last clicked answer until the
   next click). Answers given before the mod was installed are not recorded
   anywhere, so those columns show every answer without a highlight.
-- Upcoming scenes follow the chapter's scene chain. Answers do not change that
-  chain in the extracted data, but stat checks inside a scene can still change
-  what it shows; chapter 4 is only partly covered and chapter 5 not at all.
-- Explore follows the game's scene chains, which are linear inside a chapter;
-  real branches (deaths, finals, the three Lots) are separate chains.
+- Upcoming scenes are the rest of your chapter in the order the game reaches
+  them, on your run's track (your Lot in chapter 3, your post in chapter 4).
+  Their conditions (objectives, stats, characters' fates) are checked against
+  your save as it is now: a scene whose condition fails today is left out even
+  if a later answer could still unlock it, and one the mod cannot check is
+  marked "possible". The epilogue's fate pages have no answers, so the tree
+  ends with the last choice of chapter 5.
+- Explore picks the next scene the same way, so it follows your run's track;
+  it does not simulate what an answer would change.
 - Steam Cloud is not enabled for the game itself, so the game's saves do not sync
   between machines (see below).
 

@@ -374,7 +374,8 @@ namespace Doorstop
 			public string SnapshotPath = "";
 			public bool Preview;
 			public bool Current;    // the scene on screen (the pending entry)
-			public bool Upcoming;   // ahead of the current scene, from scene-edges.tsv
+			public bool Upcoming;   // ahead of the current scene, from scene-flow.tsv
+			public bool Possible;   // upcoming, but its conditions are not decided yet
 			public List<History.Choice> Choices = new List<History.Choice>();
 
 			public bool HasSnapshot
@@ -992,8 +993,21 @@ namespace Doorstop
 			_historyPanel.transform.SetAsLastSibling();
 			Canvas.ForceUpdateCanvases();
 			ScrollHistoryToFocus();
+			int ahead = 0, possible = 0;
+			foreach (TreeCol c in _tree)
+			{
+				if (c.Upcoming)
+				{
+					ahead++;
+					if (c.Possible)
+					{
+						possible++;
+					}
+				}
+			}
 			ModLog.Info("ChoiceWindow: history opened (" + n + " scene(s), "
-				+ _historyLoadable + " loadable)");
+				+ _historyLoadable + " loadable, " + ahead + " upcoming of which "
+				+ possible + " possible)");
 		}
 
 		private static void CloseHistory()
@@ -1088,7 +1102,7 @@ namespace Doorstop
 			_focusCol = pendingCol >= 0 ? pendingCol : cols.Count - 1;
 			if (!_explore && all.Count > 0)
 			{
-				AddUpcoming(cols, all[all.Count - 1].SceneName);
+				AddUpcoming(cols, all);
 			}
 			_tree = cols;
 			if (cols.Count == 0)
@@ -1140,6 +1154,10 @@ namespace Doorstop
 				else if (e.Upcoming && (i == 0 || !cols[i - 1].Upcoming))
 				{
 					headText += "  \u2022 " + Loc.T(Loc.K.Upcoming);
+				}
+				if (e.Possible)
+				{
+					headText += "  \u2022 " + Loc.T(Loc.K.Possible);
 				}
 				TextMeshProUGUI head = AddLabel(_historyList, "Head", headText,
 					18f, e.Preview || e.Upcoming ? ColTreeMuted : ColTextDark, false);
@@ -1208,7 +1226,7 @@ namespace Doorstop
 
 					TreeHover hover = node.AddComponent<TreeHover>();
 					hover.Info = c.Text + "   \u2022 " + Loc.T(c.Chosen ? Loc.K.TreeChosen
-							: e.Upcoming ? Loc.K.Upcoming : Loc.K.TreeOffered)
+							: e.Possible ? Loc.K.Possible : e.Upcoming ? Loc.K.Upcoming : Loc.K.TreeOffered)
 						+ (!_explore && e.HasSnapshot ? "   \u2022 " + Loc.T(Loc.K.SaveAvailable) : "");
 					hover.OnShow = SetHistoryInfo;
 				}
@@ -1343,7 +1361,7 @@ namespace Doorstop
 					}
 				}
 
-				string next = SceneEdges.Next(col.Scene);
+				string next = SceneFlow.Next(col.Scene);
 				ModLog.Info("ChoiceWindow: explore " + col.Scene + " [" + picked.Name + "] -> "
 					+ (string.IsNullOrEmpty(next) ? "(no edge)" : next));
 				if (!string.IsNullOrEmpty(next))
@@ -1394,27 +1412,34 @@ namespace Doorstop
 			return TreeTop + row * TreeRowH + TreeNodeH * 0.5f;
 		}
 
-		// The scenes ahead of `from` on its chapter chain (scene-edges.tsv),
-		// each with every answer it will offer. Scenes without answers
-		// (chapter screens) are passed through, not shown.
-		private static void AddUpcoming(List<TreeCol> cols, string from)
+		// The scenes still ahead in the current chapter (scene-flow.tsv), in the
+		// order the game reaches them, each with every answer it will offer:
+		// later time slots, on this run's track (Post and the other key
+		// parameters), minus scenes whose conditions fail now. Scenes whose
+		// conditions cannot be decided yet are kept, marked as possible.
+		// Scenes without answers (chapter screens) are left out.
+		private static void AddUpcoming(List<TreeCol> cols, List<History.Entry> played)
 		{
-			HashSet<string> seen = new HashSet<string>();
-			foreach (TreeCol c in cols)
+			HashSet<string> shown = new HashSet<string>();
+			string from = "";
+			foreach (History.Entry e in played)
 			{
-				seen.Add(c.Scene);
+				shown.Add(e.SceneName);
+				if (SceneFlow.Find(e.SceneName) != null)
+				{
+					from = e.SceneName;
+				}
 			}
-			string scene = SceneEdges.Next(from);
-			while (!string.IsNullOrEmpty(scene) && seen.Add(scene) && seen.Count < 400)
+			foreach (SceneFlow.Ahead a in SceneFlow.After(from, shown))
 			{
-				TreeCol col = PreviewCol(scene);
+				TreeCol col = PreviewCol(a.Row.Scene);
 				col.Preview = false;
 				col.Upcoming = true;
+				col.Possible = a.Condition != SceneFlow.Tri.True;
 				if (VisibleChoices(col).Count > 0)
 				{
 					cols.Add(col);
 				}
-				scene = SceneEdges.Next(scene);
 			}
 		}
 
@@ -2532,6 +2557,7 @@ namespace Doorstop
 			// Dev: leave time for a screenshot of the saves table, then the
 			// history panel on top of it.
 			yield return new WaitForSeconds(8f);
+			SceneFlow.DevCheck();
 			OpenHistory();
 			yield return new WaitForSeconds(3f);
 			DevWheel();

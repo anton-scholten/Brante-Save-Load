@@ -32,7 +32,10 @@ MAX_DEPTH = 40
 
 
 # ---------------------------------------------------------------- asset layer
-def load_objects(asset_path):
+def load_objects(asset_path, names=None):
+    """Bolt graphs by path id. With `names` (a dict), also fills in the name
+    of every MonoBehaviour in the file - the ScriptableObjects (objectives,
+    parameters, characters) that graphs reference through their PPtr array."""
     import UnityPy  # imported lazily so --help works without it
     env = UnityPy.load(str(asset_path))
     objects = {}
@@ -43,15 +46,17 @@ def load_objects(asset_path):
             data = obj.get_raw_data()
         except Exception:
             continue
-        start = data.find(GRAPH_START)
-        if start < 0:
-            continue
         # header(12) + enabled(4) + script(12) + name length + name
         try:
             name_len = struct.unpack_from("<i", data, 28)[0]
             name = data[32:32 + name_len].decode("utf-8", "replace")
         except Exception:
             name = ""
+        if names is not None and name:
+            names[obj.path_id] = name
+        start = data.find(GRAPH_START)
+        if start < 0:
+            continue
         graph_end = _json_end(data, start)
         if graph_end < 0:
             continue

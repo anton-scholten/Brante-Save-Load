@@ -67,12 +67,18 @@ def parse(csv_text):
 
 
 def catalogue():
-    """Scene names from the Bolt chapter macros, if it has been extracted."""
+    """Scene names from the Bolt chapter macros, if they have been extracted:
+    data/scene-flow.json (every chapter, tools/bolt_story.py) and the older
+    data/scene-catalog.json (chapters 1-4, tools/bolt_scenes.py)."""
+    names = set()
+    path = ROOT / "data" / "scene-flow.json"
+    if path.is_file():
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        names |= {r["scene"] for r in doc.get("scenes", [])}
     path = ROOT / "data" / "scene-catalog.json"
-    if not path.is_file():
-        return []
-    doc = json.loads(path.read_text(encoding="utf-8"))
-    names = {s for scenes in doc.get("chapters", {}).values() for s in scenes}
+    if path.is_file():
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        names |= {s for scenes in doc.get("chapters", {}).values() for s in scenes}
     return sorted(names, key=len, reverse=True)   # longest first
 
 

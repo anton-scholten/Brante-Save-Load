@@ -17,7 +17,7 @@ namespace Doorstop
 			ConfirmLoad, ConfirmDelete, ConfirmSave, EmptySaves,
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, SaveAvailable, Current, NothingYet,
-			TreeChosen, TreeOffered, Explore, LoadScene, PickAnswer, Upcoming
+			TreeChosen, TreeOffered, Explore, LoadScene, PickAnswer, Upcoming, Possible
 		}
 
 		static Loc()
@@ -55,17 +55,17 @@ namespace Doorstop
 			AddHintWords(_ja, "答えを選ぶと道が続きます");
 			AddHintWords(_ko, "계속하려면 답을 선택하세요");
 			AddHintWords(_zh, "选择一个答案以继续路径");
-			AddUpcomingWord(_en, "upcoming");
-			AddUpcomingWord(_ru, "впереди");
-			AddUpcomingWord(_de, "kommt noch");
-			AddUpcomingWord(_fr, "à venir");
-			AddUpcomingWord(_es, "por venir");
-			AddUpcomingWord(_it, "in arrivo");
-			AddUpcomingWord(_pl, "przed tobą");
-			AddUpcomingWord(_tr, "sırada");
-			AddUpcomingWord(_ja, "この先");
-			AddUpcomingWord(_ko, "앞으로");
-			AddUpcomingWord(_zh, "接下来");
+			AddUpcomingWord(_en, "upcoming", "possible");
+			AddUpcomingWord(_ru, "впереди", "возможно");
+			AddUpcomingWord(_de, "kommt noch", "möglich");
+			AddUpcomingWord(_fr, "à venir", "possible");
+			AddUpcomingWord(_es, "por venir", "posible");
+			AddUpcomingWord(_it, "in arrivo", "possibile");
+			AddUpcomingWord(_pl, "przed tobą", "możliwe");
+			AddUpcomingWord(_tr, "sırada", "olası");
+			AddUpcomingWord(_ja, "この先", "条件次第");
+			AddUpcomingWord(_ko, "앞으로", "조건부");
+			AddUpcomingWord(_zh, "接下来", "视条件而定");
 		}
 
 		private static void AddTreeWords(Dictionary<K, string> d, string chosen, string offered)
@@ -80,9 +80,10 @@ namespace Doorstop
 			d[K.LoadScene] = loadScene;
 		}
 
-		private static void AddUpcomingWord(Dictionary<K, string> d, string upcoming)
+		private static void AddUpcomingWord(Dictionary<K, string> d, string upcoming, string possible)
 		{
 			d[K.Upcoming] = upcoming;
+			d[K.Possible] = possible;
 		}
 
 		private static void AddHintWords(Dictionary<K, string> d, string pickAnswer)

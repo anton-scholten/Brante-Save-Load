@@ -5,11 +5,11 @@ guides so the history view can eventually show the *whole* tree, with the path o
 a given save highlighted. It is a starting point, not a complete graph — see
 "what is missing" below.
 
-**Shipped with the mod** (loaded at runtime by `SceneTexts.cs` / `SceneEdges.cs`):
+**Shipped with the mod** (loaded at runtime by `SceneTexts.cs` / `SceneFlow.cs`):
 `Brante-Save-Load/scene-texts.tsv` (titles + answers, from `tools/localization.py`)
-and `Brante-Save-Load/scene-edges.tsv` (the chapter chains, from
-`tools/bolt_edges.py`). Everything below is the documentation of how they were
-produced and what is still approximate.
+and `Brante-Save-Load/scene-flow.tsv` (every chapter's scene order with its
+conditions, from `tools/bolt_story.py`; see "The complete flow" below).
+Everything else here documents how they were produced.
 
 - `data/events.csv` — the community spreadsheet as downloaded (raw source).
 - `data/events.json` — the same data parsed (`tools/csv_to_events.py`): 19 groups,
@@ -31,6 +31,11 @@ produced and what is still approximate.
 | 3. Youth | first 5 (up to the Lots) | no | partial (the Lots) | complete per guide | path choice → chapter 4 path |
 | 4. Peace Time | none | no | no | no | no |
 | 5. The Revolt | none | no | no | no | no; endings only |
+
+(The table above is the community guides' coverage. Extracted from the game
+itself, every chapter is now complete: all 263 story scenes of chapters 1-5
+with titles and answers, plus the 192 epilogue pages, and the order and
+conditions in which the game reaches them - see "The complete flow".)
 
 Confidence is highest for chapter 1: a wiki page lists every scene, the exact
 button text, the condition, and the stat/relationship effect.
@@ -270,8 +275,59 @@ Lotless `..._Recruitment`), each ending in its `030.080.010_Departure_*`.
 python3 tools/bolt_edges.py     # -> data/scene-edges.json + Brante-Save-Load/scene-edges.tsv
 ```
 
-58 edges in four chapter chains. The mod now ships `scene-edges.tsv` next to the
-DLL, so the path builder can walk forward through unplayed choices.
+58 edges in four chapter chains. This was the first version of the path
+builder's data; it only sees links where one scene macro's `Exit` is wired
+straight to the next, so it missed everything behind a branch and all of
+chapters 4 and 5. `tools/bolt_story.py` replaces it (next section).
+
+## The complete flow (chapters 1-5 and the epilogue)
+
+```sh
+python3 tools/bolt_story.py     # -> data/scene-flow.json + Brante-Save-Load/scene-flow.tsv
+```
+
+How the game really picks the next scene, read from the macros:
+
+- **Every scene macro is a gate**: `if (Turn == T && Season == S &&
+  !GetSceneShowStatus(scene)) LoadScene(scene) else Exit`. Triggered scenes
+  (`01.N.01_Mama`, `052.N8.010_Trigger8`, ...) add their own test, e.g.
+  `SceneConditionsCollector.GetConditionBySceneName`.
+- **The chapter macro is walked again after every scene**, so the next scene is
+  the first one in flow order whose gate passes. In practice: the next time
+  slot (turn, season), then flow order inside it.
+- **Chapter macros**: `ChildhoodChapter`, `TeenChapter`, `YouthChapter`,
+  `PeaceChapter`, `Insurrection` (chapter 5), and `GameFinals` (the epilogue,
+  the `070.*` fate pages, no answers). Chapters 1-2 are chains; chapter 3
+  splits into three Lot tracks on the objectives `Noble`, `Cleric` and
+  `Bourgeois`; chapter 4 alternates a `Family` track with a job track chosen by
+  the key parameter `Post` (`Judge` -> `Prefect`, `Inquisitor`, `Rebel` ->
+  `Underground`), via `SwitchPeaceTree` (key parameter `PeaceTree`, flipped
+  every turn); chapter 5 is one long flow of branches.
+- **Unity object arguments**: `GetObjectiveStatus`, `GetParameterValue`,
+  `GetCharacterStatus` and `GetCharacterRelation` take ScriptableObjects
+  (`Objective`, `Parameter`, `Character`). Bolt stores them as an index into
+  the graph's trailing object-reference array (the same array that holds the
+  nested macros), so the extractor resolves them to asset names, e.g.
+  `@Objective'СемьяРаспалась'`, `@Parameter'Money'`, `@Character'Stefan'`.
+- **Shared macros take their scene from the caller**: `LoadScene`'s name comes
+  from `GraphInput`, i.e. from the SuperUnit that calls the macro.
+- Bolt's comparison port for `>` is spelled `aGreatherThanB`.
+
+The tool flattens the macros into one graph (macro, unit, call stack, switch
+labels), then propagates the conditions under which the flow reaches each
+unit, in topological order, as a disjunction of conjunctions simplified at
+every join - a guard `if (X) SpecialScene;` that rejoins the main line adds
+`X || !X` there, which cancels. Result: 17 + 20 + 28 + 155 + 43 story scenes,
+every one of them a scene in the game's build list; the only story scenes in
+the build that no macro reaches (`051.000.010_Scene_0`, `052.220.0x0_Final*`,
+`053.090.070_Revolution`) have no text either, so they are cut content.
+
+At runtime `SceneFlow.cs` takes the scenes after the current one in the same
+chapter, keeps those whose switch labels match the run's key chapter
+parameters (`PeaceTree` is ignored, it flips every turn), and evaluates their
+conditions against the live game by calling the very methods the macros call,
+on the game's own singletons and ScriptableObjects (found by type and name).
+What cannot be evaluated counts as unknown and is shown as "possible".
 
 The rest of this section records the earlier, now-resolved investigation.
 

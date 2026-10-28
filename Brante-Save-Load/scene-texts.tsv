@@ -50,6 +50,12 @@ B	01.11.01	ButtonDescription1	You humbly accept the commoner’s Lot.
 B	01.11.01	ButtonDescription2	You raise your head defiantly and stand up.
 B	01.11.01	ButtonDescription3	You catch the lash before it strikes your shoulders.
 B	01.11.01	ButtonDescription4	You defy the rite of the Sacrament and kiss the priest’s sword.
+S	01.N.01_Mama	The Ant Farm
+B	01.N.01_Mama	ButtonDescription1	You offer to go outside together and find some bugs to feed the ants.
+B	01.N.01_Mama	ButtonDescription2	You ask Mother to leave you alone.
+S	01.N2.01_Papa	Father's Sword
+B	01.N2.01_Papa	ButtonDescription1	You promise never to touch his sword again.
+B	01.N2.01_Papa	ButtonDescription2	You muster all your courage and beg Father to teach you how to hold the sword.
 S	02.01.01	The Boy Down The Street
 B	02.01.01	ButtonDescription1	You simply have to teach that jerk a lesson!
 B	02.01.01	ButtonDescription2	He did call them names first…
@@ -210,3 +216,643 @@ B	030.070.030_RecruitForReal	ButtonDescription4	You choose true death for yourse
 S	030.080.010_Departure_Bourgeois	A Farewell to the Capital
 S	030.080.010_Departure_Cleric	A Farewell to the Capital
 S	030.080.010_Departure_Noble	A Farewell to the Capital
+S	051.000.020_Arrive_Inquisitor	Homecoming
+B	051.000.020_Arrive_Inquisitor	ButtonDescription1	You are concerned about Mother’s health.
+B	051.000.020_Arrive_Inquisitor	ButtonDescription2	You find out what has happened in your sister’s life.
+B	051.000.020_Arrive_Inquisitor	ButtonDescription3	You spend some time with your younger brother.
+B	051.000.020_Arrive_Inquisitor	ButtonDescription4	You decide to discuss business with your elder brother.
+S	051.000.030_Arrive_Prefect	Homecoming
+B	051.000.030_Arrive_Prefect	ButtonDescription1	You are concerned about Mother’s health.
+B	051.000.030_Arrive_Prefect	ButtonDescription2	You find out what has happened in your sister’s life.
+B	051.000.030_Arrive_Prefect	ButtonDescription3	You spend some time with your younger brother.
+B	051.000.030_Arrive_Prefect	ButtonDescription4	You decide to discuss business with your elder brother.
+S	051.000.040_Arrive_Rebel	Homecoming
+B	051.000.040_Arrive_Rebel	ButtonDescription1	You are concerned about Mother’s health.
+B	051.000.040_Arrive_Rebel	ButtonDescription2	You find out what has happened in your sister’s life.
+B	051.000.040_Arrive_Rebel	ButtonDescription3	You spend some time with your younger brother.
+B	051.000.040_Arrive_Rebel	ButtonDescription4	You decide to talk business with your elder brother.
+S	051.010.010_Scene_1	A Reception at the Brante Residence
+B	051.010.010_Scene_1	ButtonDescription1	You display your knowledge of the metropolitan life to the guests.
+B	051.010.010_Scene_1	ButtonDescription2	Even though they are lowborn, your mother and sister deserve the attention of the guests.
+B	051.010.010_Scene_1	ButtonDescription3	You persuade the renowned painter Durante to paint a portrait of the Brante family.
+B	051.010.010_Scene_1	ButtonDescription4	You have earned the right to vaunt your military achievements.
+S	051.010.020_Scene_2	A Rock and a Hard Place
+B	051.010.020_Scene_2	ButtonDescription1	Gloria must stop bringing shame to your family by defying her Lot.
+B	051.010.020_Scene_2	ButtonDescription2	Stephan should give Gloria some respect. She is a member of this family too.
+B	051.010.020_Scene_2	ButtonDescription3	You persuade Gloria to go on a trip somewhere far away from Stephan. This will help them bury the hatchet.
+B	051.010.020_Scene_2	ButtonDescription4	Your younger brother’s words will help you settle the dispute.
+S	051.020.010_Scene_3	A Gift for the Family
+B	051.020.010_Scene_3	ButtonDescription1	You accept the jewels from the archduke and give them away as gifts for the local nobility.
+B	051.020.010_Scene_3	ButtonDescription2	You send the precious box back to the archduke.
+B	051.020.010_Scene_3	ButtonDescription3	You accept the jewels from the archduke in order to sell them for a good price.
+S	051.020.020_The_Old_Friend	An Old Friend
+B	051.020.020_The_Old_Friend	ButtonDescription_1	You aren’t about to miss a chance to spend some time with your old friend, no matter what kind of danger he’s in.
+B	051.020.020_The_Old_Friend	ButtonDescription_2	You and Tommas parted ways long ago. His fate is no longer linked to yours.
+S	051.020.030_The_Call_of_the_Ancestors	The Call of the Ancestors
+B	051.020.030_The_Call_of_the_Ancestors	ButtonDescription1	Robert Brante remains the head of the family.
+B	051.020.030_The_Call_of_the_Ancestors	ButtonDescription2	The eldest brother has earned the right to speak to the ancestors on behalf of the family.
+B	051.020.030_The_Call_of_the_Ancestors	ButtonDescription3	You yourself are entitled to speak to your ancestor.
+S	051.030.010_Scene_4	Brothers in Misery
+B	051.030.010_Scene_4	ButtonDescription1	You use your position as a judge to free Stephan and Nathan.
+B	051.030.010_Scene_4	ButtonDescription2	You arrange for the case to be entrusted to you as an inquisitor and free your brothers.
+B	051.030.010_Scene_4	ButtonDescription3	You find a document compromising the judge assigned to this case. He will free your brothers.
+B	051.030.010_Scene_4	ButtonDescription4	You persuade the head of the family to use his power as judge to free Stephan and Nathan.
+B	051.030.010_Scene_4	ButtonDescription5	You will not try to get your brothers out of trouble.
+S	051.040.010_Scene_7	The Festival of the Silver Tree
+B	051.040.010_Scene_7	ButtonDescription1	You persuade the family that Gloria has a right to read her poems.
+B	051.040.010_Scene_7	ButtonDescription2	Let Mother calm Gloria down.
+B	051.040.010_Scene_7	ButtonDescription3	Your sister is not to indulge in versification.
+S	051.050.010_Scene_10	Stephan’s Gambit
+B	051.050.010_Scene_10	ButtonDescription1	You will aid your brother in arranging this marriage for Gloria.
+B	051.050.010_Scene_10	ButtonDescription2	You will not participate in Stephan’s scheme.
+S	051.050.020_Scene_11	The Illegitimate Girl
+B	051.050.020_Scene_11	ButtonDescription1	You promise your sister that you will side with her.
+B	051.050.020_Scene_11	ButtonDescription2	You refuse to participate in your sister’s plan.
+S	051.060.010_RebelliousGirl	The Rebel
+B	051.060.010_RebelliousGirl	ButtonDescription1	Perhaps Mother can persuade Gloria to consent to the match.
+B	051.060.010_RebelliousGirl	ButtonDescription2	You will use your spies to gather evidence proving that Gloria is a member of a secret society.
+B	051.060.010_RebelliousGirl	ButtonDescription3	You will convince your sister to accept the fate the family has chosen for her.
+B	051.060.010_RebelliousGirl	ButtonDescription4	You will not continue pressuring Gloria.
+S	051.060.020_LesserEvil	The Lesser Evil
+B	051.060.020_LesserEvil	ButtonDescription1	You force Father to adopt Gloria and keep her in the family.
+B	051.060.020_LesserEvil	ButtonDescription2	You are prepared to fight your elder brother to the death to protect your sister.
+B	051.060.020_LesserEvil	ButtonDescription3	You have known for a long time about your brother’s secret love affair. You threaten to expose it unless Stephan relents.
+B	051.060.020_LesserEvil	ButtonDescription4	Gloria’s fate must be decided by the senior members of the family.
+S	051.060.030_Mortally	To the Death
+B	051.060.030_Mortally	ButtonDescription1	You find the strength to defeat your brother.
+B	051.060.030_Mortally	ButtonDescription2	You resort to a dirty trick — you will do whatever it takes to leave this duel alive.
+B	051.060.030_Mortally	ButtonDescription3	You cannot hope to best Stephan in a swordfight. All you can do now is accept your demise.
+S	051.060.040_HuntForThomas	The Hunt for Tommas
+B	051.060.040_HuntForThomas	ButtonDescription1	You will not try to protect Tommas.
+B	051.060.040_HuntForThomas	ButtonDescription2	You immediately come to your friend’s rescue.
+B	051.060.040_HuntForThomas	ButtonDescription3	You enlist Last Straw spies to help Tommas find refuge away from Anizotte.
+B	051.060.040_HuntForThomas	ButtonDescription4	You petition Archduke Milanidas himself to offer Tommas his protection.
+S	051.070.010_Deathbed	Deathbed
+B	051.070.010_Deathbed	ButtonDescription1	Mother is not long for this world, and there is nothing you can do about it.
+B	051.070.010_Deathbed	ButtonDescription2	You reinvigorate Mother so she can fight off her illness.
+B	051.070.010_Deathbed	ButtonDescription3	You resolve to put an end to the strife that is tearing your family apart. For Mother’s sake, all quarrels must cease.
+S	051.070.020_BrokenBranch	A Broken Branch
+B	051.070.020_BrokenBranch	ButtonDescription1	You allow Stephan to sever all ties to the Brante family.
+B	051.070.020_BrokenBranch	ButtonDescription2	You convince your brother to keep the name Brante. You still belong to the same bloodline.
+S	051.070.030_GoldenCage	The Gilded Cage
+B	051.070.030_GoldenCage	ButtonDescription1	You accept your brother’s right to decide what is best for the family — which means that the family must cut all ties with Gloria.
+B	051.070.030_GoldenCage	ButtonDescription2	You insist the Brante family must preserve their ties to Gloria.
+B	051.070.030_GoldenCage	ButtonDescription3	You deny your elder brother’s right to rule the family. Your dispute must be settled with the sword.
+S	051.070.040_InterruptedWedding	The Runaway Bride
+S	051.070.050_ThomasWedding	Tommas’s Wedding
+B	051.070.050_ThomasWedding	ButtonDescription1	You and Tommas have come a long way together. And now you will see him off to a new life.
+B	051.070.050_ThomasWedding	ButtonDescription2	As a priest, you shall conduct Tommas’ wedding ceremony yourself.
+B	051.070.050_ThomasWedding	ButtonDescription3	You have done all you could for your friend. It is time for the two of you to part ways.
+S	051.070.060_Repentance	Repentance
+B	051.070.060_Repentance	ButtonDescription1	Your younger brother has his reasons for taking one of his own lives.
+B	051.070.060_Repentance	ButtonDescription2	You prevent your younger brother from acting on his reckless plan.
+B	051.070.060_Repentance	ButtonDescription3	Surely she can find a way to talk her foolhardy son out of this.
+S	051.070.070_FamilyCouncil	A Family Matter
+B	051.070.070_FamilyCouncil	ButtonDescription1	Your bloodline has earned the right to a hereditary noble title.
+B	051.070.070_FamilyCouncil	ButtonDescription2	Your family will be ennobled by the sword and become members of Overseer Gaius Tempest’s entourage.
+B	051.070.070_FamilyCouncil	ButtonDescription3	All hope of being ennobled by the Sword is lost — but the Brante family will remain united.
+B	051.070.070_FamilyCouncil	ButtonDescription4	The Brante family is a family in name only. There is no reason to stay together anymore.
+S	051.070.080_NobleBlood	A Noble Bloodline
+B	051.070.080_NobleBlood	ButtonDescription1	You are the heir of the noble Brante family!
+B	051.070.080_NobleBlood	ButtonDescription2	Your elder brother is the lawful heir of the Brante family.
+S	051.090.010_FamilyQuarrel	Family Strife
+S	051.090.020_Devastation	Ruin and Debt
+S	051.090.030_StigmaOfShame	The Mark of Dishonor
+S	051.090.040_MinuteOfRest	A Moment of Respite
+S	051.090.050_RichFamily	A Family of Means
+B	051.090.050_RichFamily	ButtonDescription1	It is time your family estate gets the maintenance it deserves.
+B	051.090.050_RichFamily	ButtonDescription2	It is time you show the nobles of the city how the Brantes have flourished.
+B	051.090.050_RichFamily	ButtonDescription3	The books will preserve precious knowledge within your estate for centuries to come.
+S	051.090.060_GloriousFamily	A Glorious Bloodline
+S	052.010.001_Guidance	Spiritual Guidance
+B	052.010.001_Guidance	ButtonDescription1	She has your full support.
+B	052.010.001_Guidance	ButtonDescription2	The New Faith is no heresy.
+B	052.010.001_Guidance	ButtonDescription3	You are not ready to give Jeanne a definitive answer yet.
+S	052.010.005_Cassii	The Sacred Conclave
+B	052.010.005_Cassii	ButtonDescription1	You address the gathering with words of peace and reconciliation.
+B	052.010.005_Cassii	ButtonDescription2	You address the gathering with words of accusation.
+S	052.010.010_Case1	The Will and the Law
+B	052.010.010_Case1	ButtonDescription1	You obey Father Ulrich’s order.
+B	052.010.010_Case1	ButtonDescription2	You insist that the prisoner must face a tribunal.
+S	052.010.020_Case2	The La-Tari Society
+B	052.010.020_Case2	ButtonDescription1	You rush out of the Circle of La-Tari and call for the Champions of Faith.
+B	052.010.020_Case2	ButtonDescription2	The leader of the Circle, Octavia Milanidas, must be guided back to her Lot. You will help her return to the true Faith, along with her followers.
+B	052.010.020_Case2	ButtonDescription3	You remain in the Circle of La-Tari, hoping to behold a new facet of creation.
+S	052.020.010_Case3	In the Shadow of the Tree
+B	052.020.010_Case3	ButtonDescription1	You agree to help the New Believers.
+B	052.020.010_Case3	ButtonDescription2	You state that you will only serve the interests of the Inquisition.
+B	052.020.010_Case3	ButtonDescription3	You point out the flaws and inconsistencies in Fotis’s teachings to Father Lennart and refuse to help him.
+S	052.030.010_Case4	The Printed Page
+B	052.030.010_Case4	ButtonDescription1	These books must be banned.
+B	052.030.010_Case4	ButtonDescription2	You use the Patriarch’s permission as an excuse to let the books be published.
+B	052.030.010_Case4	ButtonDescription3	The books will be published — but only when you are done editing them personally.
+S	052.040.010_Case5	Miracles and Wonders
+B	052.040.010_Case5	ButtonDescription1	You will deliver her to the Inquisition, to be stripped of her Lot and her free will.
+B	052.040.010_Case5	ButtonDescription2	Ariadella is a pious, Twins-fearing woman. Perhaps magic was her path to the Twins after all.
+B	052.040.010_Case5	ButtonDescription3	Fire shall purge Ariadella’s hideous magic from this land. There is no place for witches in the Empire.
+B	052.040.010_Case5	ButtonDescription4	The young woman is innocent; her magic does no harm. You will risk yourself to keep her safe.
+S	052.050.010_Case6	Revelation
+B	052.050.010_Case6	ButtonDescription1	You go to the temple by the Silver Tree to share this revelation with a priest of the New Faith.
+B	052.050.010_Case6	ButtonDescription2	You walk to Jeanne’s home to share this revelation with a follower of the Old Faith.
+B	052.050.010_Case6	ButtonDescription3	Like the La-Tari, for a brief moment you become one with something greater than yourself.
+B	052.050.010_Case6	ButtonDescription4	You go to your family. They are more dear to you than anyone else in the world, and you want to share this revelation with them.
+S	052.050.020_Case7	The Trail of Sorcery
+B	052.050.020_Case7	ButtonDescription1	You give the mage chase, leaving Jeanne behind to bleed.
+B	052.050.020_Case7	ButtonDescription2	You let the mage escape. Right now, saving Jeanne’s life means more to you.
+B	052.050.020_Case7	ButtonDescription3	You give the mage chase, leaving Jeanne behind to bleed.
+B	052.050.020_Case7	ButtonDescription4	You let the mage escape. Right now, saving Jeanne’s life means more to you.
+S	052.050.025_Confession	A Confession
+B	052.050.025_Confession	ButtonDescription1	The Silver Tree filled you both with love, but now the illusion is gone.
+B	052.050.025_Confession	ButtonDescription2	You have both transgressed, and there will be retribution.
+B	052.050.025_Confession	ButtonDescription3	The Twins have blessed you, for such is their Will.
+B	052.050.025_Confession	ButtonDescription4	You accept the love you share.
+B	052.050.025_Confession	ButtonDescription5	You must control your passion.
+S	052.050.026_PatriarchPreaching	The Patriarch’s Sermon
+B	052.050.026_PatriarchPreaching	ButtonDescription1	You make peace with the patriarch in public, reassuring the people and Cassius himself.
+B	052.050.026_PatriarchPreaching	ButtonDescription2	The Order of the Inquisition does not submit to the patriarch. You make this clear to everyone.
+B	052.050.026_PatriarchPreaching	ButtonDescription3	Cassius is a liar and an apostate. The Order will find the truth, and all shall be revealed.
+B	052.050.026_PatriarchPreaching	ButtonDescription4	You call upon Father Lennart to stand with you against Cassius.
+S	052.050.030_Case8	A Sinner’s Confession
+B	052.050.030_Case8	ButtonDescription1	The Law of the Younger knows no mercy. Nathan and all who have turned away from the Faith will be caught, and they will be punished.
+B	052.050.030_Case8	ButtonDescription2	The Law of the Younger knows no mercy. But you do. You will let your brother go.
+B	052.050.030_Case8	ButtonDescription3	You are a priest — by your Lot, you must guide souls to the true path. Your brother must help the Inquisition arrest Father Mark.
+S	052.060.010_Case9	The Renegade
+B	052.060.010_Case9	ButtonDescription1	Mark will be allowed to leave Magra in exchange for evidence against Cassius
+B	052.060.010_Case9	ButtonDescription2	Nathan will help you lure Mark out of the house.
+B	052.060.010_Case9	ButtonDescription3	You must apprehend Father Mark by any means necessary.
+B	052.060.010_Case9	ButtonDescription4	You will not arrest Mark.
+S	052.060.020_Case10	The Sentence
+B	052.060.020_Case10	ButtonDescription1	They will help you stop the vigilantes and make sure Mark gets a proper tribunal.
+B	052.060.020_Case10	ButtonDescription2	You can prevent Cassius’s assault if you join forces with your teacher.
+B	052.060.020_Case10	ButtonDescription3	Mark will have to betray Patriarch Cassius if he wants to live to see another day.
+B	052.060.020_Case10	ButtonDescription4	You hand Mark over to the furious crowd.
+S	052.060.030_Reported	The Denunciation
+B	052.060.030_Reported	ButtonDescription1	You confess everything that happened between you under the Silver Tree.
+B	052.060.030_Reported	ButtonDescription2	You call the accusation false and insist that someone is trying to slander you.
+B	052.060.030_Reported	ButtonDescription3	You will need a powerful protector to get out of this mess.
+S	052.070.010_Case11	The Final Step
+B	052.070.010_Case11	ButtonDescription1	You bring the patriarch to justice at an Inquisition tribunal.
+B	052.070.010_Case11	ButtonDescription2	You join forces with Abbot Lennart and his congregation to overthrow Cassius.
+B	052.070.010_Case11	ButtonDescription3	Unable to stop Cassius, you wait for the Sacred Conclave.
+S	052.210.010_Final1	The Path of the Will
+S	052.210.020_Final2	The Flame of the New Faith
+S	052.210.030_Final3	The Tribunal
+S	052.210.040_Final4	Cassius’s Downfall
+S	052.210.050_Final5	Wrath of the Gods
+S	052.210.065_Final7	
+B	052.210.065_Final7	ButtonDescription1	
+B	052.210.065_Final7	ButtonDescription2	
+S	052.N1.010_Trigger1	Disdain and Rage
+B	052.N1.010_Trigger1	ButtonDescription1	You will punish these insolent wretches for daring to threaten an inquisitor in a temple.
+B	052.N1.010_Trigger1	ButtonDescription2	You go home without engaging them in conversation.
+B	052.N1.010_Trigger1	ButtonDescription3	They may be full of rage, but this is your duty as a clergyman.
+S	052.N10.010_Trigger10	The New Sacrament
+B	052.N10.010_Trigger10	ButtonDescription1	You ask Gaius Tempest to find a peaceful resolution to this conflict.
+B	052.N10.010_Trigger10	ButtonDescription2	The Inquisition will force the New Believers to forsake their new sacrament.
+B	052.N10.010_Trigger10	ButtonDescription3	You persuade your brothers and sisters in faith to defend the New Believers
+S	052.N11.010_Trigger11	Freedom
+S	052.N12.010_Trigger12	The Silence of the Gods
+B	052.N12.010_Trigger12	ButtonDescription1	You must stop this madness before the New Believers led by Samosta capture Cassius.
+B	052.N12.010_Trigger12	ButtonDescription2	You will not save Cassius. Retribution is inevitable.
+S	052.N13.010_Heretic	The Heretic
+S	052.N2.010_Trigger2	The Captive
+B	052.N2.010_Trigger2	ButtonDescription1	The alleged witch must be interrogated.
+B	052.N2.010_Trigger2	ButtonDescription2	The righteous indignation of your flock will become a weapon in your hands.
+B	052.N2.010_Trigger2	ButtonDescription3	Catalina El Laberius will be exonerated, and Jeanne will be released.
+S	052.N3.010_Trigger3	The Will
+B	052.N3.010_Trigger3	ButtonDescription1	The world is driven by Will — your entire life is proof of that. You are ready to serve the Will from now on.
+B	052.N3.010_Trigger3	ButtonDescription2	The Twins are more than just the Will; they are also Love and Law. You will not walk a false path.
+S	052.N4.010_Trigger4	Privilege and Authority
+B	052.N4.010_Trigger4	ButtonDescription1	There is no direct evidence proving El Corvio’s guilt, and torturing him will aggravate the local nobles.
+B	052.N4.010_Trigger4	ButtonDescription2	You will not let El Corvio go until you are sure he is innocent.
+B	052.N4.010_Trigger4	ButtonDescription3	Manufactured evidence would be enough to deprive El Corvio of his noble patronage.
+S	052.N5.010_Trigger5	The Reflection
+S	052.N6.010_Trigger6	Willism
+S	052.N7.010_Trigger7	Night of Sword and Lash
+B	052.N7.010_Trigger7	ButtonDescription1	You try to stop the people by preaching to them.
+B	052.N7.010_Trigger7	ButtonDescription2	You will save the New Believers and hide them in your own home.
+B	052.N7.010_Trigger7	ButtonDescription3	There is nothing you can do to stop this from happening.
+S	052.N8.010_Trigger8	The Fire
+B	052.N8.010_Trigger8	ButtonDescription1	You will convince your father to donate some of the family funds to the cause.
+B	052.N8.010_Trigger8	ButtonDescription2	You will investigate the arson, even if it means going against Ulrich.
+B	052.N8.010_Trigger8	ButtonDescription3	Here and now, you will admonish the parishioners of the burned temple and bring them back to the Old Faith and the Lots.
+S	052.N9.010_Trigger9	Lethal Weapons
+B	052.N9.010_Trigger9	ButtonDescription1	The New Believers will get the right to defend their temples.
+B	052.N9.010_Trigger9	ButtonDescription2	Protecting temples is the duty of the Champions of Faith. They will stand guard at the temple of the Silver Tree.
+B	052.N9.010_Trigger9	ButtonDescription3	A militia formed by the New Believers would only escalate the conflict. Arming the flock is not an answer.
+S	053.010.010_FirstSteps	First Steps
+B	053.010.010_FirstSteps	ButtonDescription1	You look for people who are dissatisfied with the Imperial order and determined to fight for their rights.
+B	053.010.010_FirstSteps	ButtonDescription2	You look for people who are willing to get their hands dirty without asking too many questions.
+B	053.010.010_FirstSteps	ButtonDescription3	You invest more into the print shop and hire skilled labor in order to transform your cover story into a proper business.
+S	053.010.020_Call	The Last Straw
+B	053.010.020_Call	ButtonDescription1	There is no need to vet everyone so thoroughly. Simplifying the process will speed up recruitment, which means more people will join your secret society more quickly.
+B	053.010.020_Call	ButtonDescription2	There is no way to recruit people more quickly. Felipe needs an efficient clandestine society, not a useless mob that’s impossible to control.
+S	053.010.030_Case1	Hearts on Fire
+B	053.010.030_Case1	ButtonDescription1	You convince the most gifted poets to join your underground society.
+B	053.010.030_Case1	ButtonDescription2	The Secret Chancellery will take care of those rebels-to-be.
+B	053.010.030_Case1	ButtonDescription3	You ask Gloria to help you get in touch with the poets so you can print a compilation of their works.
+B	053.010.030_Case1	ButtonDescription4	The Prefecture will take care of those rebels-to-be.
+S	053.020.010_Rotshild	Mayer Egmont
+B	053.020.010_Rotshild	ButtonDescription1	You choose to take a chance and never mention Egmont’s plan in your report to Felipe.
+B	053.020.010_Rotshild	ButtonDescription2	You write Felipe a detailed report on the conversation with Egmont.
+S	053.030.010_Case2	Freedom of Speech
+B	053.030.010_Case2	ButtonDescription1	You will publish Father Mark’s book in secret.
+B	053.030.010_Case2	ButtonDescription2	You will take Father Mark’s manuscript directly to Felipe.
+B	053.030.010_Case2	ButtonDescription3	You will publish Father Mark’s book and get on his good side, then denounce him and all his followers to Felipe.
+B	053.030.010_Case2	ButtonDescription4	If the Prefecture can apprehend such a dangerous apostate, Father’s standing will surely improve.
+S	053.040.010_Case3	Blast Wave
+B	053.040.010_Case3	ButtonDescription1	Using Last Straw, you reveal the full extent of the miners’ furious determination.
+B	053.040.010_Case3	ButtonDescription2	Your underground organization will support the miners’ march. In return, they will join your cause.
+B	053.040.010_Case3	ButtonDescription3	The nobles’ attention will be focused on the protest tomorrow. This opportunity to enrich yourself at their expense should not go to waste.
+B	053.040.010_Case3	ButtonDescription4	The chancellor has to be informed about the approaching threat before Stephan and the other nobles are trapped.
+S	053.050.010_Powder	The Gunpowder Plot
+B	053.050.010_Powder	ButtonDescription1	Mayer Egmont has every reason to trust you. You are confident you can convince the old industrialist to share some of his gunpowder with the underground.
+B	053.050.010_Powder	ButtonDescription2	There is no way you and Egmont will ever be able to make a deal. You will have to rob the warehouse.
+B	053.050.010_Powder	ButtonDescription3	You decide to quietly tell Felipe about the gunpowder. Sophia does not have to know.
+B	053.050.010_Powder	ButtonDescription4	You are staying out of this. Your movement will do just fine without gunpowder.
+S	053.050.011_YouthMistakes	The Errors of Youth
+B	053.050.011_YouthMistakes	ButtonDescription1	You decide to turn him in to the Secret Chancellery.
+B	053.050.011_YouthMistakes	ButtonDescription2	You will help Gustav escape the city.
+B	053.050.011_YouthMistakes	ButtonDescription3	You will tell Gustav that you saved the Lotless in Eterna from a far worse fate and offer him a place in Last Straw.
+B	053.050.011_YouthMistakes	ButtonDescription4	You alert Felipe to Gustav’s presence. The Secret Chancellery can solve this problem for you.
+S	053.050.012_VisitingTheBurgomaster	A Chat with the Chancellor
+B	053.050.012_VisitingTheBurgomaster	ButtonDescription1	You promise to help El Verman get rid of Mayer Egmont in return for his protection against Felipe.
+B	053.050.012_VisitingTheBurgomaster	ButtonDescription2	You refuse to make a deal with El Verman and betray Felipe.
+B	053.050.012_VisitingTheBurgomaster	ButtonDescription3	You answer vaguely. You do not refuse El Verman’s offer, but you do not make any promises either.
+S	053.050.020_SmallVictory	An Invitation to Dinner
+B	053.050.020_SmallVictory	ButtonDescription1	You have no qualms about inviting Sophia to the dinner and introducing her to your family.
+B	053.050.020_SmallVictory	ButtonDescription2	After some consideration, you invite Sophia to the dinner and introduce her to your family.
+B	053.050.020_SmallVictory	ButtonDescription3	Despite your misgivings, you invite Sophia to the dinner and introduce her to your family.
+B	053.050.020_SmallVictory	ButtonDescription4	You tell Sophia that there is no way you could invite her to the dinner.
+S	053.050.021_DoriyOtton	Dorius Otton
+B	053.050.021_DoriyOtton	ButtonDescription1	You will put your faith in Sophia as long as she trusts you in return.
+B	053.050.021_DoriyOtton	ButtonDescription2	You will support Sophia’s plan without question.
+B	053.050.021_DoriyOtton	ButtonDescription3	Until Felipe returns, there is no way you are getting involved in anything this serious.
+B	053.050.021_DoriyOtton	ButtonDescription4	You refuse to participate in Sophia’s plan and order your men to follow her in secret.
+S	053.050.030_SecondDate	An Intimate Matter
+B	053.050.030_SecondDate	ButtonDescription1	You wish her a safe journey and good luck finding new people for the cause.
+B	053.050.030_SecondDate	ButtonDescription2	You belong to Sophia. You swear to remain loyal to her until the very end.
+B	053.050.030_SecondDate	ButtonDescription3	You tell her that if she ever needs any help or protection, you will be there.
+B	053.050.030_SecondDate	ButtonDescription4	You confess the strong feelings you have had for her ever since you were children.
+B	053.050.030_SecondDate	ButtonDescription5	You profess your love for her and ask her if she feels the same.
+S	053.060.010_EnteringTroops	The Legion
+B	053.060.010_EnteringTroops	ButtonDescription1	You ask him to violate his order and let the people protest despite the risk of incurring the overseer’s wrath.
+B	053.060.010_EnteringTroops	ButtonDescription2	You are prepared to give Tommas the names of the commoners inciting unrest in the city. In exchange, you will recruit several Legion officers as Secret Chancellery informants.
+B	053.060.010_EnteringTroops	ButtonDescription3	You start printing leaflets condemning the presence of Gaius Tempest and the Legion in the city.
+B	053.060.010_EnteringTroops	ButtonDescription4	You give Tommas the names of the nobles plotting against the overseer in exchange for his assistance.
+S	053.060.020_IronPhilippe	The Summons
+B	053.060.020_IronPhilippe	ButtonDescription1	You print his appeal and distribute it throughout Magra.
+B	053.060.020_IronPhilippe	ButtonDescription2	Father Lennart’s appeal could pose too much of a threat to the balance of power in Anizotte.
+B	053.060.020_IronPhilippe	ButtonDescription3	You accept the abbot’s request on one condition: he must let you speak to his flock before he delivers his sermon.
+B	053.060.020_IronPhilippe	ButtonDescription4	You report Father Lennart’s plan to the Inquisition.
+S	053.060.030_DangerousCargo	A Dangerous Haul
+B	053.060.030_DangerousCargo	ButtonDescription1	You give him the crate of guns and track down the men who smuggled it into the city.
+B	053.060.030_DangerousCargo	ButtonDescription2	If Felipe gets his hands on Egmont, El Verman’s plan will fall apart.
+B	053.060.030_DangerousCargo	ButtonDescription3	You take the weapons back to him. Then you make sure his men have a place to hide.
+B	053.060.030_DangerousCargo	ButtonDescription4	With the gunpowder, you can use these weapons to arm a squad of Last Straw members loyal to you personally.
+S	053.070.010_Bridges	A Sleepless Night
+B	053.070.010_Bridges	ButtonDescription1	This is your chance to break free of the Secret Chancellery and spark a real revolt in Anizotte.
+B	053.070.010_Bridges	ButtonDescription2	You will sacrifice Last Straw to save the Empire.
+B	053.070.010_Bridges	ButtonDescription3	You are staying out of this. No one will find you until the danger has passed and the unrest has come to an end.
+B	053.070.010_Bridges	ButtonDescription4	You betray Felipe and seek Mayer Egmont’s protection.
+B	053.070.010_Bridges	ButtonDescription5	You betray Felipe and seek Chancellor El Verman’s protection.
+S	053.080.010_SecretMeet	Game Over
+B	053.080.010_SecretMeet	ButtonDescription1	Your father and brother are both nobles of the Sword. They will keep you safe from Felipe. They will help you be free again.
+B	053.080.010_SecretMeet	ButtonDescription2	You will incite a real uprising in Anizotte that will be too much for Felipe to deal with.
+B	053.080.010_SecretMeet	ButtonDescription3	You will help the chancellor regain control of Anizotte in exchange for protection against the Secret Chancellery.
+B	053.080.010_SecretMeet	ButtonDescription4	There is nothing keeping you in Anizotte.
+S	053.090.010_Final1	Last Straw’s Revolt
+S	053.090.020_Final2	Farewell, Advisor!
+S	053.090.030_Final3	The Free City
+S	053.090.040_Final4	The Master of Anizotte
+S	053.090.050_Final5	A Free Man
+S	053.090.060_Final6	Glory to the Empire!
+S	053.100.010_Catastrophe1	Raid
+B	053.100.010_Catastrophe1	ButtonDescription1	You persuade him that there is absolutely no need to search the print shop.
+B	053.100.010_Catastrophe1	ButtonDescription2	You send for Father, hoping to use his reputation and influence to protect you from suspicion.
+B	053.100.010_Catastrophe1	ButtonDescription3	You destroy the intelligence from your spy network just before the search.
+S	053.100.020_Arrest	Failure
+B	053.100.020_Arrest	ButtonDescription1	You start a riot, demanding freedom for Jacques and Lien.
+B	053.100.020_Arrest	ButtonDescription2	You accuse the prefect of being in cahoots with the Secret Chancellery in order to provoke public outrage.
+B	053.100.020_Arrest	ButtonDescription3	You order Last Straw to lie low and make no attempt to help Jacques and Lien.
+S	053.100.030_OfferSofya	Powder Keg
+B	053.100.030_OfferSofya	ButtonDescription1	You tell Sophia where the gunpowder is being kept.
+B	053.100.030_OfferSofya	ButtonDescription2	You reply that you cannot give Sophia the gunpowder without knowing what she is going to do with it.
+S	053.100.040_Pogrom	The Burden
+B	053.100.040_Pogrom	ButtonDescription1	Momentarily overcome by greed, the leaders of the revolt agree to put an end to the protests.
+B	053.100.040_Pogrom	ButtonDescription2	You blackmail the members of the Lesser Quorum into withdrawing their petition to the overseer.
+B	053.100.040_Pogrom	ButtonDescription3	To prevent bloodshed, you take charge of the disturbances yourself.
+S	053.100.050_Aftermath	Explosion
+S	053.100.060_ArrestSofya	The Greater Good
+B	053.100.060_ArrestSofya	ButtonDescription1	You will be with her until the end.
+B	053.100.060_ArrestSofya	ButtonDescription2	The path Sophia wants to walk is a dead end. She has to stop.
+S	053.100.070_Catastrophe2	At Midnight
+B	053.100.070_Catastrophe2	ButtonDescription1	This is your only chance to escape Felipe’s wrath.
+B	053.100.070_Catastrophe2	ButtonDescription2	You go to the meeting hoping to beg Felipe for one last chance.
+B	053.100.070_Catastrophe2	ButtonDescription3	You have no choice. You will have to relinquish part of Last Straw to Felipe.
+S	053.100.080_Tortures	Wrath
+B	053.100.080_Tortures	ButtonDescription1	You ask the advisor to forgive your failure.
+B	053.100.080_Tortures	ButtonDescription2	You will use all of Last Straw’s resources to gather the information Felipe needs.
+B	053.100.080_Tortures	ButtonDescription3	You promise to use all the resources at Last Straw’s disposal to gather the information Felipe needs.
+S	053.100.090_Chancellor	Trust
+B	053.100.090_Chancellor	ButtonDescription1	You agree to Felipe’s proposal.
+B	053.100.090_Chancellor	ButtonDescription2	You will not lie: you are only interested your freedom, not serving the Empire.
+B	053.100.090_Chancellor	ButtonDescription3	You will be loyal to Sir Felipe, but you must warn him: Sophia will never trust you.
+S	053.100.100_Lynch	Personal Interests
+B	053.100.100_Lynch	ButtonDescription1	Offer the traitor the best price for the stolen papers
+B	053.100.100_Lynch	ButtonDescription2	Last Straw needs to stop all its activities until things settle down.
+B	053.100.100_Lynch	ButtonDescription3	You will not let anyone make a fool of you.
+S	053.100.110_Aftermath2	Mutually Beneficial Collaboration
+S	053.100.120_Disclosure	Clean Hands
+B	053.100.120_Disclosure	ButtonDescription1	You conceal what you have learned from Felipe.
+B	053.100.120_Disclosure	ButtonDescription2	You reveal Sophia’s plan to Felipe and dispose of the out-of-control rebel together.
+S	053.100.130_Suspicions	Suspicions
+B	053.100.130_Suspicions	ButtonDescription1	You persuade Felipe that you have always been loyal to him and him alone.
+B	053.100.130_Suspicions	ButtonDescription2	You admit being in cahoots with El Verman.
+B	053.100.130_Suspicions	ButtonDescription3	You admit being in cahoots with Egmont.
+B	053.100.130_Suspicions	ButtonDescription4	You admit being in cahoots with Sophia.
+B	053.100.130_Suspicions	ButtonDescription5	You make up a clever lie to throw off suspicion.
+S	054.010.010_FirstDayWork	First Day of Service
+B	054.010.010_FirstDayWork	ButtonDescription1	You carefully prepare for your judicial duties.
+B	054.010.010_FirstDayWork	ButtonDescription2	You take Carlo Fockegraben up on his offer and make several useful acquaintances among the judges of the Prefecture.
+B	054.010.010_FirstDayWork	ButtonDescription3	You go to Father to get an inside look at Prefecture affairs and see where he stands himself.
+S	054.010.020_Case1	The Land Dispute
+B	054.010.020_Case1	ButtonDescription1	You confirm that Basil Jung had the right to construct the dyeworks on the rented land.
+B	054.010.020_Case1	ButtonDescription2	You terminate the rental agreement between the noble El Avilla and the commoner Jung.
+B	054.010.020_Case1	ButtonDescription3	You propose a law that would grant noble landowners the right to terminate their rental agreements in court at any time.
+B	054.010.020_Case1	ButtonDescription4	You speak with the commoner in private and imply that some generosity might change your opinion about the case.
+S	054.020.010_El_Born	The Power of the Law
+B	054.020.010_El_Born	ButtonDescription1	You promise to side with the prefect and support his gambit.
+B	054.020.010_El_Born	ButtonDescription2	You cannot accept Sir El Borne’s offer.
+S	054.020.020_Case2	The Newspaper Case
+B	054.020.020_Case2	ButtonDescription1	You ban the Lesser Quorum’s gazette.
+B	054.020.020_Case2	ButtonDescription2	You rule that the gazette has a legal right to exist and reject the nobles’ numerous complaints.
+B	054.020.020_Case2	ButtonDescription3	You host a party to help Egmont and the Quorum nobles make peace. This allows you to legitimize the Quorum Gazette.
+B	054.020.020_Case2	ButtonDescription4	With the prefect’s help, you seize the printing press used for the gazette and give it to the Quorum nobility.
+S	054.030.010_Call	
+B	054.030.010_Call	ButtonDescription1	You assist the prefect in deflecting Octavia’s demands.
+B	054.030.010_Call	ButtonDescription2	You assert the right of the Archduke’s daughter to defend her noble subjects.
+B	054.030.010_Call	ButtonDescription3	Octavia knows who you are, and this gives you an opportunity to defuse the dispute and keep the prefect safe from her ire.
+S	054.030.020_Passion	Passion
+B	054.030.020_Passion	ButtonDescription1	You will do all as Octavia wishes in return for her favor.
+B	054.030.020_Passion	ButtonDescription2	You agree to be Octavia’s lover only if she sees you as an equal.
+B	054.030.020_Passion	ButtonDescription3	You insulted Octavia immensely and leave the castle.
+S	054.030.030_Case3	The Case of Father Mark
+B	054.030.030_Case3	ButtonDescription1	Imperial law exists for all estates, so you will find a way to judge Father Mark guilty in a secular court.
+B	054.030.030_Case3	ButtonDescription2	The Inquisition ought to deal with Father Mark’s heretical acts. You hand him over to Sister Jeanne.
+B	054.030.030_Case3	ButtonDescription3	Father Mark has not violated any Imperial law. If the Inquisition wants him so badly, they can catch him on their own.
+B	054.030.030_Case3	ButtonDescription4	You insist on participating in Father Mark’s trial. As a judge, you have something to say in this litigation, and the Inquisition must take it into account.
+S	054.040.010_FriendInTrouble	A Friend in Need
+B	054.040.010_FriendInTrouble	ButtonDescription1	You cannot possibly leave Tommas in need at a time like this! You will go to the duel along with him.
+B	054.040.010_FriendInTrouble	ButtonDescription2	Since you have Dorius Otton’s favor, you can prevent the duel and save your friend.
+B	054.040.010_FriendInTrouble	ButtonDescription3	You refuse to participate in the duel.
+S	054.040.020_HelpFriend	The Case against Otton
+B	054.040.020_HelpFriend	ButtonDescription1	You choose to exercise caution and refrain from getting involved in Tommas’s fate.
+B	054.040.020_HelpFriend	ButtonDescription2	You get Tommas framed and taken to prison, all to keep him safe from another duel.
+B	054.040.020_HelpFriend	ButtonDescription3	You pressure El Borne to give you a squad of gendarmes to ensure that Tommas is well guarded.
+B	054.040.020_HelpFriend	ButtonDescription4	Thanks to the deal you struck with Otton, you convince your friend to leave military service and give him some money to live on for the time being.
+S	054.040.030_Reckoning	Payback
+B	054.040.030_Reckoning	ButtonDescription1	You publicly admit your fault before Octavia.
+B	054.040.030_Reckoning	ButtonDescription2	You object — you did not insult Octavia. You acted like a nobleman.
+B	054.040.030_Reckoning	ButtonDescription3	You try to convince the aristocrats gathered here that this is all in jest.
+S	054.040.040_OctaviaDate	A Rendezvous with Octavia
+B	054.040.040_OctaviaDate	ButtonDescription1	You relate to Octavia the grandeur of the Twin Gods’ design as it was revealed to you in your childhood.
+B	054.040.040_OctaviaDate	ButtonDescription2	You ask Octavia about the lost knowledge she has been seeking.
+B	054.040.040_OctaviaDate	ButtonDescription3	You encourage Octavia to remember the joys of this earthly life.
+B	054.040.040_OctaviaDate	ButtonDescription4	You steer the conversation in a specific direction and entreat Octavia to put in a good word for you.
+S	054.040.050_OctaviaDate	A Rendezvous with Octavia
+B	054.040.050_OctaviaDate	ButtonDescription1	You relate to Octavia the grandeur of the Twin Gods’ design as it was revealed to you in your childhood.
+B	054.040.050_OctaviaDate	ButtonDescription2	You ask Octavia about the lost knowledge she has been seeking.
+B	054.040.050_OctaviaDate	ButtonDescription3	You encourage Octavia to remember the joys of this earthly life.
+B	054.040.050_OctaviaDate	ButtonDescription4	You steer the conversation in a specific direction and entreat Octavia to put in a good word for you.
+S	054.050.010_HuntForEvidence	The Search for Evidence
+B	054.050.010_HuntForEvidence	ButtonDescription1	Your friend is still in the city. He could introduce you to other people who have suffered at Otton’s hands — but at the cost of his own safety.
+B	054.050.010_HuntForEvidence	ButtonDescription2	You directly address Gaius Tempest, overseer of Magra, and request expanded authority to gather evidence against his adversary Gaius Otton.
+B	054.050.010_HuntForEvidence	ButtonDescription3	You set off to find the trail of Otton’s misdeeds on your own… even though having no support could spell great danger for you.
+B	054.050.010_HuntForEvidence	ButtonDescription4	The case against Commander Otton is too much of a risk. You dedicate yourself to other cases at the Prefecture instead.
+S	054.050.020_SmallVictory	A Realm Unknown
+B	054.050.020_SmallVictory	ButtonDescription1	You promise Octavia to keep the Circle of La-Tari a secret.
+B	054.050.020_SmallVictory	ButtonDescription2	You summon the gendarmes to break up the Circle of La-Tari.
+B	054.050.020_SmallVictory	ButtonDescription3	You insist that Octavia must disband the society for her own good.
+B	054.050.020_SmallVictory	ButtonDescription4	You find a way to help the Circle of La-Tari continue to exist as a historical society.
+S	054.060.010_ThreatsAndPromises	Threats and Promises
+B	054.060.010_ThreatsAndPromises	ButtonDescription1	You mollify the outraged Arknian, assuring him that the case poses no threat to him whatsoever.
+B	054.060.010_ThreatsAndPromises	ButtonDescription2	You stand your ground against the Arknian’s threats and force him to back down.
+B	054.060.010_ThreatsAndPromises	ButtonDescription3	The chancellor favors you for your past achievements. You call in this favor in exchange for his protection.
+B	054.060.010_ThreatsAndPromises	ButtonDescription4	You swear an oath to the Arknian: you will do everything you can to keep this case from progressing.
+S	054.060.020_Case5	Nobleman’s Honor
+B	054.060.020_Case5	ButtonDescription1	A semblance of justice will be served.
+B	054.060.020_Case5	ButtonDescription2	Your elite patronage allows you to have the murderer prosecuted to the fullest extent of the law.
+B	054.060.020_Case5	ButtonDescription3	El Corvio’s right to the duel will be acknowledged as lawful.
+B	054.060.020_Case5	ButtonDescription4	You ban meetings of the Court of Honor itself to prevent any such duels in the future.
+S	054.060.030_Witness	The Hunt for Tommas
+B	054.060.030_Witness	ButtonDescription1	You will not try to protect Tommas.
+B	054.060.030_Witness	ButtonDescription2	You immediately come to your friend’s rescue.
+B	054.060.030_Witness	ButtonDescription3	You bribe Prefecture gendarmes to capture and kill the enemies threatening Tommas.
+S	054.060.040_RebelSentence	Insurgents and Judgment
+B	054.060.040_RebelSentence	ButtonDescription1	You refuse Advisor El Ferro and protect the people on the list from the Secret Chancellery. They are innocent until proven guilty.
+B	054.060.040_RebelSentence	ButtonDescription2	Before doing anything to the people on El Ferro’s list, you must find proof of their guilt first.
+B	054.060.040_RebelSentence	ButtonDescription3	You agree to sentence these people to death on false charges.
+B	054.060.040_RebelSentence	ButtonDescription4	You refuse to accept the case and warn the people on the list of the danger looming over them.
+S	054.070.010_Case6	The Arknian Brawler
+B	054.070.010_Case6	ButtonDescription1	You take advantage of the tense situation to provoke the defendant to draw his sword.
+B	054.070.010_Case6	ButtonDescription2	You drop all charges against the Arknian Anthony Fess.
+B	054.070.010_Case6	ButtonDescription3	You ask Octavia to pardon the young Arknian in the archduke’s name.
+B	054.070.010_Case6	ButtonDescription4	You ensure that the Arknian is found guilty of treason.
+S	054.070.020_AlAtari	Transformation
+B	054.070.020_AlAtari	ButtonDescription1	You insist that Octavia be returned to her father’s side.
+B	054.070.020_AlAtari	ButtonDescription2	You leave without interfering with the enigmatic La-Tari.
+B	054.070.020_AlAtari	ButtonDescription3	You assure the now-transformed Octavia that you still care for her.
+B	054.070.020_AlAtari	ButtonDescription4	You ask the La-Tari to open your eyes to the true nature of things.
+S	054.080.010_Final1	Broken Chains
+S	054.080.020_Final2	Night of the Serpents
+S	054.080.030_Aftermath	The Smell of Gunpowder
+S	054.080.040_Arrest	Prisoners
+B	054.080.040_Arrest	ButtonDescription1	You hand the rebels over to the Secret Chancellery and destroy all evidence linking you to Egmont.
+B	054.080.040_Arrest	ButtonDescription2	You let Egmont out of the cell and allow him to flee and start the uprising.
+S	054.080.050_Duty	The Empty Chair
+S	054.080.060_Trap	Twilight over Anizotte
+B	054.080.060_Trap	ButtonDescription1	You warn the prefect in an attempt to sabotage El Verman’s conspiracy.
+B	054.080.060_Trap	ButtonDescription2	You follow El Verman’s advice and wait to see how the night ends.
+S	054.080.070_FinalPreparations	<need translation>
+B	054.080.070_FinalPreparations	ButtonDescription_1	<need translation>
+B	054.080.070_FinalPreparations	ButtonDescription_2	<need translation>
+B	054.080.070_FinalPreparations	ButtonDescription_3	<need translation>
+S	054.080.090_Court	
+B	054.080.090_Court	ButtonDescription_1	You respond to Otton by summoning him to trial. You wield the power of the law, and you have enough evidence to indict even an Arknian.
+B	054.080.090_Court	ButtonDescription_2	You respond to Otton by summoning him to trial. The power of law has grown substantially in Magra — not even an Arknian can escape justice now.
+B	054.080.090_Court	ButtonDescription_3	You have assembled enough evidence and garnered enough influence with the aristocracy to submit the case to the overseer and doom Otton to face the Court of Honor.
+B	054.080.090_Court	ButtonDescription_4	You have garnered enough influence with the aristocracy to submit the case to the overseer and doom Otton to face the Court of Honor.
+B	054.080.090_Court	ButtonDescription_5	You are not strong enough to oppose Otton. You forfeit the struggle and do as the Arknian orders.
+S	054.080.100_Final5	A Lesson Writ in Blood
+S	054.080.110_Final4	Otton and the Court of Honor
+S	054.080.120_Final3	Night of the Serpents
+S	054.080.130_Final6	Otton’s Sentence
+S	054.100.010_MartialLaw	March of the Desperate
+B	054.100.010_MartialLaw	ButtonDescription1	You promise to give the Legion captain a bribe in exchange for letting the people march to the City Hall.
+B	054.100.010_MartialLaw	ButtonDescription2	You call back the gendarmes and let the punitive battalion do what they must.
+B	054.100.010_MartialLaw	ButtonDescription3	You order the gendarmes to protect the common people at the cost of their lives.
+S	054.100.020_Pickets	The Crowded Square
+B	054.100.020_Pickets	ButtonDescription1	You order the gendarmes to find and imprison those who are instigating the mob. Without their leadership, the throng will disperse.
+B	054.100.020_Pickets	ButtonDescription2	You take advantage of your popularity with the people to mollify the crowd with promises of justice.
+B	054.100.020_Pickets	ButtonDescription3	Friedemund Schmidt will pay for his insolence. His death will show those arrogant commoners their place.
+B	054.100.020_Pickets	ButtonDescription4	You promise the people to do what they ask as a representative of the Prefecture.
+S	054.100.030_Rotshild	Friend of the People
+B	054.100.030_Rotshild	ButtonDescription1	You pass an amendment allowing the use of gunpowder in mines.
+B	054.100.030_Rotshild	ButtonDescription2	You refuse Egmont. The imperial decree will be implemented as is.
+S	054.100.040_AbuseOfAuthority	Debacle in the Shop
+B	054.100.040_AbuseOfAuthority	ButtonDescription1	The Steiners were merely protecting themselves. They broke no law.
+B	054.100.040_AbuseOfAuthority	ButtonDescription2	All residents of the province are granted the right to defend their lives.
+B	054.100.040_AbuseOfAuthority	ButtonDescription3	The law must defend the rights of the nobleman who suffered a lesser death.
+S	054.100.070_Dismissal	Invitation to the Ball
+B	054.100.070_Dismissal	ButtonDescription1	You refuse El Laberius and leave the mansion.
+B	054.100.070_Dismissal	ButtonDescription2	You agree to recant your own rulings
+B	054.100.070_Dismissal	ButtonDescription3	You suggest that the insult be expunged in a duel of honor.
+B	054.100.070_Dismissal	ButtonDescription4	You suggest that the insult be expunged in a duel of honor, although you have no hope of winning.
+S	054.100.080_Snakes	Chutes and Ladders
+B	054.100.080_Snakes	ButtonDescription1	You father can help you deal with the problems you are having at work.
+B	054.100.080_Snakes	ButtonDescription2	You change several of your past rulings in favor of the nobles in order to reassure your colleagues.
+B	054.100.080_Snakes	ButtonDescription3	You refuse to give in. You will continue to fight for justice and the rights of the common people.
+B	054.100.080_Snakes	ButtonDescription4	You protect your position by seeking assistance from highly-placed patrons.
+S	054.100.100_Present	An Audience with the Overseer
+B	054.100.100_Present	ButtonDescription1	You swear allegiance to the overseer and agree to hand Otton over to the Court of Honor instead of sentencing him yourself.
+B	054.100.100_Present	ButtonDescription2	You refuse to hand Otton over to the Court of Honor in spite of the overseer’s wrath.
+B	054.100.100_Present	ButtonDescription3	You refuse Gaius Tempest and inform El Borne of his intentions.
+S	060.010.010_FamilyFate	
+B	060.010.010_FamilyFate	ButtonDescription1	
+B	060.010.010_FamilyFate	ButtonDescription2	
+B	060.010.010_FamilyFate	ButtonDescription3	
+B	060.010.010_FamilyFate	ButtonDescription4	
+S	060.010.020_GodsWill	
+B	060.010.020_GodsWill	ButtonDescription1	
+B	060.010.020_GodsWill	ButtonDescription2	
+B	060.010.020_GodsWill	ButtonDescription3	
+B	060.010.020_GodsWill	ButtonDescription4	
+B	060.010.020_GodsWill	ButtonDescription5	
+S	060.010.030_EscapeFromTheCity	
+B	060.010.030_EscapeFromTheCity	ButtonDescription1	
+B	060.010.030_EscapeFromTheCity	ButtonDescription2	
+B	060.010.030_EscapeFromTheCity	ButtonDescription3	
+B	060.010.030_EscapeFromTheCity	ButtonDescription4	
+B	060.010.030_EscapeFromTheCity	ButtonDescription5	
+S	060.010.040_GatheringForces	
+B	060.010.040_GatheringForces	ButtonDescription1	
+B	060.010.040_GatheringForces	ButtonDescription2	
+B	060.010.040_GatheringForces	ButtonDescription3	
+B	060.010.040_GatheringForces	ButtonDescription4	
+B	060.010.040_GatheringForces	ButtonDescription5	
+B	060.010.040_GatheringForces	ButtonDescription6	
+B	060.010.040_GatheringForces	ButtonDescription7	
+S	060.010.050_DyingLight	
+B	060.010.050_DyingLight	ButtonDescription1	
+B	060.010.050_DyingLight	ButtonDescription2	
+B	060.010.050_DyingLight	ButtonDescription3	
+B	060.010.050_DyingLight	ButtonDescription4	
+S	060.010.060_ElBornChoice	
+B	060.010.060_ElBornChoice	ButtonDescription1	
+B	060.010.060_ElBornChoice	ButtonDescription2	
+B	060.010.060_ElBornChoice	ButtonDescription3	
+B	060.010.060_ElBornChoice	ButtonDescription4	
+S	060.010.070_HuntedBeast	
+B	060.010.070_HuntedBeast	ButtonDescription1	
+B	060.010.070_HuntedBeast	ButtonDescription2	
+B	060.010.070_HuntedBeast	ButtonDescription3	
+B	060.010.070_HuntedBeast	ButtonDescription4	
+B	060.010.070_HuntedBeast	ButtonDescription5	
+S	060.010.080_OrderSprit	
+B	060.010.080_OrderSprit	ButtonDescription1	
+B	060.010.080_OrderSprit	ButtonDescription2	
+B	060.010.080_OrderSprit	ButtonDescription3	
+B	060.010.080_OrderSprit	ButtonDescription4	
+B	060.010.080_OrderSprit	ButtonDescription5	
+B	060.010.080_OrderSprit	ButtonDescription6	
+S	060.010.090_PrefectureSiege	
+B	060.010.090_PrefectureSiege	ButtonDescription1	
+B	060.010.090_PrefectureSiege	ButtonDescription2	
+B	060.010.090_PrefectureSiege	ButtonDescription3	
+B	060.010.090_PrefectureSiege	ButtonDescription4	
+B	060.010.090_PrefectureSiege	ButtonDescription5	
+B	060.010.090_PrefectureSiege	ButtonDescription6	
+S	060.010.100_OttonDuel	
+B	060.010.100_OttonDuel	ButtonDescription1	
+B	060.010.100_OttonDuel	ButtonDescription2	
+B	060.010.100_OttonDuel	ButtonDescription3	
+S	060.010.110_NewFaithProcession	
+B	060.010.110_NewFaithProcession	ButtonDescription1	
+B	060.010.110_NewFaithProcession	ButtonDescription2	
+B	060.010.110_NewFaithProcession	ButtonDescription3	
+B	060.010.110_NewFaithProcession	ButtonDescription4	
+B	060.010.110_NewFaithProcession	ButtonDescription5	
+B	060.010.110_NewFaithProcession	ButtonDescription6	
+S	060.010.120_FarewellWithJeanne	
+B	060.010.120_FarewellWithJeanne	ButtonDescription1	
+B	060.010.120_FarewellWithJeanne	ButtonDescription2	
+B	060.010.120_FarewellWithJeanne	ButtonDescription3	
+B	060.010.120_FarewellWithJeanne	ButtonDescription4	
+B	060.010.120_FarewellWithJeanne	ButtonDescription5	
+B	060.010.120_FarewellWithJeanne	ButtonDescription6	
+S	060.010.130_ChiefOftheRiot	
+B	060.010.130_ChiefOftheRiot	ButtonDescription1	
+B	060.010.130_ChiefOftheRiot	ButtonDescription2	
+B	060.010.130_ChiefOftheRiot	ButtonDescription3	
+B	060.010.130_ChiefOftheRiot	ButtonDescription4	
+B	060.010.130_ChiefOftheRiot	ButtonDescription5	
+B	060.010.130_ChiefOftheRiot	ButtonDescription6	
+B	060.010.130_ChiefOftheRiot	ButtonDescription7	
+S	060.010.140_IfyourHouseisdeartoyou	
+B	060.010.140_IfyourHouseisdeartoyou	ButtonDescription1	
+B	060.010.140_IfyourHouseisdeartoyou	ButtonDescription2	
+B	060.010.140_IfyourHouseisdeartoyou	ButtonDescription3	
+B	060.010.140_IfyourHouseisdeartoyou	ButtonDescription4	
+B	060.010.140_IfyourHouseisdeartoyou	ButtonDescription5	
+B	060.010.140_IfyourHouseisdeartoyou	ButtonDescription6	
+B	060.010.140_IfyourHouseisdeartoyou	ButtonDescription7	
+S	060.010.150_TheFinalHour1	
+B	060.010.150_TheFinalHour1	ButtonDescription1	
+B	060.010.150_TheFinalHour1	ButtonDescription2	
+B	060.010.150_TheFinalHour1	ButtonDescription3	
+B	060.010.150_TheFinalHour1	ButtonDescription4	
+B	060.010.150_TheFinalHour1	ButtonDescription5	
+S	060.010.160_TheFinalHour2	
+B	060.010.160_TheFinalHour2	ButtonDescription1	
+B	060.010.160_TheFinalHour2	ButtonDescription2	
+B	060.010.160_TheFinalHour2	ButtonDescription3	
+B	060.010.160_TheFinalHour2	ButtonDescription4	
+B	060.010.160_TheFinalHour2	ButtonDescription5	
+S	060.010.170_TheFinal1	
+B	060.010.170_TheFinal1	ButtonDescription1	
+B	060.010.170_TheFinal1	ButtonDescription2	
+B	060.010.170_TheFinal1	ButtonDescription3	
+B	060.010.170_TheFinal1	ButtonDescription4	
+B	060.010.170_TheFinal1	ButtonDescription5	
+B	060.010.170_TheFinal1	ButtonDescription6	
+S	060.010.180_TheFinal2	
+B	060.010.180_TheFinal2	ButtonDescription1	
+B	060.010.180_TheFinal2	ButtonDescription2	
+B	060.010.180_TheFinal2	ButtonDescription3	
+B	060.010.180_TheFinal2	ButtonDescription4	
+B	060.010.180_TheFinal2	ButtonDescription5	
+B	060.010.180_TheFinal2	ButtonDescription6	
+S	060.010.190_TheFinal3	
+B	060.010.190_TheFinal3	ButtonDescription1	
+B	060.010.190_TheFinal3	ButtonDescription2	
+B	060.010.190_TheFinal3	ButtonDescription3	
+B	060.010.190_TheFinal3	ButtonDescription4	
+B	060.010.190_TheFinal3	ButtonDescription5	
+B	060.010.190_TheFinal3	ButtonDescription6	
+S	060.010.200_TheFinal4	
+B	060.010.200_TheFinal4	ButtonDescription1	
+B	060.010.200_TheFinal4	ButtonDescription2	
+B	060.010.200_TheFinal4	ButtonDescription3	
+B	060.010.200_TheFinal4	ButtonDescription4	
+B	060.010.200_TheFinal4	ButtonDescription5	
+S	060.010.210_TheFinal5	
+B	060.010.210_TheFinal5	ButtonDescription1	
+B	060.010.210_TheFinal5	ButtonDescription2	
+B	060.010.210_TheFinal5	ButtonDescription3	
+B	060.010.210_TheFinal5	ButtonDescription4	
+B	060.010.210_TheFinal5	ButtonDescription5	
+B	060.010.210_TheFinal5	ButtonDescription6	
+S	ChildhoodChapterStart	Chapter I. Childhood
+S	TeenChapterStart	Chapter II. Adolescence
+S	YouthChapterStart	Chapter III. Youth

@@ -102,7 +102,9 @@ def main():
     path.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
 
     tsv = "".join("%s\t%s\t%s\n" % (e["from"], e["to"], e["chapter"]) for e in unique)
-    for target in (ROOT / "data" / "scene-edges.tsv", pathlib.Path(game) / "Brante-Save-Load" / "scene-edges.tsv"):
+    # Superseded by tools/bolt_story.py (scene-flow.tsv, which the mod ships);
+    # kept for the record of the direct scene -> scene links.
+    for target in (ROOT / "data" / "scene-edges.tsv",):
         try:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(tsv, encoding="utf-8")
