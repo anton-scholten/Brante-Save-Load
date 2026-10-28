@@ -303,6 +303,14 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
 - [x] Answer requirements in the pop-up (28 Oct 2026): all-of and one-of
   groups from `ParameterButtonChanger`, checked live (green/red) for the
   current and upcoming scenes. Verified in-game.
+- [x] Tree view, round four (28 Oct 2026): clicks select answers (red dashed
+  mark on the last), Undo resets them, Load scene replays the picked path with
+  `AutoPlay` from the newest mod save before the first change; Explore removed;
+  "not recorded" note on the band; the path no longer runs down the next
+  scene's spine before an answer is picked; Tree view button with its own icon
+  at the top of the save window. Debug runs (`dev-autoplay.txt`) make test
+  saves at chapters 2 and 3. Fixed the click recorder (it never wrote
+  `chosen=`). Verified in-game, including a two-answer replay.
 - [ ] Achievement side-effects on load (verify).
 - [ ] Full in-game pass on a played run: chapter transition, death -> restart
   chapter, explore + load from the panel.

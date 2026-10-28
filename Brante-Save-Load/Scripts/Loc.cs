@@ -17,7 +17,7 @@ namespace Doorstop
 			ConfirmLoad, ConfirmDelete, ConfirmSave, EmptySaves,
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, SaveAvailable, Current, NothingYet,
-			TreeChosen, TreeOffered, Explore, LoadScene, PickAnswer, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord
+			TreeChosen, TreeOffered, Explore, LoadScene, PickAnswer, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore
 		}
 
 		static Loc()
@@ -33,17 +33,17 @@ namespace Doorstop
 			AddTreeWords(_ja, "選択済み", "候補");
 			AddTreeWords(_ko, "선택됨", "제시됨");
 			AddTreeWords(_zh, "已选择", "可选");
-			AddExploreWords(_en, "Explore", "Load this scene");
-			AddExploreWords(_ru, "Обзор", "Загрузить эту сцену");
-			AddExploreWords(_de, "Erkunden", "Diese Szene laden");
-			AddExploreWords(_fr, "Explorer", "Charger cette scène");
-			AddExploreWords(_es, "Explorar", "Cargar esta escena");
-			AddExploreWords(_it, "Esplora", "Carica questa scena");
-			AddExploreWords(_pl, "Odkrywaj", "Wczytaj tę scenę");
-			AddExploreWords(_tr, "Keşfet", "Bu sahneyi yükle");
-			AddExploreWords(_ja, "探索", "このシーンを読み込む");
-			AddExploreWords(_ko, "탐색", "이 장면 불러오기");
-			AddExploreWords(_zh, "探索", "读取此场景");
+			AddExploreWords(_en, "Explore", "Load scene");
+			AddExploreWords(_ru, "Обзор", "Загрузить сцену");
+			AddExploreWords(_de, "Erkunden", "Szene laden");
+			AddExploreWords(_fr, "Explorer", "Charger la scène");
+			AddExploreWords(_es, "Explorar", "Cargar escena");
+			AddExploreWords(_it, "Esplora", "Carica scena");
+			AddExploreWords(_pl, "Odkrywaj", "Wczytaj scenę");
+			AddExploreWords(_tr, "Keşfet", "Sahneyi yükle");
+			AddExploreWords(_ja, "探索", "シーンを読み込む");
+			AddExploreWords(_ko, "탐색", "장면 불러오기");
+			AddExploreWords(_zh, "探索", "读取场景");
 			AddHintWords(_en, "Pick an answer to continue the path");
 			AddHintWords(_ru, "Выберите ответ, чтобы продолжить путь");
 			AddHintWords(_de, "Wähle eine Antwort, um den Pfad fortzusetzen");
@@ -66,17 +66,17 @@ namespace Doorstop
 			AddRequirementWords(_ja, "必要条件", "いずれか", "ではない");
 			AddRequirementWords(_ko, "필요 조건", "다음 중 하나", "아님");
 			AddRequirementWords(_zh, "需要", "其中之一", "非");
-			AddNotRecorded(_en, "played - answer not recorded (before the mod)");
-			AddNotRecorded(_ru, "пройдено - ответ не записан (до мода)");
-			AddNotRecorded(_de, "gespielt - Antwort nicht aufgezeichnet (vor dem Mod)");
-			AddNotRecorded(_fr, "joué - réponse non enregistrée (avant le mod)");
-			AddNotRecorded(_es, "jugado - respuesta no registrada (antes del mod)");
-			AddNotRecorded(_it, "giocato - risposta non registrata (prima della mod)");
-			AddNotRecorded(_pl, "rozegrane - odpowiedź niezapisana (przed modem)");
-			AddNotRecorded(_tr, "oynandı - cevap kaydedilmedi (moddan önce)");
-			AddNotRecorded(_ja, "プレイ済み - 回答は未記録（MOD導入前）");
-			AddNotRecorded(_ko, "플레이함 - 답변 기록 없음 (모드 설치 전)");
-			AddNotRecorded(_zh, "已经历 - 未记录选择（安装模组之前）");
+			AddNotRecorded(_en, "Played but answer not recorded (mod was not installed)", "The mod has no save from before this point, so it cannot be reached.");
+			AddNotRecorded(_ru, "Пройдено, но ответ не записан (мод не был установлен)", "У мода нет сохранения до этого места, поэтому сюда не попасть.");
+			AddNotRecorded(_de, "Gespielt, aber Antwort nicht aufgezeichnet (Mod war nicht installiert)", "Der Mod hat keinen Spielstand vor dieser Stelle, sie ist nicht erreichbar.");
+			AddNotRecorded(_fr, "Joué, mais réponse non enregistrée (le mod n'était pas installé)", "Le mod n'a aucune sauvegarde avant ce point : impossible d'y aller.");
+			AddNotRecorded(_es, "Jugado, pero respuesta no registrada (el mod no estaba instalado)", "El mod no tiene ninguna partida anterior a este punto; no se puede llegar.");
+			AddNotRecorded(_it, "Giocato, ma risposta non registrata (la mod non era installata)", "La mod non ha salvataggi prima di questo punto: non è raggiungibile.");
+			AddNotRecorded(_pl, "Rozegrane, ale odpowiedź niezapisana (mod nie był zainstalowany)", "Mod nie ma zapisu sprzed tego miejsca, więc nie da się tu dotrzeć.");
+			AddNotRecorded(_tr, "Oynandı ama cevap kaydedilmedi (mod yüklü değildi)", "Modun bu noktadan önceye ait kaydı yok, buraya ulaşılamaz.");
+			AddNotRecorded(_ja, "プレイ済みだが回答は未記録（MOD未導入）", "この地点より前のセーブがないため、ここへは移動できません。");
+			AddNotRecorded(_ko, "플레이했지만 답변이 기록되지 않음 (모드 미설치)", "이 지점 이전의 저장이 없어 이동할 수 없습니다.");
+			AddNotRecorded(_zh, "已经历，但未记录选择（当时未安装模组）", "此处之前没有模组存档，无法前往。");
 			AddUpcomingWord(_en, "upcoming", "possible");
 			AddUpcomingWord(_ru, "впереди", "возможно");
 			AddUpcomingWord(_de, "kommt noch", "möglich");
@@ -109,9 +109,10 @@ namespace Doorstop
 			d[K.NotWord] = not;
 		}
 
-		private static void AddNotRecorded(Dictionary<K, string> d, string text)
+		private static void AddNotRecorded(Dictionary<K, string> d, string text, string noSave)
 		{
 			d[K.NotRecorded] = text;
+			d[K.NoSaveBefore] = noSave;
 		}
 
 		private static void AddUpcomingWord(Dictionary<K, string> d, string upcoming, string possible)

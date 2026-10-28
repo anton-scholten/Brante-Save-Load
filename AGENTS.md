@@ -26,7 +26,8 @@ Brante-Save-Load/            the folder that gets installed into the game dir
     ModLog.cs                file logger (usable before Unity is up)
     ModHost.cs               host component; probes, dev markers, save-slot adopt
     Recorder.cs              snapshots, dedup, backup, traces, save repair
-    ChoiceWindow.cs          save table, history tree, explore path builder
+    ChoiceWindow.cs          save table, tree view, path picks + Load scene
+    AutoPlay.cs              plays scenes by itself (Load scene replay, debug runs)
     History.cs               the save's scene path + offered answers
     SceneTexts.cs            loader for scene-texts.tsv (titles + answers)
     SceneFlow.cs             scene-flow.tsv: upcoming scenes, condition evaluator
@@ -145,10 +146,11 @@ on use) and must be paired with `dev-autoload.txt`:
 |---|---|
 | `dev-autoload.txt` | replay the vanilla load sequence onto the newest autosave |
 | `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
-| `dev-book.txt` | open the settings menu, dump its layout, then the history tree and explore two steps |
+| `dev-book.txt` | open the settings menu, dump its layout, then the tree view: wheel, pop-up, load + Cancel, a pick + its load plan |
 | `dev-history.txt` | log the save's scene path (`ShowedScenesList`) |
 | `dev-advance.txt` | page through the scene text (experimental) |
 | `dev-click.txt` | click the first visible answer (experimental) |
+| `dev-autoplay.txt` | empty: log the buttons the game puts up after an answer; `chapters 2 3`: start a debug run (own main save `Debug_<date>`, from the newest `Chapter_1.dat`), play the first open answer everywhere and make a mod save when each listed chapter starts |
 | `dev-scene-tree.txt` | dump the loaded scene's UI components |
 | `dev-bolt.txt` | dump the live Bolt graph of the choice machine |
 | `dev-ironman.txt` | load the save as an Iron Man game |
@@ -168,6 +170,6 @@ work here (black/`BadMatch` on the X1 root).
 - [docs/TODO.md](docs/TODO.md): what remains of the plan.
 - All phases are implemented and verified in-game: the save table, the history
   tree over the whole playthrough (answers for every scene come from the game's
-  localisation), and the explore mode that walks the story's scene chains and
-  loads the reached scene. Remaining: the achievements check, a full playthrough
+  localisation), path picks with Load scene (replayed by `AutoPlay`), and the
+  debug runs that make test saves. Remaining: the achievements check, a full playthrough
   pass (death -> restart chapter), and a design document.

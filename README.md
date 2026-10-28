@@ -50,13 +50,16 @@ never touches the game's saves.
   and fates with the character's portrait - and what it requires (all of the
   listed ones, or one of a "one of" group). For the scene on screen and the
   ones ahead, each requirement is checked against your hero: green when met,
-  red when not. Columns the mod has a
-  save for can be clicked to load them: the confirmation opens over the tree,
-  and Cancel returns to it as it was. The tree fills nearly the whole screen,
-  and the mouse wheel scrolls it sideways. **Explore** turns the tree into a path builder: click any
-  answer to move to the scene it leads to (the game's own scene chain is shipped
-  with the mod), keep choosing to walk forward, and "Load this scene" jumps to
-  the place you reached once it is one the mod has a save for. Decisions made before the mod was
+  red when not. Clicking answers builds a path: each click selects that answer
+  (the path follows it, and the last one clicked carries a red dashed outline).
+  **Load scene** then takes you to the scene of that last pick along your path:
+  the mod loads its newest save from before the first answer you changed and
+  plays the picked answers itself, scene by scene, until the selected scene is
+  on screen, where it stops for you. The **undo** button puts every pick back
+  to what you actually played. Played scenes from before the mod was installed
+  say so at the bottom of their band. The tree fills nearly the whole screen,
+  the mouse wheel scrolls it sideways, and its button sits at the top of the
+  save window. Decisions made before the mod was
   installed can be shown but not reopened — the game keeps no earlier states, and
   only records the most recent answer. A dataset of the game's events — all five
   chapters, 175 events with every option, requirement and outcome — lives in
@@ -124,7 +127,7 @@ mod's own saves (in `Brante-Save-Load/`) are not meant to be synced.
 `scene-effects.tsv` (what each answer changes) and `scene-flow.tsv` (the order in which each chapter reaches its scenes, with the
 conditions on the way) are extracted from your installed copy of the game. They
 are what lets the tree view show answers for scenes played before the mod
-existed, list the scenes still ahead, and let Explore walk forward. After a game
+existed and list the scenes still ahead. After a game
 update they can be regenerated with `tools/bolt_story.py` and
 `tools/localization.py` (see `docs/BRANCHES.md`).
 
@@ -147,8 +150,10 @@ update they can be regenerated with `tools/bolt_story.py` and
   if a later answer could still unlock it, and one the mod cannot check is
   marked "possible". The epilogue's fate pages have no answers, so the tree
   ends with the last choice of chapter 5.
-- Explore picks the next scene the same way, so it follows your run's track;
-  it does not simulate what an answer would change.
+- Load scene replays the path in the game itself, so it takes as long as
+  clicking through those scenes (about 20 seconds each) and stops early at an
+  answer your hero cannot take there. It needs a mod save at or before the
+  first changed answer; scenes from before the mod was installed have none.
 - Steam Cloud is not enabled for the game itself, so the game's saves do not sync
   between machines (see below).
 

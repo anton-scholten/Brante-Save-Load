@@ -265,6 +265,32 @@ namespace Doorstop
 						}
 						ModLog.Info("DEV ADVANCE: answer panel " + (ready ? "is up" : "never appeared"));
 					}
+					// Dev: auto-play probe - page, answer, then log the buttons the
+					// game puts up next.
+					string autoplay = Path.Combine(Recorder.SnapshotDir, "dev-autoplay.txt");
+					if (File.Exists(autoplay))
+					{
+						string spec = "";
+						try { spec = File.ReadAllText(autoplay).Trim(); File.Delete(autoplay); }
+						catch (Exception) { }
+						if (spec.StartsWith("chapters", StringComparison.Ordinal))
+						{
+							List<int> want = new List<int>();
+							foreach (string w in spec.Substring(8).Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries))
+							{
+								int n;
+								if (int.TryParse(w, out n))
+								{
+									want.Add(n);
+								}
+							}
+							yield return AutoPlay.DebugRun(want.ToArray());
+						}
+						else
+						{
+							yield return AutoPlay.Probe(80f);
+						}
+					}
 					// Dev: click the first offered choice.
 					string click = Path.Combine(Recorder.SnapshotDir, "dev-click.txt");
 					if (File.Exists(click))

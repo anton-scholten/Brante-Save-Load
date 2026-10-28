@@ -766,6 +766,8 @@ namespace Doorstop
 				string dir = RunDir(CurrentRunId(), "Auto");
 				if (string.IsNullOrEmpty(scene) || !Directory.Exists(dir))
 				{
+					ModLog.Info("Recorder: click not recorded (scene '" + scene + "', folder "
+						+ (Directory.Exists(dir) ? "ok" : "missing: " + dir) + ")");
 					return;
 				}
 				string prefix = Sanitize(scene) + "_";
@@ -778,8 +780,11 @@ namespace Doorstop
 						continue;
 					}
 					// the snapshot file must still exist
+					// "<name>.meta.txt" -> "<name>.dat" (GetFileNameWithoutExtension
+					// would leave "<name>.meta")
+					string side = Path.GetFileName(f);
 					string dat = Path.Combine(dir,
-						Path.GetFileNameWithoutExtension(f) + ".dat");
+						side.Substring(0, side.Length - ".meta.txt".Length) + ".dat");
 					if (!File.Exists(dat))
 					{
 						continue;
@@ -793,6 +798,7 @@ namespace Doorstop
 				}
 				if (newest == null)
 				{
+					ModLog.Info("Recorder: click not recorded (no snapshot of " + scene + " in " + dir + ")");
 					return;
 				}
 				string sceneName = GameManager.Instance != null ? GameManager.Instance.OpenedSceneName : "";

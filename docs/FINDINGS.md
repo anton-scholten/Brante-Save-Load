@@ -448,3 +448,40 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
 - A full graph of every possible choice is NOT available at runtime: branching
   lives in Bolt machines; only choices of scenes actually reached and captured
   are known.
+
+## Driving the game by itself (AutoPlay, 28 Oct 2026)
+
+`AutoPlay.cs` plays scenes the way a player clicks, which is what Load scene
+(replay a picked path) and the debug runs (`dev-autoplay.txt`) need. What it
+takes, all verified over chapters 1-2 and into 3:
+
+- **Answer**: when `ChoiseDescription` exists and a `ParameterButtonChanger` is
+  visible, call `Button_Click()` on the wanted one (`GetButtonState()` says
+  whether the hero may take it). The game sets `CurrentConsequene` to the
+  button's GameObject name (`ButtonDescriptionN`).
+- **Everything else is "press the button a player would"**, sent as a real
+  pointer click (`ExecuteEvents` enter/down/up/click) so animations and
+  handlers run as with the mouse. Seen in two chapters: `PageControl/Next`
+  (scene text and consequence pages), `AnswerSelectionControlPanel/Button`
+  (the consequence's continue), `InterludePopup` `RightArrow` / `ClosePopoup`,
+  `InformationPopup` and `EventPopup` `Button`, `Window_ChapterStart` /
+  `Window_ChapterFinal` `RightArrow` and `NextButtonPanel` ("Begin chapter",
+  `ChapterStartWindowController.NextSceneButton_Click`), the loading screen's
+  `TopPanel/Button`, and the chapter title picture (`StartPictureHelper
+  .OnPointerClick`). The driver picks by name (`Next`, `RightArrow`) or by the
+  click handler's method/class name (Next, Continue, Close, Skip, ...), never
+  the HUD, the pause menu, or Prev/Back/Settings/Exit/Load/Save handlers - and
+  the never-list only looks at names and methods, since handler *classes* such
+  as `ChapterStartWindowController` contain "Window".
+- **Inside the mod, `Button` is ambiguous**: one of the game's namespaces
+  defines its own `Button`, so `UnityEngine.UI.Button` must be spelled out or
+  `FindObjectsOfTypeAll<Button>()` silently finds nothing.
+- Cutscenes and loading screens need nothing; a scene costs about 20 s.
+- **The game's `Chapter_N.dat` is a clean chapter start**: loading a copy under
+  a new `SlotInfo.Id` (written as both `Autosave.dat` and `Chapter_1.dat` in
+  `Saves/<id>/`, so `Recorder.RealRunId` finds it) gives a separate main save
+  that never touches the player's run.
+- **Bug found on the way**: `Recorder.RecordChoice` paired `X.meta.txt` with
+  `Path.GetFileNameWithoutExtension(..) + ".dat"` = `X.meta.dat`, which never
+  exists - so no click had ever been recorded and the tree relied entirely on
+  the next snapshot's `CurrentConsequence`. Fixed.

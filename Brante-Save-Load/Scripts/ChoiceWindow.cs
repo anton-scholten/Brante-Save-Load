@@ -284,7 +284,7 @@ namespace Doorstop
 		private static readonly Color ColTreeChapter = new Color(0.55f, 0.30f, 0.25f, 0.55f);
 		private static readonly Color ColTreePlayedBand = new Color(0.55f, 0.30f, 0.25f, 0.07f);
 
-		private enum Pending { Load, Delete, SaveNow }
+		private enum Pending { Load, Delete, SaveNow, LoadPath }
 
 		// Table columns, left to right. Choice is the flexible one. The hero
 		// is not a column: the list only shows the current main save, so the
@@ -363,10 +363,12 @@ namespace Doorstop
 		private static GameObject _historyPanel;
 		private static int _historyLoadable;
 		private static TextMeshProUGUI _historyInfo;
-		private static GameObject _exploreBtn;
-		private static TextMeshProUGUI _exploreLabel;
+		private static GameObject _undoBtn;
 		private static GameObject _loadHereBtn;
-		private static bool _explore;
+		// The answer the player last clicked in the tree (the scene "Load
+		// scene" goes to); every click is also kept in _overrides by scene.
+		private static string _selScene;
+		private static string _selChoice;
 
 		// One tree column: a scene, the answers it offered, the one taken and
 		// (for captured scenes) the snapshot to load.
@@ -377,6 +379,8 @@ namespace Doorstop
 			public string SnapshotPath = "";
 			public bool Preview;
 			public bool Current;    // the scene on screen (the pending entry)
+			public bool Recorded;   // the answer played here is known
+			public string PlayedChoice = "";   // that answer's name
 			public bool Upcoming;   // ahead of the current scene, from scene-flow.tsv
 			public bool Possible;   // upcoming, but its conditions are not decided yet
 			public List<History.Choice> Choices = new List<History.Choice>();
@@ -394,7 +398,6 @@ namespace Doorstop
 		private static TextMeshProUGUI _popupNote;
 		private static Transform _popupEffects;
 		private static ScrollRect _historyScroll;
-		private static List<TreeCol> _preview = new List<TreeCol>();
 		private static Dictionary<string, string> _overrides =
 			new Dictionary<string, string>();
 
@@ -721,19 +724,33 @@ namespace Doorstop
 			// as recorded by the game itself (Phase 6).
 			_historyBtn = CreateUiObject("HistoryBtn", panel.transform);
 			RectTransform hrt2 = _historyBtn.GetComponent<RectTransform>();
-			hrt2.anchorMin = new Vector2(1f, 0f);
-			hrt2.anchorMax = new Vector2(1f, 0f);
-			hrt2.pivot = new Vector2(1f, 0f);
-			hrt2.anchoredPosition = new Vector2(-22f, 20f);
-			hrt2.sizeDelta = new Vector2(220f, 52f);
+			hrt2.anchorMin = new Vector2(0.5f, 1f);
+			hrt2.anchorMax = new Vector2(0.5f, 1f);
+			hrt2.pivot = new Vector2(0.5f, 1f);
+			hrt2.anchoredPosition = new Vector2(0f, -14f);
+			hrt2.sizeDelta = new Vector2(250f, 56f);
 			Image himg2 = _historyBtn.AddComponent<Image>();
 			himg2.color = ColButtonDark;
 			Button hbtn2 = _historyBtn.AddComponent<Button>();
 			hbtn2.targetGraphic = himg2;
 			hbtn2.onClick.AddListener(OpenHistory);
+			GameObject hicon = CreateUiObject("Icon", _historyBtn.transform);
+			RectTransform hirt = hicon.GetComponent<RectTransform>();
+			hirt.anchorMin = new Vector2(0f, 0.5f);
+			hirt.anchorMax = new Vector2(0f, 0.5f);
+			hirt.pivot = new Vector2(0f, 0.5f);
+			hirt.anchoredPosition = new Vector2(14f, 0f);
+			hirt.sizeDelta = new Vector2(64f, 38f);
+			Image hiImg = hicon.AddComponent<Image>();
+			hiImg.sprite = MakeTreeIcon();
+			hiImg.color = ColTextLight;
+			hiImg.preserveAspect = true;
+			hiImg.raycastTarget = false;
 			TextMeshProUGUI hlabel = AddLabel(_historyBtn.transform, "Label",
-				Loc.T(Loc.K.History), 24f, ColTextLight, true);
+				Loc.T(Loc.K.History), 23f, ColTextLight, true);
 			Stretch(hlabel.rectTransform);
+			hlabel.rectTransform.offsetMin = new Vector2(84f, 0f);
+			hlabel.alignment = TextAlignmentOptions.MidlineLeft;
 
 			// Both on the canvas itself: the tree is wider than the save window,
 			// and the confirm dialog must be able to sit on top of the tree.
@@ -780,12 +797,10 @@ namespace Doorstop
 			_popupText = null;
 			_popupNote = null;
 			_popupEffects = null;
-			_exploreBtn = null;
-			_exploreLabel = null;
+			_undoBtn = null;
 			_loadHereBtn = null;
-			_explore = false;
-			_exploreCut = -1;
-			_preview.Clear();
+			_selScene = null;
+			_selChoice = null;
 			_overrides.Clear();
 			_tree = new List<TreeCol>();
 			_confirmPanel = null;
@@ -930,23 +945,32 @@ namespace Doorstop
 			TextMeshProUGUI cl = AddLabel(close.transform, "Label", Loc.T(Loc.K.Close), 24f, ColTextLight, true);
 			Stretch(cl.rectTransform);
 
-			// Explore toggle (bottom left) and "Load this scene" (bottom right).
-			_exploreBtn = CreateUiObject("ExploreBtn", box.transform);
-			RectTransform ert = _exploreBtn.GetComponent<RectTransform>();
-			ert.anchorMin = new Vector2(0f, 0f);
-			ert.anchorMax = new Vector2(0f, 0f);
-			ert.pivot = new Vector2(0f, 0f);
-			ert.anchoredPosition = new Vector2(24f, 24f);
-			ert.sizeDelta = new Vector2(220f, 52f);
-			Image eimg = _exploreBtn.AddComponent<Image>();
-			eimg.color = ColCancelButton;
-			Button ebtn = _exploreBtn.AddComponent<Button>();
-			ebtn.targetGraphic = eimg;
-			ebtn.onClick.AddListener(ToggleExplore);
-			_exploreLabel = AddLabel(_exploreBtn.transform, "Label",
-				Loc.T(Loc.K.Explore), 22f, ColTextLight, true);
-			Stretch(_exploreLabel.rectTransform);
+			// Undo (bottom left): back to the answers actually played.
+			_undoBtn = CreateUiObject("Undo", box.transform);
+			RectTransform urt = _undoBtn.GetComponent<RectTransform>();
+			urt.anchorMin = new Vector2(0f, 0f);
+			urt.anchorMax = new Vector2(0f, 0f);
+			urt.pivot = new Vector2(0f, 0f);
+			urt.anchoredPosition = new Vector2(24f, 24f);
+			urt.sizeDelta = new Vector2(64f, 52f);
+			Image uimg = _undoBtn.AddComponent<Image>();
+			uimg.color = ColCancelButton;
+			Button ubtn = _undoBtn.AddComponent<Button>();
+			ubtn.targetGraphic = uimg;
+			ubtn.onClick.AddListener(UndoSelections);
+			GameObject uicon = CreateUiObject("Icon", _undoBtn.transform);
+			RectTransform uirt = uicon.GetComponent<RectTransform>();
+			Stretch(uirt);
+			uirt.offsetMin = new Vector2(14f, 8f);
+			uirt.offsetMax = new Vector2(-14f, -8f);
+			Image uiImg = uicon.AddComponent<Image>();
+			uiImg.sprite = MakeUndoIcon();
+			uiImg.color = ColTextLight;
+			uiImg.preserveAspect = true;
+			uiImg.raycastTarget = false;
 
+			// Load scene (bottom right): goes to the selected answer's scene
+			// along the selected path.
 			_loadHereBtn = CreateUiObject("LoadHere", box.transform);
 			RectTransform lrt2 = _loadHereBtn.GetComponent<RectTransform>();
 			lrt2.anchorMin = new Vector2(1f, 0f);
@@ -958,7 +982,7 @@ namespace Doorstop
 			limg2.color = ColLoadButton;
 			Button lbtn2 = _loadHereBtn.AddComponent<Button>();
 			lbtn2.targetGraphic = limg2;
-			lbtn2.onClick.AddListener(LoadPreviewed);
+			lbtn2.onClick.AddListener(LoadSelected);
 			TextMeshProUGUI llabel2 = AddLabel(_loadHereBtn.transform, "Label",
 				Loc.T(Loc.K.LoadScene), 22f, ColTextLight, true);
 			Stretch(llabel2.rectTransform);
@@ -968,35 +992,154 @@ namespace Doorstop
 			_historyPanel.SetActive(false);
 		}
 
-		private static void ToggleExplore()
+		// Back to the answers actually played: drops every pick.
+		private static void UndoSelections()
 		{
-			_explore = !_explore;
-			_exploreCut = -1;
-			_preview.Clear();
 			_overrides.Clear();
-			ModLog.Info("ChoiceWindow: explore mode " + (_explore ? "on" : "off"));
+			_selScene = null;
+			_selChoice = null;
+			HidePopup();
+			RefreshKeepingScroll();
+			ModLog.Info("ChoiceWindow: tree selections reset");
+		}
+
+		// Clicking an answer selects it: the path follows it, the dashed mark
+		// moves to it, and "Load scene" will go there. Nothing loads yet.
+		private static void SelectChoice(string scene, string choice)
+		{
+			_overrides[scene] = choice;
+			_selScene = scene;
+			_selChoice = choice;
+			RefreshKeepingScroll();
+		}
+
+		// Rebuilds the tree without moving the view.
+		private static void RefreshKeepingScroll()
+		{
+			RectTransform content = _historyList as RectTransform;
+			Vector2 at = content != null ? content.anchoredPosition : Vector2.zero;
 			RefreshHistory();
 			Canvas.ForceUpdateCanvases();
-			if (_explore)
+			if (content != null)
 			{
-				ScrollHistoryToEnd();
-			}
-			else
-			{
-				ScrollHistoryToFocus();
+				content.anchoredPosition = at;
 			}
 		}
 
-		// Loads the scene the explore path currently ends on, when the mod has
-		// a save of it.
-		private static void LoadPreviewed()
+		// How to reach the selected scene: the save to start from and the
+		// answers to give on the way. The start is the newest scene with a
+		// save at or before the first point where the path leaves what was
+		// played (or the scene on screen, for scenes still ahead).
+		private sealed class LoadPlan
 		{
-			if (string.IsNullOrEmpty(_lastLoadablePath) || _tree.Count == 0)
+			public string StartPath;
+			public string StartScene;
+			public string Target;
+			public string TargetTitle;
+			public Dictionary<string, string> Picks = new Dictionary<string, string>();
+		}
+
+		private static LoadPlan PlanLoad(out string why)
+		{
+			why = "";
+			int target = -1;
+			int current = -1;
+			for (int i = 0; i < _tree.Count; i++)
 			{
+				if (_tree[i].Scene == _selScene)
+				{
+					target = i;
+				}
+				if (_tree[i].Current)
+				{
+					current = i;
+				}
+			}
+			if (target < 0)
+			{
+				return null;
+			}
+			int diverge = target;
+			if (current >= 0 && current < diverge)
+			{
+				diverge = current;   // scenes ahead have to be played to
+			}
+			for (int i = 0; i < target; i++)
+			{
+				string pick;
+				if (_overrides.TryGetValue(_tree[i].Scene, out pick) && pick != _tree[i].PlayedChoice)
+				{
+					diverge = Math.Min(diverge, i);
+					break;
+				}
+			}
+			int start = -1;
+			for (int i = diverge; i >= 0; i--)
+			{
+				if (_tree[i].HasSnapshot && !_tree[i].Upcoming)
+				{
+					start = i;
+					break;
+				}
+			}
+			if (start < 0)
+			{
+				why = Loc.T(Loc.K.NoSaveBefore);
+				return null;
+			}
+			LoadPlan plan = new LoadPlan();
+			plan.StartPath = _tree[start].SnapshotPath;
+			plan.StartScene = _tree[start].Scene;
+			plan.Target = _tree[target].Scene;
+			plan.TargetTitle = _tree[target].Title;
+			for (int i = start; i < target; i++)
+			{
+				string pick;
+				if (!_overrides.TryGetValue(_tree[i].Scene, out pick))
+				{
+					pick = _tree[i].PlayedChoice;
+				}
+				if (!string.IsNullOrEmpty(pick))
+				{
+					plan.Picks[_tree[i].Scene] = pick;
+				}
+			}
+			return plan;
+		}
+
+		private static LoadPlan _pendingPlan;
+
+		private static void LoadSelected()
+		{
+			string why;
+			LoadPlan plan = PlanLoad(out why);
+			if (plan == null)
+			{
+				SetHistoryInfo(why);
 				return;
 			}
-			TreeCol last = _tree[_tree.Count - 1];
-			Ask(Pending.Load, _lastLoadablePath, last.Title, null);
+			HidePopup();
+			_pendingPlan = plan;
+			Ask(Pending.LoadPath, plan.StartPath, plan.TargetTitle, null);
+		}
+
+		// Loads the plan's start and lets AutoPlay give the picked answers
+		// until the selected scene is on screen (left unanswered).
+		private static IEnumerator ReplayTo(LoadPlan plan)
+		{
+			ModLog.Info("ChoiceWindow: load scene " + plan.Target + " from " + plan.StartScene
+				+ " with " + plan.Picks.Count + " answer(s) to give");
+			LoadSnapshot(plan.StartPath);
+			if (plan.StartScene == plan.Target)
+			{
+				yield break;
+			}
+			yield return AutoPlay.WaitForLoad();
+			yield return AutoPlay.Run(delegate(string scene)
+			{
+				string pick;
+				return plan.Picks.TryGetValue(scene, out pick) ? pick : null;
+			}, delegate(string scene) { return scene != plan.Target; }, 60f);
 		}
 
 		private static void OpenHistory()
@@ -1034,10 +1177,9 @@ namespace Doorstop
 			{
 				_historyPanel.SetActive(false);
 			}
-			_explore = false;
-			_exploreCut = -1;
-			_preview.Clear();
 			_overrides.Clear();
+			_selScene = null;
+			_selChoice = null;
 		}
 
 		// (Re)builds the history rows; returns how many are shown.
@@ -1088,10 +1230,6 @@ namespace Doorstop
 				{
 					continue;
 				}
-				if (_explore && _exploreCut >= 0 && cols.Count >= _exploreCut)
-				{
-					break;
-				}
 				TreeCol col = new TreeCol();
 				col.Scene = e.SceneName;
 				col.Title = e.Title;
@@ -1101,12 +1239,12 @@ namespace Doorstop
 				{
 					pendingCol = cols.Count;
 				}
-				string picked;
-				if (_overrides.TryGetValue(e.SceneName, out picked))
+				foreach (History.Choice c in col.Choices)
 				{
-					foreach (History.Choice c in col.Choices)
+					if (c.Chosen)
 					{
-						c.Chosen = c.Name == picked;
+						col.Recorded = true;
+						col.PlayedChoice = c.Name;
 					}
 				}
 				cols.Add(col);
@@ -1115,14 +1253,22 @@ namespace Doorstop
 			{
 				cols[pendingCol].Current = true;
 			}
-			foreach (TreeCol preview in _preview)
-			{
-				cols.Add(preview);
-			}
 			_focusCol = pendingCol >= 0 ? pendingCol : cols.Count - 1;
-			if (!_explore && all.Count > 0)
+			if (all.Count > 0)
 			{
 				AddUpcoming(cols, all);
+			}
+			// The player's picks replace what was played (or nothing, ahead).
+			foreach (TreeCol col in cols)
+			{
+				string picked;
+				if (_overrides.TryGetValue(col.Scene, out picked))
+				{
+					foreach (History.Choice c in col.Choices)
+					{
+						c.Chosen = c.Name == picked;
+					}
+				}
 			}
 			_tree = cols;
 			if (cols.Count == 0)
@@ -1158,10 +1304,9 @@ namespace Doorstop
 				TreeCol e = cols[i];
 				List<int> shown = visible[i];
 				float x = 30f + i * TreeColW;
-				// Outside explore mode only captured decisions do anything; the
-				// rest are drawn as plain, non-interactive history.
-				bool clickable = _explore || e.HasSnapshot;
-				if (!_explore && e.HasSnapshot)
+				// Every answer can be picked to build a path.
+				bool clickable = true;
+				if (e.HasSnapshot)
 				{
 					_historyLoadable++;
 				}
@@ -1199,6 +1344,19 @@ namespace Doorstop
 					Image bandImg = band.AddComponent<Image>();
 					bandImg.color = ColTreePlayedBand;
 					bandImg.raycastTarget = false;
+					if (!e.Recorded && !e.Current)
+					{
+						TextMeshProUGUI nr = AddLabel(band.transform, "NotRecorded",
+							Loc.T(Loc.K.NotRecorded), 15f, ColTreeMuted, true);
+						RectTransform nrt2 = nr.rectTransform;
+						nrt2.anchorMin = new Vector2(0f, 0f);
+						nrt2.anchorMax = new Vector2(1f, 0f);
+						nrt2.pivot = new Vector2(0.5f, 0f);
+						nrt2.anchoredPosition = new Vector2(0f, 8f);
+						nrt2.sizeDelta = new Vector2(-24f, 40f);
+						nr.enableWordWrapping = true;
+						nr.overflowMode = TextOverflowModes.Overflow;
+					}
 				}
 				float barEnd = e.Current ? x + TreeNodeX + TreeNodeW * 0.5f : x + TreeColW;
 				AddLine(x + 6f, TreeBarY, barEnd, TreeBarY,
@@ -1259,20 +1417,9 @@ namespace Doorstop
 						int choiceIndex = k;
 						string path = e.SnapshotPath;
 						string title = e.Title;
-						if (_explore)
-						{
-							nb.onClick.AddListener(delegate { Explore(colIndex, choiceIndex); });
-						}
-						else
-						{
-							// The tree stays open under the dialog; Cancel
-							// returns to it exactly as it was.
-							nb.onClick.AddListener(delegate
-							{
-								HidePopup();
-								Ask(Pending.Load, path, title, null);
-							});
-						}
+						string sceneId = e.Scene;
+						string choiceName = c.Name;
+						nb.onClick.AddListener(delegate { SelectChoice(sceneId, choiceName); });
 					}
 
 					TextMeshProUGUI label = AddLabel(node.transform, "Text", c.Text, 17f,
@@ -1285,14 +1432,14 @@ namespace Doorstop
 					label.overflowMode = TextOverflowModes.Ellipsis;
 					label.enableWordWrapping = false;
 
-					string note = Loc.T(c.Chosen ? Loc.K.TreeChosen
-							: e.Possible ? Loc.K.Possible : e.Upcoming ? Loc.K.Upcoming
-							: played && !e.Current && ChosenRow(e, shown) < 0 ? Loc.K.NotRecorded
-							: Loc.K.TreeOffered)
-						+ (!_explore && e.HasSnapshot ? "   \u2022 " + Loc.T(Loc.K.SaveAvailable) : "");
+					string note = "";
 					List<SceneEffects.Effect> effects = SceneEffects.For(e.Scene, c.Name);
 					string fullText = c.Text;
-					bool live = e.Current || e.Upcoming || e.Preview;
+					bool live = e.Current || e.Upcoming;
+					if (e.Scene == _selScene && c.Name == _selChoice)
+					{
+						MarkNode(node);
+					}
 					TreeHover hover = node.AddComponent<TreeHover>();
 				label.text = SceneEffects.NobleParticle(label.text);
 					hover.HasEffects = effects.Count > 0;
@@ -1329,140 +1476,30 @@ namespace Doorstop
 					}
 					continue;
 				}
-				int toRow = Mathf.Max(0, ChosenRow(cols[i + 1], visible[i + 1]));
 				if (visible[i + 1].Count == 0)
 				{
 					continue;
 				}
+				// Into the next column's spine; along it only to an answer that
+				// is chosen there (none chosen: the path waits at the spine).
+				int toRow = ChosenRow(cols[i + 1], visible[i + 1]);
 				float x = 30f + i * TreeColW;
 				float fromY = RowCentre(fromRow);
-				float toY = RowCentre(toRow);
 				float nextSpine = x + TreeColW + 16f;
 				AddLine(x + TreeNodeX + TreeNodeW, fromY, nextSpine, fromY, ColTreeChosen, 5f);
-				if (Mathf.Abs(toY - fromY) > 0.5f)
+				if (toRow >= 0 && Mathf.Abs(RowCentre(toRow) - fromY) > 0.5f)
 				{
-					AddLine(nextSpine, fromY, nextSpine, toY, ColTreeChosen, 5f);
-				}
-			}
-			UpdateExploreButtons();
-			// In explore mode the newest column waits for a pick; say so softly.
-			if (_explore && _tree.Count > 0)
-			{
-				TreeCol last = _tree[_tree.Count - 1];
-				bool picked = false;
-				foreach (History.Choice c in last.Choices)
-				{
-					picked = picked || c.Chosen;
-				}
-				if (!picked)
-				{
-					SetHistoryInfo(Loc.T(Loc.K.PickAnswer));
-				}
-			}
-			return cols.Count;
-		}
-
-		// The Explore toggle, and "Load this scene" for the last column (only
-		// enabled when the mod has a save of that scene).
-		private static void UpdateExploreButtons()
-		{
-			if (_exploreLabel != null)
-			{
-				_exploreLabel.text = Loc.T(Loc.K.Explore) + (_explore ? "  \u2713" : "");
-				Image img = _exploreBtn != null ? _exploreBtn.GetComponent<Image>() : null;
-				if (img != null)
-				{
-					img.color = _explore ? ColLoadButton : ColCancelButton;
+					AddLine(nextSpine, fromY, nextSpine, RowCentre(toRow), ColTreeChosen, 5f);
 				}
 			}
 			if (_loadHereBtn != null)
 			{
-				bool canLoad = false;
-				string path = "";
-				if (_explore && _tree.Count > 0)
-				{
-					TreeCol last = _tree[_tree.Count - 1];
-					canLoad = last.HasSnapshot;
-					path = last.SnapshotPath;
-				}
-				_loadHereBtn.SetActive(canLoad);
-				_lastLoadablePath = canLoad ? path : "";
+				_loadHereBtn.SetActive(!string.IsNullOrEmpty(_selScene));
 			}
+			return cols.Count;
 		}
 
-		private static string _lastLoadablePath = "";
-		private static int _exploreCut = -1;   // played columns kept in explore, -1 = all
 		private static int _focusCol = -1;     // the column to show on open (the current scene)
-
-		// Explore mode: picking an answer moves the preview to that answer's
-		// scene, so the player can walk a path without playing it.
-		private static void Explore(int colIndex, int choiceIndex)
-		{
-			try
-			{
-				if (colIndex < 0 || colIndex >= _tree.Count)
-				{
-					return;
-				}
-				TreeCol col = _tree[colIndex];
-				if (choiceIndex < 0 || choiceIndex >= col.Choices.Count)
-				{
-					return;
-				}
-				History.Choice picked = col.Choices[choiceIndex];
-
-				// Remember the choice for every column (played ones survive the
-				// rebuild through _overrides).
-				if (!col.Preview)
-				{
-					_overrides[col.Scene] = picked.Name;
-				}
-				for (int i = 0; i < col.Choices.Count; i++)
-				{
-					col.Choices[i].Chosen = i == choiceIndex;
-				}
-
-				// Everything after the clicked column is replaced by the new path.
-				if (col.Preview)
-				{
-					int keep = colIndex - PlayedCount() + 1;
-					_preview.RemoveRange(keep, _preview.Count - keep);
-				}
-				else
-				{
-					// A pick on a played scene leaves the played path there: the
-					// later played columns (and their picks) give way to the preview.
-					_preview.Clear();
-					_exploreCut = colIndex + 1;
-					for (int i = colIndex + 1; i < _tree.Count; i++)
-					{
-						_overrides.Remove(_tree[i].Scene);
-					}
-				}
-
-				string next = SceneFlow.Next(col.Scene);
-				ModLog.Info("ChoiceWindow: explore " + col.Scene + " [" + picked.Name + "] -> "
-					+ (string.IsNullOrEmpty(next) ? "(no edge)" : next));
-				if (!string.IsNullOrEmpty(next))
-				{
-					_preview.Add(PreviewCol(next));
-				}
-				// The view stays where it is: the picked answer is under the
-				// pointer, and the next scene appears next to it.
-				RectTransform content = _historyList as RectTransform;
-				Vector2 at = content != null ? content.anchoredPosition : Vector2.zero;
-				RefreshHistory();
-				Canvas.ForceUpdateCanvases();
-				if (content != null)
-				{
-					content.anchoredPosition = at;
-				}
-			}
-			catch (Exception e)
-			{
-				ModLog.Error("ChoiceWindow: explore failed:\n" + e);
-			}
-		}
 
 		// Indices of the answers that have text, in display order.
 		private static List<int> VisibleChoices(TreeCol col)
@@ -1594,6 +1631,7 @@ namespace Doorstop
 			}
 			_popupText.text = SceneEffects.NobleParticle(text);
 			_popupNote.text = note;
+			_popupNote.gameObject.SetActive(!string.IsNullOrEmpty(note));
 			for (int i = _popupEffects.childCount - 1; i >= 0; i--)
 			{
 				GameObject old = _popupEffects.GetChild(i).gameObject;
@@ -2084,6 +2122,7 @@ namespace Doorstop
 			switch (action)
 			{
 				case Pending.Load:
+				case Pending.LoadPath:
 					body = string.Format(Loc.T(Loc.K.ConfirmLoad), title);
 					label = Loc.T(Loc.K.Load);
 					break;
@@ -2131,6 +2170,13 @@ namespace Doorstop
 					break;
 				case Pending.SaveNow:
 					SaveNow();
+					break;
+				case Pending.LoadPath:
+					if (_pendingPlan != null && ModHost.Current != null)
+					{
+						CancelConfirm();
+						ModHost.Current.StartCoroutine(ReplayTo(_pendingPlan));
+					}
 					break;
 			}
 		}
@@ -2202,6 +2248,21 @@ namespace Doorstop
 
 		// A full-length strip along one edge: horizontal ones sit at the top
 		// (edge 1) or bottom (edge 0), vertical ones at the right (1) or left (0).
+		// The same red dashed outline, around the tree's selected answer.
+		private static void MarkNode(GameObject node)
+		{
+			const float t = 3f;
+			GameObject mark = CreateUiObject("SelectedMark", node.transform);
+			RectTransform rt = mark.GetComponent<RectTransform>();
+			Stretch(rt);
+			rt.offsetMin = new Vector2(-5f, -5f);
+			rt.offsetMax = new Vector2(5f, 5f);
+			AddDashStrip(mark.transform, "Top", true, 1f, t, _dashH);
+			AddDashStrip(mark.transform, "Bottom", true, 0f, t, _dashH);
+			AddDashStrip(mark.transform, "Left", false, 0f, t, _dashV);
+			AddDashStrip(mark.transform, "Right", false, 1f, t, _dashV);
+		}
+
 		private static void AddDashStrip(Transform parent, string name, bool horizontal, float edge,
 			float thick, Sprite sprite)
 		{
@@ -2930,23 +2991,54 @@ namespace Doorstop
 				}
 			}
 			yield return new WaitForSeconds(3f);
-			// Dev: exercise explore mode - walk two answers forward.
-			yield return new WaitForSeconds(3f);
-			ToggleExplore();
-			yield return new WaitForSeconds(1f);
-			for (int step = 0; step < 2 && _tree.Count > 0; step++)
+			// Dev: pick the second answer of the first upcoming scene, show the
+			// mark, and log the load plan; then undo.
+			ScrollHistoryToFocus();
+			TreeCol ahead = _tree.Find(c => c.Current && c.Choices.Count > 1)
+				?? _tree.Find(c => c.Upcoming && c.Choices.Count > 1);
+			if (ahead != null)
 			{
-				Explore(_tree.Count - 1, 0);
-				yield return new WaitForSeconds(1f);
-			}
-			// Dev: a pick on an earlier played column cuts the path there.
-			int played = PlayedCount();
-			if (played >= 3)
-			{
+				SelectChoice(ahead.Scene, ahead.Choices[1].Name);
+				string why;
+				LoadPlan plan = PlanLoad(out why);
+				ModLog.Info("ChoiceWindow: dev selected " + ahead.Scene + " [" + ahead.Choices[1].Name
+					+ "]: " + (plan == null ? "no plan (" + why + ")" : "start " + plan.StartScene
+					+ ", " + plan.Picks.Count + " answer(s) to give"));
 				yield return new WaitForSeconds(4f);
-				Explore(played - 3, 0);
-				ModLog.Info("ChoiceWindow: dev explore cut at column " + (played - 3) + ": "
-					+ PlayedCount() + " played + " + _preview.Count + " preview column(s)");
+				UndoSelections();
+			}
+			// Dev (dev-loadpath.txt): Load scene end to end - the current
+			// scene's second answer, then the next scene's second answer, and
+			// select the scene after that; replay and report where it stopped.
+			string lp = Path.Combine(Recorder.SnapshotDir, "dev-loadpath.txt");
+			if (File.Exists(lp))
+			{
+				try { File.Delete(lp); }
+				catch (Exception) { }
+				TreeCol cur = _tree.Find(c => c.Current);
+				int ci = cur != null ? _tree.IndexOf(cur) : -1;
+				if (ci >= 0 && ci + 2 < _tree.Count)
+				{
+					SelectChoice(cur.Scene, cur.Choices[Math.Min(1, cur.Choices.Count - 1)].Name);
+					TreeCol nx = _tree[ci + 1];
+					SelectChoice(nx.Scene, nx.Choices[Math.Min(1, nx.Choices.Count - 1)].Name);
+					TreeCol goal = _tree[ci + 2];
+					SelectChoice(goal.Scene, goal.Choices[0].Name);
+					yield return new WaitForSeconds(1f);
+					LoadSelected();
+					yield return new WaitForSeconds(1f);
+					ModLog.Info("ChoiceWindow: dev load-path: replaying to " + goal.Scene);
+					RunPending();
+					yield return new WaitForSeconds(5f);
+					float until = Time.realtimeSinceStartup + 240f;
+					while (AutoPlay.Running && Time.realtimeSinceStartup < until)
+					{
+						yield return new WaitForSeconds(1f);
+					}
+					ModLog.Info("ChoiceWindow: dev load-path: now at " + AutoPlay.Story()
+						+ (AutoPlay.Story() == goal.Scene ? " (the selected scene)" : " (NOT the selected scene)"));
+				}
+				yield break;
 			}
 			yield return new WaitForSeconds(6f);
 			CloseHistory();
@@ -3071,6 +3163,139 @@ namespace Doorstop
 		// ------------------------------------------------------------------
 
 		// Filled triangle, pointing up or down, sized for the header text.
+		// Pixel canvas for the icons below: white shapes on transparent, tinted
+		// by the Image that shows them.
+		private sealed class Canvas32
+		{
+			public readonly int W, H;
+			public readonly Color32[] Px;
+
+			public Canvas32(int w, int h)
+			{
+				W = w;
+				H = h;
+				Px = new Color32[w * h];
+			}
+
+			// y measured from the top, like the drawings it copies.
+			public void Rect(float x, float y, float w, float h)
+			{
+				for (int yy = Mathf.FloorToInt(y); yy < Mathf.CeilToInt(y + h); yy++)
+				{
+					for (int xx = Mathf.FloorToInt(x); xx < Mathf.CeilToInt(x + w); xx++)
+					{
+						if (xx >= 0 && xx < W && yy >= 0 && yy < H)
+						{
+							Px[(H - 1 - yy) * W + xx] = new Color32(255, 255, 255, 255);
+						}
+					}
+				}
+			}
+
+			public void Frame(float x, float y, float w, float h, float t)
+			{
+				Rect(x, y, w, t);
+				Rect(x, y + h - t, w, t);
+				Rect(x, y, t, h);
+				Rect(x + w - t, y, t, h);
+			}
+
+			public Sprite ToSprite()
+			{
+				Texture2D tex = new Texture2D(W, H, TextureFormat.RGBA32, false);
+				tex.SetPixels32(Px);
+				tex.filterMode = FilterMode.Bilinear;
+				tex.wrapMode = TextureWrapMode.Clamp;
+				tex.Apply();
+				return Sprite.Create(tex, new Rect(0, 0, W, H), new Vector2(0.5f, 0.5f), 100f);
+			}
+		}
+
+		// The tree view's own icon: three scenes, answers as boxes, the picked
+		// ones filled, the path joining them (3 answers, the first picked; 4,
+		// the third picked; 3, none picked yet).
+		private static Sprite MakeTreeIcon()
+		{
+			Canvas32 c = new Canvas32(240, 144);
+			float[] colX = { 30f, 102f, 174f };
+			int[] counts = { 3, 4, 3 };
+			int[] picked = { 0, 2, -1 };
+			const float bw = 50f, bh = 18f, gap = 32f, line = 4f;
+			float[] lastY = new float[3];
+			for (int k = 0; k < 3; k++)
+			{
+				float top = (144f - ((counts[k] - 1) * gap + bh)) * 0.5f;
+				float spine = colX[k] - 12f;
+				c.Rect(spine - line * 0.5f, top + bh * 0.5f, line, (counts[k] - 1) * gap);
+				for (int r = 0; r < counts[k]; r++)
+				{
+					float y = top + r * gap;
+					c.Rect(spine, y + bh * 0.5f - line * 0.5f, 12f, line);
+					if (r == picked[k])
+					{
+						c.Rect(colX[k], y, bw, bh);
+						lastY[k] = y + bh * 0.5f;
+					}
+					else
+					{
+						c.Frame(colX[k], y, bw, bh, 4f);
+					}
+				}
+			}
+			// the path: from each picked box to the next scene's spine
+			for (int k = 0; k < 2; k++)
+			{
+				float from = colX[k] + bw;
+				float to = colX[k + 1] - 12f;
+				c.Rect(from, lastY[k] - line * 0.75f, to - from, line * 1.5f);
+			}
+			return c.ToSprite();
+		}
+
+		// An undo arrow: three quarters of a ring, open at the top left, with
+		// the arrowhead at its top end pointing left.
+		private static Sprite MakeUndoIcon()
+		{
+			const int n = 128;
+			Canvas32 c = new Canvas32(n, n);
+			float cx = 66f, cy = 72f, rOut = 46f, rIn = 33f;
+			for (int y = 0; y < n; y++)
+			{
+				for (int x = 0; x < n; x++)
+				{
+					float dx = x + 0.5f - cx;
+					float dy = cy - (y + 0.5f);      // up is positive
+					float r = Mathf.Sqrt(dx * dx + dy * dy);
+					float a = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
+					bool openQuarter = a > 90f && a < 180f;
+					if (r >= rIn && r <= rOut && !openQuarter)
+					{
+						c.Rect(x, y, 1, 1);
+					}
+				}
+			}
+			// arrowhead at the ring's top end, pointing left
+			float mid = (rIn + rOut) * 0.5f;
+			float tipX = cx - 34f, baseX = cx + 2f, ay = cy - mid;
+			for (int y = 0; y < n; y++)
+			{
+				for (int x = 0; x < n; x++)
+				{
+					float px = x + 0.5f, py = y + 0.5f;
+					if (px < tipX || px > baseX)
+					{
+						continue;
+					}
+					float half = (px - tipX) / (baseX - tipX) * 28f;
+					if (Mathf.Abs(py - ay) <= half)
+					{
+						c.Rect(x, y, 1, 1);
+					}
+				}
+			}
+			return c.ToSprite();
+		}
+
 		private static Sprite MakeTriangle(bool up)
 		{
 			const int w = 56;
