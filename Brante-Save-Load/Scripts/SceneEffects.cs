@@ -4,18 +4,25 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 using _Scripts.AMVCC.Models.Static;
+using _Scripts.AMVCC.Views.Windows.Destiny;
+using _Scripts.Helpers;
+using _Scripts.Managers;
 
 namespace Doorstop
 {
-	// What every answer does to the hero, extracted offline from the scene
-	// files' ParameterButtonChanger components (tools/scene_effects.py) and
-	// shipped as scene-effects.tsv:
+	// What every answer does to the hero and what it requires, extracted
+	// offline from the scene files' ParameterButtonChanger components
+	// (tools/scene_effects.py) and shipped as scene-effects.tsv:
 	//
-	//   <scene> <button index> <P|R|S> <object name> <value>
+	//   <scene> <button index> <kind> <object name> <value> [<op> <group>]
 	//
-	// P = stat change (a Parameter asset), R = relation change and S = status
-	// change (a Character asset; the value is a CharacterStatus). The assets
-	// are looked up by name at runtime for their icon and localised name.
+	// Effects: P = stat change (a Parameter asset), R = relation change and
+	// S = status change (a Character asset; the value is a CharacterStatus).
+	// Requirements: Q = stat, W = relation (op = the game's Operations),
+	// T = status (op 1 = "not"), O = objective (op 1 = "not"); group "and"
+	// for the ones that must all hold, "or" for the group of which one must.
+	// The assets are looked up by name at runtime for their icon, localised
+	// name, and - for requirements - the hero's current value.
 	public static class SceneEffects
 	{
 		public sealed class Effect
@@ -23,6 +30,12 @@ namespace Doorstop
 			public char Kind;
 			public string Name;
 			public int Value;
+			public int Op;
+			public bool Or;
+			public bool IsRequirement
+			{
+				get { return Kind == 'Q' || Kind == 'W' || Kind == 'T' || Kind == 'O'; }
+			}
 		}
 
 		private static Dictionary<string, Dictionary<int, List<Effect>>> _effects;
@@ -67,7 +80,13 @@ namespace Doorstop
 						list = new List<Effect>();
 						scene[button] = list;
 					}
-					list.Add(new Effect { Kind = p[2][0], Name = p[3], Value = value });
+					Effect fx = new Effect { Kind = p[2][0], Name = p[3], Value = value };
+					if (p.Length >= 7)
+					{
+						int.TryParse(p[5], out fx.Op);
+						fx.Or = p[6] == "or";
+					}
+					list.Add(fx);
 					n++;
 				}
 				ModLog.Info("SceneEffects: " + n + " effect(s) for " + _effects.Count + " scene(s)");
@@ -108,6 +127,141 @@ namespace Doorstop
 			}
 			int n;
 			return start < end && int.TryParse(name.Substring(start), out n) ? n : 0;
+		}
+
+		public static Objective ObjectiveAsset(string name)
+		{
+			if (_objectives == null)
+			{
+				_objectives = new Dictionary<string, Objective>();
+				foreach (Objective o in Resources.FindObjectsOfTypeAll<Objective>())
+				{
+					if (o != null && !_objectives.ContainsKey(o.name))
+					{
+						_objectives[o.name] = o;
+					}
+				}
+			}
+			Objective found;
+			return _objectives.TryGetValue(name, out found) && found != null ? found : null;
+		}
+
+		private static Dictionary<string, Objective> _objectives;
+
+		// "≥ 4", the way the game compares (ParametersManager.Compare).
+		private static string OpText(int op, int value)
+		{
+			// ASCII only: the game's font has no ≥/≤/≠ glyphs.
+			string[] ops = { ">", "<", "=", ">=", "<=", "!=" };
+			return (op >= 0 && op < ops.Length ? ops[op] : "?") + " " + value;
+		}
+
+		// A requirement's text and icon, and whether the hero meets it right
+		// now (null when it cannot be told).
+		public static string RequirementLabel(Effect r, out Sprite icon, out bool? met)
+		{
+			icon = null;
+			met = null;
+			try
+			{
+				ParametersManager pm = ParametersManager.Instance;
+				CharacterParametersSerializeHelper h = CharacterParametersSerializeHelper.Initiate;
+				switch (r.Kind)
+				{
+					case 'Q':
+					{
+						Parameter p = ParameterAsset(r.Name);
+						string name = p != null ? Translated(r.Name, p.ParameterName.ToString()) : r.Name;
+						if (p != null)
+						{
+							icon = p.Icon;
+							if (pm != null)
+							{
+								met = pm.CompareParametersValue(p.ParameterName, pm.GetParameterValue(p),
+									(Assets._Scripts.AMVCC.Views.Operations)r.Op, r.Value);
+							}
+						}
+						return name + " " + OpText(r.Op, r.Value);
+					}
+					case 'W':
+					{
+						Character c = CharacterAsset(r.Name);
+						string name = r.Name;
+						if (c != null)
+						{
+							icon = c.TooltipPortret;
+							name = Translated(c.Name.ToString(), r.Name);
+							if (pm != null && h != null)
+							{
+								met = pm.CompareCharacterRelation(c, r.Value,
+									(Assets._Scripts.AMVCC.Views.Operations)r.Op, h.Characters);
+							}
+						}
+						return name + " " + OpText(r.Op, r.Value);
+					}
+					case 'T':
+					{
+						Character c = CharacterAsset(r.Name);
+						string name = r.Name;
+						string key = r.Name;
+						string status = Enum.GetName(typeof(CharacterStatus), r.Value) ?? r.Value.ToString();
+						if (c != null)
+						{
+							icon = c.TooltipPortret;
+							key = c.Name.ToString();
+							name = Translated(key, r.Name);
+							if (pm != null && h != null)
+							{
+								met = pm.CompareCharacterStatus(c, (CharacterStatus)r.Value, r.Op == 1, h.Characters);
+							}
+						}
+						string text = Translated(key + "." + status, Translated(status, status));
+						return name + ": " + (r.Op == 1 ? Loc.T(Loc.K.NotWord) + " " : "") + text;
+					}
+					default:
+					{
+						Objective o = ObjectiveAsset(r.Name);
+						string title = r.Name;
+						if (o != null)
+						{
+							icon = o.Icon;
+							string key = o.Name == _Scripts.AMVCC.Views.Windows.ObjectiveEnum.None ? o.name : o.Name.ToString();
+							title = Translated(key + ".Title", r.Name);
+							met = r.Op == 1 ? !o.Unlocked : o.Unlocked;
+						}
+						return (r.Op == 1 ? Loc.T(Loc.K.NotWord) + " " : "") + title;
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				met = null;
+				return r.Name + " (" + e.GetType().Name + ")";
+			}
+		}
+
+		// The game's "<el>" placeholder: the noble particle once the family
+		// holds the noble sword, nothing before (ParameterButtonChanger.Start).
+		public static string NobleParticle(string text)
+		{
+			if (string.IsNullOrEmpty(text) || text.IndexOf("<el>", StringComparison.Ordinal) < 0)
+			{
+				return text;
+			}
+			string el = "";
+			try
+			{
+				KeyChapterParametersController k = KeyChapterParametersController.Initiate;
+				if (k != null && k.GetNobleSwordStatus())
+				{
+					el = I2.Loc.LocalizationManager.GetTranslation("SwordNobleEl") ?? "";
+				}
+			}
+			catch
+			{
+				el = "";
+			}
+			return text.Replace("<el>", el).Replace("  ", " ");
 		}
 
 		public static Parameter ParameterAsset(string name)
@@ -185,7 +339,7 @@ namespace Doorstop
 					string t = I2.Loc.LocalizationManager.GetTranslation(k);
 					if (!string.IsNullOrEmpty(t) && t.Trim().Length > 1)
 					{
-						return t;
+						return NobleParticle(t);
 					}
 				}
 				catch

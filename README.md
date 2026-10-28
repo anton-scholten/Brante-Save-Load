@@ -46,8 +46,11 @@ never touches the game's saves.
   and every later one, each chapter starting at a vertical rule with its name
   on top. The answers come from the game's own translation table, so this works
   for scenes played before the mod too. Hovering an answer opens a pop-up with
-  its full text and what it changes - stats with the game's own icons,
-  relations and fates with the character's portrait. Columns the mod has a
+  its full text, what it changes - stats with the game's own icons, relations
+  and fates with the character's portrait - and what it requires (all of the
+  listed ones, or one of a "one of" group). For the scene on screen and the
+  ones ahead, each requirement is checked against your hero: green when met,
+  red when not. Columns the mod has a
   save for can be clicked to load them: the confirmation opens over the tree,
   and Cancel returns to it as it was. The tree fills nearly the whole screen,
   and the mouse wheel scrolls it sideways. **Explore** turns the tree into a path builder: click any

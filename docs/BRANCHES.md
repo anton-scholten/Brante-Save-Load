@@ -298,8 +298,26 @@ name). The PPtrs point into resources.assets and are written by asset name.
 `Parameter.Icon` and the localisation key of the stat (`Will` -> Willpower),
 `Character.TooltipPortret` and the key of `Character.Name` (`NatanBronte` ->
 Nathan Brante), and for a status `<character>.<status>` (`NatanBronte.Support`
--> GRATITUDE). The buttons also carry their requirements (`Condition`,
-`ConditionByRelations`, ...), not extracted yet.
+-> GRATITUDE).
+
+The same component carries the answer's requirements, after the effects:
+four condition-icon PPtrs, `DifficultConditions` (bool), the OR group
+`OR_Condition` {`ByParameter`, `ByRelation`, `ByStatus`, `ByObjective` - each
+entry a `Letter` string plus its condition - and `Expression`, the letters
+that count, space-separated; any one true unlocks}, then the lists that must
+all hold: `Condition` {Parameter, Operations, int}, `ConditionByRelations`
+{Character, Operations, int}, `ConditionsByStatus` {Character, bool Not,
+CharacterStatus}, `ConditionByObjectives` {Objective, bool Not}, then four
+`List<bool>` check caches and `NeedCheckPossible` - only when that is set does
+the game check anything. Bools take one byte padded to 4. `Operations` is
+More, Less, Equal, MoreEqual, LessEqual, Not, all strict
+(`ParametersManager.Compare`); `MaxValue`/`ItsDiapason` in the OR group's
+parameter entries are never read by the game. 812 requirements in 187 scenes.
+The mod checks them with the game's own `CompareParametersValue`,
+`CompareCharacterRelation`, `CompareCharacterStatus` and `Objective.Unlocked`;
+objective names come from `<ObjectiveEnum>.Title` (the asset name when the
+enum is None). Texts may hold `<el>`, the noble particle: the game puts
+`SwordNobleEl` there once the family has the noble sword, nothing before.
 
 ## The complete flow (chapters 1-5 and the epilogue)
 

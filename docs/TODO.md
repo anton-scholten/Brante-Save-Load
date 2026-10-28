@@ -300,7 +300,9 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   the game's stat icons and portraits; the tree fills the screen; Explore no
   longer scrolls; loading from the tree confirms over it and Cancel returns to
   it. Verified in-game with `dev-book.txt` (pop-up, load + Cancel, chapter rule).
-- [ ] Answer requirements in the pop-up (`ParameterButtonChanger.Condition`...).
+- [x] Answer requirements in the pop-up (28 Oct 2026): all-of and one-of
+  groups from `ParameterButtonChanger`, checked live (green/red) for the
+  current and upcoming scenes. Verified in-game.
 - [ ] Achievement side-effects on load (verify).
 - [ ] Full in-game pass on a played run: chapter transition, death -> restart
   chapter, explore + load from the panel.

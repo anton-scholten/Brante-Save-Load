@@ -17,7 +17,7 @@ namespace Doorstop
 			ConfirmLoad, ConfirmDelete, ConfirmSave, EmptySaves,
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, SaveAvailable, Current, NothingYet,
-			TreeChosen, TreeOffered, Explore, LoadScene, PickAnswer, Upcoming, Possible, NotRecorded
+			TreeChosen, TreeOffered, Explore, LoadScene, PickAnswer, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord
 		}
 
 		static Loc()
@@ -55,6 +55,17 @@ namespace Doorstop
 			AddHintWords(_ja, "答えを選ぶと道が続きます");
 			AddHintWords(_ko, "계속하려면 답을 선택하세요");
 			AddHintWords(_zh, "选择一个答案以继续路径");
+			AddRequirementWords(_en, "Requires", "One of", "not");
+			AddRequirementWords(_ru, "Требуется", "Одно из", "не");
+			AddRequirementWords(_de, "Erfordert", "Eines von", "nicht");
+			AddRequirementWords(_fr, "Requiert", "Au choix", "pas");
+			AddRequirementWords(_es, "Requiere", "Uno de", "no");
+			AddRequirementWords(_it, "Richiede", "Uno tra", "non");
+			AddRequirementWords(_pl, "Wymaga", "Jedno z", "nie");
+			AddRequirementWords(_tr, "Gerekir", "Şunlardan biri", "değil");
+			AddRequirementWords(_ja, "必要条件", "いずれか", "ではない");
+			AddRequirementWords(_ko, "필요 조건", "다음 중 하나", "아님");
+			AddRequirementWords(_zh, "需要", "其中之一", "非");
 			AddNotRecorded(_en, "played - answer not recorded (before the mod)");
 			AddNotRecorded(_ru, "пройдено - ответ не записан (до мода)");
 			AddNotRecorded(_de, "gespielt - Antwort nicht aufgezeichnet (vor dem Mod)");
@@ -89,6 +100,13 @@ namespace Doorstop
 		{
 			d[K.Explore] = explore;
 			d[K.LoadScene] = loadScene;
+		}
+
+		private static void AddRequirementWords(Dictionary<K, string> d, string requires, string oneOf, string not)
+		{
+			d[K.Requires] = requires;
+			d[K.OneOf] = oneOf;
+			d[K.NotWord] = not;
 		}
 
 		private static void AddNotRecorded(Dictionary<K, string> d, string text)

@@ -42,6 +42,7 @@ namespace Doorstop
 	{
 		public Action<bool> OnHover;
 		public bool HasEffects;
+		public bool HasChoiceOfRequirements;   // dev: an "one of" group
 
 		public void OnPointerEnter(PointerEventData eventData)
 		{
@@ -1291,13 +1292,16 @@ namespace Doorstop
 						+ (!_explore && e.HasSnapshot ? "   \u2022 " + Loc.T(Loc.K.SaveAvailable) : "");
 					List<SceneEffects.Effect> effects = SceneEffects.For(e.Scene, c.Name);
 					string fullText = c.Text;
+					bool live = e.Current || e.Upcoming || e.Preview;
 					TreeHover hover = node.AddComponent<TreeHover>();
+				label.text = SceneEffects.NobleParticle(label.text);
 					hover.HasEffects = effects.Count > 0;
+					hover.HasChoiceOfRequirements = effects.Exists(f => f.Or) && e.Upcoming;
 					hover.OnHover = delegate(bool on)
 					{
 						if (on)
 						{
-							ShowPopup(nrt, fullText, note, effects);
+							ShowPopup(nrt, fullText, note, effects, live);
 						}
 						else
 						{
@@ -1582,13 +1586,13 @@ namespace Doorstop
 		}
 
 		private static void ShowPopup(RectTransform node, string text, string note,
-			List<SceneEffects.Effect> effects)
+			List<SceneEffects.Effect> effects, bool live)
 		{
 			if (_popup == null || _historyBox == null)
 			{
 				return;
 			}
-			_popupText.text = text;
+			_popupText.text = SceneEffects.NobleParticle(text);
 			_popupNote.text = note;
 			for (int i = _popupEffects.childCount - 1; i >= 0; i--)
 			{
@@ -1596,9 +1600,38 @@ namespace Doorstop
 				old.SetActive(false);
 				UnityEngine.Object.Destroy(old);
 			}
+			// What it changes, then what it requires: all of the "and" ones,
+			// and one of the "or" group. Requirements are checked against the
+			// hero only where that means something (`live`: the scene on
+			// screen and what lies ahead); met ones are green, unmet red.
+			bool reqHead = false, orHead = false;
 			foreach (SceneEffects.Effect fx in effects)
 			{
-				AddEffectRow(fx);
+				if (!fx.IsRequirement)
+				{
+					AddEffectRow(fx);
+				}
+			}
+			foreach (bool orGroup in new[] { false, true })
+			{
+				foreach (SceneEffects.Effect fx in effects)
+				{
+					if (!fx.IsRequirement || fx.Or != orGroup)
+					{
+						continue;
+					}
+					if (!reqHead)
+					{
+						AddPopupHeading(Loc.T(Loc.K.Requires));
+						reqHead = true;
+					}
+					if (orGroup && !orHead)
+					{
+						AddPopupHeading(Loc.T(Loc.K.OneOf) + ":");
+						orHead = true;
+					}
+					AddRequirementRow(fx, live);
+				}
 			}
 			_popupEffects.gameObject.SetActive(effects.Count > 0);
 			_popup.gameObject.SetActive(true);
@@ -1658,7 +1691,7 @@ namespace Doorstop
 			nle.flexibleWidth = 1f;
 			if (fx.Kind != 'S')
 			{
-				string sign = fx.Value > 0 ? "+" + fx.Value : "\u2212" + (-fx.Value);
+				string sign = fx.Value > 0 ? "+" + fx.Value : "-" + (-fx.Value);   // the font has no U+2212
 				TextMeshProUGUI val = AddLabel(row.transform, "Value", sign, 19f,
 					fx.Value > 0 ? new Color(0.18f, 0.42f, 0.18f) : new Color(0.62f, 0.16f, 0.12f), false);
 				val.alignment = TextAlignmentOptions.MidlineRight;
@@ -1666,6 +1699,52 @@ namespace Doorstop
 				vle.minWidth = 48f;
 				vle.preferredWidth = 48f;
 			}
+		}
+
+		private static void AddPopupHeading(string text)
+		{
+			TextMeshProUGUI head = AddLabel(_popupEffects, "Heading", text, 16f, ColTreeMuted, false);
+			head.fontStyle = FontStyles.Bold;
+			LayoutElement le = head.gameObject.AddComponent<LayoutElement>();
+			le.minHeight = 26f;
+		}
+
+		private static void AddRequirementRow(SceneEffects.Effect req, bool live)
+		{
+			Sprite icon;
+			bool? met;
+			string text = SceneEffects.RequirementLabel(req, out icon, out met);
+			if (!live)
+			{
+				met = null;
+			}
+			GameObject row = CreateUiObject("Requirement", _popupEffects);
+			HorizontalLayoutGroup h = row.AddComponent<HorizontalLayoutGroup>();
+			h.spacing = 10f;
+			h.childAlignment = TextAnchor.MiddleLeft;
+			h.childControlWidth = true;
+			h.childControlHeight = true;
+			h.childForceExpandWidth = false;
+			h.childForceExpandHeight = false;
+			GameObject ig = CreateUiObject("Icon", row.transform);
+			LayoutElement ile = ig.AddComponent<LayoutElement>();
+			ile.preferredWidth = 30f;
+			ile.preferredHeight = 30f;
+			ile.minWidth = 30f;
+			ile.minHeight = 30f;
+			if (icon != null)
+			{
+				Image img = ig.AddComponent<Image>();
+				img.sprite = icon;
+				img.preserveAspect = true;
+				img.raycastTarget = false;
+			}
+			Color colour = met == null ? ColTextDark
+				: met.Value ? new Color(0.18f, 0.42f, 0.18f) : new Color(0.62f, 0.16f, 0.12f);
+			TextMeshProUGUI label = AddLabel(row.transform, "Text", text, 17f, colour, false);
+			label.enableWordWrapping = true;
+			LayoutElement le = label.gameObject.AddComponent<LayoutElement>();
+			le.flexibleWidth = 1f;
 		}
 
 		private static void HidePopup()
@@ -2802,9 +2881,12 @@ namespace Doorstop
 			Button loadable = null;
 			foreach (TreeHover th in _historyList.GetComponentsInChildren<TreeHover>())
 			{
-				if (withFx == null && th.HasEffects)
+				if (th.HasChoiceOfRequirements || (withFx == null && th.HasEffects))
 				{
-					withFx = th;
+					if (withFx == null || !withFx.HasChoiceOfRequirements)
+					{
+						withFx = th;
+					}
 				}
 				if (loadable == null && th.GetComponent<Button>() != null)
 				{
@@ -2813,6 +2895,11 @@ namespace Doorstop
 			}
 			if (withFx != null)
 			{
+				RectTransform nodeRt = (RectTransform)withFx.transform;
+				float span = ((RectTransform)_historyList).rect.width - _historyScroll.viewport.rect.width;
+				_historyScroll.horizontalNormalizedPosition =
+					Mathf.Clamp01((nodeRt.anchoredPosition.x - 400f) / span);
+				Canvas.ForceUpdateCanvases();
 				withFx.OnHover(true);
 				ModLog.Info("ChoiceWindow: dev pop-up shown for '" + withFx.name + "' ("
 					+ _popupEffects.childCount + " effect row(s))");
