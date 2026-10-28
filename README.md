@@ -107,6 +107,25 @@ miss.
 Until Steam syncs them, copy the `Saves` folder between computers by hand. The
 mod's own saves (in `Brante-Save-Load/`) are not meant to be synced.
 
+### What the mod ships besides the DLL
+
+`scene-texts.tsv` (every scene's title and answers) and `scene-edges.tsv` (the
+story's scene chains) are extracted from your installed copy of the game. They
+are what lets the history show answers for scenes played before the mod existed,
+and what lets Explore walk forward through choices. After a game update they can
+be regenerated with `tools/localization.py` and `tools/bolt_edges.py` (see
+`docs/BRANCHES.md`).
+
+### Known limitations
+
+- The history can only **load** scenes the mod recorded (from the moment it was
+  installed). Earlier scenes are shown, with their answers, but the game keeps no
+  state for them.
+- Explore follows the game's scene chains, which are linear inside a chapter;
+  real branches (deaths, finals, the three Lots) are separate chains.
+- Steam Cloud is not enabled for the game itself, so the game's saves do not sync
+  between machines (see below).
+
 ## Why it works this way
 
 Sir Brante (Unity 2018.3) keeps the entire game state in one serialisable object

@@ -5,6 +5,12 @@ guides so the history view can eventually show the *whole* tree, with the path o
 a given save highlighted. It is a starting point, not a complete graph — see
 "what is missing" below.
 
+**Shipped with the mod** (loaded at runtime by `SceneTexts.cs` / `SceneEdges.cs`):
+`Brante-Save-Load/scene-texts.tsv` (titles + answers, from `tools/localization.py`)
+and `Brante-Save-Load/scene-edges.tsv` (the chapter chains, from
+`tools/bolt_edges.py`). Everything below is the documentation of how they were
+produced and what is still approximate.
+
 - `data/events.csv` — the community spreadsheet as downloaded (raw source).
 - `data/events.json` — the same data parsed (`tools/csv_to_events.py`): 19 groups,
   **175 events**, 3.35 options per event on average, covering all five chapters

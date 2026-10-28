@@ -92,6 +92,25 @@ namespace Doorstop
 			return _scenes != null && _scenes.TryGetValue(scene, out s) ? s.Title : "";
 		}
 
+		// The text of one answer, or "" when the table has no such key.
+		public static string Text(string scene, string buttonName)
+		{
+			Load();
+			Scene s;
+			if (_scenes == null || !_scenes.TryGetValue(scene, out s) || string.IsNullOrEmpty(buttonName))
+			{
+				return "";
+			}
+			foreach (KeyValuePair<string, string> b in s.Buttons)
+			{
+				if (b.Key == buttonName)
+				{
+					return b.Value;
+				}
+			}
+			return "";
+		}
+
 		// Answers offered at a scene, in key order (ButtonDescription1 first).
 		public static List<KeyValuePair<string, string>> Buttons(string scene)
 		{

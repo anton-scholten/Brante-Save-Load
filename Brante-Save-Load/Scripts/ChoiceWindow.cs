@@ -1036,6 +1036,10 @@ namespace Doorstop
 				for (int k = 0; k < e.Choices.Count; k++)
 				{
 					History.Choice c = e.Choices[k];
+					if (string.IsNullOrEmpty(c.Text) || c.Text.Trim().Length == 0)
+					{
+						continue;   // never draw a blank answer row
+					}
 					float y = TreeTop + k * TreeRowH;
 					float cy = y + TreeNodeH * 0.5f;
 					Color line = c.Chosen ? ColTreeChosen : ColTreeLine;
@@ -1118,6 +1122,20 @@ namespace Doorstop
 				}
 			}
 			UpdateExploreButtons();
+			// In explore mode the newest column waits for a pick; say so softly.
+			if (_explore && _tree.Count > 0)
+			{
+				TreeCol last = _tree[_tree.Count - 1];
+				bool picked = false;
+				foreach (History.Choice c in last.Choices)
+				{
+					picked = picked || c.Chosen;
+				}
+				if (!picked)
+				{
+					SetHistoryInfo(Loc.T(Loc.K.PickAnswer));
+				}
+			}
 			return cols.Count;
 		}
 

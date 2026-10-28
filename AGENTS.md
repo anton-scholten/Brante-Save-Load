@@ -18,19 +18,33 @@ how the game works and where every fact used by the mod came from.
 Brante-Save-Load/            the folder that gets installed into the game dir
   Brante-Save-Load.dll       built by tools/build.sh; the Doorstop entry assembly
   0Harmony.dll               vendored Harmony (copied by the build from vendor/)
+  scene-texts.tsv            every scene's title and answers (from the game; see data/)
+  scene-edges.tsv            the story's scene chains (from the game; see data/)
   Scripts/*.cs               the source
-    Entrypoint.cs            Doorstop entry: creates the host GameObject
+    Entrypoint.cs            Doorstop entry: Harmony patches, host creation
     ModLog.cs                file logger (usable before Unity is up)
-    ModHost.cs               the host component; probe first, features after
-    Recorder.cs              choice-point snapshot capture + dedup
-    ChoiceWindow.cs          save list window + settings button + load flow
+    ModHost.cs               host component; probes, dev markers, save-slot adopt
+    Recorder.cs              snapshots, dedup, backup, traces, save repair
+    ChoiceWindow.cs          save table, history tree, explore path builder
+    History.cs               the save's scene path + offered answers
+    SceneTexts.cs            loader for scene-texts.tsv (titles + answers)
+    SceneEdges.cs            loader for scene-edges.tsv (choice -> next scene)
+    Loc.cs                   the UI's own translations (11 languages)
+    BoltDump.cs              runtime dump of the choice machine (dev only)
 doorstop/doorstop_config.ini the Doorstop config installed into the game folder
 vendor/                      vendored third-party binaries + their licenses
   doorstop/winhttp.dll       Unity Doorstop 4.6.0 (x64), LGPL-2.1
   0Harmony.dll               Lib.Harmony 2.3.3 (net472), MIT
 tools/build.sh               compile against the game's own Managed/ DLLs
 tools/install.sh             build, then symlink/copy into the game folder
-docs/                        FINDINGS (what the game's code does), DESIGN, TODO
+tools/localization.py        extract titles/answers -> data/, shipped TSV
+tools/bolt_extract.py        dump every Bolt graph as JSON (no UnityPy needed)
+tools/bolt_graph.py          Walk Bolt graphs (macro resolution, LoadScene)
+tools/bolt_scenes.py         scene catalogue per chapter
+tools/bolt_edges.py          scene chains (the transition table) -> shipped TSV
+tools/build_graph.py         merge traces + snapshots + event sheet
+data/                        extracted game data (see docs/BRANCHES.md)
+docs/                        FINDINGS (game internals), BRANCHES (choice data), TODO
 ```
 
 ## Build, install
@@ -57,6 +71,21 @@ folder cause the game's Mono runtime to run `Doorstop.Entrypoint.Start()` before
 anything else. There is no mod loader, no plugin framework — the repo is
 self-contained. Doorstop files are the only things placed beside the game files,
 and `--uninstall` removes exactly what was installed.
+
+## Game data files (regenerate, don't hand-edit)
+
+`Brante-Save-Load/scene-texts.tsv` and `scene-edges.tsv` are extracted from the
+installed game and shipped with the mod. Regenerate them after a game update with
+
+```sh
+python3 tools/localization.py     # scene-texts.tsv (+ data/localization.csv)
+python3 tools/bolt_edges.py       # scene-edges.tsv (needs UnityPy)
+```
+
+`tools/bolt_*.py` / `tools/localization.py` need the game installed; the Bolt
+readers need UnityPy (`pip install unitypy`, or PYTHONPATH pointing at it).
+`tools/build_graph.py` is optional tooling that merges the mod's traces with the
+community event sheet (`data/events.json`).
 
 ## Rules that are not obvious
 
@@ -103,11 +132,24 @@ the game — that log is the mod's only diagnostic channel.
 
 To test the mod in-game without playing to a choice point, drop marker files
 into the mod's folder inside the Proton prefix
-(`<persistentDataPath>/Brante-Save-Load/Snapshots/`): `dev-autoload.txt` replays
-the vanilla load sequence onto the newest autosave, and `dev-uitest.txt`
-(alongside it) then drives the choice-list UI through every state. Kill the
-game's own `…Sir Brante.exe` processes (not just the Proton wrapper) plus
-`wineserver -k` after each run.
+(`<persistentDataPath>/Brante-Save-Load/Snapshots/`). All are one-shot (deleted
+on use) and must be paired with `dev-autoload.txt`:
+
+| marker | what it does |
+|---|---|
+| `dev-autoload.txt` | replay the vanilla load sequence onto the newest autosave |
+| `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
+| `dev-book.txt` | open the settings menu, dump its layout, then the history tree and explore two steps |
+| `dev-history.txt` | log the save's scene path (`ShowedScenesList`) |
+| `dev-advance.txt` | page through the scene text (experimental) |
+| `dev-click.txt` | click the first visible answer (experimental) |
+| `dev-scene-tree.txt` | dump the loaded scene's UI components |
+| `dev-bolt.txt` | dump the live Bolt graph of the choice machine |
+| `dev-ironman.txt` | load the save as an Iron Man game |
+| `dev-lang.txt` | switch the game language, to exercise the window rebuild |
+
+Kill the game's own `…Sir Brante.exe` processes (not just the Proton wrapper)
+plus `wineserver -k` after each run.
 
 To screenshot the running game (Wayland/KDE session):
 `DISPLAY=:1 xwininfo -root -tree | grep -i brante` finds the window's display,
@@ -118,7 +160,8 @@ work here (black/`BadMatch` on the X1 root).
 ## Open work
 
 - [docs/TODO.md](docs/TODO.md): what remains of the plan.
-- Phases 0–5 are done and verified in-game (the save list is a sortable table;
-  saves live per main save in `Brante-Save-Load/Runs/<main save ID>/`, and older
-  ones are migrated at startup). Phase 6 (reconstructing pre-mod choice history)
-  and Phase 7 (polish) follow.
+- All phases are implemented and verified in-game: the save table, the history
+  tree over the whole playthrough (answers for every scene come from the game's
+  localisation), and the explore mode that walks the story's scene chains and
+  loads the reached scene. Remaining: the achievements check, a full playthrough
+  pass (death -> restart chapter), and a design document.

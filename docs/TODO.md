@@ -182,7 +182,6 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   in Iron Man; the mod's window ignores that and keeps working (verified by
   loading a save with `IronManMode` forced on: scene reopens, no errors).
   Autosaves continue normally after a rewind, as in a normal run.
-- [ ] Achievement side-effects on load (expected: none harmful; verify).
 - [ ] Load a save after switching to a different main save (per-run folders make
   this testable now).
 - [x] Cross-platform paths: sanitiser uses the union of Windows/Unix rules, all
@@ -241,7 +240,7 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   `scene-edges.tsv`), columns continue as far as the chain goes, and "Load this
   scene" appears when the reached scene has a snapshot. Verified in-game:
   `01.05.01 → 01.06.01 → 01.07.01` walked from the panel.
-- [ ] Original notes for the feature: In the tree, let the player click
+- Design notes behind it (kept for context): In the tree, let the player click
   any answer at any step; the view then shows the scene that answer leads to, and
   they can keep picking until they load the resulting scene. This is the
   "load any scene by quickly making all the selections" feature.
@@ -260,9 +259,17 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   - UI: a toggle in the History panel ("explore"), which unlocks clicking
     read-only answers; a "load this scene" button appears once the path reaches a
     scene the mod has a snapshot for, otherwise the path is only a preview.
-- [ ] Find the transition order/source (only needed for unplayed branches beyond
-  one step): C# `SceneStateMachine` fields or story `TextBlock` data.
-- [ ] Collect edges by playing (traces do it automatically) as a cross-check; a
-  page-advancing driver would allow clicking through a loaded scene instead.
-- [ ] Render the full tree from `data/graph.json`, path highlighted.
-- [ ] In-game test pass, README final, design doc.
+- [x] Transition order: solved from the chapter macros' wiring
+  (`tools/bolt_edges.py`), no need for the scene-file `UnityEvent` parsing.
+- [x] Full path view: the history tree shows the whole playthrough with every
+  answer, and explore mode walks the chains forward.
+- [ ] Optional cross-check: traces record the edges actually played; a page
+  advancing driver would let a harness click through loaded scenes.
+- [x] Polish pass (28 Oct 2026): answer texts are filled from the localisation
+  table when a sidecar holds a key or an empty entry, blank rows are never drawn,
+  the explore view says "pick an answer to continue" and scrolls to the newest
+  column; documentation (README, AGENTS, TODO, BRANCHES) brought up to date.
+- [ ] Achievement side-effects on load (verify).
+- [ ] Full in-game pass on a played run: chapter transition, death -> restart
+  chapter, explore + load from the panel.
+- [ ] Design document (`docs/DESIGN.md`).

@@ -145,10 +145,12 @@ namespace Doorstop
 						c.Index = idx;
 					}
 					string text = line.Substring(close + 1).Trim();
-					int nameAt = text.IndexOf("   (name: ", StringComparison.Ordinal);
+					// "(name: X)" follows the text, but the spaces before it are
+					// trimmed away when the text itself is empty.
+					int nameAt = text.IndexOf("(name: ", StringComparison.Ordinal);
 					if (nameAt >= 0)
 					{
-						string name = text.Substring(nameAt + 10).TrimEnd(')', ' ');
+						string name = text.Substring(nameAt + 7).TrimEnd(')', ' ');
 						c.Name = name;
 						text = text.Substring(0, nameAt);
 					}
@@ -174,6 +176,41 @@ namespace Doorstop
 			{
 				ModLog.Error("History: reading choices of " + sidecar + " failed:\n" + ex);
 			}
+			CleanChoices(e);
+		}
+
+		// Sidecars of older builds can contain a button key instead of its text
+		// (the game has no localisation for some unused buttons), or an empty
+		// entry. Fill those from the localisation table and drop the rest, so the
+		// tree never shows "ButtonDescription5".
+		private static void CleanChoices(Entry e)
+		{
+			List<Choice> kept = new List<Choice>();
+			foreach (Choice c in e.Choices)
+			{
+				if (string.IsNullOrEmpty(c.Text) || c.Text == c.Name)
+				{
+					string fromTable = SceneTexts.Text(e.SceneName, c.Name);
+					if (!string.IsNullOrEmpty(fromTable))
+					{
+						c.Text = fromTable;
+					}
+				}
+				if (string.IsNullOrEmpty(c.Text) || c.Text == c.Name)
+				{
+					continue;
+				}
+				bool dup = false;
+				foreach (Choice other in kept)
+				{
+					dup = dup || other.Text == c.Text;
+				}
+				if (!dup)
+				{
+					kept.Add(c);
+				}
+			}
+			e.Choices = kept;
 		}
 
 		// The answer the player picked is stored in the NEXT snapshot

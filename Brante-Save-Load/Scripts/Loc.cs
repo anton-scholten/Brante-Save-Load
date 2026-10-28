@@ -17,7 +17,7 @@ namespace Doorstop
 			ConfirmLoad, ConfirmDelete, ConfirmSave, EmptySaves,
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, SaveAvailable, Current, NothingYet,
-			TreeChosen, TreeOffered, Explore, LoadScene
+			TreeChosen, TreeOffered, Explore, LoadScene, PickAnswer
 		}
 
 		static Loc()
@@ -44,6 +44,17 @@ namespace Doorstop
 			AddExploreWords(_ja, "探索", "このシーンを読み込む");
 			AddExploreWords(_ko, "탐색", "이 장면 불러오기");
 			AddExploreWords(_zh, "探索", "读取此场景");
+			AddHintWords(_en, "Pick an answer to continue the path");
+			AddHintWords(_ru, "Выберите ответ, чтобы продолжить путь");
+			AddHintWords(_de, "Wähle eine Antwort, um den Pfad fortzusetzen");
+			AddHintWords(_fr, "Choisissez une réponse pour continuer le chemin");
+			AddHintWords(_es, "Elige una respuesta para continuar el camino");
+			AddHintWords(_it, "Scegli una risposta per continuare il percorso");
+			AddHintWords(_pl, "Wybierz odpowiedź, aby kontynuować ścieżkę");
+			AddHintWords(_tr, "Yola devam etmek için bir yanıt seçin");
+			AddHintWords(_ja, "答えを選ぶと道が続きます");
+			AddHintWords(_ko, "계속하려면 답을 선택하세요");
+			AddHintWords(_zh, "选择一个答案以继续路径");
 		}
 
 		private static void AddTreeWords(Dictionary<K, string> d, string chosen, string offered)
@@ -56,6 +67,11 @@ namespace Doorstop
 		{
 			d[K.Explore] = explore;
 			d[K.LoadScene] = loadScene;
+		}
+
+		private static void AddHintWords(Dictionary<K, string> d, string pickAnswer)
+		{
+			d[K.PickAnswer] = pickAnswer;
 		}
 
 		private static Dictionary<K, string> _english;
