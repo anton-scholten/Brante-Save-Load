@@ -194,10 +194,33 @@ ports (0 of 482 graphs). Scene files do not carry a successor table either: only
 one of the 25 scene files with a consequence key also names another scene
 (`level34` → `01.06.01`); the rest name only themselves.
 
-So the per-choice transition is decided elsewhere — most likely by the scene's
-**Bolt State Machine** (`SceneStateMachine` in the scene) or by a value the
-`Click` event dispatches on inside `ChildhoodChapter`'s single `SwitchOnString`
-(ports `%true`/`%false`/`default`). That is the remaining unknown.
+So the per-choice transition is decided elsewhere. Two more things were ruled out
+or narrowed:
+
+- `SceneStateMachine` is a **C# MonoBehaviour**, not a Bolt state machine: the
+  Bolt state-graph types (`Bolt.OnEnterState`, `StateGraph`, …) do not appear
+  anywhere in the game files.
+- The `GameManager` `Click` dispatch switches on `GetKeyChapterParameterValue
+  ("GoToFinals")` (`%Yes`/`%No`) and then on `GetMember Chapter` (`%0`…`%5`) —
+  that routes to the chapter macros, i.e. chapter flow and finals, not choices.
+
+The chapter macros do give the game's own **scene catalogue** (one macro per
+scene), which `tools/bolt_scenes.py` exports:
+
+```sh
+python3 tools/bolt_scenes.py            # -> data/scene-catalog.json
+```
+
+75 distinct scenes: Childhood 18, Teen 21, Youth 29, Peace 12, plus the finals
+handled outside the chapter macros. It is a set, not an order — ids mostly
+follow the story, but variants break that (`01.02.01_2` Hide and Seek comes
+*before* `01.02.01` The Great Descent in an actual playthrough).
+
+Remaining unknown: the transition order itself. It is not in the flow graphs,
+not in the scene files as a table (1 of 25), and not in a Bolt state machine. The
+most likely holder is the C# `SceneStateMachine` per scene (its serialised event
+fields) or the story `TextBlock` data. Traces already record the true order for
+every path that is played.
 
 Everything extracted so far is committed (`data/bolt-graphs.json`,
 `data/bolt-edges.json`).

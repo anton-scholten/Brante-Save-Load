@@ -223,7 +223,12 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   a successor table either (1 of 25 does). The per-choice transition is decided
   by the scene's Bolt **state machine** / the `%true`/`%false` switch - still to
   be decoded.
-- [ ] Decode that dispatch (state machine or switch key) to complete the edges.
+- [x] Ruled out Bolt state graphs (SceneStateMachine is C#) and the chapter
+  switch (it only routes chapter/finals). Exported the game's own scene
+  catalogue per chapter (`tools/bolt_scenes.py` -> `data/scene-catalog.json`,
+  75 scenes).
+- [ ] Find the transition order/source: C# `SceneStateMachine` fields or story
+  `TextBlock` data; traces give the order for paths actually played.
 - [ ] Collect edges by playing (traces do it automatically) as a cross-check; a
   page-advancing driver would allow clicking through a loaded scene instead.
 - [ ] Render the full tree from `data/graph.json`, path highlighted.
