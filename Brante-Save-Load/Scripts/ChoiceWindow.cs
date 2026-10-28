@@ -332,6 +332,32 @@ namespace Doorstop
 		private static GameObject _historyPanel;
 		private static int _historyLoadable;
 		private static TextMeshProUGUI _historyInfo;
+		private static GameObject _exploreBtn;
+		private static TextMeshProUGUI _exploreLabel;
+		private static GameObject _loadHereBtn;
+		private static bool _explore;
+
+		// One tree column: a scene, the answers it offered, the one taken and
+		// (for captured scenes) the snapshot to load.
+		private sealed class TreeCol
+		{
+			public string Scene = "";
+			public string Title = "";
+			public string SnapshotPath = "";
+			public bool Preview;
+			public List<History.Choice> Choices = new List<History.Choice>();
+
+			public bool HasSnapshot
+			{
+				get { return !string.IsNullOrEmpty(SnapshotPath); }
+			}
+		}
+
+		private static List<TreeCol> _tree = new List<TreeCol>();
+		private static ScrollRect _historyScroll;
+		private static List<TreeCol> _preview = new List<TreeCol>();
+		private static Dictionary<string, string> _overrides =
+			new Dictionary<string, string>();
 
 		private static Transform _historyList;
 		private static Col _sortCol = Col.Saved;
@@ -788,6 +814,7 @@ namespace Doorstop
 			cont.sizeDelta = new Vector2(100f, 100f);
 			sc.content = cont;
 			_historyList = content.transform;
+			_historyScroll = sc;
 
 			// Hover info line, above the Close button.
 			_historyInfo = AddLabel(box.transform, "Info", "", 18f,
@@ -816,7 +843,64 @@ namespace Doorstop
 			TextMeshProUGUI cl = AddLabel(close.transform, "Label", Loc.T(Loc.K.Close), 24f, ColTextLight, true);
 			Stretch(cl.rectTransform);
 
+			// Explore toggle (bottom left) and "Load this scene" (bottom right).
+			_exploreBtn = CreateUiObject("ExploreBtn", box.transform);
+			RectTransform ert = _exploreBtn.GetComponent<RectTransform>();
+			ert.anchorMin = new Vector2(0f, 0f);
+			ert.anchorMax = new Vector2(0f, 0f);
+			ert.pivot = new Vector2(0f, 0f);
+			ert.anchoredPosition = new Vector2(24f, 24f);
+			ert.sizeDelta = new Vector2(220f, 52f);
+			Image eimg = _exploreBtn.AddComponent<Image>();
+			eimg.color = ColCancelButton;
+			Button ebtn = _exploreBtn.AddComponent<Button>();
+			ebtn.targetGraphic = eimg;
+			ebtn.onClick.AddListener(ToggleExplore);
+			_exploreLabel = AddLabel(_exploreBtn.transform, "Label",
+				Loc.T(Loc.K.Explore), 22f, ColTextLight, true);
+			Stretch(_exploreLabel.rectTransform);
+
+			_loadHereBtn = CreateUiObject("LoadHere", box.transform);
+			RectTransform lrt2 = _loadHereBtn.GetComponent<RectTransform>();
+			lrt2.anchorMin = new Vector2(1f, 0f);
+			lrt2.anchorMax = new Vector2(1f, 0f);
+			lrt2.pivot = new Vector2(1f, 0f);
+			lrt2.anchoredPosition = new Vector2(-24f, 24f);
+			lrt2.sizeDelta = new Vector2(260f, 52f);
+			Image limg2 = _loadHereBtn.AddComponent<Image>();
+			limg2.color = ColLoadButton;
+			Button lbtn2 = _loadHereBtn.AddComponent<Button>();
+			lbtn2.targetGraphic = limg2;
+			lbtn2.onClick.AddListener(LoadPreviewed);
+			TextMeshProUGUI llabel2 = AddLabel(_loadHereBtn.transform, "Label",
+				Loc.T(Loc.K.LoadScene), 22f, ColTextLight, true);
+			Stretch(llabel2.rectTransform);
+			_loadHereBtn.SetActive(false);
+
 			_historyPanel.SetActive(false);
+		}
+
+		private static void ToggleExplore()
+		{
+			_explore = !_explore;
+			_preview.Clear();
+			_overrides.Clear();
+			ModLog.Info("ChoiceWindow: explore mode " + (_explore ? "on" : "off"));
+			RefreshHistory();
+			Canvas.ForceUpdateCanvases();
+		}
+
+		// Loads the scene the explore path currently ends on, when the mod has
+		// a save of it.
+		private static void LoadPreviewed()
+		{
+			if (string.IsNullOrEmpty(_lastLoadablePath) || _tree.Count == 0)
+			{
+				return;
+			}
+			TreeCol last = _tree[_tree.Count - 1];
+			CloseHistory();
+			Ask(Pending.Load, _lastLoadablePath, last.Title, null);
 		}
 
 		private static void OpenHistory()
@@ -829,6 +913,7 @@ namespace Doorstop
 			_historyPanel.SetActive(true);
 			_historyPanel.transform.SetAsLastSibling();
 			Canvas.ForceUpdateCanvases();
+			ScrollHistoryToEnd();
 			ModLog.Info("ChoiceWindow: history opened (" + n + " scene(s), "
 				+ _historyLoadable + " loadable)");
 		}
@@ -839,6 +924,9 @@ namespace Doorstop
 			{
 				_historyPanel.SetActive(false);
 			}
+			_explore = false;
+			_preview.Clear();
+			_overrides.Clear();
 		}
 
 		// (Re)builds the history rows; returns how many are shown.
@@ -875,14 +963,35 @@ namespace Doorstop
 			}
 			// Every played scene with a known answer list becomes a column; only
 			// the ones the mod captured can be loaded (the rest are pre-mod).
-			List<History.Entry> cols = new List<History.Entry>();
+			// Columns with Preview=true are the explore-mode ones and survive a
+			// re-render until the player closes or toggles the mode.
+			List<TreeCol> cols = new List<TreeCol>();
 			foreach (History.Entry e in all)
 			{
-				if (e.Choices.Count > 0)
+				if (e.Choices.Count == 0)
 				{
-					cols.Add(e);
+					continue;
 				}
+				TreeCol col = new TreeCol();
+				col.Scene = e.SceneName;
+				col.Title = e.Title;
+				col.SnapshotPath = e.SnapshotPath;
+				col.Choices = e.Choices;
+				string picked;
+				if (_overrides.TryGetValue(e.SceneName, out picked))
+				{
+					foreach (History.Choice c in col.Choices)
+					{
+						c.Chosen = c.Name == picked;
+					}
+				}
+				cols.Add(col);
 			}
+			foreach (TreeCol preview in _preview)
+			{
+				cols.Add(preview);
+			}
+			_tree = cols;
 			if (cols.Count == 0)
 			{
 				TextMeshProUGUI empty = AddLabel(_historyList, "Empty",
@@ -897,9 +1006,9 @@ namespace Doorstop
 			}
 
 			int rows = 0;
-			foreach (History.Entry e in cols)
+			foreach (TreeCol c in cols)
 			{
-				rows = Mathf.Max(rows, e.Choices.Count);
+				rows = Mathf.Max(rows, c.Choices.Count);
 			}
 			float width = 30f + cols.Count * TreeColW;
 			float height = TreeTop + rows * TreeRowH + 20f;
@@ -907,12 +1016,12 @@ namespace Doorstop
 
 			for (int i = 0; i < cols.Count; i++)
 			{
-				History.Entry e = cols[i];
+				TreeCol e = cols[i];
 				float x = 30f + i * TreeColW;
 
 				// Column header: the scene's title.
 				TextMeshProUGUI head = AddLabel(_historyList, "Head", e.Title,
-					18f, ColTextDark, false);
+					18f, e.Preview ? new Color(0.45f, 0.40f, 0.32f) : ColTextDark, false);
 				Wrap(head, x, 6f, TreeNodeW + TreeNodeX, 44f);
 				head.enableWordWrapping = true;
 				head.overflowMode = TextOverflowModes.Ellipsis;
@@ -941,14 +1050,20 @@ namespace Doorstop
 					nrt.sizeDelta = new Vector2(TreeNodeW, TreeNodeH);
 					Image nimg = node.AddComponent<Image>();
 					nimg.color = c.Chosen ? ColTreeChosenBg : ColAuto;
-					// Clicking loads that decision's save (the state just
-					// before the choice was made) - only for captured scenes.
-					if (e.HasSnapshot)
+					// Explore mode: picking any answer extends the path. Otherwise
+					// clicking loads that decision's save (captured scenes only).
+					Button nb = node.AddComponent<Button>();
+					nb.targetGraphic = nimg;
+					int colIndex = i;
+					int choiceIndex = k;
+					string path = e.SnapshotPath;
+					string title = e.Title;
+					if (_explore)
 					{
-						Button nb = node.AddComponent<Button>();
-						nb.targetGraphic = nimg;
-						string path = e.SnapshotPath;
-						string title = e.Title;
+						nb.onClick.AddListener(delegate { Explore(colIndex, choiceIndex); });
+					}
+					else if (e.HasSnapshot)
+					{
 						nb.onClick.AddListener(delegate
 						{
 							CloseHistory();
@@ -1002,7 +1117,130 @@ namespace Doorstop
 					}
 				}
 			}
+			UpdateExploreButtons();
 			return cols.Count;
+		}
+
+		// The Explore toggle, and "Load this scene" for the last column (only
+		// enabled when the mod has a save of that scene).
+		private static void UpdateExploreButtons()
+		{
+			if (_exploreLabel != null)
+			{
+				_exploreLabel.text = Loc.T(Loc.K.Explore) + (_explore ? "  \u2713" : "");
+				Image img = _exploreBtn != null ? _exploreBtn.GetComponent<Image>() : null;
+				if (img != null)
+				{
+					img.color = _explore ? ColLoadButton : ColCancelButton;
+				}
+			}
+			if (_loadHereBtn != null)
+			{
+				bool canLoad = false;
+				string path = "";
+				if (_explore && _tree.Count > 0)
+				{
+					TreeCol last = _tree[_tree.Count - 1];
+					canLoad = last.HasSnapshot;
+					path = last.SnapshotPath;
+				}
+				_loadHereBtn.SetActive(canLoad);
+				_lastLoadablePath = canLoad ? path : "";
+			}
+		}
+
+		private static string _lastLoadablePath = "";
+
+		// Explore mode: picking an answer moves the preview to that answer's
+		// scene, so the player can walk a path without playing it.
+		private static void Explore(int colIndex, int choiceIndex)
+		{
+			try
+			{
+				if (colIndex < 0 || colIndex >= _tree.Count)
+				{
+					return;
+				}
+				TreeCol col = _tree[colIndex];
+				if (choiceIndex < 0 || choiceIndex >= col.Choices.Count)
+				{
+					return;
+				}
+				History.Choice picked = col.Choices[choiceIndex];
+
+				// Remember the choice for every column (played ones survive the
+				// rebuild through _overrides).
+				if (!col.Preview)
+				{
+					_overrides[col.Scene] = picked.Name;
+				}
+				for (int i = 0; i < col.Choices.Count; i++)
+				{
+					col.Choices[i].Chosen = i == choiceIndex;
+				}
+
+				// Everything after the clicked column is replaced by the new path.
+				if (col.Preview)
+				{
+					int keep = colIndex - PlayedCount() + 1;
+					_preview.RemoveRange(keep, _preview.Count - keep);
+				}
+				else
+				{
+					_preview.Clear();
+				}
+
+				string next = SceneEdges.Next(col.Scene);
+				ModLog.Info("ChoiceWindow: explore " + col.Scene + " [" + picked.Name + "] -> "
+					+ (string.IsNullOrEmpty(next) ? "(no edge)" : next));
+				if (!string.IsNullOrEmpty(next))
+				{
+					_preview.Add(PreviewCol(next));
+				}
+				RefreshHistory();
+				Canvas.ForceUpdateCanvases();
+				ScrollHistoryToEnd();
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: explore failed:\n" + e);
+			}
+		}
+
+		private static int PlayedCount()
+		{
+			int n = 0;
+			foreach (TreeCol c in _tree)
+			{
+				if (!c.Preview)
+				{
+					n++;
+				}
+			}
+			return n;
+		}
+
+		private static TreeCol PreviewCol(string scene)
+		{
+			TreeCol col = new TreeCol();
+			col.Scene = scene;
+			col.Preview = true;
+			col.Title = SceneTexts.Title(scene);
+			if (string.IsNullOrEmpty(col.Title))
+			{
+				col.Title = scene;
+			}
+			col.SnapshotPath = History.SnapshotFor(scene);
+			int index = 1;
+			foreach (KeyValuePair<string, string> b in SceneTexts.Buttons(scene))
+			{
+				History.Choice c = new History.Choice();
+				c.Index = index++;
+				c.Name = b.Key;
+				c.Text = b.Value;
+				col.Choices.Add(c);
+			}
+			return col;
 		}
 
 		// Sets the content rect of a scroll view that is laid out by hand.
@@ -1047,6 +1285,16 @@ namespace Doorstop
 			Image img = go.AddComponent<Image>();
 			img.color = color;
 			img.raycastTarget = false;
+		}
+
+		// The newest column is the interesting one (the end of the path, or the
+		// scene explore mode just reached), so show the right-hand end.
+		private static void ScrollHistoryToEnd()
+		{
+			if (_historyScroll != null)
+			{
+				_historyScroll.horizontalNormalizedPosition = 1f;
+			}
 		}
 
 		private static void SetHistoryInfo(string text)
@@ -2041,6 +2289,15 @@ namespace Doorstop
 			// history panel on top of it.
 			yield return new WaitForSeconds(8f);
 			OpenHistory();
+			// Dev: exercise explore mode - walk two answers forward.
+			yield return new WaitForSeconds(2f);
+			ToggleExplore();
+			yield return new WaitForSeconds(1f);
+			for (int step = 0; step < 2 && _tree.Count > 0; step++)
+			{
+				Explore(_tree.Count - 1, 0);
+				yield return new WaitForSeconds(1f);
+			}
 			yield return new WaitForSeconds(6f);
 			CloseHistory();
 			if (DevLanguageSwitch)

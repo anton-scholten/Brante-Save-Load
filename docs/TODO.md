@@ -236,7 +236,12 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   have no snapshot - with every answer and the taken one highlighted. Only
   captured decisions are clickable.
 
-- [ ] **Path builder (design, not started).** In the tree, let the player click
+- [x] **Path builder (28 Oct 2026).** Explore toggle in the history panel:
+  clicking any answer moves the preview to the next scene (from
+  `scene-edges.tsv`), columns continue as far as the chain goes, and "Load this
+  scene" appears when the reached scene has a snapshot. Verified in-game:
+  `01.05.01 → 01.06.01 → 01.07.01` walked from the panel.
+- [ ] Original notes for the feature: In the tree, let the player click
   any answer at any step; the view then shows the scene that answer leads to, and
   they can keep picking until they load the resulting scene. This is the
   "load any scene by quickly making all the selections" feature.

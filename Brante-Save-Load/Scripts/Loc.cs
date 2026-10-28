@@ -17,7 +17,7 @@ namespace Doorstop
 			ConfirmLoad, ConfirmDelete, ConfirmSave, EmptySaves,
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, SaveAvailable, Current, NothingYet,
-			TreeChosen, TreeOffered
+			TreeChosen, TreeOffered, Explore, LoadScene
 		}
 
 		static Loc()
@@ -33,12 +33,29 @@ namespace Doorstop
 			AddTreeWords(_ja, "選択済み", "候補");
 			AddTreeWords(_ko, "선택됨", "제시됨");
 			AddTreeWords(_zh, "已选择", "可选");
+			AddExploreWords(_en, "Explore", "Load this scene");
+			AddExploreWords(_ru, "Обзор", "Загрузить эту сцену");
+			AddExploreWords(_de, "Erkunden", "Diese Szene laden");
+			AddExploreWords(_fr, "Explorer", "Charger cette scène");
+			AddExploreWords(_es, "Explorar", "Cargar esta escena");
+			AddExploreWords(_it, "Esplora", "Carica questa scena");
+			AddExploreWords(_pl, "Odkrywaj", "Wczytaj tę scenę");
+			AddExploreWords(_tr, "Keşfet", "Bu sahneyi yükle");
+			AddExploreWords(_ja, "探索", "このシーンを読み込む");
+			AddExploreWords(_ko, "탐색", "이 장면 불러오기");
+			AddExploreWords(_zh, "探索", "读取此场景");
 		}
 
 		private static void AddTreeWords(Dictionary<K, string> d, string chosen, string offered)
 		{
 			d[K.TreeChosen] = chosen;
 			d[K.TreeOffered] = offered;
+		}
+
+		private static void AddExploreWords(Dictionary<K, string> d, string explore, string loadScene)
+		{
+			d[K.Explore] = explore;
+			d[K.LoadScene] = loadScene;
 		}
 
 		private static Dictionary<K, string> _english;

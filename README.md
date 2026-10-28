@@ -42,7 +42,10 @@ never touches the game's saves.
   picked joined by a darker line. The answers come from the game's own
   translation table, so this works for scenes played before the mod too;
   hovering shows the full text, and columns the mod has a save for can be
-  clicked to load them. Decisions made before the mod was
+  clicked to load them. **Explore** turns the tree into a path builder: click any
+  answer to move to the scene it leads to (the game's own scene chain is shipped
+  with the mod), keep choosing to walk forward, and "Load this scene" jumps to
+  the place you reached once it is one the mod has a save for. Decisions made before the mod was
   installed can be shown but not reopened — the game keeps no earlier states, and
   only records the most recent answer. A dataset of the game's events — all five
   chapters, 175 events with every option, requirement and outcome — lives in
