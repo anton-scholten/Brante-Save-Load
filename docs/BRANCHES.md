@@ -5,9 +5,14 @@ guides so the history view can eventually show the *whole* tree, with the path o
 a given save highlighted. It is a starting point, not a complete graph — see
 "what is missing" below.
 
-- `data/branches.json` — machine-readable: chapters, scenes, choices, conditions,
-  effects, destinies, endings, plus the in-game scene ids we have confirmed from
-  the mod's own logs.
+- `data/events.csv` — the community spreadsheet as downloaded (raw source).
+- `data/events.json` — the same data parsed (`tools/csv_to_events.py`): 19 groups,
+  **175 events**, 3.35 options per event on average, covering all five chapters
+  including Peace Time and The Revolt. Each option has its text, its
+  requirement and its outcome.
+- `data/branches.json` — hand-made digest: chapter 1 in full detail, chapter 2–3
+  scenes, destinies, endings, and the in-game scene ids we confirmed from the
+  mod's own logs.
 - `data/trace.log` (per main save, created at runtime) — see "Getting the
   missing edges".
 
@@ -39,33 +44,31 @@ button text, the condition, and the stat/relationship effect.
 - TheGamer, *Chapter Three: Youth* — unlock conditions for the three Lots and for
   several destinies.
   <https://www.thegamer.com/life-suffering-brante-chapter-three-youth-arrival-three-lots-decisions/>
-- Steam guide, *Spreadsheet with Events, Conditions and Consequences* — a
-  community Google Sheet with ~175 events (title, requirements, options,
-  outcomes), kept in a link inside the guide; not machine-read here.
-  <https://steamcommunity.com/sharedfiles/filedetails/?id=2577499714>
+- **Steam guide, *Spreadsheet with Events, Conditions and Consequences* by
+  Brian Sirith** — the community Google Sheet this repository now ships as
+  `data/events.csv` / `data/events.json`: 175 events with every option, its
+  requirement and its outcome, across all five chapters.
+  Guide: <https://steamcommunity.com/sharedfiles/filedetails/?id=2577499714>
+  Sheet: <https://docs.google.com/spreadsheets/d/1TEZ2C3KZdPFUxLOg_pEkNWZOjNUKGVX-LbbeeX5ahmY/edit?usp=sharing>
+  Credit: Brian Sirith transcribed the events and options by hand, with
+  corrections from Gowther32 and other commenters. The guide asks for credit if
+  the data is reused; this file and `data/events.json` carry it.
 - Fandom path pages (*Path of the Nobleman / Priest / Lotless*) — chapter 4–5
   route descriptions and the ending names.
 
 ## What is missing
 
-1. **Edges: which scene each choice leads to.** No guide lists them, and the game
-   does not store them (branching lives in Bolt machines). Without edges a tree
-   can show what was offered, but not where the *other* branches would have gone.
-2. **Chapters 4 and 5**: no public scene-by-scene data at all — only the three
-   route spines (judge, inquisitor, print-shop agent), a few named decisions and
-   the ending list.
-3. **Exact choice texts for chapters 2 (most options), 3, 4, 5.** Chapter 2 has
-   one playthrough's wording; chapter 3 only has effects.
-4. **Conditions (which options appear at all).** Known for chapter 1; partial
-   elsewhere. In-game this is data on each `ParameterButtonChanger`
-   (`Condition`, `ConditionsByRelations`, `ChecksByStatus`, …) and could be read
-   per scene, but only for scenes the player can reach with the current state.
-5. **Scene id ↔ title mapping.** The mod knows ids like `01.05.01`; the guides
-   use titles. Four are confirmed (Birth, Hide and Seek, The Great Descent,
-   The Lot of Suffering, Gloria's Rhymes, The Newborn's Cry).
-6. **Which answer was picked in old saves.** The game stores only the most recent
-   click (`CurrentConsequence`), so decisions made before the mod was installed
-   cannot be recovered from the save.
+1. **Edges: which event follows which option.** The sheet gives order by year
+   and path, not transitions. This is the one structural gap (see the trace
+   system below).
+2. **Scene id ↔ event title mapping.** The mod sees ids like `01.05.01`; the
+   sheet uses titles. Six are confirmed from our own logs; the rest must come
+   from traces (a scene line right after a click names the destination).
+3. **Which answer was picked in old saves.** The game stores only the most recent
+   click (`CurrentConsequence`), so pre-mod decisions cannot be recovered.
+4. **Condition semantics** are listed per option in the sheet (e.g.
+   `Willpower ≥ 0`, `Sophia: Trusting`) but not in the game's own data format;
+   matching the two is only needed if the mod wanted to predict available options.
 
 ## Getting the missing edges (the system)
 
@@ -98,12 +101,10 @@ To make the graph complete, edges must be *exercised*:
 
 ## Recommended plan
 
-1. Keep collecting `trace.log` from normal play and dev runs; add a merge step
-   (small script) that folds them into `data/branches.json` as `edges`.
-2. Use the dev harness to click each option of the chapters 1–2 scenes we can
-   capture (the state is already valid there), which yields most of the early
-   graph — the part most players rewind to.
-3. Treat chapters 4–5 as "options only, destinations unknown" until traces from
-   those chapters exist.
-4. When edges exist, render the full tree: static nodes from `branches.json`,
-   the current save's path highlighted by matching scene ids and recorded clicks.
+1. Keep collecting `trace.log` from normal play and dev runs; a small merge
+   script folds them into an `edges` map (event id → option → next event id).
+2. Use the dev harness to click each option of the scenes we can capture, which
+   fills most of the early graph — the part players rewind to. Chapters 4–5 need
+   traces from those chapters (or save-editing to reach them).
+3. When edges exist, render the full tree: event nodes from `events.json`, the
+   current save's path highlighted by matching scene ids and recorded clicks.

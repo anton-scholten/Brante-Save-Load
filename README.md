@@ -42,9 +42,10 @@ never touches the game's saves.
   picked joined by a darker line. Hovering a choice shows its full text; clicking
   one loads the save of that decision. Decisions made before the mod was
   installed can be shown but not reopened — the game keeps no earlier states, and
-  only records the most recent answer. A public-guide dataset of the game's
-  choices lives in `data/branches.json` (see `docs/BRANCHES.md`); it is partial,
-  and is the base for showing the full tree later.
+  only records the most recent answer. A dataset of the game's events — all five
+  chapters, 175 events with every option, requirement and outcome — lives in
+  `data/events.json` (raw sheet in `data/events.csv`, see `docs/BRANCHES.md`);
+  it is the base for showing the full tree later.
 
 ### Platforms
 

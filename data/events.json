@@ -1,0 +1,4261 @@
+{
+ "schema": 1,
+ "source": {
+  "name": "Spreadsheet with Events, Conditions and Consequences of the Game",
+  "author": "Brian Sirith",
+  "guide": "https://steamcommunity.com/sharedfiles/filedetails/?id=2577499714",
+  "credit": "Event list and option texts transcribed by Brian Sirith, with corrections from Gowther32 and others."
+ },
+ "note": "Options are per event; the sheet groups events by life stage/year and by path (Family/General/Judge/Priest/Publisher). It does not say which event follows which option - that has to come from traces (see docs/BRANCHES.md).",
+ "eventCount": 175,
+ "groups": [
+  {
+   "group": "",
+   "events": [
+    {
+     "title": "At The End Of Time",
+     "condition": "",
+     "category": "",
+     "options": [
+      {
+       "text": "The Man Himself",
+       "requires": "",
+       "outcome": ""
+      },
+      {
+       "text": "The World Around Him",
+       "requires": "",
+       "outcome": ""
+      },
+      {
+       "text": "A Higher Power",
+       "requires": "",
+       "outcome": ""
+      },
+      {
+       "text": "There Is No Destiny",
+       "requires": "",
+       "outcome": ""
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Childhood (Year 1118)",
+   "events": [
+    {
+     "title": "Birth",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Reach Out To The Palm",
+       "requires": "",
+       "outcome": "Perception +1"
+      },
+      {
+       "text": "Reach Out To The Fist",
+       "requires": "",
+       "outcome": "Determination +1"
+      },
+      {
+       "text": "Smile At The Shadow",
+       "requires": "",
+       "outcome": "Willpower +10"
+      }
+     ]
+    },
+    {
+     "title": "Hide And Seek",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Cry Loudly",
+       "requires": "",
+       "outcome": "Willpower +10"
+      },
+      {
+       "text": "Find Your Way Home",
+       "requires": "",
+       "outcome": "Determination +1"
+      },
+      {
+       "text": "Sit There And Wait",
+       "requires": "",
+       "outcome": "Perception +1"
+      }
+     ]
+    },
+    {
+     "title": "Great Descent",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Finish The Song Properly",
+       "requires": "",
+       "outcome": "Perception +1"
+      },
+      {
+       "text": "Sing The Last Line Wrong",
+       "requires": "",
+       "outcome": "Determination +1"
+      }
+     ]
+    },
+    {
+     "title": "The Lot Of Suffering",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Accept Your Punishment",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Willpower -5 / Lydia: Grateful / Stephan +1"
+      },
+      {
+       "text": "Deny Your Guilt",
+       "requires": "",
+       "outcome": "Determination +1"
+      },
+      {
+       "text": "Demand An Explanation",
+       "requires": "",
+       "outcome": "Perception +1"
+      }
+     ]
+    },
+    {
+     "title": "Gloria's Rhymes",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Complain About Your Sister",
+       "requires": "Determination ≥ 2",
+       "outcome": "Determination +1"
+      },
+      {
+       "text": "Offer To Write Rhymes With Her",
+       "requires": "Perception ≥ 2",
+       "outcome": "Perception +1"
+      },
+      {
+       "text": "Comfort Your Sister",
+       "requires": "Willpower ≥0",
+       "outcome": "Willpower -5 / Gloria +1 / Gloria: Grateful"
+      },
+      {
+       "text": "Leave The Room",
+       "requires": "",
+       "outcome": "Willpower +10"
+      }
+     ]
+    },
+    {
+     "title": "Newborn’s Cry",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Call Father For Help",
+       "requires": "",
+       "outcome": "Perception +1"
+      },
+      {
+       "text": "Redirect Her Anger At Yourself",
+       "requires": "",
+       "outcome": "Determination +1"
+      },
+      {
+       "text": "Snatch Nathan From Mother",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Willpower -5 / Nathan +1 / Nathan: Grateful"
+      },
+      {
+       "text": "Hug Mother",
+       "requires": "Lydia: Grateful",
+       "outcome": "Unity +1 / Lydia + 1"
+      }
+     ]
+    },
+    {
+     "title": "Toy Soldiers",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Deny Your Guilt",
+       "requires": "",
+       "outcome": "Willpower +10"
+      },
+      {
+       "text": "Tell Him The Truth",
+       "requires": "",
+       "outcome": "Determination +1"
+      },
+      {
+       "text": "Admit Your Guilt",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Willpower -5 / Robert +1 / Robert: Grateful"
+      }
+     ]
+    },
+    {
+     "title": "The Intrusion",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Watch Them Melt Helplessly",
+       "requires": "Perception ≥ 4",
+       "outcome": "Willpower +5 / Perception +1"
+      },
+      {
+       "text": "Rescue Your Tin Warriors",
+       "requires": "Determination ≥ 4",
+       "outcome": "Determination +1 / Gregor +1"
+      },
+      {
+       "text": "Burst Into Tears",
+       "requires": "",
+       "outcome": "Willpower -5 / Gregor -1"
+      },
+      {
+       "text": "Strike Grandfather",
+       "requires": "",
+       "outcome": "Determination +1 / Perception +1 / Death +1 / Gregor -1 / Beyond"
+      }
+     ]
+    },
+    {
+     "title": "An Illustrious Guest",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Greet The Baroness Politely",
+       "requires": "",
+       "outcome": "Reputation +1 / Unity -1 / Lydia -1 / Robert +1 / Gregor +1"
+      },
+      {
+       "text": "Walk Away With Mother",
+       "requires": "",
+       "outcome": "Perception +1 / Reputation -1/ Robert -1  / Lydia +1 / Gregor -1"
+      },
+      {
+       "text": "Maintain Your Composure",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Willpower -5"
+      },
+      {
+       "text": "Demand That Mother Be Introduced",
+       "requires": "Perception ≥ 4 or Robert: Grateful",
+       "outcome": "Unity + 1 / Reputation -1 / Gregor -1"
+      }
+     ]
+    },
+    {
+     "title": "The Kaleidoscope",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Take The Kaleidoscope Apart",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Perception +1 / Willpower -5"
+      },
+      {
+       "text": "Keep Looking Through The Kaleidoscope",
+       "requires": "",
+       "outcome": "Willpower +10"
+      },
+      {
+       "text": "Return To Your Studies",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Determination +1 / Willpower -5"
+      }
+     ]
+    },
+    {
+     "title": "Sweet Temptation",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Tell The Truth",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Perception +1 / Willpower -5 / Gregor +1"
+      },
+      {
+       "text": "Lie",
+       "requires": "",
+       "outcome": "Willpower +5 / Gloria -1"
+      },
+      {
+       "text": "Mock Grandfather Along With Your Sister",
+       "requires": "Gloria: Grateful",
+       "outcome": "Determination +1 / Gloria +1 / Gregor -1"
+      }
+     ]
+    },
+    {
+     "title": "The Sacrament",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Accept It",
+       "requires": "",
+       "outcome": "Perception +1 / Determination -1"
+      },
+      {
+       "text": "Raise Your Head",
+       "requires": "Determination ≥ 4",
+       "outcome": "Willpower +5"
+      },
+      {
+       "text": "Catch The Lash",
+       "requires": "",
+       "outcome": "Determination +1 / Perception -1"
+      },
+      {
+       "text": "Kiss The Sword",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Determination +1 / Perception -1 / Willpower -10 / Gregor +1 / Nobleman's Sacrament"
+      }
+     ]
+    },
+    {
+     "title": "The Ant Farm",
+     "condition": "Perception ≥ 4",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Keep Playing With Mother",
+       "requires": "",
+       "outcome": "Willpower +5 / Lydia+1"
+      },
+      {
+       "text": "Play By Yourself",
+       "requires": "",
+       "outcome": "Perception +1 / Unity -1 / An Epiphany"
+      }
+     ]
+    },
+    {
+     "title": "Father's Sword",
+     "condition": "Determination ≥ 4",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Agree With Father",
+       "requires": "",
+       "outcome": "Willpower +5 / Robert +1"
+      },
+      {
+       "text": "Ask Father To Teach You The Basics",
+       "requires": "",
+       "outcome": "Determination +1 / Willpower -10 / The Fencing Lesson"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Adolescence (Year 1126)",
+   "events": [
+    {
+     "title": "The Boy Down The Street",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Come At Tommas And Give Him A Beating",
+       "requires": "",
+       "outcome": "Nobility +1 / Tommas + 1"
+      },
+      {
+       "text": "Say Your Brother Is To Blame",
+       "requires": "",
+       "outcome": "Ingenuity +1 / Tommas +1"
+      },
+      {
+       "text": "Solve The Matter Peacefully",
+       "requires": "",
+       "outcome": "Spirituality +1 / Tommas +1"
+      },
+      {
+       "text": "Listen To Your Brother First:",
+       "requires": "Nathan: Grateful",
+       "outcome": "Willpower +10 / Unity +1 / Tommas +1"
+      }
+     ]
+    },
+    {
+     "title": "Riders On The Road",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Shield Sophia From The Horses",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Nobility +1 / Ingenuity +1 / Spirituality +1 / Willpower -5 / Death + 1 / Sophia +1 / Sophia Saved"
+      },
+      {
+       "text": "Stay Where You Are",
+       "requires": "",
+       "outcome": "Sophia: Died Her First Death"
+      }
+     ]
+    },
+    {
+     "title": "Stephan's Arrival",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Insult Your Brother",
+       "requires": "",
+       "outcome": "Ingenuity +1 / Gloria +1 / Stephan -1 / Stephan: Bad Blood"
+      },
+      {
+       "text": "Make Small Talk Over Dinner",
+       "requires": "",
+       "outcome": "Nobility +1 / Gregor +1"
+      },
+      {
+       "text": "Join Gloria In Her Plight",
+       "requires": "",
+       "outcome": "Willpower +10 / Gloria +1"
+      }
+     ]
+    },
+    {
+     "title": "A Dropped Handkerchief",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Give The Handkerchief Back To Octavia",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Willpower -5 / Octavia: Remembers You / Matters Of The Heart"
+      },
+      {
+       "text": "Stash The Trophy",
+       "requires": "",
+       "outcome": "Willpower +5 / Tommas +1"
+      },
+      {
+       "text": "Keep The Handkerchief As A Memento",
+       "requires": "",
+       "outcome": "Willpower +10"
+      }
+     ]
+    },
+    {
+     "title": "A Storm Of Expectations",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Focus On Law And History",
+       "requires": "",
+       "outcome": "Nobility +1 / Robert +1"
+      },
+      {
+       "text": "Go Help Tommas",
+       "requires": "",
+       "outcome": "Ingenuity +1 / Tommas +1"
+      },
+      {
+       "text": "Study Theology",
+       "requires": "",
+       "outcome": "Spirituality +1 / Lydia +1"
+      },
+      {
+       "text": "Spend A Moment With Nathan",
+       "requires": "",
+       "outcome": "Willpower +10 / Nathan +1"
+      }
+     ]
+    },
+    {
+     "title": "Sons Of The Nobility",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Challenge Diederik To A Fight",
+       "requires": "",
+       "outcome": "Nobility +1 / Tommas +1"
+      },
+      {
+       "text": "Turn Him Over To The Teachers",
+       "requires": "",
+       "outcome": "Ingenuity +1 / Tommas +1"
+      },
+      {
+       "text": "Admonish The Noblemen's Sons",
+       "requires": "",
+       "outcome": "Spirituality +1 / Tommas +1"
+      },
+      {
+       "text": "Shake Diederik's Hand:",
+       "requires": "Tommas ≤ 1",
+       "outcome": "Reputation +1 / Robert +1 / Tommas -1"
+      }
+     ]
+    },
+    {
+     "title": "The Silver Tree",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Follow The Girl Into The Temple",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Willpower -5 / Jeanne +1 / Jeanne: Aquainted /  Matters Of The Heart"
+      },
+      {
+       "text": "Stay With The Red-Haired Pilgrim",
+       "requires": "",
+       "outcome": "Spirituality +1 / Jeanne -1"
+      },
+      {
+       "text": "Leave Them And Approach The Tree",
+       "requires": "",
+       "outcome": "Willpower +10"
+      },
+      {
+       "text": "Give In To The Epiphany:",
+       "requires": "An Epiphany",
+       "outcome": "Spirituality +1 / Jeanne: Aquainted /  Revelation Of The Tree"
+      }
+     ]
+    },
+    {
+     "title": "The Shadow Of The Past",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Accept Gloria As Your Sister",
+       "requires": "",
+       "outcome": "Gloria +1 / Lydia +1"
+      },
+      {
+       "text": "Distance Yourself From Gloria",
+       "requires": "Gloria ≤ 3",
+       "outcome": "Nobility +1 / Gloria -1 / Lydia -1"
+      },
+      {
+       "text": "Evade The Question",
+       "requires": "",
+       "outcome": "Willpower +5 / Lydia -1"
+      }
+     ]
+    },
+    {
+     "title": "The Nobleman's Lot",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Charge The Attackers",
+       "requires": "",
+       "outcome": "Stephan +2"
+      },
+      {
+       "text": "Follow Your Brother's Orders",
+       "requires": "Willpower ≥ 0 / Stephan ≠ Bad Blood",
+       "outcome": "Nobility +1 / Willpower -5 / Stephan +2"
+      },
+      {
+       "text": "Call The Guards",
+       "requires": "",
+       "outcome": "Ingenuity +1"
+      }
+     ]
+    },
+    {
+     "title": "Trial Of The Assailants",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Support Father",
+       "requires": "",
+       "outcome": "Reputation +1 / Unity -1 / Robert +1 / Gloria -1"
+      },
+      {
+       "text": "Lie To Father",
+       "requires": "",
+       "outcome": "Ingenuity +1 / Robert -2 / Gloria +1 / Gregor -1"
+      },
+      {
+       "text": "Convince Father To Change His Mind",
+       "requires": "Willpower ≥ 0 / Robert ≥ 2",
+       "outcome": "Willpower -5 / Nobility +1 / Spirituality +1 / Reputation -1 / Unity +1/ Gregor -1"
+      }
+     ]
+    },
+    {
+     "title": "Agony",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Run Away And Rescue Nathan And Gloria",
+       "requires": "",
+       "outcome": "Spirituality +1 / Ingenuity +1 / Wealth -1 / Gregor: True Death"
+      },
+      {
+       "text": "Stop Grandfather",
+       "requires": "Willpower ≥ 0 / Gregor ≤ 2",
+       "outcome": "Nobility +1 / Ingenuity +1 / Willpower -5 / Gregor -1 / Gregor: True Death"
+      },
+      {
+       "text": "Let It All Happen As Grandfather Wishes",
+       "requires": "",
+       "outcome": "Nobility +1 / Ingenuity +1 / Spirituality +2 / Deaths +1 / Wealth -1 / Lydia -1 / Gregor +1 / Gregor: True Death"
+      }
+     ]
+    },
+    {
+     "title": "Last Respects",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Give The Dagger Back",
+       "requires": "",
+       "outcome": "Willpower +5 / Robert -1 / Nathan +1"
+      },
+      {
+       "text": "Bleed",
+       "requires": "Nobleman's Sacrament",
+       "outcome": "Robert +1 / Blood Tide"
+      },
+      {
+       "text": "Ask For Grandfather's Blessing",
+       "requires": "Nobility ≥ 6 or Gregor ≥ 2",
+       "outcome": "Robert +1 / Stephan+1 /  Blood Tide"
+      }
+     ]
+    },
+    {
+     "title": "The Fugitive Girl",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Try To Stop Otton",
+       "requires": "Sophia ≠ Died Her First Death",
+       "outcome": "Sophia +1 / Sophia: Trusting / Matters Of Heart"
+      },
+      {
+       "text": "Bring Sophia Back To Otton",
+       "requires": "Sophia: Died Her First Death",
+       "outcome": "Otton +1 / Sophia -2 / Sophia: Merciless"
+      },
+      {
+       "text": "Help Sophia Flee",
+       "requires": "Ingenuity ≥ 4 / Willpower ≥ 0",
+       "outcome": "Willpower -5 / Sophia +1 / Sophia: Trusting / Matters Of The Heart"
+      },
+      {
+       "text": "Hide Alone",
+       "requires": "",
+       "outcome": "Willpower +5 / Sophia -1 / Sophia: Embittered"
+      }
+     ]
+    },
+    {
+     "title": "The Last Night",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Spend The Time With Father",
+       "requires": "Robert ≥ 4 or Robert: Grateful",
+       "outcome": "Nobility +2 / Robert +1"
+      },
+      {
+       "text": "Spend The Time With Mother",
+       "requires": "Lydia ≥ 4 or Lydia: Grateful",
+       "outcome": "Spirituality +2 / Lydia +1"
+      },
+      {
+       "text": "Spend The Time With Gloria",
+       "requires": "Gloria ≥ 4 or Gloria: Grateful",
+       "outcome": "Ingenuity+2 / Gloria+1"
+      },
+      {
+       "text": "Spend The Time With Nathan",
+       "requires": "",
+       "outcome": "Willpower +10 / Nathan +1"
+      }
+     ]
+    },
+    {
+     "title": "An Adult Question",
+     "condition": "Spirituality ≥ 4",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Dispel Nathan's Fears",
+       "requires": "",
+       "outcome": "Spirituality +1 / Nathan +1 / Nathan's Admonition"
+      },
+      {
+       "text": "Confirm Nathan's Fear",
+       "requires": "",
+       "outcome": "Ingenuity+1 / Nobility +1 / Nathan's Admonition"
+      }
+     ]
+    },
+    {
+     "title": "Forbidden Love",
+     "condition": "Nobility ≥ 4",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Reming Him What A Nobleman's Honor Means",
+       "requires": "",
+       "outcome": "Nobility +1 / Stephan +1 / Stephan's Disgrace"
+      },
+      {
+       "text": "Aid Stephan In His Cause",
+       "requires": "",
+       "outcome": "Spirituality +1 / Ingenuity +1 / Stephan's Disgrace"
+      }
+     ]
+    },
+    {
+     "title": "The Poets",
+     "condition": "Ingenuity ≥ 4",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Convince Gloria To Leave The Society",
+       "requires": "",
+       "outcome": "Nobility +1 / Spirituality +1 / Gloria's Secret"
+      },
+      {
+       "text": "Keep Gloria's Secret",
+       "requires": "",
+       "outcome": "Ingenuity +1 / Gloria +1 / Gloria's Secret"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Youth (Year 1134)",
+   "events": []
+  },
+  {
+   "group": "16 (Year 1134)",
+   "events": [
+    {
+     "title": "Arrival In The Capital",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Meet The Noble Youths",
+       "requires": "",
+       "outcome": "Diplomacy +1 / Manipulation +1 / Willpower -5"
+      },
+      {
+       "text": "Listen To Arkwright's Speech",
+       "requires": "",
+       "outcome": "Manipulation +1 / Eloquence +1 / Willpower - 5"
+      },
+      {
+       "text": "Visit The Great Temple Of The Twins",
+       "requires": "",
+       "outcome": "Theology +1 / Eloquence +1 / Willpower -5"
+      },
+      {
+       "text": "Run After The Students",
+       "requires": "",
+       "outcome": "Willpower +10"
+      }
+     ]
+    },
+    {
+     "title": "Luke's Sermon",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Listen To His Councel",
+       "requires": "",
+       "outcome": "Theology +1"
+      },
+      {
+       "text": "Debate Him",
+       "requires": "",
+       "outcome": "Eloquence +1"
+      },
+      {
+       "text": "Resist Him",
+       "requires": "",
+       "outcome": "Diplomacy +1"
+      }
+     ]
+    },
+    {
+     "title": "The City That Never Sleeps",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Go To The Dueling Club",
+       "requires": "",
+       "outcome": "Valor +1"
+      },
+      {
+       "text": "Go To The Secret Salon",
+       "requires": "",
+       "outcome": "Scheming +1"
+      },
+      {
+       "text": "Go To The Markian Society",
+       "requires": "",
+       "outcome": "Theology +1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "17 (Year 1135)",
+   "events": [
+    {
+     "title": "The Girl From Your Past",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Help Her",
+       "requires": "Sophia ≠ Merciless",
+       "outcome": "Valor +1 / Scheming +1 / Sophia +1"
+      },
+      {
+       "text": "Refuse",
+       "requires": "",
+       "outcome": "Valor +1 / Diplomacy +1 / Sophia -1"
+      },
+      {
+       "text": "Assuage Your Guilt",
+       "requires": "Willpower ≥ 0 / Sophia: Merciless",
+       "outcome": "Scheming +1 / Manipulation +1 / Willpower -5 / Sophia +1 / Sophia: Embittered"
+      }
+     ]
+    },
+    {
+     "title": "The Three Lots",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Break Through The Cordon Into The College",
+       "requires": "Diplomacy ≥ 10 or Valor ≥ 10",
+       "outcome": "Path Of The Nobleman"
+      },
+      {
+       "text": "Preach Your Revelation",
+       "requires": "Eloquence ≥ 10 or Theology ≥ 10",
+       "outcome": "Path Of The Priest"
+      },
+      {
+       "text": "Follow The Lotless",
+       "requires": "",
+       "outcome": "Path Of The Lotless"
+      }
+     ]
+    },
+    {
+     "title": "Bonds Of Friendship",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Swear An Oath Of Friendship",
+       "requires": "Path Of The Nobleman",
+       "outcome": "Tommas: Bound By Friendship / Bond Of Friendship"
+      },
+      {
+       "text": "Take The Ring",
+       "requires": "Tommas ≥ 3 / Path Of The Nobleman: False",
+       "outcome": "Tommas: Bound By Friendship / Bond Of Friendship"
+      },
+      {
+       "text": "Keep Things As They Are",
+       "requires": "",
+       "outcome": "Willpower +5 / Tommas: Remained Friends"
+      },
+      {
+       "text": "End The Friendship",
+       "requires": "Path Of The Nobleman: False",
+       "outcome": "Tommas -2 / Tommas: Severed All Ties"
+      }
+     ]
+    },
+    {
+     "title": "Searching For The Truth",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Reject Doubt And Strengthen Your Belief",
+       "requires": "Theology ≥ 10",
+       "outcome": "Theology +1 / Manipulation +1 / Shield Of The Old Faith"
+      },
+      {
+       "text": "Support Patriarch Luke",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Eloquence +1 / Diplomacy +1 / Willpower -5 / Shield Of The New Faith"
+      },
+      {
+       "text": "Seek Comfort In Prayer",
+       "requires": "",
+       "outcome": "Willpower +10"
+      }
+     ]
+    },
+    {
+     "title": "The Lotless",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Print Leaftlets",
+       "requires": "Manipulation ≥ 10",
+       "outcome": "Manipulation +1 / Diplomacy +1"
+      },
+      {
+       "text": "Condemn The Nobles",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Scheming +1 / Eloquence +1 / Willpower -5"
+      },
+      {
+       "text": "Recruit New Members",
+       "requires": "",
+       "outcome": "Willpower +10"
+      }
+     ]
+    },
+    {
+     "title": "The Ball",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Resolve The Quarrel",
+       "requires": "Diplomacy ≥ 10",
+       "outcome": "Manipulation +1 / Otton +1"
+      },
+      {
+       "text": "Draw Otton's Ire Upon Yourself",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Eloquence +1 / Willpower -5 / Tommas +1 / Otton -1"
+      },
+      {
+       "text": "Dance With The Mysterious Lady",
+       "requires": "",
+       "outcome": "Willpower +10 / Octavia: Remembers You / Octavia +1 / Tommas -1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "18 (Year 1136)",
+   "events": [
+    {
+     "title": "The Black Book",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Tell No One About Aylis",
+       "requires": "",
+       "outcome": "Scheming +1 / Jeanne: Steadfast in Faith / Aylis: Joined a Troupe / Aylis's Rescue"
+      },
+      {
+       "text": "Inform The Inquisition",
+       "requires": "",
+       "outcome": "Valor +1 / Jeanne: Zealous / Aylis: True Death"
+      },
+      {
+       "text": "Guide Your Friend To The Right Path",
+       "requires": "",
+       "outcome": "Manipulation +1 / Jeanne: Wavering / Aylis's Rescue"
+      }
+     ]
+    },
+    {
+     "title": "Matters Of Faith",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Join The Preachers",
+       "requires": "",
+       "outcome": "Theology +1 / Jeanne +1"
+      },
+      {
+       "text": "Search For The Divine Within Yourself",
+       "requires": "",
+       "outcome": "Willpower +10"
+      },
+      {
+       "text": "Infiltrate The Secret Society",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Diplomacy +1 / Scheming +1 / Willpower -5"
+      }
+     ]
+    },
+    {
+     "title": "Before The March",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Mobilize The Commoners",
+       "requires": "",
+       "outcome": "Manipulation +1"
+      },
+      {
+       "text": "Mobilize The Nobles And The Clergy",
+       "requires": "",
+       "outcome": "Diplomacy +1 / Theology +1"
+      },
+      {
+       "text": "Show Sophia Your Support",
+       "requires": "",
+       "outcome": "Willpower +5 / Sophia +1"
+      }
+     ]
+    },
+    {
+     "title": "March Of The Collars",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Begin The Assault",
+       "requires": "",
+       "outcome": "Valor +1 / Aylis: True Death"
+      },
+      {
+       "text": "Hold Sophia Back",
+       "requires": "Sophia: Trusting",
+       "outcome": "Eloquence +1 / Manipulation +1 / Aylis's Rescue"
+      },
+      {
+       "text": "Free The Captive Mages On Your Own",
+       "requires": "Scheming ≥ 10",
+       "outcome": "Scheming +1 / Sophia +1 / Aylis's Rescue"
+      }
+     ]
+    },
+    {
+     "title": "Sir El Croix's Lesson",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Rely On The Will Of The Twins",
+       "requires": "",
+       "outcome": "Valor +1 / Theology +1"
+      },
+      {
+       "text": "Press For A Decisive Assault",
+       "requires": "",
+       "outcome": "Valor +1 / Eloquence +1"
+      },
+      {
+       "text": "Lay Siege To The Palace",
+       "requires": "",
+       "outcome": "Valor +1 / Scheming +1"
+      }
+     ]
+    },
+    {
+     "title": "The First Case",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Find The Nobleman",
+       "requires": "",
+       "outcome": "Diplomacy +1 / Aylis's Rescue"
+      },
+      {
+       "text": "Interrogate Aylis",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Manipulation +1 / Theology +1 / Willpower -5 / Aylis: True Death"
+      },
+      {
+       "text": "Release Aylis",
+       "requires": "",
+       "outcome": "Willpower +10 / Aylis's Rescue"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "19 (Year 1137)",
+   "events": [
+    {
+     "title": "A Criminal Relationship",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Defend The Seminary Student",
+       "requires": "Theology ≥ 12",
+       "outcome": "Theology +1 / Valor +1 / Jeanne -1"
+      },
+      {
+       "text": "Demand Punishment",
+       "requires": "Eloquence ≥ 12",
+       "outcome": "Eloquence +1"
+      },
+      {
+       "text": "Flee The Courtroom",
+       "requires": "",
+       "outcome": "Willpower +10 / Jeanne +1"
+      }
+     ]
+    },
+    {
+     "title": "The Second Sacrament",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Have Mercy On The Child",
+       "requires": "",
+       "outcome": "Willpower +5 / Jeanne -1"
+      },
+      {
+       "text": "Strike With All Your Might",
+       "requires": "",
+       "outcome": "Willpower -5 / Jeanne +1"
+      }
+     ]
+    },
+    {
+     "title": "The Trap Springs",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Resist Sophia",
+       "requires": "Willpower ≥ 10",
+       "outcome": "Valor +1 / Eloquence +1 / Willpower -5 / Sophia -1"
+      },
+      {
+       "text": "Create A Distraction",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Scheming +1 / Willpower -5 / Sophia +1"
+      },
+      {
+       "text": "Surrender",
+       "requires": "",
+       "outcome": "Willpower +5"
+      }
+     ]
+    },
+    {
+     "title": "Recruitment",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Outwit Felipe",
+       "requires": "Manipulation ≥ 13",
+       "outcome": "The Lotless At Large"
+      },
+      {
+       "text": "Prove That You Will Be Useful",
+       "requires": "Scheming ≥ 13",
+       "outcome": "Felipe +2"
+      },
+      {
+       "text": "Betray The Remaining Lotless",
+       "requires": "",
+       "outcome": "Sophia -2 / Collapse Of The Lotless"
+      },
+      {
+       "text": "Reject The Secret Chancellery",
+       "requires": "",
+       "outcome": "Reputation -10 / Deaths +4 / True Death"
+      }
+     ]
+    },
+    {
+     "title": "A Great Feast For All",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Follow The Order",
+       "requires": "Diplomacy ≥ 12",
+       "outcome": "Diplomacy +1 / Power -1 / Order +1"
+      },
+      {
+       "text": "Demand Your Rights",
+       "requires": "Valor ≥ 12",
+       "outcome": "Valor +1"
+      },
+      {
+       "text": "Bide Your Time",
+       "requires": "",
+       "outcome": "Willpower +10 / Power -1"
+      }
+     ]
+    },
+    {
+     "title": "The Way Of The Sword",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Fight In Octavia's Name",
+       "requires": "Octavia: Remembers You",
+       "outcome": "Diplomacy +1 / Octavia: Intrigued / Octavia +1"
+      },
+      {
+       "text": "Address Octavia Publicly",
+       "requires": "Willpower ≥ 0 / Octavia ≠ Remembers You",
+       "outcome": "Diplomacy +1 / Willpower -5 / Octavia: Aquainted / Octavia +1"
+      },
+      {
+       "text": "Choose A Lady Of The Court To Fight For",
+       "requires": "",
+       "outcome": "Octavia: Ill-Disposed"
+      },
+      {
+       "text": "Dedicate Your Fight To Your Father",
+       "requires": "Valor ≥ 12 / The Fencing Lesson",
+       "outcome": "Valor +1 / Octavia: Intrigued / Victory In The Tournament"
+      }
+     ]
+    },
+    {
+     "title": "A Farewell To The Capital",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "",
+       "requires": "",
+       "outcome": "Path Sibling +1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Peace Time",
+   "events": []
+  },
+  {
+   "group": "20 (Year 1138)",
+   "events": [
+    {
+     "title": "Spiritual Guidance",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Support Jeanne",
+       "requires": "",
+       "outcome": "Jeanne +1"
+      },
+      {
+       "text": "Disagree With Jeanne",
+       "requires": "Shield Of The New Faith / Eloquence ≥ 12",
+       "outcome": "Theology +1 / Eloquence +1"
+      },
+      {
+       "text": "Evade The Question",
+       "requires": "",
+       "outcome": "Willpower +5"
+      }
+     ]
+    },
+    {
+     "title": "Homecoming",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Find Out How Mother Is Doing",
+       "requires": "",
+       "outcome": "Lydia +1"
+      },
+      {
+       "text": "Ask Gloria About Her Life",
+       "requires": "",
+       "outcome": "Stephan -1 / Gloria +1"
+      },
+      {
+       "text": "Chat With Nathan",
+       "requires": "",
+       "outcome": "Nathan +1"
+      },
+      {
+       "text": "Talk To Stephan",
+       "requires": "",
+       "outcome": "Stephan +1 / Gloria -1"
+      }
+     ]
+    },
+    {
+     "title": "The Sacred Conclave",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Put The Magrans At Ease",
+       "requires": "",
+       "outcome": "Tolerance +1 / Reputation +1 / Jeanne -1 / Lennart +1"
+      },
+      {
+       "text": "Accuse The Magrans",
+       "requires": "",
+       "outcome": "Inquisition +1 / Reputation +1 / Jeanne +1 / Ulrich +1"
+      }
+     ]
+    },
+    {
+     "title": "First Steps",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Hire Rebels",
+       "requires": "Manipulation ≥ 12",
+       "outcome": "Unrest +1"
+      },
+      {
+       "text": "Hire Spies, Moles And Crooks",
+       "requires": "Scheming ≥ 12",
+       "outcome": "Network +1"
+      },
+      {
+       "text": "Commit To The Printing Business",
+       "requires": "Wealth ≥ 1",
+       "outcome": "Willpower +5 / Wealth -1 / Profitable Business"
+      }
+     ]
+    },
+    {
+     "title": "First Day Of Service",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Prepare To Deal With Your First Cases",
+       "requires": "",
+       "outcome": "Willpower +5 / El Borne +1"
+      },
+      {
+       "text": "Get Aquainted With The Judges",
+       "requires": "",
+       "outcome": "Career +1 / Justice -1"
+      },
+      {
+       "text": "Ask Father For Advice",
+       "requires": "Robert ≥ 2",
+       "outcome": "Diplomacy +1 / Justice +1 / Career -1"
+      }
+     ]
+    },
+    {
+     "title": "A Reception At The Brante Residence",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Share News From The Capital",
+       "requires": "Diplomacy ≥ 10",
+       "outcome": "Diplomacy +1 / Manipulation +1 / Reputation +1 / Stephan +1"
+      },
+      {
+       "text": "Present Your Mother And Sister",
+       "requires": "",
+       "outcome": "Willpower +5 / Unity +1 / Reputation -1 / Gloria +1 / Stephan -1"
+      },
+      {
+       "text": "Purchase A Family Portrait",
+       "requires": "Manipulation ≥ 10 or Eloquence ≥ 12",
+       "outcome": "Manipulation +1 / Eloquence +1 / Wealth -1 / Reputation +1 / Unity +1"
+      },
+      {
+       "text": "Talk About Your Victory In The Tournament",
+       "requires": "Victory In The Tournament",
+       "outcome": "Diplomacy +1 / Eloquence +1 / Reputation +2 / Stephan +1"
+      }
+     ]
+    },
+    {
+     "title": "A Rock And A Hard Place",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Side With Stephan",
+       "requires": "",
+       "outcome": "Unity -1 / Gloria -1"
+      },
+      {
+       "text": "Defend Gloria",
+       "requires": "",
+       "outcome": "Reputation -1 / Stephan -1"
+      },
+      {
+       "text": "Send Gloria To Valona",
+       "requires": "Wealth ≥ 1 / (Manipulation ≥ 12 or Gloria ≥ 2)",
+       "outcome": "Eloquence +1 / Manipulation +1 / Wealth -1"
+      },
+      {
+       "text": "Appeal To Nathan",
+       "requires": "Theology ≥ 11 / Nathan ≥ 2",
+       "outcome": "Theology +1 / Unity +1 / Gloria -1 / Stephan -1 / Nathan +1"
+      }
+     ]
+    },
+    {
+     "title": "The Last Straw",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Agree With Felipe",
+       "requires": "",
+       "outcome": "Willpower +5 / Network +1 / Felipe +1 / Sophia -1"
+      },
+      {
+       "text": "Side With Sophia",
+       "requires": "Manipulation ≥ 12",
+       "outcome": "Felipe -1 / Sophia +1"
+      }
+     ]
+    },
+    {
+     "title": "Hearts On Fire",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Recruit The Poets",
+       "requires": "",
+       "outcome": "Eloquence +1 / Unrest +1 / Network -1"
+      },
+      {
+       "text": "Let Felipe Handle Them",
+       "requires": "",
+       "outcome": "Network +1 / Unrest -1 / Felipe +1 / Sophia -1"
+      },
+      {
+       "text": "Publish A Book Of Their Poetry",
+       "requires": "Manipulation ≥ 12 / Gloria ≥ 2 / Gloria's Secret",
+       "outcome": "Manipulation +1 / Unrest +1 / Network -1 / Wealth +2"
+      },
+      {
+       "text": "Report The Poets To Father",
+       "requires": "Scheming ≥ 12 / Felipe ≥ 0",
+       "outcome": "Unrest -1 / Network +1 / Reputation +2 / Sophia -1"
+      }
+     ]
+    },
+    {
+     "title": "The Land Dispute",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Protect Jung's Rights",
+       "requires": "",
+       "outcome": "Wealth Of Magra +1 / Order -1 / Career -1 / Justice +1"
+      },
+      {
+       "text": "Comply With El Avilla's Demands",
+       "requires": "",
+       "outcome": "Wealth Of Magra -1 / Order +1 / Career +1 / Justice -1"
+      },
+      {
+       "text": "Terminate The Rental Agreement",
+       "requires": "Willpower ≥ 0 / Diplomacy ≥ 12",
+       "outcome": "Willpower -5 / Wealth Of Magra -1 / Order +1 / Career +1 / Justice -1 / Reputation +1"
+      },
+      {
+       "text": "Ask Jung For A Bribe",
+       "requires": "Manipulation ≥ 10",
+       "outcome": "Manipulation +1 / Wealth Of Magra +1 / Order -1 / Career -1 / Justice +1 / Wealth +1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "21 (Year 1139)",
+   "events": [
+    {
+     "title": "A Gift for the Family",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Give The Jewels To Prominent Nobles As Gifts",
+       "requires": "Diplomacy ≥ 11 / Stephan ≥ 1",
+       "outcome": "Diplomacy +1 / Scheming +1 / Reputation +2"
+      },
+      {
+       "text": "Decline The Gift",
+       "requires": "Robert ≥ 3",
+       "outcome": "Valor +1 / Willpower +5 / Unity +2 / Milanidas -1"
+      },
+      {
+       "text": "Sell The Jewels",
+       "requires": "",
+       "outcome": "Wealth +2 / Unity -1"
+      }
+     ]
+    },
+    {
+     "title": "The La-Tari Society",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Arrest The Apostates",
+       "requires": "",
+       "outcome": "Theology +1 / Inquisition +1 / Tolerance -1"
+      },
+      {
+       "text": "Preach To Them",
+       "requires": "Eloquence ≥ 13 / Willpower ≥ 0",
+       "outcome": "Willpower -5 / Inquisition +1 / Tolerance -1 / Wealth +1 / Reputation +1 / Milanidas: Grateful"
+      },
+      {
+       "text": "Become A Part Of The Circle",
+       "requires": "Theology ≥ 13",
+       "outcome": "Willpower +5 / Tolerance +1 / Inquisition -1 / The La-Tari Ritual"
+      }
+     ]
+    },
+    {
+     "title": "Concerned Citizen",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Keep The Conversation A Secret",
+       "requires": "",
+       "outcome": "Wealth +1 / Egmont: Secret Plot"
+      },
+      {
+       "text": "Report The Conversation",
+       "requires": "",
+       "outcome": "Felipe +1 / Egmont: In Jeopardy"
+      }
+     ]
+    },
+    {
+     "title": "The Power Of The Law",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Side With El Borne",
+       "requires": "",
+       "outcome": "El Borne +2 / El Borne: The Promise"
+      },
+      {
+       "text": "Reject His Offer",
+       "requires": "",
+       "outcome": "Willpower +5 / El Borne -2"
+      }
+     ]
+    },
+    {
+     "title": "An Old Friend",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Have Dinner With Tommas",
+       "requires": "",
+       "outcome": "Willpower +10 / Reputation -1 / Tommas +1"
+      },
+      {
+       "text": "Walk Away",
+       "requires": "Path Of The Nobleman: False / Tommas ≠ Bound by Friendship",
+       "outcome": "Tommas -1"
+      }
+     ]
+    },
+    {
+     "title": "In The Shadow Of The Tree",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Help Father Lennart",
+       "requires": "",
+       "outcome": "Lennart +2 / Lennart: A Promise Is Made"
+      },
+      {
+       "text": "Refuse Father Lennart",
+       "requires": "",
+       "outcome": "Lennart -1"
+      },
+      {
+       "text": "Point Out The Flaws In The New Faith",
+       "requires": "Eloquence ≥ 12 / Shield Of The Old Faith",
+       "outcome": "Theology +1 / Eloquence +1"
+      }
+     ]
+    },
+    {
+     "title": "The Gunpowder Plot",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Make A Deal With Mayer Egmont",
+       "requires": "Manipulation ≥ 12 / Egmont: Secret Plot",
+       "outcome": "Diplomacy +1 / Stash Of Gunpowder"
+      },
+      {
+       "text": "Steal The Gunpowder",
+       "requires": "Willpower ≥ 0 / (Scheming ≥14 or Sophia ≥ 2)",
+       "outcome": "Valor +1 / Willpower -5 / Stash Of Gunpowder"
+      },
+      {
+       "text": "Report This To Felipe",
+       "requires": "Egmont: In Jeopardy",
+       "outcome": "Network +1 / Felipe +1"
+      },
+      {
+       "text": "Reject The Idea Of Gunpodwer Outright",
+       "requires": "",
+       "outcome": "Willpower +10"
+      }
+     ]
+    },
+    {
+     "title": "Personal Interests",
+     "condition": "Network ≥ 8",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Buy The Compromising Material Back",
+       "requires": "Diplomacy ≥ 10 / Wealth ≥ 2",
+       "outcome": "Wealth -2"
+      },
+      {
+       "text": "Lie Low",
+       "requires": "",
+       "outcome": "Willpower +5 / Unrest -2 / Network -2"
+      },
+      {
+       "text": "Track Down The Traitor",
+       "requires": "Scheming ≥ 16 / Willpower ≥ 0",
+       "outcome": "Willpower -5 / Network +2"
+      }
+     ]
+    },
+    {
+     "title": "The Newspaper Case",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Shut Down The Gazette",
+       "requires": "",
+       "outcome": "Career +1 / Justice -1 / El Verman +2"
+      },
+      {
+       "text": "Do Not Shut Down The Gazette",
+       "requires": "",
+       "outcome": "Career -1 / Justice +1"
+      },
+      {
+       "text": "Legitimize The Gazette",
+       "requires": "Diplomacy ≥ 13 / Willpower ≥ 0",
+       "outcome": "Willpower -5 / Career +1 / Justice +1 / Wealth -1 / Protector Of The People"
+      },
+      {
+       "text": "Seize The Printing Press",
+       "requires": "Scheming ≥ 10 / El Borne ≥ 2",
+       "outcome": "Scheming +1 / Career -1 / Justice -1 / Wealth +1 / Reputation +1 / El Borne -2"
+      }
+     ]
+    },
+    {
+     "title": "The Call Of The Ancestors",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Side With Father",
+       "requires": "",
+       "outcome": "Willpower -5 / Unity +1 / Stephan -1 / Robert +1"
+      },
+      {
+       "text": "Support Stephan's Superiority",
+       "requires": "",
+       "outcome": "Willpower +5 / Diplomacy +1 / Unity -1 / Stephan +2"
+      },
+      {
+       "text": "Step Forward Yourself",
+       "requires": "Path Of The Nobleman / Blood Tide",
+       "outcome": "Willpower -5 / Valor +3 / Stephan -2 / Robert -2 / Gregor +2"
+      }
+     ]
+    },
+    {
+     "title": "The Errors Of Youth",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Lure Gustav Into A Trap",
+       "requires": "Manipulation ≥ 14",
+       "outcome": "Manipulation +1 / Network +1 / Reputation -1"
+      },
+      {
+       "text": "Help Him Escape The City",
+       "requires": "Scheming ≥ 14",
+       "outcome": "Willpower +5 / Scheming +1 / Wealth -1"
+      },
+      {
+       "text": "Explain Yourself To Him",
+       "requires": "Willpower ≥ 0 / The Lotless At Large",
+       "outcome": "Eloquence +1 / Willpower -5"
+      },
+      {
+       "text": "Order Everyone To Lie Low",
+       "requires": "",
+       "outcome": "Network -1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "22 (Year 1140)",
+   "events": [
+    {
+     "title": "The Will And The Law",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Kill The Prisoner",
+       "requires": "",
+       "outcome": "Ulrich +2"
+      },
+      {
+       "text": "Support Jeanne",
+       "requires": "",
+       "outcome": "Valor +1 / Willpower -5 / Jeanne +1"
+      }
+     ]
+    },
+    {
+     "title": "The Printed Page",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Destroy The Print Run",
+       "requires": "",
+       "outcome": "Power -1 / Inquisition +1 / Tolerance -1 / Reputation +1 / Lennart -2 / Lennart: Penance"
+      },
+      {
+       "text": "Leave The Books Alone",
+       "requires": "",
+       "outcome": "Church +1 / Inquisition -1 / Tolerance +1 / Lennart +2 / Ulrich -1 / Jeanne -1"
+      },
+      {
+       "text": "Redact And Sensor The Books",
+       "requires": "Willpower ≥ 0 / Theology ≥ 15",
+       "outcome": "Willpower -5 / Order +1 / Inquisition +1 / Tolerance +1 / Lennart +1"
+      }
+     ]
+    },
+    {
+     "title": "Powder Keg",
+     "condition": "Unrest ≥ 5 / Stash Of Gunpowder",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Agree",
+       "requires": "",
+       "outcome": "Wealth Of Magra -1 / Order -1 / Unrest +2 / Sophia +1 / Sophia Has The Gunpowder"
+      },
+      {
+       "text": "Refuse",
+       "requires": "",
+       "outcome": "Sophia -1"
+      }
+     ]
+    },
+    {
+     "title": "Trust",
+     "condition": "Network ≥ 5 / Felipe ≥ 2",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Shake His Hand",
+       "requires": "Sophia ≠ Merciless",
+       "outcome": "Network +1 / Reputation +1 / Wealth +1 / Felipe: Saw Your Loyalty / Felipe +1"
+      },
+      {
+       "text": "Refuse",
+       "requires": "",
+       "outcome": "Felipe -1"
+      },
+      {
+       "text": "Agree",
+       "requires": "Sophia: Merciless",
+       "outcome": "Wealth +1 / Reputation +1 / Felipe: Saw Your Loyalty / Felipe +1"
+      }
+     ]
+    },
+    {
+     "title": "A Chat With The Magistrate",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Agree To The Deal",
+       "requires": "",
+       "outcome": "Reputation +1 / Verman +1 / Verman: Made A Deal"
+      },
+      {
+       "text": "Refuse Outright",
+       "requires": "Valor ≥ 10",
+       "outcome": "Valor +1 / Verman -2"
+      },
+      {
+       "text": "Evade The Question",
+       "requires": "Willpower ≥ 0 / Diplomacy ≥ 12 or Manipulation ≥ 16",
+       "outcome": "Diplomacy +1 / Willpower -5 / Reputation +1"
+      }
+     ]
+    },
+    {
+     "title": "The Vassal And The Lord",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Support El Borne",
+       "requires": "",
+       "outcome": "Octavia -1 / Tempest +1 / El Borne +1 / Milanidas -1"
+      },
+      {
+       "text": "Side With Octavia",
+       "requires": "",
+       "outcome": "Justice -1 / Octavia +1 / El Borne -1 / Milanidas +1"
+      },
+      {
+       "text": "Defuse The Situation",
+       "requires": "Diplomacy ≥ 13 or Victory In The Tournament / Octavia: Intrigued",
+       "outcome": "Willpower -5 / El Borne +1"
+      }
+     ]
+    },
+    {
+     "title": "Passion",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Submit To Her",
+       "requires": "",
+       "outcome": "Reputation +1 / Octavia +1 / Octavia: Your Patron"
+      },
+      {
+       "text": "Insist On Being Treated As Her Equal",
+       "requires": "Octavia ≥ 2 or Octavia: Intrigued",
+       "outcome": "Willpower -5 / Octavia +2 / Octavia: Grown Close"
+      },
+      {
+       "text": "Reject Her",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Willpower -5 / Octavia -1 / Octavia: Scorned"
+      }
+     ]
+    },
+    {
+     "title": "Brothers In Misery",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Use Your Authority",
+       "requires": "Path Of The Nobleman / Career ≥ 5",
+       "outcome": "Eloquence +1 / Justice -1 / Stephan +1 / Nathan +1 / El Borne -1"
+      },
+      {
+       "text": "Take Them To The Inquisition",
+       "requires": "Path Of The Priest / Inquisition ≥ 5",
+       "outcome": "Scheming +1 / Inquisition -1 / Stephan +1 / Nathan +1"
+      },
+      {
+       "text": "Blackmail The Judge",
+       "requires": "Path Of The Lotless / Network ≥ 5",
+       "outcome": "Diplomacy +1 / Network -1 / Stephan +1 / Nathan +1"
+      },
+      {
+       "text": "Ask Father For His Help",
+       "requires": "",
+       "outcome": "Manipulation +1 / Unity -1 / Reputation -1 / Stephan +1 / Nathan +1 / Robert -1"
+      },
+      {
+       "text": "Refuse To Help",
+       "requires": "",
+       "outcome": "Willpower +5 / Reputation -2 / Stephan +1 / Nathan +1"
+      }
+     ]
+    },
+    {
+     "title": "Freedom Of Speech",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Print The Book In Secret",
+       "requires": "Scheming ≥ 14",
+       "outcome": "Theology +1 / Unrest +1"
+      },
+      {
+       "text": "Report The Encounter To Felipe",
+       "requires": "",
+       "outcome": "Church -1 / Unrest -1 / Network +1 / Felipe +1"
+      },
+      {
+       "text": "Print And Disseminate The Book Yourself",
+       "requires": "Eloquence ≥ 12",
+       "outcome": "Theology +1 / Church +1 / Unrest +1 / Network +1 / Wealth -1 / Reputation -1"
+      },
+      {
+       "text": "Tell Your Father About The Encounter",
+       "requires": "Robert ≥ 2",
+       "outcome": "Unrest -1 / Network -1 / Reputation +1 / Unity +1"
+      }
+     ]
+    },
+    {
+     "title": "The Case Of Father Mark",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Judge Him",
+       "requires": "Justice ≥ 4",
+       "outcome": "Diplomacy +1 / Career -1 / Justice +1 / Jeanne -1"
+      },
+      {
+       "text": "Hand Him Over To The Inquisition",
+       "requires": "",
+       "outcome": "Theology +2 / Church -1 / Justice -1"
+      },
+      {
+       "text": "Set Him Free",
+       "requires": "Scheming ≥ 10",
+       "outcome": "Scheming +1 / Church +1 / Career -1 / Wealth +2"
+      },
+      {
+       "text": "Prosecute The Case With The Inquisition",
+       "requires": "Theology ≥ 10",
+       "outcome": "Theology +1 / Eloquence +1 / Church -1 / Career +1 / Justice -1"
+      }
+     ]
+    },
+    {
+     "title": "Payback",
+     "condition": "Octavia: Scorned",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Offer An Apology",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Willpower -10 / Career -1 / Reputation -1 / Octavia: -"
+      },
+      {
+       "text": "Defend Yourself",
+       "requires": "",
+       "outcome": "Career -2 / Reputation -2 / Octavia - / Octavia+2 / Stephan -1"
+      },
+      {
+       "text": "Seek Assistance From The Hostess",
+       "requires": "Diplomacy ≥ 16",
+       "outcome": "Reputation +1 / Octavia: -"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "23 (Year 1141)",
+   "events": [
+    {
+     "title": "The Principle Of The Will",
+     "condition": "Inquisition  ≥ 5 / Deaths ≤ 2",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Agree",
+       "requires": "",
+       "outcome": "Willpower +40 / Deaths +1 / Inquisition +2 / Ulrich +2 / Ulrich: Master"
+      },
+      {
+       "text": "Disagree",
+       "requires": "",
+       "outcome": "Willpower -10 / Theology +1 / Ulrich -1"
+      }
+     ]
+    },
+    {
+     "title": "Lethal Weapons",
+     "condition": "Tolerance ≥ 5",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Support Lenart",
+       "requires": "",
+       "outcome": "Power +1 / Church +1 / Tolerance +2 / Inquisition -1 / Ulrich -1 / Jeanne -1 / Right to Defend the Faith"
+      },
+      {
+       "text": "Dissuade Lennart",
+       "requires": "Willpower ≥ 0 / Diplomacy ≥ 10 / Lennart: A Promise Is Made",
+       "outcome": "Willpower -5 / Order +1 / Tolerance +1"
+      },
+      {
+       "text": "Refuse",
+       "requires": "",
+       "outcome": "Tolerance -1 / Lennart -1"
+      }
+     ]
+    },
+    {
+     "title": "Miracles and Wonders",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Subdue Ariadella",
+       "requires": "Inquisition ≥ 5",
+       "outcome": "Eloquence +1 / Inquisition +1 / Tolerance -1"
+      },
+      {
+       "text": "Proclaim this Occurence a Miracle Of The Twins",
+       "requires": "Theology ≥ 13",
+       "outcome": "Theology +1 / Manipulation +1 / Inquisition -1 / Tolerance +1 / Wealth of Magra +1"
+      },
+      {
+       "text": "Have Ariadella Executed",
+       "requires": "",
+       "outcome": "Diplomacy +1 / Reputation +1 / Tolerance -1"
+      },
+      {
+       "text": "Save Ariadella",
+       "requires": "Scheming ≥ 10 / Jeanne ≥ 2 / Aylis: Joined a Troupe",
+       "outcome": "Scheming +1 / Inquisition -1 / Wealth +2"
+      }
+     ]
+    },
+    {
+     "title": "Blast Wave",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Incite A Full Fledged Riot",
+       "requires": "",
+       "outcome": "Manipulation +1 / Scheming +1 / Deaths +1 / Order -1 / Unrest +1 / Network -1"
+      },
+      {
+       "text": "Recruit The Protesters To The Last Straw",
+       "requires": "Manipulation ≥ 15",
+       "outcome": "Manipulation +1 / Eloquence +1 / Wealth Of Magra +2 / Unrest -1 / Network +1"
+      },
+      {
+       "text": "Profit From The Havoc",
+       "requires": "Scheming ≥ 15",
+       "outcome": "Scheming +1 / Diplomacy +1 / Wealth Of Magra +1 / Network -1 / Wealth +2"
+      },
+      {
+       "text": "Alert El Verman",
+       "requires": "Verman ≥ 0",
+       "outcome": "Order +1 / Unrest -1 / Unity +1 / Reputation +1 / Stephan +1 / Verman +1"
+      }
+     ]
+    },
+    {
+     "title": "Friend Of The People",
+     "condition": "Justice ≥ 5 / El Verman ≠ Made A Deal",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Agree",
+       "requires": "El Verman ≠ Made A Deal",
+       "outcome": "Wealth Of Magra +2 / Justice +2 / Wealth +1 / Egmont: Made A Deal / Egmont +1"
+      },
+      {
+       "text": "Refuse",
+       "requires": "",
+       "outcome": "Egmont -2"
+      }
+     ]
+    },
+    {
+     "title": "A Friend In Need",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Agree To Be Tommas's Second",
+       "requires": "",
+       "outcome": "Tommas: In Danger / Tommas +1 / El Borne -1"
+      },
+      {
+       "text": "Stop The Duel From Taking Place",
+       "requires": "Manipulation ≥ 10 / Otton ≥ 0",
+       "outcome": "Tommas: In Hiding / Otton -1"
+      },
+      {
+       "text": "Decline Tommas's Request",
+       "requires": "Bond of Friendship: False",
+       "outcome": "Willpower +5 / Tommas: In Danger / Tommas -1"
+      }
+     ]
+    },
+    {
+     "title": "The Case Against Otton",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Let Tommas Roam Freely",
+       "requires": "",
+       "outcome": "Career +1 / Tommas: In Danger / Tommas -2"
+      },
+      {
+       "text": "Have Tommas Taken Into Custody",
+       "requires": "El Borne ≥ 0",
+       "outcome": "Scheming +1 / Reputation -1 / Tommas: In Hiding"
+      },
+      {
+       "text": "Send Tommas Out Of Anizotte",
+       "requires": "El Borne: The Promise",
+       "outcome": "Willpower -5 / Career -1 / Tommas: In Hiding"
+      },
+      {
+       "text": "Convince Tommas To Leave The Legion",
+       "requires": "Wealth ≥ 1 / Tommas: In Hiding",
+       "outcome": "Wealth -1 / Tommas: Rescued"
+      }
+     ]
+    },
+    {
+     "title": "Chutes And Ladders",
+     "condition": "Career ≤ 2",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Ask Your Father For Help",
+       "requires": "Willpower ≥ 0 / Robert ≥ 3",
+       "outcome": "Diplomacy +1 / Willpower -5 / Career +2 / Reputation -1"
+      },
+      {
+       "text": "Annul Your Decisions",
+       "requires": "",
+       "outcome": "Diplomacy +1 / Career +2 / Justice -3"
+      },
+      {
+       "text": "Continue The Fight",
+       "requires": "",
+       "outcome": "Valor +1 / Career -1"
+      },
+      {
+       "text": "Ask A Powerful Benefactor To Protect Your Honor",
+       "requires": "Diplomacy ≥ 15 / Tempest ≥ 0 / Patronage Of The Powerful / Branded By Dishonor: False",
+       "outcome": "Career +2"
+      }
+     ]
+    },
+    {
+     "title": "The Road To The Top",
+     "condition": "Career ≥ 5 / Branded By Dishonor: False",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Agree",
+       "requires": "Egmont ≠ Made A Deal",
+       "outcome": "Career +3 / Justice +1 / Verman: Made A Deal / El Borne: Betrayed / Patronage Of The Powerful"
+      },
+      {
+       "text": "Refuse And Protect Your Family",
+       "requires": "Robert ≥ 2",
+       "outcome": "Career -1"
+      },
+      {
+       "text": "Refuse And Protect Your Career",
+       "requires": "",
+       "outcome": "Reputation -1"
+      }
+     ]
+    },
+    {
+     "title": "The Festival Of The Silver Tree",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Let Gloria Read her Poems",
+       "requires": "",
+       "outcome": "Unity -1 / Gloria +1 / Stephan -1"
+      },
+      {
+       "text": "Appeal to Mother",
+       "requires": "Lydia ≥ 3",
+       "outcome": "Manipulation +1 / Unity +1 / Gloria -1"
+      },
+      {
+       "text": "Interrupt Gloria",
+       "requires": "",
+       "outcome": "Unity -1 / Gloria -1 / Stephan +1"
+      }
+     ]
+    },
+    {
+     "title": "A Rendezvous With Octavia",
+     "condition": "Octavia: Your Patron",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Share Your Revelation",
+       "requires": "Deaths ≥ 1 or Insight",
+       "outcome": "Eloquence +2 / Willpower +5"
+      },
+      {
+       "text": "Inquire About This Arcane Knowledge",
+       "requires": "Octavia: Grown Close",
+       "outcome": "Theology +2 / Willpower +5 / Octavia +1"
+      },
+      {
+       "text": "Lose Yourself In Pleasure",
+       "requires": "",
+       "outcome": "Willpower +10"
+      },
+      {
+       "text": "Ask For Assistance",
+       "requires": "Octavia: Your Patron",
+       "outcome": "Career +1 / Reputation +1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "24 (Year 1142)",
+   "events": [
+    {
+     "title": "The Trail of Sorcery",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Chase the Mage",
+       "requires": "Jeanne ≠ Wavering",
+       "outcome": "Inquisition +1 / Jeanne +1"
+      },
+      {
+       "text": "Heal Jeanne",
+       "requires": "Jeanne: Zealous",
+       "outcome": "Willpower +5 / Inquisition +1"
+      },
+      {
+       "text": "Chase the Mage",
+       "requires": "Jeanne: Wavering",
+       "outcome": "Willpower +5 / Inquisition +1"
+      },
+      {
+       "text": "Heal Jeanne",
+       "requires": "Jeanne: Wavering",
+       "outcome": "Inquisition +1 /Jeanne +1"
+      }
+     ]
+    },
+    {
+     "title": "Revelation",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Go to Father Lennart",
+       "requires": "",
+       "outcome": "Tolerance +1 / Reputation -1 / Lennart +1"
+      },
+      {
+       "text": "Go to Jeanne",
+       "requires": "",
+       "outcome": "Tolerance -1 / Reputation +1 / Jeanne +1"
+      },
+      {
+       "text": "Prolong the Revelation",
+       "requires": "Willpower ≥ 0 / The La-Tari Ritual",
+       "outcome": "Willpower -10 / Scheming +1 / Valor +1 / Diplomacy +1 / Manipulation +1"
+      },
+      {
+       "text": "Go Home",
+       "requires": "",
+       "outcome": "Eloquence +1 / Reputation -1 / Unity -1"
+      }
+     ]
+    },
+    {
+     "title": "An Invitation To Dinner",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Invite Sophia To The Dinner",
+       "requires": "Sophia: Trusting",
+       "outcome": "Willpower +5 / Power +1 / Wealth of Magra -1 / Unrest +1 / Unity +1 / Sophia +1"
+      },
+      {
+       "text": "Agree With Sophia",
+       "requires": "Sophia: Embittered",
+       "outcome": "Willpower +5 / Power +1 / Wealth of Magra -1 / Unrest +1 / Sophia +1"
+      },
+      {
+       "text": "Give In To Her Demands",
+       "requires": "Sophia: Merciless",
+       "outcome": "Power +1 / Wealth of Magra -1 / Unrest +1"
+      },
+      {
+       "text": "Refuse",
+       "requires": "",
+       "outcome": "Willpower +10 / Unrest -1 / Reputation +1 / Sophia -1"
+      }
+     ]
+    },
+    {
+     "title": "The Search For Evidence",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Ask Tommas To Help You Gather Evidence",
+       "requires": "Tommas ≥ 2 / Tommas ≠ In Hiding",
+       "outcome": "Tommas: In Danger / Tommas -1 / Evidence Against Otton"
+      },
+      {
+       "text": "Ask Overseer Gaius For Support",
+       "requires": "Reputation ≥ 7 or Tempest ≥ 2",
+       "outcome": "El Borne: Betrayed / Tempest +1 / Evidence Against Otton"
+      },
+      {
+       "text": "Search For Evidence On Your Own",
+       "requires": "",
+       "outcome": "Valor +1 / Scheming +1 / Deaths +1 / Evidence Against Otton"
+      },
+      {
+       "text": "Don't Waste Your Time",
+       "requires": "",
+       "outcome": "Willpower +5 / Career +1 / Robert +1"
+      }
+     ]
+    },
+    {
+     "title": "Stephan's Gambit",
+     "condition": "Stephan ≥ 1",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Agree",
+       "requires": "",
+       "outcome": "Stephan +1 / Stephan: Secret Plot"
+      },
+      {
+       "text": "Refuse",
+       "requires": "",
+       "outcome": "Willpower +5 / Unity +1 / Stephan -2"
+      }
+     ]
+    },
+    {
+     "title": "The Illegitimate Girl",
+     "condition": "Gloria ≥ 1 / Stephan ≠ Secret Plot",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Help Gloria",
+       "requires": "",
+       "outcome": "Gloria +1 / Gloria: Secret Plot"
+      },
+      {
+       "text": "Refuse Gloria",
+       "requires": "",
+       "outcome": "Willpower +5 / Unity +1 / Gloria -2"
+      }
+     ]
+    },
+    {
+     "title": "A Confession",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "It was an Illusion",
+       "requires": "",
+       "outcome": "Willpower +5 / Jeanne -1"
+      },
+      {
+       "text": "It Was A Mistake",
+       "requires": "Jeanne: Zealous",
+       "outcome": "Willpower +5"
+      },
+      {
+       "text": "It was a Miracle",
+       "requires": "Jeanne ≥ 2 / Jeanne: Wavering",
+       "outcome": "Willpower +5 / Jeanne +1 / Jeanne: Grown Close"
+      },
+      {
+       "text": "These Feelings are Real",
+       "requires": "Eloquence ≥ 14 / Jeanne  ≥ 3 / Jeanne: Steadfast in Faith",
+       "outcome": "Willpower +5 / Jeanne +1 / Jeanne: Grown Close"
+      },
+      {
+       "text": "This is a Test",
+       "requires": "Eloquence ≥ 15 / Jeanne ≥ 4 / Jeanne: Zealous",
+       "outcome": "Willpower -5 / Jeanne +1 / Jeanne: Grown Close"
+      }
+     ]
+    },
+    {
+     "title": "Getting Even",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Ask Her To Explain Herself",
+       "requires": "Scheming ≥ 14 / Sophia ≥ 3",
+       "outcome": "Network +1 / Otton: Dishonored / Sophia +1"
+      },
+      {
+       "text": "Agree",
+       "requires": "Scheming ≥ 16 / Willpower ≥ 0",
+       "outcome": "Willpower -5 / Network +1 / Otton: Dishonored / Sophia +1"
+      },
+      {
+       "text": "Refuse",
+       "requires": "",
+       "outcome": "Willpower +5 / Sophia -1"
+      },
+      {
+       "text": "Refuse And Have Sophia Shadowed",
+       "requires": "Scheming ≥ 12 / Willpower ≥ 0",
+       "outcome": "Scheming +1 / Willpower -5 / Network +1 / Sophia -1"
+      }
+     ]
+    },
+    {
+     "title": "An Audience With The Overseer",
+     "condition": "Career ≥ 8 / Branded By Dishonor: False",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Take The Envelope",
+       "requires": "",
+       "outcome": "Diplomacy +1 / Career +2 / El Borne: Betrayed / Tempest +2 / Patronage Of The Powerful"
+      },
+      {
+       "text": "Decline",
+       "requires": "Valor ≥ 13",
+       "outcome": "Valor +1 / Career -2 / Reputation -1 / Tempest -1"
+      },
+      {
+       "text": "Decline And Tell El Borne",
+       "requires": "Valor ≥ 11 / El Borne: The Promise",
+       "outcome": "Willpower -5 / Career -2 / Justice +1 / Reputation -1 / El Borne +1 / Tempest -2"
+      }
+     ]
+    },
+    {
+     "title": "A Realm Unknown",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Keep Their Secret",
+       "requires": "",
+       "outcome": "Theology +1 / Willpower +5 / Justice -1 / Octavia +1 / El Borne -1 / The La-Tari Ritual"
+      },
+      {
+       "text": "Ban The Circle Of La-Tari",
+       "requires": "",
+       "outcome": "Eloquence +1 / Theology +1 / Justice +1 / Reputation -1 / Octavia -2"
+      },
+      {
+       "text": "Convince Octavia To Disband The Circle",
+       "requires": "Manipulation ≥ 10 / Octavia ≥ 2",
+       "outcome": "Manipulation +1 / Justice +1 / Octavia -1"
+      },
+      {
+       "text": "Legitimize The Circle",
+       "requires": "Willpower ≥ 0 / Diplomacy ≥ 15 or Patronage Of The Powerful",
+       "outcome": "Diplomacy +1 / Theology +1 / Willpower -5 / Wealth +1 / Octavia +1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "25 (Year 1143)",
+   "events": [
+    {
+     "title": "The Patriarch's Sermon",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Kiss the Patriarch's Hand",
+       "requires": "",
+       "outcome": "Diplomacy +1 / Church -1 / Tolerance -2 / Inquisition -2 / Reputation +1"
+      },
+      {
+       "text": "Refuse",
+       "requires": "",
+       "outcome": "Eloquence +1 / Willpower -5 / Deaths +1 / Tolerance -1"
+      },
+      {
+       "text": "Accuse Cassius",
+       "requires": "Willpower ≥ 0 / Ulrich: Master",
+       "outcome": "Valor +1 / Willpower -10 / Inquisition +1 / Reputation +1"
+      },
+      {
+       "text": "Rely on the New Believers for Support",
+       "requires": "The New Faith, Persecuted: False / Lennart ≥ 2 / Lennart  ≠ Penance",
+       "outcome": "Church +1 / Tolerance +1 / Inquisition -1"
+      }
+     ]
+    },
+    {
+     "title": "The Hard Goodbye",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Wish Her A Safe Journey",
+       "requires": "",
+       "outcome": "Willpower +5 / Sophia -1"
+      },
+      {
+       "text": "Swear To Remain Loyal To Her No Matter What",
+       "requires": "Sophia ≥ 4 / Sophia: Embittered",
+       "outcome": "Willpower -5 / Sophia: Grown Close"
+      },
+      {
+       "text": "Promise To Protect Her",
+       "requires": "Sophia ≥ 4 / Sophia ≠ Merciless",
+       "outcome": "Willpower +5 / Sophia +1"
+      },
+      {
+       "text": "Tell Her How You Feel",
+       "requires": "Sophia ≥ 4 / Sophia: Merciless",
+       "outcome": "Willpower +5"
+      },
+      {
+       "text": "Confess Your Love For Her",
+       "requires": "Sophia ≥ 3 / Sophia: Trusting",
+       "outcome": "Willpower -5 / Sophia: Grown Close / Sophia +1"
+      }
+     ]
+    },
+    {
+     "title": "The Legion In The City",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Use Tommas",
+       "requires": "Bond Of Friendship",
+       "outcome": "Power +1 / Unrest +2 / Network -2 / Reputation -1 / Tommas: Exiled"
+      },
+      {
+       "text": "Convince Tommas To Cooperate",
+       "requires": "Tommas ≥ 2 / Tommas ≠ Severed All Ties",
+       "outcome": "Order +1 / Unrest -2 / Network +2 / Unity -1 / Deaths +1"
+      },
+      {
+       "text": "Incite The Common People To Riot Against Them",
+       "requires": "",
+       "outcome": "Eloquence +1 / Order -1 / Unrest +1 / Network -1"
+      },
+      {
+       "text": "Denounce The Rebellious Nobles To Tommas",
+       "requires": "Otton: Dishonored  / Tommas ≠ Severed All Ties",
+       "outcome": "Unrest -1 / Networlk +1 / Reputation +1"
+      }
+     ]
+    },
+    {
+     "title": "Usual Suspects",
+     "condition": "Felipe ≠ Saw Your Loyalty",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Prove Your Loyalty",
+       "requires": "Sophia Has The Gunpowder: False / Egmont ≠ Secret Plot / Verman ≠ Made A Deal",
+       "outcome": "Willpower +10 / Felipe +1"
+      },
+      {
+       "text": "Betray El Verman",
+       "requires": "Verman: Made A Deal",
+       "outcome": "Willpower -10 / Verman: Betrayed / Felipe -4"
+      },
+      {
+       "text": "Betray Egmont",
+       "requires": "Egmont: Secret Plot",
+       "outcome": "Willpower -10 / Unrest -1 / Egmont: In Jeopardy / Felipe -4"
+      },
+      {
+       "text": "Betray Sophia",
+       "requires": "Sophia Has The Gunpowder",
+       "outcome": "Willpower -10 / Unrest -1 / Sophia: Betrayed / Sophia -2 / Felipe -4"
+      },
+      {
+       "text": "Deny Your Guilt",
+       "requires": "Manipulation ≥ 16",
+       "outcome": "Willpower -10 / Felipe +1"
+      }
+     ]
+    },
+    {
+     "title": "An Urgent Deal",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Fulfil His Request",
+       "requires": "",
+       "outcome": "Theology +1 / Church +1 / Unrest +2 / Network -2 / Reputation -2"
+      },
+      {
+       "text": "Report Lennart To Felipe",
+       "requires": "",
+       "outcome": "Church -1 / Unrest -2 / Network +2 / Reputation -1"
+      },
+      {
+       "text": "Take Advantage Of His Sermon To Recuit People Into The Last Straw",
+       "requires": "Eloquence ≥ 12 / Willpower ≥ 0",
+       "outcome": "Eloquence +1 / Willpower -5 / Unrest +1 / Network +1 / Reputation -1"
+      },
+      {
+       "text": "Contact The Inquisition",
+       "requires": "Theology ≥ 12",
+       "outcome": "Theology +1 / Church -1 / Unrest -1 / Network -1 / Reputation +1"
+      }
+     ]
+    },
+    {
+     "title": "Threats And Promises",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Put Otton At Ease",
+       "requires": "Manipulation ≥ 12 or Otton ≥0",
+       "outcome": "Manipulation +1 / Otton +1"
+      },
+      {
+       "text": "Retaliate Against Otton",
+       "requires": "Valor ≥ 13 / Willpower ≥ 0",
+       "outcome": "Valor +1 / Deaths +1 / Willpower -5 / Reputation +1"
+      },
+      {
+       "text": "Seek Sir El Verman's Protection",
+       "requires": "El Verman ≥ 2 or Patronage Of The Powerful",
+       "outcome": "Diplomacy +1 / El Verman -1"
+      },
+      {
+       "text": "Give Otton Your Word",
+       "requires": "",
+       "outcome": "Career -1 / Justice -1"
+      }
+     ]
+    },
+    {
+     "title": "Invitation To The Ball",
+     "condition": "Career = 0 / Stephan ≠ Killed In A Duel",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Reject The Demands",
+       "requires": "",
+       "outcome": "Reputation -2 / Unity -2"
+      },
+      {
+       "text": "Accept The Conditions",
+       "requires": "",
+       "outcome": "Justice -3"
+      },
+      {
+       "text": "Challenge El Laberius To A Duel",
+       "requires": "Valor ≥ 18 / Court Of Honor Banned: False",
+       "outcome": "Valor +1 / Willpower -5 / Justice -1 / Wealth -1"
+      },
+      {
+       "text": "Expiate Your Errors With Blood",
+       "requires": "Valor ≤ 17 / Court Of Honor Banned: False",
+       "outcome": "Willpower -5 / Deaths +1 / Valor +1 / Justice -1"
+      }
+     ]
+    },
+    {
+     "title": "Nobleman's Honor",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Fine El Corvio",
+       "requires": "",
+       "outcome": "Diplomacy +1 / Willpower +5 / Career +1 / Justice -1"
+      },
+      {
+       "text": "Sentence El Corvio To Capital Punishment",
+       "requires": "Octavia ≥ 0 / Octavia: Your Patron or Octavia: Grown Close",
+       "outcome": "Career -1 / Justice +1 / Wealth +1"
+      },
+      {
+       "text": "Legalize Duels",
+       "requires": "Diplomacy ≥ 15 / Career ≥ 6 / El Borne ≠ The Promise",
+       "outcome": "Power -1 / Order -1 / Career +2 /Justice -3 / El Borne -2 / Patronage Of The Powerful"
+      },
+      {
+       "text": "Pronounce The Court Of Honor Illegal",
+       "requires": "Diplomacy ≥ 15 / Justice ≥ 6 / El Borne: The Promise",
+       "outcome": "Power +1 / Order +1 / Career -2 /Justice +2 / Reputation -1 / Court Of Honor Banned"
+      }
+     ]
+    },
+    {
+     "title": "The Hunt for Tommas",
+     "condition": "Tommas ≠ Severed all Ties / Tommas ≠ Exiled / Otton ≠ Dishonored",
+     "category": "Not Judge",
+     "options": [
+      {
+       "text": "Don't Get Involved",
+       "requires": "",
+       "outcome": "Willpower +5 / Tommas: True Death"
+      },
+      {
+       "text": "Hide Tommas in the Temple",
+       "requires": "Path Of The Priest",
+       "outcome": "Scheming +1 / Deaths +1 / Inquisition -1 / Tommas: Rescued"
+      },
+      {
+       "text": "Get Tommas out Of The City",
+       "requires": "Path Of The Lotless / Wealth ≥ 1",
+       "outcome": "Network -1 / Wealth -1 / Tommas: Rescued"
+      },
+      {
+       "text": "Turn to your Benefactor for Aid",
+       "requires": "Felipe  ≥  3 or Milanidas: Grateful",
+       "outcome": "Diplomacy +1 / Tommas: Rescued"
+      }
+     ]
+    },
+    {
+     "title": "The Hunt for Tommas",
+     "condition": "Tommas ≠ Rescued",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Don't Get Involved",
+       "requires": "",
+       "outcome": "Willpower +5 / Tommas: True Death"
+      },
+      {
+       "text": "Protect Tommas",
+       "requires": "Valor ≥ 12",
+       "outcome": "Valor +1 / Willpower -5 / Deaths +1 / Reputation -1 / Tommas: Rescued / Tommas +1"
+      },
+      {
+       "text": "Eliminate Otton's Henchmen",
+       "requires": "Tommas: In Hiding",
+       "outcome": "Career -2 / Tommas: Rescued / Tommas +1"
+      }
+     ]
+    },
+    {
+     "title": "El Ferro's List",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Protect The People On The List",
+       "requires": "Willpower ≥ 0 / Valor ≥ 12",
+       "outcome": "Valor +1 / Willpower -5 / Career -2 / Justice +2 / Reputation -1 / Unity +1"
+      },
+      {
+       "text": "Conduct An Investigation",
+       "requires": "Wealth ≥ 1 / Scheming ≥ 10",
+       "outcome": "Scheming +1 / Power -1 / Career +1 / Justice +1 / Wealth -1"
+      },
+      {
+       "text": "Obey The Secret Chancellery",
+       "requires": "",
+       "outcome": "Power -1 / Career +2 / Justice -2 / Unity -2 / Robert -1 / Patronage Of The Powerful"
+      },
+      {
+       "text": "Shelter The Suspects",
+       "requires": "Manipulation ≥ 10 / Gloria's Secret",
+       "outcome": "Justice -1 / Unity +1 / Wealth +1 / Gloria +1"
+      }
+     ]
+    },
+    {
+     "title": "The Rebel",
+     "condition": "Stephan: Secret Plot",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Influence Gloria Through Mother",
+       "requires": "",
+       "outcome": "Manipulation +1 / Unity -1 / Gloria: Betrothed / Gloria -1"
+      },
+      {
+       "text": "Infiltrate The Secret Society",
+       "requires": "Path Of The Lotless / Scheming ≥ 12",
+       "outcome": "Scheming +1 / Unrest -1 / Gloria: Betrothed / Gloria -2"
+      },
+      {
+       "text": "Persuade Gloria To Accept Her Fate",
+       "requires": "Gloria's Secret",
+       "outcome": "Theology +1 / Manipulation +1 / Gloria: Betrothed / Gloria +1"
+      },
+      {
+       "text": "Reject The Plan",
+       "requires": "",
+       "outcome": "Gloria: - / Stephan: - / Gloria +1 / Stephan -3"
+      }
+     ]
+    },
+    {
+     "title": "The Lesser Evil",
+     "condition": "Gloria: Secret Plot",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Put Pressure On Father",
+       "requires": "",
+       "outcome": "Unity -2 / Gloria: At Home / Stephan: Bad Blood / Stephan -2 / Gloria +2 / Robert -2"
+      },
+      {
+       "text": "Challenge Stephan To A Duel",
+       "requires": "Path Of The Nobleman / Court Of Honor Banned: False",
+       "outcome": "Stephan: Duel Impending / Gloria: At Home / Gloria +2"
+      },
+      {
+       "text": "Threaten Stephan",
+       "requires": "Stephan's Disgrace",
+       "outcome": "Unity -1 / Gloria: At Home / Stephan: Bad Blood / Stephan -3 / Gloria +2"
+      },
+      {
+       "text": "Say Nothing",
+       "requires": "",
+       "outcome": "Willpower +10 / Gloria: Betrothed / Gloria -3"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "26 (Year 1144)",
+   "events": [
+    {
+     "title": "A Sinners Confession",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Judge Nathan and Find him Guilty",
+       "requires": "",
+       "outcome": "Inquisition +2 / Tolerance -2 / Unity -1 / Reputation -2 / Nathan -2 / Evidence Against Cassius"
+      },
+      {
+       "text": "Set Nathan Free",
+       "requires": "Scheming ≥ 10",
+       "outcome": "Scheming +1 / Manipulation +1 / Inquisition -1 / Tolerance +1 / Reputation -1 / Nathan +1"
+      },
+      {
+       "text": "Guide Nathan to the Right Path",
+       "requires": "Nathan's Admonition / Theology ≥ 13 / Willpower ≥ 0",
+       "outcome": "Theology +1 / Manipulation +1 / Willpower -5 / Reputation -1 / Nathan +1 / Nathan: Recruited"
+      }
+     ]
+    },
+    {
+     "title": "The Renegade",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Make a Deal with Mark",
+       "requires": "Tolerance ≥ 4 / Eloquence ≥ 13",
+       "outcome": "Eloquence +1 / Inquisition -2 / Tolerance +2 / Evidence Against Cassius"
+      },
+      {
+       "text": "Lure Mark into a Trap",
+       "requires": "Nathan: Recruited",
+       "outcome": "Scheming +1 / Inquisition +2 / Tolerance -1 / Reputation -1 / Evidence Against Cassius / Mark: Imprisoned"
+      },
+      {
+       "text": "Capture Mark",
+       "requires": "",
+       "outcome": "Valor +1 / Deaths +1 / Inquisition +1 / Tolerance +1 / Evidence Against Cassius / Mark: Imprisoned"
+      },
+      {
+       "text": "Return to Jeanne",
+       "requires": "",
+       "outcome": "Inquisition -1 / Tolerance -1"
+      }
+     ]
+    },
+    {
+     "title": "The Sentence",
+     "condition": "Mark: Imprisoned",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Send for Jeanne and Father Lennart",
+       "requires": "Collapse Of The Inquisition: False / Lennart ≠ Penance / (Eloquence ≥ 15 or Jeanne ≥ 3)",
+       "outcome": "Willpower -5 / Order +1 / Inquisition +2 / Tolerance + 2 / Reputation +1 / Mark: True Death"
+      },
+      {
+       "text": "Send for Ulrich",
+       "requires": "Willpower ≥ 0 / Ulrich: Master",
+       "outcome": "Eloquence +1 / Willpower -10 / Inquisition +1 / Tolerance -1 / Reputation +1 / Mark: True Death"
+      },
+      {
+       "text": "Release Mark from Captivity",
+       "requires": "Theology ≥ 15 or Manipulation ≥ 10",
+       "outcome": "Theology +1 / Jeanne -1 / Mark: Freed"
+      },
+      {
+       "text": "Hand Mark Over",
+       "requires": "",
+       "outcome": "Inquisition -2 / Tolerance -2 / Mark: True Deat"
+      }
+     ]
+    },
+    {
+     "title": "Priviledge and Authority",
+     "condition": "Inquisition ≥ 8",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Let the Nobleman Go",
+       "requires": "Willpower ≥ 0 / Ulrich ≥ 2",
+       "outcome": "Willpower -5 / Diplomacy +1 / Inquisition -1 / Jeanne -1"
+      },
+      {
+       "text": "Support Ulrich",
+       "requires": "",
+       "outcome": "Church -1 / Tolerance -2 / Inquisition -1"
+      },
+      {
+       "text": "Fabricate Evidence",
+       "requires": "Scheming ≥ 12",
+       "outcome": "Scheming +1 / Inquisition +2"
+      }
+     ]
+    },
+    {
+     "title": "A Banner Year",
+     "condition": "Profitable Business",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "",
+       "requires": "",
+       "outcome": "Wealth +3"
+      }
+     ]
+    },
+    {
+     "title": "A Dangerous Haul",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Report This To Felipe",
+       "requires": "",
+       "outcome": "Power -1 / Unrest -1 / Network +1 / Egmont: Arrested / Felipe +1"
+      },
+      {
+       "text": "Inform El Verman About This",
+       "requires": "Verman: Made A Deal",
+       "outcome": "Network +1 / Egmont: In Danger / Verman +1"
+      },
+      {
+       "text": "Keep Egmont's Secrets Safe",
+       "requires": "Network ≤ 6 / Egmont: Secret Plot",
+       "outcome": "Unrest +1 / Network -1 / Egmont +2"
+      },
+      {
+       "text": "Seize The Guns For Yourself",
+       "requires": "Stash Of Gunpowder / Scheming ≥ 15",
+       "outcome": "Power -1 / Egmont: Arrested / Stockpile Of Arms"
+      }
+     ]
+    },
+    {
+     "title": "Justice For All",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Provoke The Arknian",
+       "requires": "Willpower ≥ 0 / Manipulation ≥ 10  or Eloquence ≥ 12",
+       "outcome": "Manipulation +1 / Willpower -5 / Deaths +1 / Career +2 / Justice +1 / Reputation +1"
+      },
+      {
+       "text": "Aquit Him And Clear Him Of All Charges",
+       "requires": "",
+       "outcome": "Career -2 / Justice -2 / Wealth +1 / El Borne -2 / Protector Of The People"
+      },
+      {
+       "text": "Turn To Octavia For Aid",
+       "requires": "Milanidas ≥ 0 / Octavia: Grown Close or Octavia: Your Patron",
+       "outcome": "Career +1 / Justice -1/ Tempest +1"
+      },
+      {
+       "text": "Find Him Guilty, As The Law Demands",
+       "requires": "El Borne: The Promise / Reputation ≥ 7 or Patronage Of The Powerful",
+       "outcome": "Diplomacy +1 / Order +1 / Career -1 / Justice +2"
+      }
+     ]
+    },
+    {
+     "title": "Deathbed",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Accept This Loss",
+       "requires": "",
+       "outcome": "Willpower -10 / Unity -2 / Robert -1 / Gloria -1 / Nathan -1 / Lydia: Succumbed To Illness"
+      },
+      {
+       "text": "Share Your Strength With Mother",
+       "requires": "Unity ≥ 8 / Willpower ≥ 0",
+       "outcome": "Willpower -10 / Unity +1 / Mother Recovers"
+      },
+      {
+       "text": "Unite The Family",
+       "requires": "Unity ≥ 7 / Stephan ≠ Secret Plot / Gloria ≠ At Home / Stephan ≠ Killed In A Duel / Gloria ≠ Betrothed",
+       "outcome": "Willpower +5 / Unity +1 / Mother Recovers / The Family At Peace / Gloria: At Home / Stephan: At Home"
+      }
+     ]
+    },
+    {
+     "title": "Gloria Of House Brante",
+     "condition": "Gloria: At Home / The Family At Peace",
+     "category": "Family",
+     "options": [
+      {
+       "text": "",
+       "requires": "",
+       "outcome": "Gloria +2 / Reputation -10"
+      }
+     ]
+    },
+    {
+     "title": "Transformation",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Demand That Octavia Be Returned To Her Family",
+       "requires": "",
+       "outcome": "Reputation +1 / Octavia: Betrayed By You / Milanidas +1 / Octavia -2"
+      },
+      {
+       "text": "Let The La-Tari Go",
+       "requires": "",
+       "outcome": "Reputation -1 / Octavia: Fled / Octavia +1"
+      },
+      {
+       "text": "Accept Your Beloved's Transformation",
+       "requires": "Octavia: Grown Close",
+       "outcome": "Willpower -10 / Reputation -1 / Octavia: Spiritual Bond"
+      },
+      {
+       "text": "Open Yourself To The Truth Of La-Tari",
+       "requires": "The La-Tari Ritual / Octavia ≥ 2",
+       "outcome": "Willpower +10 / Reputation -1 / Octavia: Spiritual Bond"
+      }
+     ]
+    },
+    {
+     "title": "A Broken Branch",
+     "condition": "Stephan: Bad Blood",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Sever All Ties With Stephan",
+       "requires": "",
+       "outcome": "Reputation -10 / Unity -1 / Heir [Player] Brante / Stephan: Severed All Ties / Gloria: At Home / Robert -1 / Gloria +1 / Gloria Brante"
+      },
+      {
+       "text": "Maintain Family Ties With Stephan",
+       "requires": "Unity ≥ 5 / Stephan ≥ 1",
+       "outcome": "Reputation -10 / Stephan: Never To Return / Gloria: At Home / Stephan +1 / Gloria Brante"
+      }
+     ]
+    },
+    {
+     "title": "To The Death",
+     "condition": "Stephan: Duel Impending",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Parry",
+       "requires": "Valor ≥ 18",
+       "outcome": "Willpower -10 / Valor +1 / Unity -2 / Heir [Player] Brante / Stephan: Killed In A Duel"
+      },
+      {
+       "text": "Resort To Dirty Tricks",
+       "requires": "Scheming ≥ 12 / Stephan ≥ 2",
+       "outcome": "Scheming +1 / Valor +1 / Willpower -5 / Unity -2 / Heir: [Player] Brante / Stephan: Killed In A Duel"
+      },
+      {
+       "text": "Perish",
+       "requires": "",
+       "outcome": "Deaths +4 / True Death"
+      },
+      {
+       "text": "Overcome Death",
+       "requires": "Valor ≥ 15 / Valor < 18 / Willpower ≥ 10",
+       "outcome": "Willpower -20 / Valor +1 / Unity -2 / Heir [Evan] Brante / Stephan: Killed In A Duel"
+      }
+     ]
+    },
+    {
+     "title": "The Gilded Cage",
+     "condition": "Gloria: Betrothed",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Sever All Ties With Gloria",
+       "requires": "",
+       "outcome": "Reputation +1 / Unity -1 / Gloria: Severed All Ties / Stephan: At Home / Stephan +2"
+      },
+      {
+       "text": "Maintain Family Ties With Gloria",
+       "requires": "Eloquence ≥ 12 or Stephan ≥ 3",
+       "outcome": "Eloquence +1 / Unity +1 / Reputation -1 / Stephan: At Home / Gloria: Married / Stephan -1"
+      },
+      {
+       "text": "Challenge Stephan To A Duel",
+       "requires": "Path Of The Nobleman / Court Of Honor Banned: False / Blood Tide",
+       "outcome": "Stephan: Duel Impending / Gloria: Married / Robert -2"
+      }
+     ]
+    },
+    {
+     "title": "Tommas's Wedding",
+     "condition": "Tommas ≠ Exiled / Tommas ≠ Severed All Ties / Tommas ≠ True Death",
+     "category": "General",
+     "options": [
+      {
+       "text": "Bear Witness To Their Wedding Vows",
+       "requires": "Tommas ≥ 4 or Bond Of Friendship",
+       "outcome": "Willpower +10 / Tommas's New Life"
+      },
+      {
+       "text": "Perform The Ceremony Yourself",
+       "requires": "Path Of The Priest",
+       "outcome": "Eloquence +1 / Theology +1 / Tommas's New Life"
+      },
+      {
+       "text": "Bid Tommas Farewell",
+       "requires": "",
+       "outcome": "Willpower +5 / Tommas's New Life"
+      }
+     ]
+    },
+    {
+     "title": "Repentance",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Do Not Stop Nathan",
+       "requires": "",
+       "outcome": "Theology +1 / Willpower -5 / Nathan +1 / Nathan: Hopeful"
+      },
+      {
+       "text": "Protect Your Brother",
+       "requires": "Theology ≥ 12 or Nathan ≥ 4",
+       "outcome": "Theology +1 / Manipulation +1 / Nathan -1 / Nathan Consumed By Despair"
+      },
+      {
+       "text": "Call Mother",
+       "requires": "Mother Recovers / Nathan ≥ 3",
+       "outcome": "Willpower +5 / Manipulation +1 / Eloquence +1 / Nathan: Hopeful"
+      }
+     ]
+    },
+    {
+     "title": "The Denunciation",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Tell the Truth",
+       "requires": "",
+       "outcome": "Inquisition -1 / Jeanne +1"
+      },
+      {
+       "text": "Deny Everything",
+       "requires": "Eloquence ≥ 16 or Jeanne: Grown Close",
+       "outcome": "Inquisition +1 / Jeanne -2"
+      },
+      {
+       "text": "Ask Archduke Milanidas For Help",
+       "requires": "Branded by Dishonour: False / Willpower ≥ 0 / Milanidas: Grateful",
+       "outcome": "Diplomacy +1 / Willpower -5 / Inquisition +1 / Reputation -1 / Jeanne -1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "27  (Year 1145)",
+   "events": [
+    {
+     "title": "A Family Matter",
+     "condition": "",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Become Nobles Of The Sword",
+       "requires": "Branded By Dishonor: False / The Family In Ruins: False / Reputation ≥ 8 / Wealth ≥ 5 / Unity ≥ 3",
+       "outcome": "Willpower +5 / Gregor +2 / Ennobled By The Sword"
+      },
+      {
+       "text": "Become Members Of The Overseer's Entourage",
+       "requires": "The Family In Ruins: False / Reputation ≥ 8 / Wealth ≥ 6 / Unity ≥ 3 / A Family Of Means or A Glorious Bloodline",
+       "outcome": "Willpower +5 / Gregor +3 / Ennobled By The Sword / Favored By The Overseer"
+      },
+      {
+       "text": "Preserve The Family",
+       "requires": "Unity ≥ 3",
+       "outcome": "Willpower +5 / Gregor -2"
+      },
+      {
+       "text": "Sever All Ties With The Family",
+       "requires": "Unity ≤ 2",
+       "outcome": "Willpower -5 / Unity -2 / Wealth -2 / Reputation -2  / The Family Falls Apart"
+      }
+     ]
+    },
+    {
+     "title": "A Noble Bloodline",
+     "condition": "Ennobled By The Sword",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Step Forward As The Family Heir",
+       "requires": "Heir = [Player] El Brante",
+       "outcome": "Valor +2 / Diplomacy +2 / Heir Of The Family"
+      },
+      {
+       "text": "Accompany Stephan As He Steps Forward",
+       "requires": "Heir = Stephan El Brante",
+       "outcome": "Diplomacy +1 / Willpower +10 / Stephan +2 / Robert +2"
+      }
+     ]
+    },
+    {
+     "title": "The Final Step",
+     "condition": "",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Denounce Cassius",
+       "requires": "Evidence Against Cassius / Collapse Of The Inquisition: False / Inquisition ≥ 7",
+       "outcome": ""
+      },
+      {
+       "text": "Overthrow Cassius",
+       "requires": "Evidence Against Cassius / New Faith, Persecuted: False / Tolerance ≥ 7 / Lennart ≠ Penance",
+       "outcome": ""
+      },
+      {
+       "text": "Wait For The Conclave",
+       "requires": "",
+       "outcome": ""
+      }
+     ]
+    },
+    {
+     "title": "The Greater Good",
+     "condition": "Unrest ≥ 9 / Sophia: Grown Close / Felipe ≠ Saw Your Loyalty",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Agree",
+       "requires": "",
+       "outcome": "Sophia: Secret Plot"
+      },
+      {
+       "text": "Try To Talk Her Out Of It",
+       "requires": "Manipulation ≥ 16 or Sophia ≥ 4",
+       "outcome": "Unrest -4 / Sophia -4"
+      }
+     ]
+    },
+    {
+     "title": "A Sleepless Night",
+     "condition": "",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Murder Felipe",
+       "requires": "Sophia: Secret Plot",
+       "outcome": "Wealth -1 / Felipe: True Death / Sophia: Lover"
+      },
+      {
+       "text": "Proceed With Felipe's Plan",
+       "requires": "Network ≥ 8 / Unrest ≥ 3 / Unrest ≤ 8 / Sophia ≠ Secret Plot",
+       "outcome": "Network +2 / Wealth -1 / Sophia -2"
+      },
+      {
+       "text": "Go Into Hiding",
+       "requires": "Sophia ≠ Secret Plot",
+       "outcome": "Willpower -10 / Unrest -3 / Network -3 / Felipe -2"
+      },
+      {
+       "text": "Ask Egmont To Hide You",
+       "requires": "Unrest ≥ 7 / Egmont: Secret Plot / Sophia ≠ Secret Plot",
+       "outcome": "Unrest +1 / Network -1 / Felipe -2"
+      },
+      {
+       "text": "Ask El Verman To Hide You",
+       "requires": "Network ≥ 7 / Egmont: In Danger / Verman: Made A Deal",
+       "outcome": "Unrest -1 / Network +1 / Felipe -2"
+      }
+     ]
+    },
+    {
+     "title": "Mutually Beneficient Collaboration",
+     "condition": "Network ≥ 8 / Felipe: Saw Your Loyalty",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "",
+       "requires": "",
+       "outcome": "Power -1 / Order +1"
+      }
+     ]
+    },
+    {
+     "title": "Clean Hands",
+     "condition": "Network ≥ 8 / Unrest ≥ 3 / Felipe: Saw You Loyalty / Sophia: Grown Close",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Keep Sophia's Secret",
+       "requires": "Manipulation ≥ 15 / Felipe ≥ 4",
+       "outcome": "Willpower -5 / Network -3 / Unrest +2 / Felipe: Betrayed"
+      },
+      {
+       "text": "Kill Sophia",
+       "requires": "Sophia: Grown Close",
+       "outcome": "Sophia: True Death"
+      }
+     ]
+    },
+    {
+     "title": "The Smell Of Gunpowder",
+     "condition": "Justice ≥ 8 / Egmont: Made A Deal",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Keep The Prisoners In Captivity",
+       "requires": "",
+       "outcome": "Power -1 / Justice -3 / Egmont: True Death / Egmont -4"
+      },
+      {
+       "text": "Help Them Escape",
+       "requires": "Scheming ≥ 10 / Willpower ≥ 0",
+       "outcome": "Willpower -10 / Deaths +1 / Career -2 / Wealth +1 / Egmont: Leading The Revolt / Egmont +2"
+      }
+     ]
+    },
+    {
+     "title": "Final Preparations",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Address The People With A Speech",
+       "requires": "Justice ≤ 8 / Eloquence ≥ 12 / Willpower ≥ 0",
+       "outcome": "Justice +1 / Willpower -10"
+      },
+      {
+       "text": "Start A Rumor Among The Aristocracy",
+       "requires": "Career ≤ 8 / Diplomacy ≥ 15 / Willpower ≥ 0",
+       "outcome": "Career +1 / Willpower -10"
+      },
+      {
+       "text": "Bide Your Time",
+       "requires": "",
+       "outcome": "Willpower +5"
+      }
+     ]
+    },
+    {
+     "title": "The Hour Has Come",
+     "condition": "",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Charge Otton With Crimes",
+       "requires": "Justice ≥ 7 / Justice < 10 / El Borne ≠ Betrayed / Evidence Against Otton",
+       "outcome": ""
+      },
+      {
+       "text": "Summon Otton To Trial",
+       "requires": "Justice ≥ 8 / Justice < 10 / El Borne ≠ Betrayed / Evidence Against Otton: False / Protector Of The People",
+       "outcome": ""
+      },
+      {
+       "text": "Bring Otton To The Court Of Honor",
+       "requires": "Career ≥ 7 / Career < 10 / El Borne: Betrayed / Evidence Against Otton / Court Of Honor Banned: False / Branded By Dishonor: False",
+       "outcome": ""
+      },
+      {
+       "text": "Call For Gaius Tempest's Aid",
+       "requires": "Career ≥ 8 / Career < 10 / El Borne: Betrayed / Evidence Against Otton: False / Court Of Honor Banned: False / Branded By Dishonor: False / Patronage Of The Powerful",
+       "outcome": ""
+      },
+      {
+       "text": "Burn The Case",
+       "requires": "",
+       "outcome": ""
+      }
+     ]
+    },
+    {
+     "title": "The Empty Chair",
+     "condition": "Career ≥ 7 / Verman: Made A Deal / The Family Falls Apart: False",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "",
+       "requires": "",
+       "outcome": "Power -1"
+      }
+     ]
+    },
+    {
+     "title": "Twilight Over Anizotte",
+     "condition": "Career ≥ 8 / Verman: Made A Deal / The Family Falls Apart: False",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Warn El Borne",
+       "requires": "Willpower ≥ 0",
+       "outcome": "Willpower -10 / Deaths +1 / Career -3"
+      },
+      {
+       "text": "Go Home",
+       "requires": "",
+       "outcome": "Justice -2 / Reputation +1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "Variable Year",
+   "events": [
+    {
+     "title": "A Sound Of Thunder",
+     "condition": "Network ≤ 2",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Beg For Forgiveness",
+       "requires": "",
+       "outcome": "Manipulation +1 / Willpower +10 / Deaths +1 / Network -1 / Felipe -1"
+      },
+      {
+       "text": "Promise Quick Results",
+       "requires": "Scheming ≥ 15 / Willpower ≥ 0",
+       "outcome": "Scheming +1 / Willpower -5 / Unrest -2 / Network +2"
+      },
+      {
+       "text": "Lie To Felipe",
+       "requires": "Manipulation ≥ 16 / Willpower ≥ 0",
+       "outcome": "Manipulation +1 / Willpower -10"
+      }
+     ]
+    },
+    {
+     "title": "Sound And Fury",
+     "condition": "Unrest ≥ 8",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Bribe The Leaders Of The Revolt",
+       "requires": "Wealth ≥ 2 / Manipulation ≥ 15",
+       "outcome": "Manipulation +1 / Unrest -2 / Wealth -2"
+      },
+      {
+       "text": "Threaten The Lesser Quorum",
+       "requires": "Network ≥ 2 / Diplomacy ≥ 10",
+       "outcome": "Unrest -2 / Network -1"
+      },
+      {
+       "text": "Take Control Of The Disturbances",
+       "requires": "",
+       "outcome": "Scheming +1 / Order -1 / Wealth of Magra +1 / Unrest +2 / Network -1 / Wealth -1"
+      }
+     ]
+    },
+    {
+     "title": "Debacle In The Shop",
+     "condition": "Justice ≥ 8",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Acquit The Steiners",
+       "requires": "Eloquence ≥ 10 or Diplomacy ≥ 16",
+       "outcome": "Eloquence +1 / Career -1 / Justice +2"
+      },
+      {
+       "text": "Grant The Right Of Self-Defence",
+       "requires": "Patronage Of The Powerful",
+       "outcome": "Diplomacy +1 / Power +1 / Justice +2 / Tempest -1 / Protector Of The People"
+      },
+      {
+       "text": "Punish The Steiners",
+       "requires": "",
+       "outcome": "Diplomacy +1 / Willpower +5 / Justice -2"
+      }
+     ]
+    },
+    {
+     "title": "The New Sacrament",
+     "condition": "Tolerance ≥ 8",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Appeal To The Overseer",
+       "requires": "Diplomacy ≥ 12 / Reputation ≥ 7 / Breanded By Dishonour: False",
+       "outcome": "Inquisition -1 / Tolerance -1 / Reputation -1"
+      },
+      {
+       "text": "Follow The Overseer's Orders",
+       "requires": "",
+       "outcome": "Church -1 / Power -1 / Inquisition -2 / Tolerance -2"
+      },
+      {
+       "text": "Defend The New Believers",
+       "requires": "Eloquence ≥ 15 / Willpower ≥ 0",
+       "outcome": "Eloquence +1 / Willpower -5 / Church +1 / Tolerance +2"
+      }
+     ]
+    },
+    {
+     "title": "A Moment Of Respite",
+     "condition": "Unity = 10",
+     "category": "Family",
+     "options": [
+      {
+       "text": "",
+       "requires": "",
+       "outcome": "All Family +1 / Willpower +10"
+      }
+     ]
+    },
+    {
+     "title": "A Glorious Bloodline",
+     "condition": "Reputation = 10 / Branded By Dishonor: False",
+     "category": "Family",
+     "options": [
+      {
+       "text": "",
+       "requires": "",
+       "outcome": "Diplomacy +1 / Valor +1"
+      }
+     ]
+    },
+    {
+     "title": "The Mark Of Dishonor",
+     "condition": "Reputation = 0 / The Family Falls Apart: False",
+     "category": "Family",
+     "options": [
+      {
+       "text": "",
+       "requires": "",
+       "outcome": "Robert -1 / Wealth -1 / Unity -1"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "group": "The Revolt (Year 1146)",
+   "events": [
+    {
+     "title": "The Family's Fate",
+     "condition": "The Family Falls Apart: False",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Agree With Father And Protect Your Home",
+       "requires": "",
+       "outcome": "Willpower +5 / The Family Is In The City"
+      },
+      {
+       "text": "The Brantes Will Flee The City",
+       "requires": "Unity ≥ 6 or Robert ≥ 2",
+       "outcome": "Willpower -5 / Robert: Fled"
+      },
+      {
+       "text": "The Brantes Will Oppose The Revolt",
+       "requires": "The Rebel: False / Reputation ≥ 5 / Robert ≥ 2 / Stephan: At Home",
+       "outcome": "Nobles +1 / Robert: Defender Of The Empire / The Defender Of The Empire / The Family Is In The City"
+      },
+      {
+       "text": "The Brantes Will Side With The Revolt",
+       "requires": "The Defender Of The Empire: False / Unity ≥ 5 / Robert ≥ 2 / Gloria: At Home / Stephan ≠ At Home",
+       "outcome": "Common Folk +1 / Robert: Rebel / The Rebel / The Family Is In The City"
+      }
+     ]
+    },
+    {
+     "title": "By Their Will",
+     "condition": "The Family Falls Apart: False",
+     "category": "Family",
+     "options": [
+      {
+       "text": "He Should Ask The Elder",
+       "requires": "Nathan: Hopeful / Nathan's Admonition or Revelation Of The Tree",
+       "outcome": "Theology +1 / Eloquence +1 / Nathan: Prophet"
+      },
+      {
+       "text": "The Revolt Is A Challenge Against The Gods",
+       "requires": "",
+       "outcome": "Theology +1 / Nathan: Consumed by Despair"
+      },
+      {
+       "text": "The Revolt Is A Threat To Their Design",
+       "requires": "",
+       "outcome": "Eloquence +1 / Nathan: Consumed By Despair"
+      },
+      {
+       "text": "The Revolt Is A Part Of Their Design",
+       "requires": "Nathan's Admonition / Theology ≥ 12 / Nathan ≥ 3",
+       "outcome": "Eloquence +1 / Nathan: Hopeful"
+      },
+      {
+       "text": "Walk Away Without Giving Nathan An Answer",
+       "requires": "",
+       "outcome": "Willpower +5"
+      }
+     ]
+    },
+    {
+     "title": "Escape From Anizotte",
+     "condition": "Robert: Fled",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Flee With Your Family, Leaving Everything Behind",
+       "requires": "The Rebel: False / The Defender Of The Empire: False / Wealth ≥ 5 / Manipulation ≥ 12",
+       "outcome": "Wealth -5 / The Family Has Fled / Escape From The City / Dark Times"
+      },
+      {
+       "text": "Bribe The Guards",
+       "requires": "Wealth ≥ 5 / Manipulation ≥ 12",
+       "outcome": "Wealth -5 / The Family Has Fled"
+      },
+      {
+       "text": "Order Them To Let Your Family Through",
+       "requires": "Sophia: Ally or Sophia: Lover",
+       "outcome": "Common Folk -1 / The Family Has Fled"
+      },
+      {
+       "text": "Attack The Guards",
+       "requires": "Troops ≥ 1",
+       "outcome": "The Revolt +1 / Common Folk -1 / The Family Has Fled"
+      },
+      {
+       "text": "Turn The Carriage Around",
+       "requires": "",
+       "outcome": "Willpower -5 / Robert: At Home / The Family Is In The City"
+      }
+     ]
+    },
+    {
+     "title": "Mustering The Forces",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Arm The New Believers",
+       "requires": "Path Of The Priest / The Defender Of The Empire: False / Eloquence ≥ 16",
+       "outcome": "The Revolt +1 / Troops +1 / Common Folk +1 / The Rebel"
+      },
+      {
+       "text": "Incite A Riot Among The Legion Troops",
+       "requires": "Path Of The Nobleman / The Defender Of The Empire: False / Tommas's New Life / Valor ≥ 14",
+       "outcome": "The Revolt +1 / Troops +1 / The Rebel"
+      },
+      {
+       "text": "Assemble A Squad Of Loyal Rebels",
+       "requires": "Path Of The Lotless / The Defender Of The Empire: False / Scheming ≥ 16",
+       "outcome": "The Revolt +1 / Troops +1 / The Rebel"
+      },
+      {
+       "text": "Support The Old Believer Priests",
+       "requires": "Path Of The Priest / Torch Of The New Faith: False / The Rebel: False / Theology ≥ 16",
+       "outcome": "Clergy +1 / The Defender Of The Empire"
+      },
+      {
+       "text": "Unite The Nobles",
+       "requires": "Path Of The Nobleman / Ennobled Of The Sword / The Rebel: False / Diplomacy ≥ 14",
+       "outcome": "Nobles +1 / Troops +1 / The Defender Of The Empire"
+      }
+     ]
+    },
+    {
+     "title": "The Order Divided",
+     "condition": "Path Of The Priest",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Convince Her to Spare the Inquisitors",
+       "requires": "Eloquence ≥ 20 / Jeanne: Grown Close / The Defender Of The Empire: False / Cassius Faces the Tribunal: False",
+       "outcome": "Willpower -5 / Church +1 / The Revolt +1 / Clergy +1 / Common Folk +1 / Jeanne +1 / The Rebel"
+      },
+      {
+       "text": "Free The Captive Inquisitors By Force",
+       "requires": "Troops ≥ 1 / The Defender Of The Empire: False / (Torch Of The New Faith or Cassius Overthrown)",
+       "outcome": "Church +1 / The Revolt +2 / Troops -1/ Clergy +1 / Common Folk +1 / Jeanne -2 / The Rebel"
+      },
+      {
+       "text": "Seize Control Of The Inquisition",
+       "requires": "Cassius Overthrown: False / The Rebel: False",
+       "outcome": "Church -1 / The Revolt -1 / Troops +1 / Clergy -1 / Jeanne: Doomed for her Sin / The Defender Of The Empire"
+      },
+      {
+       "text": "Stop Jeanne",
+       "requires": "Theology ≥ 18 / Jeanne ≥ 4 / Jeanne: Grown Close / Cassius Faces the Tribunal / The Rebel: False",
+       "outcome": "Willpower -5 / Church -1 / Troops +1 / Clergy +1 / Jeanne: Righteous / The Defender Of The Empire"
+      },
+      {
+       "text": "Do Not Get Involved",
+       "requires": "Cassius Overthrown: False / The Rebel: False",
+       "outcome": "Willpower +5 / The Revolt +1 / Jeanne: Doomed for her Sin"
+      }
+     ]
+    },
+    {
+     "title": "A Cornered Beast",
+     "condition": "Path Of The Lotless",
+     "category": "Publisher",
+     "options": [
+      {
+       "text": "Rush To Sophia's Side",
+       "requires": "Troops ≥ 1 / (Sophia: Lover or Sophia: Ally)",
+       "outcome": "Willpower +5 / The Revolt +2 / Troops +1 / Sophia: Leading The Revolt"
+      },
+      {
+       "text": "Get Rid Of Sophia",
+       "requires": "Scheming = 20 / Troops ≥ 1 / (Sophia: Lover or Sophia: Ally)",
+       "outcome": "Troops +1 / Common Folk -1 / Sophia: Captive / Otton +2"
+      },
+      {
+       "text": "Stop Sophia",
+       "requires": "Manipulation = 20 / Troops ≥ 1 / Sophia: Lover",
+       "outcome": "Willpower -5 / Troops +1 / The Revolt -1 / Sophia: Hopeful"
+      },
+      {
+       "text": "Order A Retreat",
+       "requires": "Sophia ≠ Lover",
+       "outcome": "Willpower +5 / The Revolt +1 / Willpower +5"
+      },
+      {
+       "text": "Capture Sophia And Have Her Executed",
+       "requires": "Valor ≥ 14 or Scheming ≥20 / Troops ≥ 1 / Sophia ≠ Lover",
+       "outcome": "Willpower -5 / Power -1 / The Revolt -4 / Troops -1 / Sophia: Executed"
+      }
+     ]
+    },
+    {
+     "title": "A Fading Light",
+     "condition": "Path Of The Nobleman",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Hand Her Over To The Inquisition",
+       "requires": "The Rebel: False / Octavia ≠ Spiritual Bond",
+       "outcome": "Clergy +1 / Octavia: Captive"
+      },
+      {
+       "text": "Get her Out Of The City",
+       "requires": "Diplomacy ≥ 16 / Otton ≥ 0 / The Rebel: False",
+       "outcome": "Willpower -5 / Nobles +1 / Octavia: Brought Back / Otton +2"
+      },
+      {
+       "text": "Share A Final Moment With Her Before She Leaves This World",
+       "requires": "Theology ≥ 14 / The La-Tari Ritual / Octavia: Spiritual Bond",
+       "outcome": "Octavia: Left A Trace"
+      },
+      {
+       "text": "Part Ways With Her",
+       "requires": "",
+       "outcome": "Octavia: Escaped The World"
+      }
+     ]
+    },
+    {
+     "title": "Sir El Borne's Choice",
+     "condition": "Path Of The Nobleman",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Await El Borne's Decision",
+       "requires": "",
+       "outcome": "The Revolt +1 / Willpower +5"
+      },
+      {
+       "text": "Convince El Borne To Side With The Rebellion",
+       "requires": "Valor ≥ 18 / Common Folk ≥ 1 / El Borne ≥ 2 / The Defender Of The Empire: False",
+       "outcome": "The Revolt +1 / Troops +1 / Common Folk +1 / Nobles -1 / El Borne: Rebel / The Rebel"
+      },
+      {
+       "text": "Support El Borne's Plan",
+       "requires": "El Borne ≥ 2 / Nobles ≥ 1 or Reputation ≥ 7",
+       "outcome": "The Revolt -1 / Nobles -1 / Common Folk +1"
+      },
+      {
+       "text": "Condemn El Borne",
+       "requires": "Diplomacy ≥ 18 / The Rebel: False / Branded By Dishonor: False",
+       "outcome": "Common Folk -1 / El Borne: The Defender Of The Empire / The Defender Of The Empire"
+      }
+     ]
+    },
+    {
+     "title": "The Perfecture Under Siege",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Rouse The Mob And Encourage Them To Defend The Prefect",
+       "requires": "Willpower ≥ 0 / Common Folk ≥ 2 / El Borne ≠ Defender Of The Empire  / The Defender Of The Empire: False",
+       "outcome": "Willpower -5 / Power +1 / Order -1 / The Revolt +2 / Troops +1 / El Borne: The Rebel / The Rebel"
+      },
+      {
+       "text": "Get Otton's Army To Abandon Him",
+       "requires": "Otton Is Sentenced / The Defender Of The Empire: False / Nobles ≥ 1 / Diplomacy ≥ 16",
+       "outcome": "Power +2 / Order +1 / The Revolt +1 / Troops +1 / Nobles +1 / Common Folk +1 / Otton: True Death / El Borne: Rebel / The Rebel"
+      },
+      {
+       "text": "Challenge Otton To A Duel",
+       "requires": "Nobles ≥ 1 / El Borne ≠ Rebel / Otton Faces The Court of Honor / The Rebel: False",
+       "outcome": "Otton: Duel Impending / The Defender Of The Empire"
+      },
+      {
+       "text": "Overthrow El Borne",
+       "requires": "Willpower ≥ 0 / Troops ≥ 1 / Otton Faces The Court of Honor: False / The Rebel: False",
+       "outcome": "Order -1 / Power -1 / The Revolt +1 / Nobles +1 / El Borne: True Death / Otton +2 / The Defender Of The Empire"
+      },
+      {
+       "text": "Get Otton And El Borne To Reconcile",
+       "requires": "Diplomacy = 20 / Reputation ≥ 6 / Otton ≥ 0 / El Borne ≠ Rebel / The Rebel: False / Night Of The Serpents or Broken Chains",
+       "outcome": "Willpower -5 / Power -2 / Order +1 / The Revolt -1 / Nobles +1 / Common Folk -1 / El Borne: Defender Of The Empire / Otton: Reconciled / The Defender Of The Empire"
+      }
+     ]
+    },
+    {
+     "title": "The Duel With Otton",
+     "condition": "Otton: Duel Impending",
+     "category": "Judge",
+     "options": [
+      {
+       "text": "Defeat Otton",
+       "requires": "Valor = 20",
+       "outcome": "Willpower -5 / Power -1 / The Revolt -1 / Troops +1 / Nobles +1 / Common Folk +1 / Otton: Killed In A Duel / El Borne: Defender Of The Empire"
+      },
+      {
+       "text": "Call Upon Your Forebear",
+       "requires": "Valor ≥ 16 / Gregor ≥ 2 / Ennobled By The Sword",
+       "outcome": "Power -1 / The Revolt -1 / Troops +1 / Nobles +1 / Common Folk +1 / Otton: Killed In A Duel / El Borne: Defender Of The Empire"
+      },
+      {
+       "text": "Die With Honor",
+       "requires": "",
+       "outcome": "Deaths +4 / True Death"
+      },
+      {
+       "text": "Overcome Death",
+       "requires": "Valor ≥ 16 / Valor ≤ 19 / Willpower ≥ 10",
+       "outcome": "Willpower -20 / Power -1 / The Revolt -1 / Troops +1 / Nobles +1 / Common Folk +1 / Otton: Killed In A Duel / El Borne: Defender Of The Empire"
+      }
+     ]
+    },
+    {
+     "title": "The March Of The New Faith",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Lead The Procession To The Temple",
+       "requires": "Eloquence ≥ 16 / Clergy ≥ 2 / Common Folk ≥ 2 / The Defender Of The Empire: False / Cassius Overthrown or Torch Of The New Faith",
+       "outcome": "Church +1 / Troops +1 / Common Folk +1 / Nobles +1 / Lennart: Patriarch /Jeanne: Defeated / The Rebel"
+      },
+      {
+       "text": "Stand With Jeanne And Drive The Procession Away",
+       "requires": "Troops ≥ 1 / Clergy ≥ 2 / Jeanne: Righteous / The Rebel: False",
+       "outcome": "Church -1 / Power -1 / The Revolt -2 / Troops +1 / Nobles +1 / Common Folk +1 / Lennart: Defeated / The Defender Of The Empire"
+      },
+      {
+       "text": "Save The New Believers From Bloodshed",
+       "requires": "Willpower ≥ 0 / Common Folk ≥ 2 / The Defender Of The Empire: False",
+       "outcome": "Willpower -5 / Order -1 / The Revolt +1 / Clergy +1 / Lennart: Defeated / Jeanne: True Death / The Rebel"
+      },
+      {
+       "text": "Fend Them Off With The Champions Of The Faith",
+       "requires": "Willpower ≥ 0 / Troops ≥ 1 / The Rebel: False",
+       "outcome": "Willpower -5 / Order -1 / The Revolt -1 / Troops +1 / Clergy +1 / Common Folk -1 / Jeanne: Defeated / Lennart: True Death / The Defender Of The Empire"
+      },
+      {
+       "text": "Order The Priests To Attack",
+       "requires": "Troops ≥ 1 / Jeanne: Doomed for her Sin / The Path Of The Priest / The Defender Of The Empire",
+       "outcome": "Church -2 / Order -1 / Power -2 / The Revolt -3 / Nobles +1 / Clergy +1 / Common Folk -1 / Lennart: True Death"
+      }
+     ]
+    },
+    {
+     "title": "A Farewell to Jeanne",
+     "condition": "Jeanne ≠ True Death / Jeanne ≠ Buried Alive",
+     "category": "Priest",
+     "options": [
+      {
+       "text": "Convert Jeanne to the New Faith",
+       "requires": "Theology = 20 / Jeanne ≥ 2 / Jeanne: Defeated / The Rebel",
+       "outcome": "Willpower +10 / Jeanne: New Believer"
+      },
+      {
+       "text": "Congratulate Jeanne",
+       "requires": "Jeanne: Righteous",
+       "outcome": "Willpower +10"
+      },
+      {
+       "text": "Try To Take Jeanne Into Custody",
+       "requires": "Jeanne: Defeated / The Rebel",
+       "outcome": "Jeanne: True Death"
+      },
+      {
+       "text": "Share Jeanne's Sorrow",
+       "requires": "Jeanne: Doomed for her Sin / The Defender Of The Empire",
+       "outcome": "Willpower +5"
+      },
+      {
+       "text": "Console Jeanne",
+       "requires": "Jeanne ≥ 3 / Jeanne: Defeated / The Defender Of The Empire",
+       "outcome": "Willpower -5 / Jeanne: Righteous"
+      }
+     ]
+    },
+    {
+     "title": "The Rebel Leader",
+     "condition": "",
+     "category": "General",
+     "options": [
+      {
+       "text": "Unite The Rebels Around Sophia",
+       "requires": "Willpower ≥ 0 / Sophia: Leading The Revolt / The Rebel",
+       "outcome": "Willpower -5 / Power +1 / The Revolt +2 / Troops +1 / Common Folk +1 / Sophia +2"
+      },
+      {
+       "text": "Take Control Of The Revolt",
+       "requires": "Sophia ≠ Leading The Revolt / The Rebel",
+       "outcome": "The Revolt +1 / Troops +1 / Common Folk +1 / Leading The Revolt"
+      },
+      {
+       "text": "Break Up The Mob",
+       "requires": "Willpower ≥ 0 / Troops ≥ 2 / Sophia: Leading The Revolt / The Defender Of The Empire",
+       "outcome": "Willpower -5 / Order +1 / Power -1 / The Revolt -2 / Troops -1 / Nobles +1 / Clergy +1"
+      },
+      {
+       "text": "Destroy Their Morale",
+       "requires": "Manipulation ≥ 18 / Common Folk ≥ 1 / Sophia: Executed or Sophia: Captive / The Rebel: False",
+       "outcome": "Order +1 / Power -1 / The Revolt -4 / Nobles +1 / Clergy +1"
+      },
+      {
+       "text": "Overthrow Sophia",
+       "requires": "Willpower ≥ 0 / Troops ≥ 2 / Common Folk ≥ 2 / The Revolt ≤ 8 / Sophia: Leading The Revolt / The Rebel",
+       "outcome": "Willpower -5 / The Revolt -2 / Troops -1 / Common Folk +1 / Clergy +1 / Sophia: Executed / Leading The Revolt"
+      }
+     ]
+    },
+    {
+     "title": "Hearth And Home",
+     "condition": "The Revolt ≥ 1 / The Family Is In The City",
+     "category": "Family",
+     "options": [
+      {
+       "text": "Die for Your Home",
+       "requires": "",
+       "outcome": "Deaths +4 / Robert: True Death / Lydia: True Death / Stephan: True Death / Gloria: True Death / True Death / The Family has Perished"
+      },
+      {
+       "text": "Kill The Leader",
+       "requires": "Valor ≥ 16 / Stephan ≠ At Home / Path Of The Nobleman / The Fencing Lesson",
+       "outcome": "Willpower -5 / Common Folk -1 / The Family is Saved"
+      },
+      {
+       "text": "Fight For Your Home",
+       "requires": "Valor ≥ 10 / Stephan: At Home",
+       "outcome": "Common Folk -1 / The Family is Saved"
+      },
+      {
+       "text": "Subdue the Thugs",
+       "requires": "Common Folk ≥ 3 / The Revolt ≤ 8 / The Rebel",
+       "outcome": "The Revolt -1 / Common Folk -1 / The Family is Saved"
+      },
+      {
+       "text": "Call In The Troops",
+       "requires": "Troops ≥ 1 / Nathan: Hopeful",
+       "outcome": "The Revolt -1 / Troops -1 / The Family Is Saved"
+      }
+     ]
+    },
+    {
+     "title": "The Final Hour",
+     "condition": "The Rebel",
+     "category": "General",
+     "options": [
+      {
+       "text": "Go See El Borne",
+       "requires": "El Borne: Rebel",
+       "outcome": "The Revolt +1 / Nobles +1"
+      },
+      {
+       "text": "Ask Lennart For Help",
+       "requires": "Lennart: Patriarch",
+       "outcome": "Willpower +5 / Clergy +1 / Common Folk +1 / The Revolt +1"
+      },
+      {
+       "text": "Ask Your Family For Help",
+       "requires": "Robert: Rebel / The Family Has Perished: False",
+       "outcome": "The Revolt +1 / Common Folk +1"
+      },
+      {
+       "text": "Gather The Soldiers Of The Last Straw",
+       "requires": "Sophia: Hopeful",
+       "outcome": "The Revolt +1 / Troops +1"
+      },
+      {
+       "text": "Muster Your Forces",
+       "requires": "",
+       "outcome": "Willpower +10"
+      }
+     ]
+    },
+    {
+     "title": "The Final Hour (Alt)",
+     "condition": "The Defender Of The Empire",
+     "category": "General",
+     "options": [
+      {
+       "text": "Go See El Borne",
+       "requires": "El Borne: Defender Of The Empire",
+       "outcome": "The Revolt -3 / Common Folk +1"
+      },
+      {
+       "text": "Ask Your Family For Help",
+       "requires": "The Family Has Perished: False / Robert: Defender Of The Empire",
+       "outcome": "The Revolt -2 / Troops +1"
+      },
+      {
+       "text": "Ask Jeanne For Help",
+       "requires": "Jeanne: Righteous",
+       "outcome": "The Revolt -2 / Common Folk +1"
+      },
+      {
+       "text": "Ask Otton For Reinforcements",
+       "requires": "Otton ≠ True Death / Otton ≥ 2 or Otton: Reconciled",
+       "outcome": "The Revolt -2 / Troops +2"
+      },
+      {
+       "text": "Save Your Strength",
+       "requires": "",
+       "outcome": "Willpower +10 / The Revolt -1"
+      }
+     ]
+    },
+    {
+     "title": "The Battle For Anizotte",
+     "condition": "The Revolt ≥ 6 / Sophia ≠ Leading the Revolt",
+     "category": "General",
+     "options": [
+      {
+       "text": "Defeat The Legion",
+       "requires": "Troops ≥ 2 / Common Folk = 3 / The Rebel / Leading The Revolt",
+       "outcome": "Power +1 / Church +1 / The Legion Is Defeated"
+      },
+      {
+       "text": "Achieve Peace",
+       "requires": "Power ≥ 3 / Power < 5 / Troops ≥ 1 / Nobles ≥ 1 / Clergy ≥ 2 / Common Folk = 3 / The Rebel / Leading the Revolt",
+       "outcome": "Wealth of Magra +4 / Church +1 / Order +4 / A peace with the Overseer"
+      },
+      {
+       "text": "Defend The City",
+       "requires": "Willpower ≥ 10 / Troops ≥ 2 / Common Folk ≥ 2 / The Rebel / Leading the Revolt",
+       "outcome": "Willpower -20 / Power +1 / Church +1 / The City is Defended"
+      },
+      {
+       "text": "Die in Battle Against the Revolt",
+       "requires": "The Rebel: False",
+       "outcome": "Deaths +4 / Power -2 / Church -2 / Order -1 / Wealth of Magra -1 / The Revolt -3 / Dark Times / True Death"
+      },
+      {
+       "text": "Die for the Revolt",
+       "requires": "The Defender Of The Empire: False",
+       "outcome": "Deaths +4 / Power -2 / Church -2 / Order -1 / Wealth of Magra -1 / The Revolt -3 / Dark Times / True Death"
+      }
+     ]
+    },
+    {
+     "title": "The Battle For Anizotte (Alt)",
+     "condition": "The Revolt ≥ 6 / Sophia: Leading the Revolt",
+     "category": "General",
+     "options": [
+      {
+       "text": "Accept Death",
+       "requires": "The Defender Of The Empire",
+       "outcome": "Deaths +4 / True Death / Power +2 / Church +1 / Order -2 / Wealth Of Magra -2 / The Anizotte Massacre"
+      },
+      {
+       "text": "Defy Sophia",
+       "requires": "The Defender Of The Empire: False",
+       "outcome": "Deaths +4 / True Death / Power +2 / Church +1 / Order -2 / Wealth Of Magra -2 / The Anizotte Massacre"
+      },
+      {
+       "text": "Take Charge Of The Bloodbath",
+       "requires": "The Rebel / Sophia ≥ 0",
+       "outcome": "Power +2 / Church +1 / Order -2 / Wealth Of Magra -2 / Tempest: True Death / The Anizotte Massacre"
+      },
+      {
+       "text": "Stop The Slaughter",
+       "requires": "Willpower ≥ 10 / Troops ≥ 2 / Common Folk ≥ 2 / The Rebel",
+       "outcome": "Willpower -20 / Deaths +4 / True Death / Power -8 / Church -3 / Order +4 / The Revolt -10 / The Revolt Is Defeated"
+      },
+      {
+       "text": "Flee",
+       "requires": "Scheming ≥ 12",
+       "outcome": "Willpower -5 / Power +2 / Church +1 / Order -2 / Wealth Of Magra -2 / The Anizotte Massacre / Escape From The City"
+      }
+     ]
+    },
+    {
+     "title": "The Battle For Anizotte (Alt2)",
+     "condition": "The Revolt = 0",
+     "category": "General",
+     "options": [
+      {
+       "text": "Crush The Rebel Forces",
+       "requires": "Power ≤ -1 / Troops ≥ 2 / Nobles = 3 / Clergy = 3 / Common Folk ≥ 1 / Sophia ≠ Executed / The Defender Of The Empire",
+       "outcome": "Power -2 / Church -2 / Order +4 / The Revolt Is Defeated"
+      },
+      {
+       "text": "Force The Rebels To Surrender The City",
+       "requires": "Power > -5 / Power ≤ -3 / Troops ≥ 1 / Nobles ≥ 2 / Clergy ≥ 2 / Common Folk ≥ 2 / Sophia ≠ Executed / The Defender Of The Empire",
+       "outcome": "Wealth Of Magra +3 / Church -1 / Order +5 / The Surrender Of The Revolt"
+      },
+      {
+       "text": "Get Rid Of Sophia",
+       "requires": "Willpower ≥ 10 / Power ≤ -1 / Troops ≥ 2 / Nobles ≥ 1 / Clergy ≥ 1 / Sophia ≠ Executed / The Defender Of The Empire",
+       "outcome": "Willpower -20 / Deaths +4 / Power -2 / Church -2 / Order +4 / The Revolt Is Defeated / True Death"
+      },
+      {
+       "text": "Route The Insurgents",
+       "requires": "Power ≤ -1 / Troops ≥ 1 / Common Folk ≥ 1 / Sophia: Executed / The Defender Of The Empire",
+       "outcome": "Power -2 / Church -2 / Order +4 / The Revolt Is Defeated"
+      },
+      {
+       "text": "Die In Battle Against The Revolt",
+       "requires": "",
+       "outcome": "Deaths +4 / Power -2 / Church -2 / Order -1 / Wealth Of Magra -1 / The Revolt +2 / Dark Times / True Death"
+      }
+     ]
+    },
+    {
+     "title": "A New Day Dawns",
+     "condition": "True Death: False / Escape form the City: False",
+     "category": "General",
+     "options": [
+      {
+       "text": "Say you Would Grant the World Forgiveness",
+       "requires": "Nathan: Prophet",
+       "outcome": ""
+      },
+      {
+       "text": "Say You Would Leave The World Alone",
+       "requires": "",
+       "outcome": ""
+      },
+      {
+       "text": "Say You Would Take Better Care Of The World",
+       "requires": "",
+       "outcome": ""
+      },
+      {
+       "text": "Say You Would Free The Mortals From Their Lots",
+       "requires": "",
+       "outcome": ""
+      },
+      {
+       "text": "Say You Would Destroy The World",
+       "requires": "The Anizotte Massacre",
+       "outcome": ""
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
