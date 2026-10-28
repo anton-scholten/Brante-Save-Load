@@ -292,6 +292,15 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   scenes. Chapter 1 verified in-game (upcoming and explore unchanged, every
   condition parses and evaluates); chapters 4-5 checked offline only, since no
   save that far exists here.
+- [x] Tree view, round three (28 Oct 2026): every played scene on a band
+  under a timeline bar (answers before the mod are not recorded anywhere, so
+  those columns show no highlight); every later chapter after the current one,
+  each behind a rule with the chapter's name; hover pop-up with the full text
+  and the answer's effects (`tools/scene_effects.py`, `SceneEffects.cs`) using
+  the game's stat icons and portraits; the tree fills the screen; Explore no
+  longer scrolls; loading from the tree confirms over it and Cancel returns to
+  it. Verified in-game with `dev-book.txt` (pop-up, load + Cancel, chapter rule).
+- [ ] Answer requirements in the pop-up (`ParameterButtonChanger.Condition`...).
 - [ ] Achievement side-effects on load (verify).
 - [ ] Full in-game pass on a played run: chapter transition, death -> restart
   chapter, explore + load from the panel.

@@ -36,26 +36,26 @@ namespace Doorstop
 	// the game save normally again (autosaves, chapter files), exactly as it
 	// would after loading an older save from its own menu - so a chapter
 	// restart after a death continues the rewound timeline.
-	// Shows a node's full text in the history panel's info line while the
-	// pointer is over it (the tree nodes are narrow, so the text is clipped).
+	// Opens a tree node's pop-up (full answer text and what it changes) while
+	// the pointer is over the node: OnHover(true) on enter, (false) on exit.
 	public sealed class TreeHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 	{
-		public string Info;
-		public Action<string> OnShow;
+		public Action<bool> OnHover;
+		public bool HasEffects;
 
 		public void OnPointerEnter(PointerEventData eventData)
 		{
-			if (OnShow != null)
+			if (OnHover != null)
 			{
-				OnShow(Info);
+				OnHover(true);
 			}
 		}
 
 		public void OnPointerExit(PointerEventData eventData)
 		{
-			if (OnShow != null)
+			if (OnHover != null)
 			{
-				OnShow(null);
+				OnHover(false);
 			}
 		}
 	}
@@ -280,6 +280,8 @@ namespace Doorstop
 		private static readonly Color ColTreeChosenBg = new Color(1f, 0.93f, 0.72f);
 		private static readonly Color ColTreeUpcomingBg = new Color(0.84f, 0.79f, 0.68f, 0.45f);
 		private static readonly Color ColTreeMuted = new Color(0.45f, 0.40f, 0.32f);
+		private static readonly Color ColTreeChapter = new Color(0.55f, 0.30f, 0.25f, 0.55f);
+		private static readonly Color ColTreePlayedBand = new Color(0.55f, 0.30f, 0.25f, 0.07f);
 
 		private enum Pending { Load, Delete, SaveNow }
 
@@ -385,6 +387,11 @@ namespace Doorstop
 		}
 
 		private static List<TreeCol> _tree = new List<TreeCol>();
+		private static RectTransform _historyBox;
+		private static RectTransform _popup;
+		private static TextMeshProUGUI _popupText;
+		private static TextMeshProUGUI _popupNote;
+		private static Transform _popupEffects;
 		private static ScrollRect _historyScroll;
 		private static List<TreeCol> _preview = new List<TreeCol>();
 		private static Dictionary<string, string> _overrides =
@@ -570,6 +577,7 @@ namespace Doorstop
 		public static void Close()
 		{
 			CancelConfirm();
+			CloseHistory();
 			if (_canvas != null)
 			{
 				_canvas.SetActive(false);
@@ -726,8 +734,10 @@ namespace Doorstop
 				Loc.T(Loc.K.History), 24f, ColTextLight, true);
 			Stretch(hlabel.rectTransform);
 
-			BuildConfirm(panel.transform);
-			BuildHistory(panel.transform);
+			// Both on the canvas itself: the tree is wider than the save window,
+			// and the confirm dialog must be able to sit on top of the tree.
+			BuildConfirm(_canvas.transform);
+			BuildHistory(_canvas.transform);
 			_builtLanguage = CurrentLanguage();
 		}
 
@@ -764,6 +774,11 @@ namespace Doorstop
 			_historyList = null;
 			_historyScroll = null;
 			_historyInfo = null;
+			_historyBox = null;
+			_popup = null;
+			_popupText = null;
+			_popupNote = null;
+			_popupEffects = null;
 			_exploreBtn = null;
 			_exploreLabel = null;
 			_loadHereBtn = null;
@@ -797,15 +812,16 @@ namespace Doorstop
 			Image overlay = _historyPanel.AddComponent<Image>();
 			overlay.color = new Color(0f, 0f, 0f, 0.55f);
 
+			// Nearly the whole screen: the more columns fit, the more of the
+			// story is in view.
 			GameObject box = CreateUiObject("Box", _historyPanel.transform);
 			RectTransform brt = box.GetComponent<RectTransform>();
-			brt.anchorMin = new Vector2(0.5f, 0.5f);
-			brt.anchorMax = new Vector2(0.5f, 0.5f);
-			brt.pivot = new Vector2(0.5f, 0.5f);
-			brt.anchoredPosition = Vector2.zero;
-			brt.sizeDelta = new Vector2(980f, 700f);
+			Stretch(brt);
+			brt.offsetMin = new Vector2(36f, 30f);
+			brt.offsetMax = new Vector2(-36f, -30f);
 			Image bimg = box.AddComponent<Image>();
 			bimg.color = ColPanel;
+			_historyBox = brt;
 
 			TextMeshProUGUI title = AddLabel(box.transform, "Title",
 				Loc.T(Loc.K.Playthrough), 32f, ColTextDark, false);
@@ -886,7 +902,7 @@ namespace Doorstop
 			_historyList = content.transform;
 			_historyScroll = sc;
 
-			// Hover info line, above the Close button.
+			// Hint line (explore mode), above the Close button.
 			_historyInfo = AddLabel(box.transform, "Info", "", 18f,
 				new Color(0.30f, 0.26f, 0.20f), false);
 			RectTransform irt2 = _historyInfo.rectTransform;
@@ -947,6 +963,7 @@ namespace Doorstop
 			Stretch(llabel2.rectTransform);
 			_loadHereBtn.SetActive(false);
 
+			BuildPopup(box.transform);
 			_historyPanel.SetActive(false);
 		}
 
@@ -978,7 +995,6 @@ namespace Doorstop
 				return;
 			}
 			TreeCol last = _tree[_tree.Count - 1];
-			CloseHistory();
 			Ask(Pending.Load, _lastLoadablePath, last.Title, null);
 		}
 
@@ -1012,6 +1028,7 @@ namespace Doorstop
 
 		private static void CloseHistory()
 		{
+			HidePopup();
 			if (_historyPanel != null)
 			{
 				_historyPanel.SetActive(false);
@@ -1032,7 +1049,9 @@ namespace Doorstop
 		private const float TreeNodeH = 48f;
 		private const float TreeRowH = 58f;
 		private const float TreeNodeX = 46f;
-		private const float TreeTop = 58f;
+		private const float TreeTop = 102f;     // first answer row
+		private const float TreeHeadY = 34f;    // column titles (chapter names above)
+		private const float TreeBarY = 88f;     // the timeline bar under the titles
 
 		private static int RefreshHistory()
 		{
@@ -1132,6 +1151,7 @@ namespace Doorstop
 			float height = TreeTop + rows * TreeRowH + 20f;
 			SetContentSize(width, height);
 
+			int prevChapter = 0;
 			for (int i = 0; i < cols.Count; i++)
 			{
 				TreeCol e = cols[i];
@@ -1144,6 +1164,44 @@ namespace Doorstop
 				{
 					_historyLoadable++;
 				}
+
+				// A new chapter starts here: a vertical rule, its name at the top.
+				int chapter = SceneFlow.ChapterOf(e.Scene);
+				if (chapter > 0 && chapter != prevChapter)
+				{
+					AddLine(x + 2f, 0f, x + 2f, height, ColTreeChapter, 3f);
+					TextMeshProUGUI ch = AddLabel(_historyList, "Chapter", ChapterTitle(chapter),
+						20f, ColTreeChosen, false);
+					Wrap(ch, x + 14f, 2f, TreeColW * 2f, 28f);
+					ch.enableWordWrapping = false;
+					ch.raycastTarget = false;
+				}
+				if (chapter > 0)
+				{
+					prevChapter = chapter;
+				}
+
+				// Played scenes - all of them, whether or not the mod saw the
+				// answer - sit on a tinted band with the path's bar above them;
+				// the bar ends at the scene on screen, and goes on pale through
+				// what is still ahead.
+				bool played = !e.Preview && !e.Upcoming;
+				if (played)
+				{
+					GameObject band = CreateUiObject("Played", _historyList);
+					RectTransform brt2 = band.GetComponent<RectTransform>();
+					brt2.anchorMin = new Vector2(0f, 1f);
+					brt2.anchorMax = new Vector2(0f, 1f);
+					brt2.pivot = new Vector2(0f, 1f);
+					brt2.anchoredPosition = new Vector2(x + 6f, -(TreeHeadY - 4f));
+					brt2.sizeDelta = new Vector2(TreeColW - 8f, height - TreeHeadY - 6f);
+					Image bandImg = band.AddComponent<Image>();
+					bandImg.color = ColTreePlayedBand;
+					bandImg.raycastTarget = false;
+				}
+				float barEnd = e.Current ? x + TreeNodeX + TreeNodeW * 0.5f : x + TreeColW;
+				AddLine(x + 6f, TreeBarY, barEnd, TreeBarY,
+					played ? ColTreeChosen : ColTreeLine, played ? 6f : 3f);
 
 				// Column header: the scene's title.
 				string headText = e.Title;
@@ -1161,7 +1219,7 @@ namespace Doorstop
 				}
 				TextMeshProUGUI head = AddLabel(_historyList, "Head", headText,
 					18f, e.Preview || e.Upcoming ? ColTreeMuted : ColTextDark, false);
-				Wrap(head, x, 6f, TreeNodeW + TreeNodeX, 44f);
+				Wrap(head, x + 14f, TreeHeadY, TreeNodeW + TreeNodeX - 14f, 44f);
 				head.enableWordWrapping = true;
 				head.overflowMode = TextOverflowModes.Ellipsis;
 
@@ -1206,9 +1264,11 @@ namespace Doorstop
 						}
 						else
 						{
+							// The tree stays open under the dialog; Cancel
+							// returns to it exactly as it was.
 							nb.onClick.AddListener(delegate
 							{
-								CloseHistory();
+								HidePopup();
 								Ask(Pending.Load, path, title, null);
 							});
 						}
@@ -1224,11 +1284,26 @@ namespace Doorstop
 					label.overflowMode = TextOverflowModes.Ellipsis;
 					label.enableWordWrapping = false;
 
-					TreeHover hover = node.AddComponent<TreeHover>();
-					hover.Info = c.Text + "   \u2022 " + Loc.T(c.Chosen ? Loc.K.TreeChosen
-							: e.Possible ? Loc.K.Possible : e.Upcoming ? Loc.K.Upcoming : Loc.K.TreeOffered)
+					string note = Loc.T(c.Chosen ? Loc.K.TreeChosen
+							: e.Possible ? Loc.K.Possible : e.Upcoming ? Loc.K.Upcoming
+							: played && !e.Current && ChosenRow(e, shown) < 0 ? Loc.K.NotRecorded
+							: Loc.K.TreeOffered)
 						+ (!_explore && e.HasSnapshot ? "   \u2022 " + Loc.T(Loc.K.SaveAvailable) : "");
-					hover.OnShow = SetHistoryInfo;
+					List<SceneEffects.Effect> effects = SceneEffects.For(e.Scene, c.Name);
+					string fullText = c.Text;
+					TreeHover hover = node.AddComponent<TreeHover>();
+					hover.HasEffects = effects.Count > 0;
+					hover.OnHover = delegate(bool on)
+					{
+						if (on)
+						{
+							ShowPopup(nrt, fullText, note, effects);
+						}
+						else
+						{
+							HidePopup();
+						}
+					};
 				}
 			}
 
@@ -1368,9 +1443,16 @@ namespace Doorstop
 				{
 					_preview.Add(PreviewCol(next));
 				}
+				// The view stays where it is: the picked answer is under the
+				// pointer, and the next scene appears next to it.
+				RectTransform content = _historyList as RectTransform;
+				Vector2 at = content != null ? content.anchoredPosition : Vector2.zero;
 				RefreshHistory();
 				Canvas.ForceUpdateCanvases();
-				ScrollHistoryToEnd();
+				if (content != null)
+				{
+					content.anchoredPosition = at;
+				}
 			}
 			catch (Exception e)
 			{
@@ -1412,11 +1494,11 @@ namespace Doorstop
 			return TreeTop + row * TreeRowH + TreeNodeH * 0.5f;
 		}
 
-		// The scenes still ahead in the current chapter (scene-flow.tsv), in the
-		// order the game reaches them, each with every answer it will offer:
-		// later time slots, on this run's track (Post and the other key
-		// parameters), minus scenes whose conditions fail now. Scenes whose
-		// conditions cannot be decided yet are kept, marked as possible.
+		// The scenes still ahead (scene-flow.tsv), in the order the game
+		// reaches them, each with every answer it will offer: the rest of the
+		// current chapter on this run's track, minus scenes whose conditions
+		// fail now, then every later chapter (see SceneFlow.After). Scenes
+		// whose conditions cannot be decided yet are marked as possible.
 		// Scenes without answers (chapter screens) are left out.
 		private static void AddUpcoming(List<TreeCol> cols, List<History.Entry> played)
 		{
@@ -1430,7 +1512,7 @@ namespace Doorstop
 					from = e.SceneName;
 				}
 			}
-			foreach (SceneFlow.Ahead a in SceneFlow.After(from, shown))
+			foreach (SceneFlow.Ahead a in SceneFlow.After(from, shown, true))
 			{
 				TreeCol col = PreviewCol(a.Row.Scene);
 				col.Preview = false;
@@ -1440,6 +1522,157 @@ namespace Doorstop
 				{
 					cols.Add(col);
 				}
+			}
+		}
+
+		// The game's own chapter name ("Chapter II. Adolescence").
+		private static string ChapterTitle(int chapter)
+		{
+			string[] keys = { "", "Chapter1.Childhood", "Chapter2.Teen", "Chapter3.Youth",
+				"Chapter4.Peace", "Chapter5.War" };
+			return chapter > 0 && chapter < keys.Length ? Translate(keys[chapter]) : "";
+		}
+
+		private const float PopupWidth = 470f;
+
+		// The hover pop-up: an answer's full text, what the tree knows about it,
+		// and what it changes - stats with the game's own stat icons, relations
+		// and fates with the character's portrait. Never a raycast target, so it
+		// cannot steal the hover from the node under it.
+		private static void BuildPopup(Transform box)
+		{
+			GameObject go = CreateUiObject("Popup", box);
+			_popup = go.GetComponent<RectTransform>();
+			_popup.anchorMin = new Vector2(0f, 1f);
+			_popup.anchorMax = new Vector2(0f, 1f);
+			_popup.pivot = new Vector2(0f, 1f);
+			_popup.sizeDelta = new Vector2(PopupWidth, 100f);
+			Image bg = go.AddComponent<Image>();
+			bg.color = new Color(0.98f, 0.96f, 0.90f, 0.98f);
+			bg.raycastTarget = false;
+			Outline outline = go.AddComponent<Outline>();
+			outline.effectColor = new Color(0.30f, 0.26f, 0.20f, 0.9f);
+			outline.effectDistance = new Vector2(2f, -2f);
+			VerticalLayoutGroup v = go.AddComponent<VerticalLayoutGroup>();
+			v.padding = new RectOffset(16, 16, 12, 14);
+			v.spacing = 6f;
+			v.childControlWidth = true;
+			v.childControlHeight = true;
+			v.childForceExpandWidth = true;
+			v.childForceExpandHeight = false;
+			ContentSizeFitter fit = go.AddComponent<ContentSizeFitter>();
+			fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+			_popupText = AddLabel(go.transform, "Text", "", 19f, ColTextDark, false);
+			_popupText.enableWordWrapping = true;
+			_popupText.overflowMode = TextOverflowModes.Overflow;
+			_popupText.alignment = TextAlignmentOptions.TopLeft;
+			_popupNote = AddLabel(go.transform, "Note", "", 15f, ColTreeMuted, false);
+			_popupNote.enableWordWrapping = true;
+			_popupNote.alignment = TextAlignmentOptions.TopLeft;
+			GameObject list = CreateUiObject("Effects", go.transform);
+			VerticalLayoutGroup lv = list.AddComponent<VerticalLayoutGroup>();
+			lv.spacing = 4f;
+			lv.childControlWidth = true;
+			lv.childControlHeight = true;
+			lv.childForceExpandWidth = true;
+			lv.childForceExpandHeight = false;
+			_popupEffects = list.transform;
+			go.SetActive(false);
+		}
+
+		private static void ShowPopup(RectTransform node, string text, string note,
+			List<SceneEffects.Effect> effects)
+		{
+			if (_popup == null || _historyBox == null)
+			{
+				return;
+			}
+			_popupText.text = text;
+			_popupNote.text = note;
+			for (int i = _popupEffects.childCount - 1; i >= 0; i--)
+			{
+				GameObject old = _popupEffects.GetChild(i).gameObject;
+				old.SetActive(false);
+				UnityEngine.Object.Destroy(old);
+			}
+			foreach (SceneEffects.Effect fx in effects)
+			{
+				AddEffectRow(fx);
+			}
+			_popupEffects.gameObject.SetActive(effects.Count > 0);
+			_popup.gameObject.SetActive(true);
+			_popup.SetAsLastSibling();
+			LayoutRebuilder.ForceRebuildLayoutImmediate(_popup);
+
+			// Beside the node, flipped to its left near the right edge, and
+			// kept inside the box.
+			Vector3[] c = new Vector3[4];
+			node.GetWorldCorners(c);
+			Vector2 topLeft = _historyBox.InverseTransformPoint(c[1]);
+			Vector2 topRight = _historyBox.InverseTransformPoint(c[2]);
+			Rect box = _historyBox.rect;
+			float w = _popup.rect.width;
+			float h = _popup.rect.height;
+			float x = topRight.x + 14f;
+			if (x + w > box.xMax - 10f)
+			{
+				x = topLeft.x - 14f - w;
+			}
+			x = Mathf.Clamp(x, box.xMin + 10f, box.xMax - 10f - w);
+			float y = Mathf.Clamp(topRight.y, box.yMin + 10f + h, box.yMax - 10f);
+			// anchored at the box's top-left corner
+			_popup.anchoredPosition = new Vector2(x - box.xMin, y - box.yMax);
+		}
+
+		private static void AddEffectRow(SceneEffects.Effect fx)
+		{
+			Sprite icon;
+			string name = SceneEffects.Label(fx, out icon);
+			GameObject row = CreateUiObject("Effect", _popupEffects);
+			HorizontalLayoutGroup h = row.AddComponent<HorizontalLayoutGroup>();
+			h.spacing = 10f;
+			h.childAlignment = TextAnchor.MiddleLeft;
+			h.childControlWidth = true;
+			h.childControlHeight = true;
+			h.childForceExpandWidth = false;
+			h.childForceExpandHeight = false;
+
+			GameObject ig = CreateUiObject("Icon", row.transform);
+			LayoutElement ile = ig.AddComponent<LayoutElement>();
+			ile.preferredWidth = 34f;
+			ile.preferredHeight = 34f;
+			ile.minWidth = 34f;
+			ile.minHeight = 34f;
+			if (icon != null)
+			{
+				Image img = ig.AddComponent<Image>();
+				img.sprite = icon;
+				img.preserveAspect = true;
+				img.raycastTarget = false;
+			}
+
+			TextMeshProUGUI label = AddLabel(row.transform, "Name", name, 18f, ColTextDark, false);
+			label.enableWordWrapping = true;
+			LayoutElement nle = label.gameObject.AddComponent<LayoutElement>();
+			nle.flexibleWidth = 1f;
+			if (fx.Kind != 'S')
+			{
+				string sign = fx.Value > 0 ? "+" + fx.Value : "\u2212" + (-fx.Value);
+				TextMeshProUGUI val = AddLabel(row.transform, "Value", sign, 19f,
+					fx.Value > 0 ? new Color(0.18f, 0.42f, 0.18f) : new Color(0.62f, 0.16f, 0.12f), false);
+				val.alignment = TextAlignmentOptions.MidlineRight;
+				LayoutElement vle = val.gameObject.AddComponent<LayoutElement>();
+				vle.minWidth = 48f;
+				vle.preferredWidth = 48f;
+			}
+		}
+
+		private static void HidePopup()
+		{
+			if (_popup != null)
+			{
+				_popup.gameObject.SetActive(false);
 			}
 		}
 
@@ -1799,6 +2032,7 @@ namespace Doorstop
 			if (_confirmPanel != null)
 			{
 				_confirmPanel.SetActive(true);
+				_confirmPanel.transform.SetAsLastSibling();   // above the tree too
 			}
 			// Paint the new text immediately (see Open's flush note).
 			Canvas.ForceUpdateCanvases();
@@ -2561,6 +2795,54 @@ namespace Doorstop
 			OpenHistory();
 			yield return new WaitForSeconds(3f);
 			DevWheel();
+			// Dev: the pop-up of an answer with known effects, then a load from
+			// the tree and Cancel - the tree must still be open after it.
+			yield return new WaitForSeconds(2f);
+			TreeHover withFx = null;
+			Button loadable = null;
+			foreach (TreeHover th in _historyList.GetComponentsInChildren<TreeHover>())
+			{
+				if (withFx == null && th.HasEffects)
+				{
+					withFx = th;
+				}
+				if (loadable == null && th.GetComponent<Button>() != null)
+				{
+					loadable = th.GetComponent<Button>();
+				}
+			}
+			if (withFx != null)
+			{
+				withFx.OnHover(true);
+				ModLog.Info("ChoiceWindow: dev pop-up shown for '" + withFx.name + "' ("
+					+ _popupEffects.childCount + " effect row(s))");
+				yield return new WaitForSeconds(4f);
+				withFx.OnHover(false);
+			}
+			if (loadable != null)
+			{
+				loadable.onClick.Invoke();
+				yield return new WaitForSeconds(3f);
+				CancelConfirm();
+				ModLog.Info("ChoiceWindow: dev load-cancel: tree still open = "
+					+ (_historyPanel != null && _historyPanel.activeSelf));
+			}
+			// Dev: show the first chapter boundary after the current scene.
+			RectTransform contentRt = _historyList as RectTransform;
+			int seen = 0;
+			foreach (Transform t in _historyList)
+			{
+				if (t.name == "Chapter" && ++seen == 2)
+				{
+					float cx = ((RectTransform)t).anchoredPosition.x;
+					float range = contentRt.rect.width - _historyScroll.viewport.rect.width;
+					_historyScroll.horizontalNormalizedPosition = Mathf.Clamp01((cx - 700f) / range);
+					ModLog.Info("ChoiceWindow: dev chapter boundary at x " + cx + ": '"
+						+ t.GetComponent<TextMeshProUGUI>().text + "'");
+					break;
+				}
+			}
+			yield return new WaitForSeconds(3f);
 			// Dev: exercise explore mode - walk two answers forward.
 			yield return new WaitForSeconds(3f);
 			ToggleExplore();

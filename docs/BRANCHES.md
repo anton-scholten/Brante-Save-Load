@@ -280,6 +280,27 @@ builder's data; it only sees links where one scene macro's `Exit` is wired
 straight to the next, so it missed everything behind a branch and all of
 chapters 4 and 5. `tools/bolt_story.py` replaces it (next section).
 
+## Answer effects
+
+```sh
+python3 tools/scene_effects.py  # -> data/scene-effects.json + Brante-Save-Load/scene-effects.tsv
+```
+
+Each answer button is a `ParameterButtonChanger` inside the scene file
+(`levelN`, N = the scene's index in the build list from `globalgamemanagers`'
+`BuildSettings`). Its serialised fields start `MainContainer`, `ButtonTextKey`
+(`01.05.01_Button_3`), `ButtonIndex` (3 = `ButtonDescription3`), then the three
+effect arrays `Parameters` {Parameter, Value}, `Relations` {Character, Value}
+and `Statuses` {Character, CharacterStatus}. With no type trees in the build
+they are read raw (header = GameObject PPtr, enabled + padding, script PPtr,
+name). The PPtrs point into resources.assets and are written by asset name.
+183 scenes, 1985 effects. At runtime the names map to the live ScriptableObjects:
+`Parameter.Icon` and the localisation key of the stat (`Will` -> Willpower),
+`Character.TooltipPortret` and the key of `Character.Name` (`NatanBronte` ->
+Nathan Brante), and for a status `<character>.<status>` (`NatanBronte.Support`
+-> GRATITUDE). The buttons also carry their requirements (`Condition`,
+`ConditionByRelations`, ...), not extracted yet.
+
 ## The complete flow (chapters 1-5 and the epilogue)
 
 ```sh

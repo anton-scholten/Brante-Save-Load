@@ -40,12 +40,17 @@ never touches the game's saves.
   save has passed through. **Tree view** draws that path left to right: one
   column per scene, every answer offered there stacked underneath, and the
   answer you picked highlighted and joined to the next scene by a darker line.
-  After the scene you are on, the rest of the chapter follows in muted columns
-  ("upcoming"), with the answers each of those scenes will offer. The answers
-  come from the game's own translation table, so this works for scenes played
-  before the mod too; hovering shows the full text, columns the mod has a save
-  for can be clicked to load them, and the mouse wheel scrolls the tree
-  sideways. **Explore** turns the tree into a path builder: click any
+  Every scene you have played sits on a tinted band under a dark timeline bar,
+  whether or not the mod saw your answer. After the scene you are on, the rest
+  of the story follows in muted columns ("upcoming"): the rest of this chapter
+  and every later one, each chapter starting at a vertical rule with its name
+  on top. The answers come from the game's own translation table, so this works
+  for scenes played before the mod too. Hovering an answer opens a pop-up with
+  its full text and what it changes - stats with the game's own icons,
+  relations and fates with the character's portrait. Columns the mod has a
+  save for can be clicked to load them: the confirmation opens over the tree,
+  and Cancel returns to it as it was. The tree fills nearly the whole screen,
+  and the mouse wheel scrolls it sideways. **Explore** turns the tree into a path builder: click any
   answer to move to the scene it leads to (the game's own scene chain is shipped
   with the mod), keep choosing to walk forward, and "Load this scene" jumps to
   the place you reached once it is one the mod has a save for. Decisions made before the mod was
@@ -112,8 +117,8 @@ mod's own saves (in `Brante-Save-Load/`) are not meant to be synced.
 
 ### What the mod ships besides the DLL
 
-`scene-texts.tsv` (every scene's title and answers, all five chapters) and
-`scene-flow.tsv` (the order in which each chapter reaches its scenes, with the
+`scene-texts.tsv` (every scene's title and answers, all five chapters),
+`scene-effects.tsv` (what each answer changes) and `scene-flow.tsv` (the order in which each chapter reaches its scenes, with the
 conditions on the way) are extracted from your installed copy of the game. They
 are what lets the tree view show answers for scenes played before the mod
 existed, list the scenes still ahead, and let Explore walk forward. After a game
@@ -130,7 +135,10 @@ update they can be regenerated with `tools/bolt_story.py` and
   next click). Answers given before the mod was installed are not recorded
   anywhere, so those columns show every answer without a highlight.
 - Upcoming scenes are the rest of your chapter in the order the game reaches
-  them, on your run's track (your Lot in chapter 3, your post in chapter 4).
+  them, on your run's track (your Lot in chapter 3, your post in chapter 4),
+  then every later chapter. In a later chapter a track that is decided by
+  then (the Lot, the post) is not known yet, so only what all tracks share is
+  listed, and every scene with a condition is marked "possible".
   Their conditions (objectives, stats, characters' fates) are checked against
   your save as it is now: a scene whose condition fails today is left out even
   if a later answer could still unlock it, and one the mod cannot check is

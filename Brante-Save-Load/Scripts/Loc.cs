@@ -17,7 +17,7 @@ namespace Doorstop
 			ConfirmLoad, ConfirmDelete, ConfirmSave, EmptySaves,
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, SaveAvailable, Current, NothingYet,
-			TreeChosen, TreeOffered, Explore, LoadScene, PickAnswer, Upcoming, Possible
+			TreeChosen, TreeOffered, Explore, LoadScene, PickAnswer, Upcoming, Possible, NotRecorded
 		}
 
 		static Loc()
@@ -55,6 +55,17 @@ namespace Doorstop
 			AddHintWords(_ja, "答えを選ぶと道が続きます");
 			AddHintWords(_ko, "계속하려면 답을 선택하세요");
 			AddHintWords(_zh, "选择一个答案以继续路径");
+			AddNotRecorded(_en, "played - answer not recorded (before the mod)");
+			AddNotRecorded(_ru, "пройдено - ответ не записан (до мода)");
+			AddNotRecorded(_de, "gespielt - Antwort nicht aufgezeichnet (vor dem Mod)");
+			AddNotRecorded(_fr, "joué - réponse non enregistrée (avant le mod)");
+			AddNotRecorded(_es, "jugado - respuesta no registrada (antes del mod)");
+			AddNotRecorded(_it, "giocato - risposta non registrata (prima della mod)");
+			AddNotRecorded(_pl, "rozegrane - odpowiedź niezapisana (przed modem)");
+			AddNotRecorded(_tr, "oynandı - cevap kaydedilmedi (moddan önce)");
+			AddNotRecorded(_ja, "プレイ済み - 回答は未記録（MOD導入前）");
+			AddNotRecorded(_ko, "플레이함 - 답변 기록 없음 (모드 설치 전)");
+			AddNotRecorded(_zh, "已经历 - 未记录选择（安装模组之前）");
 			AddUpcomingWord(_en, "upcoming", "possible");
 			AddUpcomingWord(_ru, "впереди", "возможно");
 			AddUpcomingWord(_de, "kommt noch", "möglich");
@@ -78,6 +89,11 @@ namespace Doorstop
 		{
 			d[K.Explore] = explore;
 			d[K.LoadScene] = loadScene;
+		}
+
+		private static void AddNotRecorded(Dictionary<K, string> d, string text)
+		{
+			d[K.NotRecorded] = text;
 		}
 
 		private static void AddUpcomingWord(Dictionary<K, string> d, string upcoming, string possible)

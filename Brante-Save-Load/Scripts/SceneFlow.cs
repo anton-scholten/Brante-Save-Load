@@ -141,9 +141,23 @@ namespace Doorstop
 			return scene != null && _byScene != null && _byScene.TryGetValue(scene, out r) ? r : null;
 		}
 
-		// The scenes that can come after `from` in its chapter, in the order
-		// the game would reach them. `shown` (may be null) are left out.
-		public static List<Ahead> After(string from, ICollection<string> shown)
+		// The chapter a scene belongs to, 0 when it is not in the flow.
+		public static int ChapterOf(string scene)
+		{
+			Row r = Find(scene);
+			return r != null ? r.Chapter : 0;
+		}
+
+		// The scenes that can come after `from`, in the order the game would
+		// reach them: the rest of its chapter and, with `laterChapters`, every
+		// chapter after it. `shown` (may be null) are left out.
+		//
+		// In the current chapter the run's key parameters and the conditions
+		// are checked against the live game. Later chapters are too far ahead
+		// for today's state to say much: their conditional scenes count as
+		// undecided, and a track picked by a key parameter the run has not set
+		// yet (Post, in chapter 4) shows only what every option has in common.
+		public static List<Ahead> After(string from, ICollection<string> shown, bool laterChapters)
 		{
 			List<Ahead> result = new List<Ahead>();
 			Row start = Find(from);
@@ -155,20 +169,27 @@ namespace Doorstop
 			List<Row> later = new List<Row>();
 			foreach (Row r in _rows)
 			{
-				if (r.Chapter == start.Chapter && r != start && Compare(r, start) > 0
-					&& (shown == null || !shown.Contains(r.Scene)))
+				bool ahead = r.Chapter == start.Chapter ? r != start && Compare(r, start) > 0
+					: laterChapters && r.Chapter > start.Chapter;
+				if (ahead && (shown == null || !shown.Contains(r.Scene)))
 				{
 					later.Add(r);
 				}
 			}
-			later.Sort(Compare);
+			later.Sort(delegate(Row a, Row b)
+			{
+				return a.Chapter != b.Chapter ? a.Chapter.CompareTo(b.Chapter) : Compare(a, b);
+			});
 			foreach (Row r in later)
 			{
-				if (!LabelsMatch(r, ctx))
+				bool future = r.Chapter != start.Chapter;
+				if (!LabelsMatch(r, ctx, future))
 				{
 					continue;
 				}
-				Tri cond = Evaluate(r, ctx);
+				Tri cond = future
+					? (string.IsNullOrEmpty(r.Condition) ? Tri.True : Tri.Unknown)
+					: Evaluate(r, ctx);
 				if (cond == Tri.False)
 				{
 					continue;
@@ -184,7 +205,7 @@ namespace Doorstop
 		// The first scene after `scene`, or "" when none is known.
 		public static string Next(string scene)
 		{
-			List<Ahead> after = After(scene, null);
+			List<Ahead> after = After(scene, null, true);
 			return after.Count > 0 ? after[0].Row.Scene : "";
 		}
 
@@ -222,6 +243,9 @@ namespace Doorstop
 					}
 				}
 			}
+			ModLog.Info("SceneFlow: key parameters Post='" + ctx.KeyParameter("Post")
+				+ "' TriggerBlock='" + ctx.KeyParameter("TriggerBlock") + "' PeaceTree='"
+				+ ctx.KeyParameter("PeaceTree") + "'");
 			ModLog.Info("SceneFlow: dev check over " + _rows.Count + " scene(s): conditions true "
 				+ t + ", false " + f + ", undecided " + u + ", failed " + bad);
 		}
@@ -241,11 +265,29 @@ namespace Doorstop
 		}
 
 		// Any alternative whose switches all agree with the key chapter
-		// parameters. A parameter the game has not set yet agrees with anything.
-		private static bool LabelsMatch(Row r, Context ctx)
+		// parameters; a parameter the game has not set yet agrees with anything.
+		// For a later chapter (`strict`) the live values mean nothing yet - a
+		// new game already holds Post=Inquisitor long before the post is
+		// chosen - so there the scene must be reachable whatever value the
+		// parameter will get.
+		private static bool LabelsMatch(Row r, Context ctx, bool strict)
 		{
 			if (r.Labels.Count == 0)
 			{
+				return true;
+			}
+			if (strict)
+			{
+				foreach (List<KeyValuePair<string, string>> set in r.Labels)
+				{
+					foreach (KeyValuePair<string, string> lab in set)
+					{
+						if (!Covers(r, lab.Key))
+						{
+							return false;
+						}
+					}
+				}
 				return true;
 			}
 			foreach (List<KeyValuePair<string, string>> set in r.Labels)
@@ -267,6 +309,48 @@ namespace Doorstop
 				}
 			}
 			return false;
+		}
+
+		// Whether a scene is reachable under every value its chapter switches
+		// `key` to: some alternative ignores the switch, or the alternatives
+		// name every value the chapter uses.
+		private static bool Covers(Row r, string key)
+		{
+			HashSet<string> mine = new HashSet<string>();
+			foreach (List<KeyValuePair<string, string>> set in r.Labels)
+			{
+				bool has = false;
+				foreach (KeyValuePair<string, string> lab in set)
+				{
+					if (lab.Key == key)
+					{
+						has = true;
+						mine.Add(lab.Value);
+					}
+				}
+				if (!has)
+				{
+					return true;
+				}
+			}
+			foreach (Row other in _rows)
+			{
+				if (other.Chapter != r.Chapter)
+				{
+					continue;
+				}
+				foreach (List<KeyValuePair<string, string>> set in other.Labels)
+				{
+					foreach (KeyValuePair<string, string> lab in set)
+					{
+						if (lab.Key == key && !mine.Contains(lab.Value))
+						{
+							return false;
+						}
+					}
+				}
+			}
+			return true;
 		}
 
 		private static Tri Evaluate(Row r, Context ctx)
