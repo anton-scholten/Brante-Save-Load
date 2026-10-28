@@ -218,9 +218,12 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
 - [x] Resolve `SuperUnit.nest.macro`: the machine object ends with a PPtr array,
   one entry per SuperUnit (`tools/bolt_graph.py`). Control flow now walks from
   the `Click` event through switches and macros to `LoadScene`.
-- [ ] Read the per-scene successors (button -> next scene) from the `level*`
-  scene files: the graph does not switch on scene ids, but each scene file
-  contains its own successor ids (e.g. `level34` -> `01.06.01`).
+- [x] Chapter macros catalogue the scenes (one macro per scene id), but a scene
+  macro only loads itself and no switch uses scene ids - scene files do not hold
+  a successor table either (1 of 25 does). The per-choice transition is decided
+  by the scene's Bolt **state machine** / the `%true`/`%false` switch - still to
+  be decoded.
+- [ ] Decode that dispatch (state machine or switch key) to complete the edges.
 - [ ] Collect edges by playing (traces do it automatically) as a cross-check; a
   page-advancing driver would allow clicking through a loaded scene instead.
 - [ ] Render the full tree from `data/graph.json`, path highlighted.

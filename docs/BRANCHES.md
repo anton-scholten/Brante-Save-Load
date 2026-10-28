@@ -185,12 +185,19 @@ GameManager  switch=%Yes / macro:GameFinals / ... -> LiveTimeline
 GameManager  switch=%No / switch=%1 / macro:LoadScreen -> LoadingScreen_Child
 ```
 
-**Second finding — per-scene successors live in the scene files.** The Bolt graph
-does not switch on scene ids, but each `level*` scene file contains its own
-successor ids: `level34` (= scene `01.05.01`) holds the string `01.06.01` right
-next to its consequence key `01.05.01_ConsequenceText_3_1`. So the remaining work
-is to read those per-scene entries (button → next scene) from the scene files,
-instead of chasing them in the graph.
+**Where the graph stops.** The chapter macros (`ChildhoodChapter`, `TeenChapter`,
+…) reference **one macro per scene, named after the scene id** (`01.05.01`,
+`01.06.01`, `01.N.01`, `ChildhoodFinishScreen`, …). That catalogue is exactly the
+scene list of the chapter. But a scene macro's own graph only loads *itself*
+(`01.05.01 → LoadScene("01.05.01")`), and no switch anywhere uses scene ids as
+ports (0 of 482 graphs). Scene files do not carry a successor table either: only
+one of the 25 scene files with a consequence key also names another scene
+(`level34` → `01.06.01`); the rest name only themselves.
+
+So the per-choice transition is decided elsewhere — most likely by the scene's
+**Bolt State Machine** (`SceneStateMachine` in the scene) or by a value the
+`Click` event dispatches on inside `ChildhoodChapter`'s single `SwitchOnString`
+(ports `%true`/`%false`/`default`). That is the remaining unknown.
 
 Everything extracted so far is committed (`data/bolt-graphs.json`,
 `data/bolt-edges.json`).
