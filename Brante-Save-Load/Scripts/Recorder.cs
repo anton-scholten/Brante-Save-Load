@@ -725,6 +725,31 @@ namespace Doorstop
 			ModLog.Info("Choice point recorded: " + baseName + " (" + blob.Length + " bytes)");
 		}
 
+		// Appends one line to the run's trace log: every scene load and every
+		// click, in order. Merging traces offline gives the graph edges
+		// (which scene a choice leads to), which neither the save nor the
+		// guides contain.
+		public static void Trace(string kind, string a, string b)
+		{
+			try
+			{
+				string run = CurrentRunId();
+				if (string.IsNullOrEmpty(run))
+				{
+					return;
+				}
+				string dir = Path.Combine(RunsDir, Sanitize(run));
+				Directory.CreateDirectory(dir);
+				string line = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")
+					+ "\t" + kind + "\t" + (a ?? "") + "\t" + (b ?? "");
+				File.AppendAllText(Path.Combine(dir, "trace.log"), line + "\n");
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: trace write failed:\n" + e);
+			}
+		}
+
 		// Harmony postfix on ParameterButtonChanger.Button_Click: the player
 		// picked an answer. The game stores the button's GameObject name in
 		// CurrentConsequence; we write it into this scene's sidecar so the
@@ -770,6 +795,8 @@ namespace Doorstop
 				{
 					return;
 				}
+				string sceneName = GameManager.Instance != null ? GameManager.Instance.OpenedSceneName : "";
+				Trace("click", sceneName, button.gameObject.name + " | " + T(button.ButtonTextKey));
 				string chosen = "chosen=" + button.gameObject.name;
 				string text = File.ReadAllText(newest);
 				if (text.IndexOf(chosen, StringComparison.Ordinal) < 0)

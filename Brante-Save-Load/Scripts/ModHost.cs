@@ -25,6 +25,23 @@ namespace Doorstop
 			Current = this;
 		}
 
+		// Every scene load is traced, so a click can be paired with the scene
+		// it leads to (see Recorder.Trace).
+		private void OnEnable()
+		{
+			SceneManager.sceneLoaded += OnSceneLoaded;
+		}
+
+		private void OnDisable()
+		{
+			SceneManager.sceneLoaded -= OnSceneLoaded;
+		}
+
+		private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+		{
+			Recorder.Trace("scene", scene.name, mode.ToString());
+		}
+
 		// Start fires the frame after the boot-hook postfix (see Entrypoint)
 		// created us, i.e. the engine is fully up by now.
 		private void Start()

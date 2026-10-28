@@ -202,4 +202,11 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   stacked, taken branch on a darker path, hover shows the full text, clicking a
   node loads that decision. The clicked answer is recorded (sidecar `chosen=`,
   and derived from the next snapshot's `CurrentConsequence`).
+- [x] Branch data gathered from public guides (`data/branches.json`,
+  `docs/BRANCHES.md`): chapter 1 complete, chapters 2-3 partial, 4-5 endings
+  only. Gaps and the plan to fill them are documented there.
+- [x] Trace logging (`Runs/<save>/trace.log`): every scene load and click, so
+  the missing graph edges (choice -> next scene) can be merged from play.
+- [ ] Merge traces into the branch data (script), then render the full tree with
+  the current save's path highlighted.
 - [ ] In-game test pass, README final, design doc.

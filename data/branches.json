@@ -1,0 +1,317 @@
+{
+  "schema": 1,
+  "game": "The Life and Suffering of Sir Brante",
+  "note": "Partial choice tree gathered from public guides (see docs/BRANCHES.md). It is NOT complete: chapters 4-5 are undocumented, and 'next scene' edges are only known where a guide says so. In-game scene ids are filled in only where confirmed from the mod's own logs.",
+  "sources": [
+    {
+      "id": "fandom-ch1",
+      "url": "https://the-life-and-suffering-of-sir-brante.fandom.com/wiki/Chapter_1._Childhood",
+      "covers": "Chapter 1: every scene, exact choice text, conditions and effects"
+    },
+    {
+      "id": "gamepretty",
+      "url": "https://gamepretty.com/the-life-and-suffering-of-sir-brante-all-choices-guide-chapters-1-3/",
+      "covers": "Chapters 1-3: scene order and the effects of each answer (choice texts for ch1 match the wiki)"
+    },
+    {
+      "id": "steam-rebel-lotless",
+      "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2825258690",
+      "covers": "One complete playthrough: exact choice texts used in chapters 1-2"
+    },
+    {
+      "id": "thegamer-ch3",
+      "url": "https://www.thegamer.com/life-suffering-brante-chapter-three-youth-arrival-three-lots-decisions/",
+      "covers": "Chapter 3 destinies: unlock conditions"
+    },
+    {
+      "id": "steam-event-sheet",
+      "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2577499714",
+      "covers": "Community spreadsheet, ~175 events with requirements and outcomes (external Google Sheet, not machine-read)"
+    }
+  ],
+  "chapters": [
+    {
+      "chapter": 1,
+      "title": "Childhood",
+      "lifeStage": "Childhood",
+      "scenes": [
+        {
+          "order": 1,
+          "title": "Birth",
+          "year": 1118,
+          "inGameId": "01.01.01",
+          "choices": [
+            { "text": "Reach out to the Palm", "effects": ["Perception +1"] },
+            { "text": "Reach out to the Fist", "effects": ["Determination +1"] },
+            { "text": "Smile at the Shadow", "effects": ["Willpower +10"] }
+          ]
+        },
+        {
+          "order": 2,
+          "title": "Hide and Seek",
+          "year": 1119,
+          "inGameId": "01.02.01_2",
+          "choices": [
+            { "text": "Cry loudly", "effects": ["Willpower +10"] },
+            { "text": "Find your way home", "effects": ["Determination +1"] },
+            { "text": "Sit there and wait", "effects": ["Perception +1"] }
+          ]
+        },
+        {
+          "order": 3,
+          "title": "The Great Descent",
+          "year": 1120,
+          "inGameId": "01.02.01",
+          "choices": [
+            { "text": "Finish the song properly", "effects": ["Perception +1"] },
+            { "text": "Sing the last line wrong", "effects": ["Determination +1"] }
+          ]
+        },
+        {
+          "order": 4,
+          "title": "The Lot of Suffering",
+          "year": 1121,
+          "inGameId": "01.03.01",
+          "choices": [
+            { "text": "Accept your punishment", "requires": ["Willpower >= 0"], "effects": ["Willpower -5", "Lydia +1", "Lydia: Grateful", "Stephan +1"] },
+            { "text": "Deny your guilt", "effects": ["Determination +1"] },
+            { "text": "Demand an explanation", "effects": ["Perception +1"] }
+          ]
+        },
+        {
+          "order": 5,
+          "title": "Gloria's Rhymes",
+          "year": 1122,
+          "inGameId": "01.04.01",
+          "choices": [
+            { "text": "Complain about your sister", "requires": ["Determination >= 2"], "effects": ["Determination +1"] },
+            { "text": "Offer to write rhymes with your sister", "requires": ["Perception >= 2"], "effects": ["Perception +1"] },
+            { "text": "Comfort your sister", "requires": ["Willpower >= 0"], "effects": ["Willpower -5", "Gloria +1", "Gloria: Grateful"] },
+            { "text": "Leave the room", "effects": ["Willpower +10"] }
+          ]
+        },
+        {
+          "order": 6,
+          "title": "Winter. The Coming Sacrament",
+          "year": 1122,
+          "choices": [],
+          "notes": "No choice; Unity -1, Stephan -1."
+        },
+        {
+          "order": 7,
+          "title": "The Newborn's Cry",
+          "year": 1122,
+          "inGameId": "01.05.01",
+          "choices": [
+            { "text": "Call to Father for help", "effects": ["Perception +1"] },
+            { "text": "Redirect her anger to yourself", "effects": ["Determination +1"] },
+            { "text": "Snatch Nathan from Mother", "requires": ["Willpower >= 0"], "effects": ["Willpower -5", "Nathan +5", "Nathan: Grateful"] },
+            { "text": "Hug mother", "requires": ["Lydia: Grateful"], "effects": ["Unity +1", "Lydia +1"] }
+          ]
+        },
+        {
+          "order": 8,
+          "title": "Toy Soldiers",
+          "year": 1123,
+          "choices": [
+            { "text": "Deny your guilt", "effects": ["Willpower +10"] },
+            { "text": "Tell him the truth", "effects": ["Determination +1"] },
+            { "text": "Admit your guilt", "requires": ["Willpower >= 0"], "effects": ["Willpower -5", "Robert +1", "Robert: Grateful"] }
+          ]
+        },
+        {
+          "order": 9,
+          "title": "The Intrusion",
+          "year": 1124,
+          "choices": [
+            { "text": "Watch them melt helplessly", "requires": ["Perception >= 4"], "effects": ["Willpower +5", "Perception +1"] },
+            { "text": "Rescue your tin warriors", "requires": ["Determination >= 4"], "effects": ["Determination +1", "Gregor +1"] },
+            { "text": "Burst into tears", "effects": ["Willpower -5", "Gregor -1"] },
+            { "text": "Strike Grandfather", "destiny": "Beyond", "effects": ["Determination +1", "Perception +1", "Death +1", "Gregor -1"] }
+          ]
+        },
+        {
+          "order": 10,
+          "title": "An Illustrious Guest",
+          "year": 1124,
+          "choices": [
+            { "text": "Greet the Baroness politely", "effects": ["Reputation +1", "Unity -1", "Lydia -1", "Robert +1", "Gregor +1"] },
+            { "text": "Walk away with mother", "effects": ["Reputation -1", "Perception +1", "Robert -1", "Lydia +1", "Gregor -1"] },
+            { "text": "Maintain your composure", "requires": ["Willpower >= 0"], "effects": ["Willpower -5"] },
+            { "text": "Demand that mother be introduced", "requires": ["Perception >= 4", "or", "Robert: Grateful"], "effects": ["Unity +1", "Reputation -1", "Gregor -1"] }
+          ]
+        },
+        {
+          "order": 11,
+          "title": "The Kaleidoscope",
+          "year": 1125,
+          "choices": [
+            { "text": "Take the Kaleidoscope apart", "requires": ["Willpower >= 0"], "effects": ["Willpower -5", "Perception +1"] },
+            { "text": "Keep looking through the Kaleidoscope", "effects": ["Willpower +10"] },
+            { "text": "Return to your studies", "requires": ["Willpower >= 0"], "effects": ["Willpower -5", "Determination +1"] }
+          ]
+        },
+        {
+          "order": 12,
+          "title": "Sweet Temptation",
+          "year": 1125,
+          "choices": [
+            { "text": "Tell the Truth", "requires": ["Willpower >= 0"], "effects": ["Perception +1", "Willpower -5", "Gregor +1"] },
+            { "text": "Lie", "effects": ["Willpower +5", "Gloria -1"] },
+            { "text": "Mock Grandfather along with your sister", "requires": ["Gloria: Grateful"], "effects": ["Determination +1", "Gloria +1", "Gregor -1"] }
+          ]
+        },
+        {
+          "order": 13,
+          "title": "The Sacrament",
+          "year": 1125,
+          "choices": [
+            { "text": "Accept it", "effects": ["Determination -1", "Perception +1"] },
+            { "text": "Raise your head", "requires": ["Determination >= 4"], "effects": ["Willpower +5"] },
+            { "text": "Catch the lash", "effects": ["Determination +1", "Perception -1"] },
+            { "text": "Kiss the Sword", "requires": ["Willpower >= 0"], "destiny": "Nobleman's Sacrament", "effects": ["Determination +1", "Perception -1", "Willpower -10", "Gregor +1"] }
+          ]
+        },
+        {
+          "order": 21,
+          "title": "Father's Sword",
+          "optional": true,
+          "requires": ["Determination >= 4"],
+          "window": "between The Newborn's Cry and The Sacrament",
+          "choices": [
+            { "text": "Agree with father", "effects": ["Willpower +5", "Robert +1"] },
+            { "text": "Ask Father to teach you the basics", "destiny": "The Fencing Lesson", "effects": ["Determination +1", "Willpower -10"] }
+          ]
+        },
+        {
+          "order": 22,
+          "title": "The Ant Farm",
+          "optional": true,
+          "requires": ["Perception >= 4"],
+          "window": "between The Newborn's Cry and The Sacrament",
+          "choices": [
+            { "text": "Keep playing with mother", "effects": ["Willpower +5", "Lydia +1"] },
+            { "text": "Play by yourself", "destiny": "Insight", "effects": ["Unity -1", "Perception +1"] }
+          ]
+        }
+      ]
+    },
+    {
+      "chapter": 2,
+      "title": "Adolescence",
+      "lifeStage": "Adolescence",
+      "coverage": "scene order and choice effects from gamepretty; choice texts from one Rebel/Lotless playthrough (steam-rebel-lotless), so only the picked option's text is certain for most scenes",
+      "scenes": [
+        { "order": 1, "title": "The Boy down the Street", "year": 1126, "choices": [
+          { "text": "Say your brother is to blame", "effects": ["Ingenuity +1", "Tommas +1"] },
+          { "text": "other options: Nobility +1 / Tommas +1; Spirituality +1 / Tommas +1", "effects": ["(Nathan: Grateful) Unity +1", "Willpower +10", "Tommas +1"] } ] },
+        { "order": 2, "title": "Riders on the Road", "choices": [
+          { "text": "Shield Sophia from the horses", "requires": ["Willpower >= 0"], "destiny": "Sophia saved", "effects": ["Nobility +1", "Ingenuity +1", "Spirituality +1", "Willpower -5", "Death +1"] } ] },
+        { "order": 3, "title": "Stephan's Arrival", "choices": [
+          { "text": "Make small talk over dinner", "effects": ["Nobility +1", "Gregor +1"] },
+          { "text": "other options", "effects": ["Ingenuity +1", "Stephan -1", "Gloria +1", "Stephan: Bad Blood", "or", "Willpower +10", "Gloria +1"] } ] },
+        { "order": 4, "title": "A Dropped Handkerchief", "choices": [
+          { "text": "Stash the trophy", "effects": ["Willpower +5", "Tommas +1"] },
+          { "text": "other options", "effects": ["(Willpower >= 0) Willpower -5", "Matters of heart", "or", "Willpower +10"] } ] },
+        { "order": 5, "title": "A Storm of Expectations", "choices": [
+          { "text": "Go help Tommas", "effects": ["Ingenuity +1", "Tommas +1"] },
+          { "text": "other options", "effects": ["Nobility +1", "Robert +1", "or", "Spirituality +1", "Lydia +1", "or", "Willpower +10", "Nathan +1"] } ] },
+        { "order": 6, "title": "Sons of the Nobility", "choices": [
+          { "text": "Turn him over the teachers", "effects": ["Ingenuity +1", "Tommas +1"] },
+          { "text": "other options", "effects": ["Nobility +1", "Tommas +1", "or", "Spirituality +1", "Tommas +1", "or", "(Tommas <= 1) Reputation +1", "Robert +1", "Tommas -1"] } ] },
+        { "order": 7, "title": "The Silver Tree", "choices": [
+          { "text": "Stay with the red-haired pilgrim", "effects": ["Spirituality +1", "Jeanne -1"] },
+          { "text": "other options", "effects": ["(Willpower >= 0) Jeanne +1", "Matters of heart", "Jeanne: Acquainted", "Willpower -5", "or", "Willpower +10", "or", "(Insight) Jeanne: Acquainted", "Spirituality +1", "Revelation of the Tree"] } ] },
+        { "order": 8, "title": "The Shadow of the Past", "choices": [
+          { "text": "Accept Gloria as your sister", "effects": ["Lydia +1", "Gloria +1"] },
+          { "text": "other options", "effects": ["Nobility +1", "Gloria -1", "Lydia -1", "or", "Willpower +5", "Lydia -1"] } ] },
+        { "order": 9, "title": "The Nobleman's Lot", "choices": [
+          { "text": "Follow your brother's orders", "requires": ["Willpower >= 0", "Stephan: not Bad Blood"], "effects": ["Nobility +1", "Stephan +2", "Willpower -5"] },
+          { "text": "other options", "effects": ["Stephan +2", "or", "Ingenuity +1"] } ] },
+        { "order": 10, "title": "Trial of the Assailants", "choices": [
+          { "text": "Convince Father to change his mind", "effects": ["Reputation -1", "Unity +1", "Nobility +1", "Spirituality +1", "Gregor -1"] },
+          { "text": "other options", "effects": ["Reputation +1", "Unity -1", "Robert +1", "Gloria -1", "or", "Ingenuity +1", "Robert -2", "Gloria +1", "Gregor -1"] } ] },
+        { "order": 11, "title": "Agony", "choices": [
+          { "text": "Stop Grandfather", "requires": ["Willpower >= 0", "Gregor <= 2"], "destiny": "True Death", "effects": ["Nobility +1", "Ingenuity +1", "Gregor -1", "Willpower -5"] },
+          { "text": "other options", "effects": ["Wealth -1", "Spirituality +1", "Ingenuity +1", "or", "Wealth -1", "Spirituality +2", "Ingenuity +1", "Nobility +1", "Deaths +1", "Lydia -1", "Gregor +1"] } ] },
+        { "order": 12, "title": "Last Respects", "choices": [
+          { "text": "Ask for Grandfather's blessing", "destiny": "Blood Tide", "effects": ["Robert +1", "Stephan +1"] },
+          { "text": "other options", "effects": ["Willpower +5", "Robert -1", "Nathan +1", "or", "(Sacrament) Blood Tide", "Robert +1"] } ] },
+        { "order": 13, "title": "The Fugitive Girl", "choices": [
+          { "text": "Try to stop Otton", "destiny": "Matters of the heart", "effects": ["Sophia +1", "Sophia: Trusting"] },
+          { "text": "other options", "effects": ["(Sophia not saved) Sophia: Merciless", "Otton +1", "Sophia -2", "or", "(Ingenuity >= 4, Willpower >= 0) Sophia: Trusting", "Sophia +1", "Willpower -5", "or", "Willpower -5", "Sophia: Embittered", "Sophia -1"] } ] },
+        { "order": 14, "title": "The Last Night", "choices": [
+          { "text": "Spend the time with Gloria", "effects": ["Ingenuity +2", "Gloria +1"] },
+          { "text": "other options", "effects": ["(Robert >= 4 / Grateful) Nobility +2", "Robert +1", "or", "(Lydia >= 4 / Grateful) Spirituality +2", "Lydia +1", "or", "Nathan +1", "Willpower +10"] } ] },
+        { "order": 21, "title": "Forbidden Love", "optional": true, "requires": ["Nobility >= 4"], "window": "after Sons of the Nobility", "choices": [
+          { "text": "Aid Stephan in his cause", "destiny": "Stephan's disgrace", "effects": ["Spirituality +1", "Ingenuity +1"] },
+          { "text": "other option", "effects": ["Stephan's disgrace", "Nobility +1", "Stephan +1"] } ] },
+        { "order": 22, "title": "The Poets", "optional": true, "requires": ["Ingenuity >= 4"], "window": "after Sons of the Nobility", "choices": [
+          { "text": "Keep Gloria's secret", "destiny": "Gloria's secret", "effects": ["Ingenuity +1", "Gloria +1"] },
+          { "text": "other option", "effects": ["Nobility +1", "Spirituality +1", "Gloria +1", "Gloria's secret"] } ] },
+        { "order": 23, "title": "An Adult Question", "optional": true, "requires": ["Ingenuity >= 4"], "window": "after Sons of the Nobility", "choices": [
+          { "text": "Confirm Nathan's fears", "destiny": "Nathan's admonition", "effects": ["Nobility +1", "Ingenuity +1"] },
+          { "text": "other option", "effects": ["Spirituality +1", "Nathan +1", "A Nathan's Admonition"] } ] }
+      ]
+    },
+    {
+      "chapter": 3,
+      "title": "Youth",
+      "lifeStage": "Youth",
+      "coverage": "only up to the choice of Lot (guide stops there); effects listed, choice texts not documented",
+      "scenes": [
+        { "order": 1, "title": "Arrival in the Capital", "year": 1135, "choices": [
+          { "text": "unknown (3 options)", "effects": ["Diplomacy +1", "Manipulation +1", "Willpower -5", "or", "Manipulation +1", "Eloquence +1", "Willpower -5", "or", "Theology +1", "Eloquence +1", "Willpower -5", "or", "Willpower +10"] } ] },
+        { "order": 2, "title": "Luke's Sermon", "choices": [
+          { "text": "unknown (3 options)", "effects": ["Diplomacy +1", "or", "Eloquence +1", "or", "Theology +1"] } ] },
+        { "order": 3, "title": "The City that Never Sleeps", "choices": [
+          { "text": "unknown (3 options)", "effects": ["Valor +1", "or", "Scheming +1", "or", "Theology +1"] } ] },
+        { "order": 4, "title": "The Girl from Your Past", "choices": [
+          { "text": "unknown", "effects": ["(Sophia != Merciless) Valor +1", "Sophia +1", "Scheming +1", "or", "Valor +1", "Sophia -1", "Diplomacy +1", "or", "(Sophia = Merciless, Willpower >= 0) Sophia: Embittered", "Sophia +1", "Scheming +1", "Manipulation +1", "Willpower -5"] } ] },
+        { "order": 5, "title": "The Three Lots", "choices": [
+          { "text": "Enroll in the Imperial College", "requires": ["Diplomacy >= 10 AND Valor >= 10"], "destiny": "Path of the Nobleman", "next": "chapter 4: Nobleman" },
+          { "text": "Enroll in the Seminary", "requires": ["Eloquence >= 10 AND Theology >= 10"], "destiny": "Path of the Priest", "next": "chapter 4: Priest" },
+          { "text": "Remain a Commoner", "destiny": "Path of the Lotless", "next": "chapter 4: Lotless" }
+        ] }
+      ]
+    },
+    {
+      "chapter": 4,
+      "title": "Peace Time",
+      "lifeStage": "Peace",
+      "coverage": "not documented by any guide found: 'too many branches' (gamepretty). Only the three path spines and some known destinies/endings are known.",
+      "paths": [
+        { "path": "Nobleman", "role": "judge in the Anizotte prefecture", "knownDecisions": ["side with Augustin El Borne (reform) or the Prefect (status quo)"] },
+        { "path": "Priest", "role": "Inquisitor in Magra", "knownDecisions": ["support the New Faith (Father Lennart) or the Old Faith (Patriarch Cassius)"] },
+        { "path": "Lotless", "role": "print shop cover for the Secret Chancellery", "knownDecisions": ["work the Chancellery's plan or undermine it", "support Sophia going rogue or not"] }
+      ],
+      "scenes": []
+    },
+    {
+      "chapter": 5,
+      "title": "The Revolt",
+      "lifeStage": "War",
+      "coverage": "not documented scene by scene; endings are listed on the wiki",
+      "scenes": [],
+      "endings": [
+        { "group": "Rebel", "names": ["The Free City", "The Last Straw Rebellion"] },
+        { "group": "Defender of the Empire", "names": ["Farewell, Advisor!", "Glory to the Empire!"] },
+        { "group": "Lotless, other", "names": ["The Master of Anizotte", "Free Man"] },
+        { "group": "Shared", "names": ["Favored by the Overseer", "True Death", "Ennobled by the Sword"] }
+      ]
+    }
+  ],
+  "destinies": [
+    { "name": "Beyond", "scene": "ch1 The Intrusion", "effect": "Death +1" },
+    { "name": "Insight", "scene": "ch1 The Ant Farm" },
+    { "name": "The Fencing Lesson", "scene": "ch1 Father's Sword" },
+    { "name": "Nobleman's Sacrament", "scene": "ch1 The Sacrament" },
+    { "name": "Sophia saved", "scene": "ch2 Riders on the Road" },
+    { "name": "Stephan's disgrace", "scene": "ch2 Forbidden Love" },
+    { "name": "Gloria's secret", "scene": "ch2 The Poets" },
+    { "name": "Nathan's admonition", "scene": "ch2 An Adult Question" },
+    { "name": "Matters of the heart", "scene": "ch2 A Dropped Handkerchief / The Fugitive Girl" },
+    { "name": "Blood Tide", "scene": "ch2 Last Respects" },
+    { "name": "True Death", "scene": "ch2 Agony (4th death)" }
+  ]
+}
