@@ -244,11 +244,10 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
     BRANCHES.md). Without them the view cannot know where an unplayed answer
     goes; with them it is only rendering.
   - Two possible designs:
-    1. **Offline graph**: `data/graph.json` + a full edge table, so clicking is
-       instant and needs no game state. **Blocked**: the transition is not in the
-       flow graphs, scene files or build order (see BRANCHES.md, "Why the
-       transition table cannot be read offline"). Unblocking it means parsing
-       `m_PersistentCalls` in the scene files by hand.
+    1. **Offline graph**: `data/scene-edges.json` + `scene-edges.tsv` (shipped
+       with the mod) hold the chapter chains, extracted from the chapter macros'
+       wiring (`tools/bolt_edges.py`) - 58 edges, matching a real playthrough.
+       The path builder can now walk forward without playing.
     2. **Live simulation**: load the nearest snapshot, then invoke the game's
        own `Button_Click` for each chosen answer and let the game advance. Works
        for captured scenes, but each step plays the consequence animation

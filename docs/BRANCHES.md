@@ -242,7 +242,32 @@ That means the tree does not need the unplayed-branch edges at all for the
 in order), the alternatives at each step come from this table, and the answer
 actually taken comes from the recorded `chosen=`/next snapshot.
 
-**Why the transition table cannot be read offline (checked 28 Oct 2026).**
+**Solved: the transitions are the chapter macros' wiring.** Each chapter macro
+connects its scene sub-macros in sequence — a scene's `Exit` flows into the next
+scene's `Enter`/`Flow`:
+
+```
+ChapterPicture -> ChildhoodStartScreen -> SWITCH
+SWITCH %true  -> 01.01.01 -> 01.02.01_2 -> 01.02.01 -> 01.03.01 -> 01.04.01
+              -> 01.05.01 -> 01.06.01 -> 01.07.01 -> 01.08.01 -> 01.09.01
+              -> 01.10.01 -> 01.11.01 -> ChildhoodFinishScreen
+SWITCH %false -> 01.N.01 -> 01.N2.01 -> 01.01.01 (joins the main chain)
+```
+
+This matches a real playthrough exactly (`01.01.01 → 01.02.01_2 → 01.02.01 →
+01.03.01 …`) and explains why the build order looked wrong. `TeenChapter` chains
+`02.N.01 → 02.N.02 → 02.N.03 → 02.01.01 …`, and `YouthChapter` has **three**
+chains, one per path (Noble `..._OfficersClub`, Priest `..._LegacyOfTheEvilAges`,
+Lotless `..._Recruitment`), each ending in its `030.080.010_Departure_*`.
+
+```sh
+python3 tools/bolt_edges.py     # -> data/scene-edges.json + Brante-Save-Load/scene-edges.tsv
+```
+
+58 edges in four chapter chains. The mod now ships `scene-edges.tsv` next to the
+DLL, so the path builder can walk forward through unplayed choices.
+
+The rest of this section records the earlier, now-resolved investigation.
 
 - The `Click` handler at runtime is the machine on `TalismanFlowMachine`. A new
   dev dump (`BoltDump.cs`, marker `dev-bolt.txt`) reads the *live* graph and
