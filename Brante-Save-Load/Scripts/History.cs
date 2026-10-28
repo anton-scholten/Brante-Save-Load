@@ -18,6 +18,14 @@ namespace Doorstop
 	// clicked, so it is a history of scenes, not of choices.
 	public static class History
 	{
+		public sealed class Choice
+		{
+			public int Index;
+			public string Text;
+			public string Name;
+			public bool Chosen;
+		}
+
 		public sealed class Entry
 		{
 			public int Index;
@@ -25,6 +33,8 @@ namespace Doorstop
 			public bool IsShowed;
 			public string Title;
 			public string SnapshotPath;
+			public string ChosenName;      // CurrentConsequence stored in the save
+			public List<Choice> Choices = new List<Choice>();
 
 			public bool HasSnapshot
 			{
@@ -53,8 +63,11 @@ namespace Doorstop
 				e.IsShowed = s.IsShowed;
 				e.Title = TitleOf(s.SceneName);
 				e.SnapshotPath = SnapshotFor(s.SceneName);
+				e.ChosenName = helper.CurrentConsequence ?? "";
+				LoadChoices(e);
 				list.Add(e);
 			}
+			MarkChosen(list);
 			return list;
 		}
 
@@ -83,9 +96,127 @@ namespace Doorstop
 				e.IsShowed = s.IsShowed;
 				e.Title = TitleOf(s.SceneName);
 				e.SnapshotPath = SnapshotFor(s.SceneName);
+				e.ChosenName = gm.CurrentConsequene ?? "";
+				LoadChoices(e);
 				list.Add(e);
 			}
+			MarkChosen(list);
 			return list;
+		}
+
+		// The offered choices recorded in the scene's sidecar.
+		private static void LoadChoices(Entry e)
+		{
+			e.Choices = new List<Choice>();
+			if (string.IsNullOrEmpty(e.SnapshotPath))
+			{
+				return;
+			}
+			string sidecar = Path.ChangeExtension(e.SnapshotPath, ".meta.txt");
+			try
+			{
+				if (!File.Exists(sidecar))
+				{
+					return;
+				}
+				foreach (string raw in File.ReadAllLines(sidecar))
+				{
+					string line = raw.Trim();
+					if (!line.StartsWith("[", StringComparison.Ordinal))
+					{
+						continue;
+					}
+					int close = line.IndexOf(']');
+					if (close < 2)
+					{
+						continue;
+					}
+					Choice c = new Choice();
+					int idx;
+					if (int.TryParse(line.Substring(1, close - 1), out idx))
+					{
+						c.Index = idx;
+					}
+					string text = line.Substring(close + 1).Trim();
+					int nameAt = text.IndexOf("   (name: ", StringComparison.Ordinal);
+					if (nameAt >= 0)
+					{
+						string name = text.Substring(nameAt + 10).TrimEnd(')', ' ');
+						c.Name = name;
+						text = text.Substring(0, nameAt);
+					}
+					c.Text = text.Trim();
+					// Scenes carry inactive variants of the same button; keep
+					// one node per distinct text, and skip empty entries.
+					if (c.Text.Length == 0)
+					{
+						continue;
+					}
+					bool dup = false;
+					foreach (Choice other in e.Choices)
+					{
+						dup = dup || other.Text == c.Text;
+					}
+					if (!dup)
+					{
+						e.Choices.Add(c);
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLog.Error("History: reading choices of " + sidecar + " failed:\n" + ex);
+			}
+		}
+
+		// The answer the player picked is stored in the NEXT snapshot
+		// (CurrentConsequence holds the clicked button's name), and, for the
+		// newest decision, in the sidecar by the click hook.
+		private static void MarkChosen(List<Entry> list)
+		{
+			for (int i = 0; i < list.Count; i++)
+			{
+				Entry e = list[i];
+				if (e.Choices.Count == 0)
+				{
+					continue;
+				}
+				string sidecar = string.IsNullOrEmpty(e.SnapshotPath) ? "" :
+					Path.ChangeExtension(e.SnapshotPath, ".meta.txt");
+				string chosen = "";
+				try
+				{
+					if (File.Exists(sidecar))
+					{
+						foreach (string raw in File.ReadAllLines(sidecar))
+						{
+							if (raw.StartsWith("chosen=", StringComparison.Ordinal))
+							{
+								chosen = raw.Substring(7).Trim();
+							}
+						}
+					}
+				}
+				catch
+				{
+					// best effort
+				}
+				if (string.IsNullOrEmpty(chosen) && i + 1 < list.Count)
+				{
+					chosen = list[i + 1].ChosenName;
+				}
+				if (string.IsNullOrEmpty(chosen))
+				{
+					continue;
+				}
+				foreach (Choice c in e.Choices)
+				{
+					if (!string.IsNullOrEmpty(c.Name) && c.Name == chosen)
+					{
+						c.Chosen = true;
+					}
+				}
+			}
 		}
 
 		// The newest choice-point snapshot the mod has for a scene (its file

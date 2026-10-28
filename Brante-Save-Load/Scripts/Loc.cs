@@ -16,7 +16,29 @@ namespace Doorstop
 			Load, Delete, Save, Cancel,
 			ConfirmLoad, ConfirmDelete, ConfirmSave, EmptySaves,
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
-			TypeAuto, TypeManual, SaveAvailable, Current, NothingYet
+			TypeAuto, TypeManual, SaveAvailable, Current, NothingYet,
+			TreeChosen, TreeOffered
+		}
+
+		static Loc()
+		{
+			AddTreeWords(_en, "chosen", "offered");
+			AddTreeWords(_ru, "выбрано", "предложено");
+			AddTreeWords(_de, "gewählt", "angeboten");
+			AddTreeWords(_fr, "choisi", "proposé");
+			AddTreeWords(_es, "elegido", "ofrecido");
+			AddTreeWords(_it, "scelto", "offerto");
+			AddTreeWords(_pl, "wybrano", "zaproponowano");
+			AddTreeWords(_tr, "seçildi", "sunuldu");
+			AddTreeWords(_ja, "選択済み", "候補");
+			AddTreeWords(_ko, "선택됨", "제시됨");
+			AddTreeWords(_zh, "已选择", "可选");
+		}
+
+		private static void AddTreeWords(Dictionary<K, string> d, string chosen, string offered)
+		{
+			d[K.TreeChosen] = chosen;
+			d[K.TreeOffered] = offered;
 		}
 
 		private static Dictionary<K, string> _english;

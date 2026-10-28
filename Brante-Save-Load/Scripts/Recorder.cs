@@ -725,6 +725,66 @@ namespace Doorstop
 			ModLog.Info("Choice point recorded: " + baseName + " (" + blob.Length + " bytes)");
 		}
 
+		// Harmony postfix on ParameterButtonChanger.Button_Click: the player
+		// picked an answer. The game stores the button's GameObject name in
+		// CurrentConsequence; we write it into this scene's sidecar so the
+		// history tree can mark the branch actually taken.
+		public static void RecordChoice(ParameterButtonChanger button)
+		{
+			try
+			{
+				if (button == null)
+				{
+					return;
+				}
+				string scene = GameManager.Instance != null ? GameManager.Instance.OpenedSceneName : "";
+				string dir = RunDir(CurrentRunId(), "Auto");
+				if (string.IsNullOrEmpty(scene) || !Directory.Exists(dir))
+				{
+					return;
+				}
+				string prefix = Sanitize(scene) + "_";
+				string newest = null;
+				DateTime newestTime = DateTime.MinValue;
+				foreach (string f in Directory.GetFiles(dir, "*.meta.txt"))
+				{
+					if (!Path.GetFileName(f).StartsWith(prefix, StringComparison.Ordinal))
+					{
+						continue;
+					}
+					// the snapshot file must still exist
+					string dat = Path.Combine(dir,
+						Path.GetFileNameWithoutExtension(f) + ".dat");
+					if (!File.Exists(dat))
+					{
+						continue;
+					}
+					DateTime t = File.GetLastWriteTimeUtc(dat);
+					if (t > newestTime)
+					{
+						newestTime = t;
+						newest = f;
+					}
+				}
+				if (newest == null)
+				{
+					return;
+				}
+				string chosen = "chosen=" + button.gameObject.name;
+				string text = File.ReadAllText(newest);
+				if (text.IndexOf(chosen, StringComparison.Ordinal) < 0)
+				{
+					File.AppendAllText(newest, chosen + "\n");
+					ModLog.Info("Choice recorded for " + Path.GetFileName(newest)
+						+ ": " + button.gameObject.name);
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: recording the clicked choice failed:\n" + e);
+			}
+		}
+
 		// Manual save: a new entry in the mod's own folder every time. Never
 		// touches the game's Saves/ folder.
 		public static void SaveManual()
@@ -936,7 +996,8 @@ namespace Doorstop
 			Array.Sort(buttons, (a, b) => a.ButtonIndex.CompareTo(b.ButtonIndex));
 			foreach (ParameterButtonChanger b in buttons)
 			{
-				sb.AppendLine("  [" + b.ButtonIndex + "] " + T(b.ButtonTextKey));
+				sb.AppendLine("  [" + b.ButtonIndex + "] " + T(b.ButtonTextKey)
+					+ "   (name: " + b.gameObject.name + ")");
 			}
 			File.WriteAllText(Path.Combine(dir, baseName + ".meta.txt"), sb.ToString());
 		}
@@ -989,7 +1050,8 @@ namespace Doorstop
 			StringBuilder sb = new StringBuilder();
 			foreach (ParameterButtonChanger b in buttons)
 			{
-				sb.AppendLine("  [" + b.ButtonIndex + "] " + T(b.ButtonTextKey));
+				sb.AppendLine("  [" + b.ButtonIndex + "] " + T(b.ButtonTextKey)
+					+ "   (name: " + b.gameObject.name + ")");
 			}
 			string path = Path.Combine(dir, baseName + ".meta.txt");
 			string text = File.ReadAllText(path);

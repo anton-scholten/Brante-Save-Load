@@ -76,6 +76,8 @@ namespace Doorstop
 				// the "Save / Load" button (Phase 4/6); fires only when the
 				// engine is up, so the Unity API is safe here
 				new[] { "_Scripts.Managers.UIManager, Assembly-CSharp", "ShowPauseMenu", "PauseMenuPostfix" },
+				// a choice button was clicked: record which one (history tree)
+				new[] { "_Scripts.AMVCC.Views.ParameterButtonChanger, Assembly-CSharp", "Button_Click", "ChoiceClickPostfix" },
 			};
 			foreach (string[] t in targets)
 			{
@@ -129,6 +131,12 @@ namespace Doorstop
 					postfix: new HarmonyMethod(typeof(Entrypoint), "SaveFolderPostfix"));
 				ModLog.Info("Patched " + slm.Name + ".GetSaveFolderPath (folder repair postfix)");
 			}
+		}
+
+		// Harmony postfix on ParameterButtonChanger.Button_Click.
+		private static void ChoiceClickPostfix(object __instance)
+		{
+			Recorder.RecordChoice(__instance as _Scripts.AMVCC.Views.ParameterButtonChanger);
 		}
 
 		private static void SaveFolderPostfix(ref string __result)

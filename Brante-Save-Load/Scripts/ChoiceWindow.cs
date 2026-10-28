@@ -36,6 +36,30 @@ namespace Doorstop
 	// the game save normally again (autosaves, chapter files), exactly as it
 	// would after loading an older save from its own menu - so a chapter
 	// restart after a death continues the rewound timeline.
+	// Shows a node's full text in the history panel's info line while the
+	// pointer is over it (the tree nodes are narrow, so the text is clipped).
+	public sealed class TreeHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+	{
+		public string Info;
+		public Action<string> OnShow;
+
+		public void OnPointerEnter(PointerEventData eventData)
+		{
+			if (OnShow != null)
+			{
+				OnShow(Info);
+			}
+		}
+
+		public void OnPointerExit(PointerEventData eventData)
+		{
+			if (OnShow != null)
+			{
+				OnShow(null);
+			}
+		}
+	}
+
 	// Scrolls a too-long row text (a "marquee"): it first rests showing as
 	// much as fits plus TMP's ellipsis, then slides right-to-left (the text
 	// moves left) until the end is visible, pauses, and starts over.
@@ -225,6 +249,9 @@ namespace Doorstop
 		private static readonly Color ColTextDark = new Color(0.12f, 0.10f, 0.08f);
 		private static readonly Color ColDashRed = new Color(0.85f, 0.10f, 0.10f);
 		private static readonly Color ColCrossNormal = new Color(0.05f, 0.04f, 0.03f);
+		private static readonly Color ColTreeLine = new Color(0.55f, 0.50f, 0.42f, 0.55f);
+		private static readonly Color ColTreeChosen = new Color(0.55f, 0.30f, 0.25f);
+		private static readonly Color ColTreeChosenBg = new Color(1f, 0.93f, 0.72f);
 
 		private enum Pending { Load, Delete, SaveNow }
 
@@ -304,6 +331,8 @@ namespace Doorstop
 		private static GameObject _historyBtn;
 		private static GameObject _historyPanel;
 		private static int _historyLoadable;
+		private static TextMeshProUGUI _historyInfo;
+
 		private static Transform _historyList;
 		private static Col _sortCol = Col.Saved;
 		private static bool _sortAsc;
@@ -738,7 +767,7 @@ namespace Doorstop
 			srt.offsetMin = new Vector2(26f, 96f);
 			srt.offsetMax = new Vector2(-26f, -96f);
 			ScrollRect sc = scroll.AddComponent<ScrollRect>();
-			sc.horizontal = false;
+			sc.horizontal = true;
 			sc.vertical = true;
 			sc.movementType = ScrollRect.MovementType.Clamped;
 			sc.scrollSensitivity = 30f;
@@ -748,25 +777,29 @@ namespace Doorstop
 			viewport.AddComponent<RectMask2D>();
 			sc.viewport = viewport.GetComponent<RectTransform>();
 
+			// The tree is positioned by hand (columns and lines), so no layout
+			// group and no size fitter here.
 			GameObject content = CreateUiObject("Content", viewport.transform);
 			RectTransform cont = content.GetComponent<RectTransform>();
 			cont.anchorMin = new Vector2(0f, 1f);
-			cont.anchorMax = new Vector2(1f, 1f);
-			cont.pivot = new Vector2(0.5f, 1f);
+			cont.anchorMax = new Vector2(0f, 1f);
+			cont.pivot = new Vector2(0f, 1f);
 			cont.anchoredPosition = Vector2.zero;
-			cont.sizeDelta = Vector2.zero;
-			VerticalLayoutGroup vlg = content.AddComponent<VerticalLayoutGroup>();
-			vlg.padding = new RectOffset(4, 4, 4, 4);
-			vlg.spacing = 4f;
-			vlg.childControlWidth = true;
-			vlg.childControlHeight = true;
-			vlg.childForceExpandWidth = true;
-			vlg.childForceExpandHeight = false;
-			ContentSizeFitter fitter = content.AddComponent<ContentSizeFitter>();
-			fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-			fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+			cont.sizeDelta = new Vector2(100f, 100f);
 			sc.content = cont;
 			_historyList = content.transform;
+
+			// Hover info line, above the Close button.
+			_historyInfo = AddLabel(box.transform, "Info", "", 18f,
+				new Color(0.30f, 0.26f, 0.20f), false);
+			RectTransform irt2 = _historyInfo.rectTransform;
+			irt2.anchorMin = new Vector2(0f, 0f);
+			irt2.anchorMax = new Vector2(1f, 0f);
+			irt2.pivot = new Vector2(0.5f, 0f);
+			irt2.anchoredPosition = new Vector2(0f, 82f);
+			irt2.sizeDelta = new Vector2(-52f, 26f);
+			_historyInfo.overflowMode = TextOverflowModes.Ellipsis;
+			_historyInfo.enableWordWrapping = false;
 
 			GameObject close = CreateUiObject("Close", box.transform);
 			RectTransform crt = close.GetComponent<RectTransform>();
@@ -809,6 +842,17 @@ namespace Doorstop
 		}
 
 		// (Re)builds the history rows; returns how many are shown.
+		// The history as a left-to-right tree: one column per captured
+		// decision, its offered choices stacked vertically, the answer taken
+		// on a darker path. Hovering a choice shows its full text; clicking
+		// one loads that decision's save.
+		private const float TreeColW = 360f;
+		private const float TreeNodeW = 290f;
+		private const float TreeNodeH = 48f;
+		private const float TreeRowH = 58f;
+		private const float TreeNodeX = 46f;
+		private const float TreeTop = 58f;
+
 		private static int RefreshHistory()
 		{
 			if (_historyList == null)
@@ -822,76 +866,191 @@ namespace Doorstop
 				UnityEngine.Object.Destroy(old);
 			}
 			_historyLoadable = 0;
-			List<History.Entry> entries = History.FromCurrentGame();
-			if (entries.Count == 0)
-			{
-				entries = History.FromNewestSave();
-			}
-			int shown = 0;
-			foreach (History.Entry e in entries)
-			{
-				// Scenes without a title are the game's machinery (loading
-				// screens, disclaimers); the story path is what matters.
-				if (string.IsNullOrEmpty(e.Title))
-				{
-					continue;
-				}
-				shown++;
-				GameObject row = CreateUiObject("HistRow", _historyList);
-				LayoutElement rle = row.AddComponent<LayoutElement>();
-				rle.preferredHeight = 42f;
-				Image img = row.AddComponent<Image>();
-				img.color = shown % 2 == 0 ? ColAutoAlt : ColAuto;
-				// Scenes the mod captured are clickable: they load that
-				// choice point. Scenes from before the mod have no state to
-				// restore, so their row stays plain.
-				if (e.HasSnapshot)
-				{
-					_historyLoadable++;
-					Button btn = row.AddComponent<Button>();
-					btn.targetGraphic = img;
-					string path = e.SnapshotPath;
-					string title = e.Title;
-					btn.onClick.AddListener(delegate
-					{
-						// The history panel closes, so there is no row to mark
-						// behind the confirm dialog.
-						CloseHistory();
-						Ask(Pending.Load, path, title, null);
-					});
-				}
+			SetHistoryInfo(null);
 
-				TextMeshProUGUI label = AddLabel(row.transform, "Text",
-					shown + ".  " + e.Title
-					+ (e.HasSnapshot ? "   [" + Loc.T(Loc.K.SaveAvailable) + "]" : "")
-					+ (e.IsShowed ? "" : "   [" + Loc.T(Loc.K.Current) + "]"),
-					19f, e.HasSnapshot ? ColTextDark : new Color(0.35f, 0.30f, 0.24f), false);
-				label.overflowMode = TextOverflowModes.Ellipsis;
-				label.enableWordWrapping = false;
-				RectTransform lrt = label.rectTransform;
-				lrt.anchorMin = Vector2.zero;
-				lrt.anchorMax = Vector2.one;
-				lrt.offsetMin = new Vector2(10f, 0f);
-				lrt.offsetMax = new Vector2(-170f, 0f);
-
-				TextMeshProUGUI id = AddLabel(row.transform, "Scene", e.SceneName,
-					17f, new Color(0.35f, 0.30f, 0.24f), false);
-				RectTransform irt = id.rectTransform;
-				irt.anchorMin = new Vector2(1f, 0f);
-				irt.anchorMax = new Vector2(1f, 1f);
-				irt.pivot = new Vector2(1f, 0.5f);
-				irt.offsetMin = new Vector2(-160f, 0f);
-				irt.offsetMax = new Vector2(-10f, 0f);
-				id.alignment = TextAlignmentOptions.MidlineRight;
+			List<History.Entry> all = History.FromCurrentGame();
+			if (all.Count == 0)
+			{
+				all = History.FromNewestSave();
 			}
-			if (shown == 0)
+			// Only scenes the mod captured have choices and a loadable state.
+			List<History.Entry> cols = new List<History.Entry>();
+			foreach (History.Entry e in all)
+			{
+				if (e.HasSnapshot && e.Choices.Count > 0)
+				{
+					cols.Add(e);
+				}
+			}
+			if (cols.Count == 0)
 			{
 				TextMeshProUGUI empty = AddLabel(_historyList, "Empty",
 					Loc.T(Loc.K.NothingYet), 20f, ColTextDark, true);
-				LayoutElement le = empty.gameObject.AddComponent<LayoutElement>();
-				le.preferredHeight = 50f;
+				RectTransform ert = empty.rectTransform;
+				ert.anchorMin = new Vector2(0f, 1f);
+				ert.anchorMax = new Vector2(0f, 1f);
+				ert.pivot = new Vector2(0f, 1f);
+				ert.sizeDelta = new Vector2(400f, 40f);
+				SetContentSize(420f, 80f);
+				return 0;
 			}
-			return shown;
+
+			int rows = 0;
+			foreach (History.Entry e in cols)
+			{
+				rows = Mathf.Max(rows, e.Choices.Count);
+			}
+			float width = 30f + cols.Count * TreeColW;
+			float height = TreeTop + rows * TreeRowH + 20f;
+			SetContentSize(width, height);
+
+			for (int i = 0; i < cols.Count; i++)
+			{
+				History.Entry e = cols[i];
+				float x = 30f + i * TreeColW;
+
+				// Column header: the scene's title.
+				TextMeshProUGUI head = AddLabel(_historyList, "Head", e.Title,
+					18f, ColTextDark, false);
+				Wrap(head, x, 6f, TreeNodeW + TreeNodeX, 44f);
+				head.enableWordWrapping = true;
+				head.overflowMode = TextOverflowModes.Ellipsis;
+
+				// Choices, top to bottom; the chosen one carries the dark path.
+				int chosenY = -1;
+				float spineTop = TreeTop + (TreeRowH - TreeNodeH) * 0.5f;
+				float spineBottom = spineTop + (e.Choices.Count - 1) * TreeRowH;
+				AddLine(x + 16f, spineTop + TreeNodeH * 0.5f, x + 16f,
+					spineBottom + TreeNodeH * 0.5f, ColTreeLine, 3f);
+
+				for (int k = 0; k < e.Choices.Count; k++)
+				{
+					History.Choice c = e.Choices[k];
+					float y = TreeTop + k * TreeRowH;
+					float cy = y + TreeNodeH * 0.5f;
+					Color line = c.Chosen ? ColTreeChosen : ColTreeLine;
+					AddLine(x + 16f, cy, x + TreeNodeX, cy, line, c.Chosen ? 5f : 3f);
+
+					GameObject node = CreateUiObject("Choice", _historyList);
+					RectTransform nrt = node.GetComponent<RectTransform>();
+					nrt.anchorMin = new Vector2(0f, 1f);
+					nrt.anchorMax = new Vector2(0f, 1f);
+					nrt.pivot = new Vector2(0f, 1f);
+					nrt.anchoredPosition = new Vector2(x + TreeNodeX, -y);
+					nrt.sizeDelta = new Vector2(TreeNodeW, TreeNodeH);
+					Image nimg = node.AddComponent<Image>();
+					nimg.color = c.Chosen ? ColTreeChosenBg : ColAuto;
+					// Clicking loads that decision's save (the state just
+					// before this choice was made).
+					Button nb = node.AddComponent<Button>();
+					nb.targetGraphic = nimg;
+					string path = e.SnapshotPath;
+					string title = e.Title;
+					nb.onClick.AddListener(delegate
+					{
+						CloseHistory();
+						Ask(Pending.Load, path, title, null);
+					});
+					_historyLoadable++;
+
+					TextMeshProUGUI label = AddLabel(node.transform, "Text",
+						c.Text, 17f, ColTextDark, false);
+					RectTransform lrt = label.rectTransform;
+					lrt.anchorMin = Vector2.zero;
+					lrt.anchorMax = Vector2.one;
+					lrt.offsetMin = new Vector2(10f, 2f);
+					lrt.offsetMax = new Vector2(-10f, -2f);
+					label.overflowMode = TextOverflowModes.Ellipsis;
+					label.enableWordWrapping = false;
+
+					TreeHover hover = node.AddComponent<TreeHover>();
+					hover.Info = c.Text + (c.Chosen ? "   \u2022 " + Loc.T(Loc.K.TreeChosen)
+						: "   \u2022 " + Loc.T(Loc.K.TreeOffered));
+					hover.OnShow = SetHistoryInfo;
+
+					if (c.Chosen)
+					{
+						chosenY = k;
+					}
+				}
+
+				// Link this column's answer to the next column.
+				if (chosenY >= 0 && i + 1 < cols.Count)
+				{
+					float fromY = TreeTop + chosenY * TreeRowH + TreeNodeH * 0.5f;
+					int nextChosen = -1;
+					for (int k = 0; k < cols[i + 1].Choices.Count; k++)
+					{
+						if (cols[i + 1].Choices[k].Chosen)
+						{
+							nextChosen = k;
+							break;
+						}
+					}
+					float toY = nextChosen >= 0
+						? TreeTop + nextChosen * TreeRowH + TreeNodeH * 0.5f
+						: TreeTop + TreeNodeH * 0.5f;
+					float nextSpine = x + TreeColW + 16f;
+					AddLine(x + 16f, fromY, nextSpine, fromY, ColTreeChosen, 5f);
+					if (Mathf.Abs(toY - fromY) > 0.5f)
+					{
+						AddLine(nextSpine, fromY, nextSpine, toY, ColTreeChosen, 5f);
+					}
+				}
+			}
+			return cols.Count;
+		}
+
+		// Sets the content rect of a scroll view that is laid out by hand.
+		private static void SetContentSize(float width, float height)
+		{
+			RectTransform rt = _historyList as RectTransform;
+			if (rt != null)
+			{
+				rt.sizeDelta = new Vector2(width, height);
+			}
+		}
+
+		// Positions a label at the top-left of the history content.
+		private static void Wrap(TextMeshProUGUI label, float x, float y, float width, float height)
+		{
+			RectTransform rt = label.rectTransform;
+			rt.anchorMin = new Vector2(0f, 1f);
+			rt.anchorMax = new Vector2(0f, 1f);
+			rt.pivot = new Vector2(0f, 1f);
+			rt.anchoredPosition = new Vector2(x, -y);
+			rt.sizeDelta = new Vector2(width, height);
+		}
+
+		// An axis-aligned connector line in the tree.
+		private static void AddLine(float x1, float y1, float x2, float y2, Color color, float thickness)
+		{
+			GameObject go = CreateUiObject("Line", _historyList);
+			RectTransform rt = go.GetComponent<RectTransform>();
+			rt.anchorMin = new Vector2(0f, 1f);
+			rt.anchorMax = new Vector2(0f, 1f);
+			rt.pivot = new Vector2(0f, 1f);
+			if (Mathf.Abs(y2 - y1) < 0.5f)
+			{
+				rt.anchoredPosition = new Vector2(Mathf.Min(x1, x2), -y1 + thickness * 0.5f);
+				rt.sizeDelta = new Vector2(Mathf.Abs(x2 - x1), thickness);
+			}
+			else
+			{
+				rt.anchoredPosition = new Vector2(x1 - thickness * 0.5f, -Mathf.Max(y1, y2));
+				rt.sizeDelta = new Vector2(thickness, Mathf.Abs(y2 - y1));
+			}
+			Image img = go.AddComponent<Image>();
+			img.color = color;
+			img.raycastTarget = false;
+		}
+
+		private static void SetHistoryInfo(string text)
+		{
+			if (_historyInfo != null)
+			{
+				_historyInfo.text = string.IsNullOrEmpty(text) ? "" : text;
+			}
 		}
 
 		private static void BuildScrollbar(Transform scroll)

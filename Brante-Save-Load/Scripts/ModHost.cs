@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using _Scripts.Helpers;
 using _Scripts.Managers;
+using _Scripts.AMVCC.Views;
 
 namespace Doorstop
 {
@@ -202,6 +204,42 @@ namespace Doorstop
 						ModLog.Info("DEV UITEST: marker found - starting UI test in 3s");
 						yield return new WaitForSeconds(3f);
 						ChoiceWindow.DevTest();
+					}
+					// Dev: click the first offered choice (records the branch
+					// taken and moves the story on).
+					string click = Path.Combine(Recorder.SnapshotDir, "dev-click.txt");
+					if (File.Exists(click))
+					{
+						try { File.Delete(click); }
+						catch (Exception) { }
+						yield return new WaitForSeconds(3f);
+						// The buttons are inactive until the show animation;
+						// FindObjectsOfType would miss them.
+						List<ParameterButtonChanger> found = new List<ParameterButtonChanger>();
+						foreach (ParameterButtonChanger b in
+							Resources.FindObjectsOfTypeAll<ParameterButtonChanger>())
+						{
+							if (b != null && b.gameObject.scene.IsValid())
+							{
+								found.Add(b);
+							}
+						}
+						// Only visible buttons respond correctly; an inactive
+						// one throws inside the game's own handler.
+						found.RemoveAll(b => !b.gameObject.activeInHierarchy);
+						ParameterButtonChanger[] btns = found.ToArray();
+						if (btns.Length > 0)
+						{
+							Array.Sort(btns, (a, b) => a.ButtonIndex.CompareTo(b.ButtonIndex));
+							ModLog.Info("DEV CLICK: clicking choice [" + btns[0].ButtonIndex + "] on "
+								+ btns[0].gameObject.name);
+							btns[0].Button_Click();
+							yield return new WaitForSeconds(4f);
+						}
+						else
+						{
+							ModLog.Info("DEV CLICK: no choice buttons");
+						}
 					}
 					// Phase 6: dump the scene path the playthrough has taken.
 					string history = Path.Combine(Recorder.SnapshotDir, "dev-history.txt");
