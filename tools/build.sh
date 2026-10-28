@@ -45,24 +45,7 @@ if [[ ! -f "$CSC" ]]; then
     exit 1
 fi
 
-find_game() {
-    if [[ -n "${BRANTE_DIR:-}" ]]; then echo "$BRANTE_DIR"; return; fi
-    local candidates=()
-    local vdf lib
-    for vdf in "$HOME/.steam/steam/steamapps/libraryfolders.vdf" \
-               "$HOME/.local/share/Steam/steamapps/libraryfolders.vdf"; do
-        [[ -f "$vdf" ]] || continue
-        while read -r lib; do candidates+=("$lib/steamapps/common"); done \
-            < <(grep -oE '"path"[[:space:]]+"[^"]+"' "$vdf" | sed -E 's/.*"([^"]+)"$/\1/')
-    done
-    candidates+=("$HOME/.steam/steam/steamapps/common" "$HOME/.local/share/Steam/steamapps/common")
-    local dir
-    for dir in "${candidates[@]}"; do
-        [[ -f "$dir/The Life and Suffering of Sir Brante/The Life and Suffering of Sir Brante_Data/Managed/Assembly-CSharp.dll" ]] \
-            && { echo "$dir/The Life and Suffering of Sir Brante"; return; }
-    done
-    return 1
-}
+source "$REPO_DIR/tools/steam.sh"
 
 if ! GAME="$(find_game)"; then
     echo "Could not find the game. Set BRANTE_DIR to its install directory." >&2

@@ -4,7 +4,8 @@
 #
 #   ./tools/install.sh              build, then symlink (best for development:
 #                                   a rebuild is picked up by the next game
-#                                   start, no reinstall)
+#                                   start, no reinstall). Without a .NET SDK
+#                                   the prebuilt DLL from the repo is used.
 #   ./tools/install.sh --copy       copy instead (for handing someone a folder)
 #   ./tools/install.sh --uninstall  remove everything again
 #   ./tools/install.sh --no-build   skip the build step
@@ -19,7 +20,8 @@
 #                             proxy loads without any launch option
 # None of the game's own files are modified; --uninstall removes only these.
 #
-# Set BRANTE_DIR if the game is not auto-detected.
+# The game is found through Steam's library list (distro, Flatpak or Snap
+# Steam; see tools/steam.sh). Set BRANTE_DIR if it is not auto-detected.
 
 set -euo pipefail
 
@@ -46,24 +48,7 @@ if [[ $RESTORE -eq 1 || $PURGE -eq 1 ]] && [[ "$MODE" != "uninstall" ]]; then
     exit 1
 fi
 
-find_game() {
-    if [[ -n "${BRANTE_DIR:-}" ]]; then echo "$BRANTE_DIR"; return; fi
-    local candidates=()
-    local vdf lib
-    for vdf in "$HOME/.steam/steam/steamapps/libraryfolders.vdf" \
-               "$HOME/.local/share/Steam/steamapps/libraryfolders.vdf"; do
-        [[ -f "$vdf" ]] || continue
-        while read -r lib; do candidates+=("$lib/steamapps/common"); done \
-            < <(grep -oE '"path"[[:space:]]+"[^"]+"' "$vdf" | sed -E 's/.*"([^"]+)"$/\1/')
-    done
-    candidates+=("$HOME/.steam/steam/steamapps/common" "$HOME/.local/share/Steam/steamapps/common")
-    local dir
-    for dir in "${candidates[@]}"; do
-        [[ -f "$dir/The Life and Suffering of Sir Brante/The Life and Suffering of Sir Brante_Data/globalgamemanagers" ]] \
-            && { echo "$dir/The Life and Suffering of Sir Brante"; return; }
-    done
-    return 1
-}
+source "$REPO_DIR/tools/steam.sh"
 
 if ! GAME="$(find_game)"; then
     echo "Could not find the game. Set BRANTE_DIR to its install directory." >&2
@@ -72,13 +57,7 @@ fi
 
 # Steam libraries, for finding the game's Proton prefix (compat data may live
 # in any library, not necessarily the one holding the game files).
-mapfile -t LIBS < <(
-    for vdf in "$HOME/.steam/steam/steamapps/libraryfolders.vdf" \
-               "$HOME/.local/share/Steam/steamapps/libraryfolders.vdf"; do
-        [[ -f "$vdf" ]] || continue
-        grep -oE '"path"[[:space:]]+"[^"]+"' "$vdf" | sed -E 's/.*"([^"]+)"$/\1/'
-    done | sort -u
-)
+mapfile -t LIBS < <(steam_libraries)
 
 # --- Proton/Wine: load Doorstop's proxy without a launch option --------------
 # Wine prefers its builtin winhttp.dll over the native proxy in the game dir,
@@ -262,6 +241,20 @@ if [[ "$MODE" == "uninstall" ]]; then
         echo "Just delete the mod's own saves:              ./tools/install.sh --uninstall --purge"
     fi
     exit 0
+fi
+
+# The repo ships a built DLL, so players need no SDK: without one, install
+# that. (Same lookup as build.sh's find_dotnet.)
+have_dotnet() {
+    [[ -n "${DOTNET_DIR:-}" && -x "$DOTNET_DIR/dotnet" ]] && return 0
+    [[ -x "$HOME/.dotnet/dotnet" ]] && return 0
+    command -v dotnet >/dev/null 2>&1
+}
+if [[ $BUILD -eq 1 ]] && ! have_dotnet && [[ -f "$SRC/$MOD_NAME.dll" ]]; then
+    echo "No .NET SDK found: installing the prebuilt $MOD_NAME.dll shipped with the repo."
+    echo "(Only needed to rebuild after changing the source; see AGENTS.md.)"
+    echo
+    BUILD=0
 fi
 
 if [[ $BUILD -eq 1 ]]; then

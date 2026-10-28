@@ -138,12 +138,18 @@ have already rolled by the time a choice is visible. Details in
 ## Install
 
 ```sh
-./tools/install.sh          # build + install (symlink; best for development)
+./tools/install.sh          # install (symlink; best for development)
 ./tools/install.sh --copy   # copy instead
 ```
 
-Requires: the game (Steam), a .NET SDK (≥ 6) for building. Runs under Proton or
-native Windows. The installer places three things in the game folder — a symlink
+Requires: the game, installed through Steam, and bash. The installer finds the
+game in any of your Steam libraries, whether Steam is the distro package, the
+Flatpak or the Snap; for any other location (or a non-Steam copy) run it as
+`BRANTE_DIR=/path/to/"The Life and Suffering of Sir Brante" ./tools/install.sh`.
+The mod's DLL ships built in the repo, so no .NET SDK is needed to play: when
+one is installed (≥ 6) the installer rebuilds from source first, otherwise it
+uses the prebuilt DLL. Runs under Proton or native Windows (for Windows without
+bash, see the manual steps under Platforms). The installer places three things in the game folder — a symlink
 to `Brante-Save-Load/`, `doorstop_config.ini` and `winhttp.dll` (Doorstop, the same
 bootstrap BepInEx uses, without BepInEx) — plus, under Proton, a per-app Wine
 `DllOverrides` entry in the game's compat-data prefix so the proxy DLL is picked

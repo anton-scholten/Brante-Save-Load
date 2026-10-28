@@ -37,6 +37,7 @@ vendor/                      vendored third-party binaries + their licenses
   0Harmony.dll               Lib.Harmony 2.3.3 (net472), MIT
 tools/build.sh               compile against the game's own Managed/ DLLs
 tools/install.sh             build, then symlink/copy into the game folder
+tools/steam.sh               Steam library lookup (distro/Flatpak/Snap), sourced by both
 tools/localization.py        extract titles/answers -> data/, shipped TSV
 tools/bolt_extract.py        dump every Bolt graph as JSON (no UnityPy needed)
 tools/bolt_graph.py          Walk Bolt graphs (macro resolution, LoadScene)
