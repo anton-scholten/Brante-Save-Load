@@ -168,7 +168,32 @@ cannot be used to disambiguate either. Resolving this needs either:
 - parsing the FlowMachine MonoBehaviour bytes by hand (its macro PPtr array), or
 - Unity type trees (not shipped in a release build).
 
-Everything up to that point is extracted and committed (`data/bolt-graphs.json`).
+**Solved.** The MonoBehaviour's serialised layout is
+
+```
+header(12) | m_Enabled(4) | m_Script(12) | m_Name(len+bytes) | graph JSON | macro PPtr array
+```
+
+and the trailing array is `count | count * (fileID int32, pathID int64)`. For the
+`GameManager` machine it holds exactly **16 entries — one per `SuperUnit`** — so
+`nest.macro = N` is the N-th pathID in that array. `tools/bolt_graph.py` reads the
+layout, resolves macros, and walks control flow from the `Click` event through
+switches/branches and nested macros to `LoadScene`:
+
+```
+GameManager  switch=%Yes / macro:GameFinals / ... -> LiveTimeline
+GameManager  switch=%No / switch=%1 / macro:LoadScreen -> LoadingScreen_Child
+```
+
+**Second finding — per-scene successors live in the scene files.** The Bolt graph
+does not switch on scene ids, but each `level*` scene file contains its own
+successor ids: `level34` (= scene `01.05.01`) holds the string `01.06.01` right
+next to its consequence key `01.05.01_ConsequenceText_3_1`. So the remaining work
+is to read those per-scene entries (button → next scene) from the scene files,
+instead of chasing them in the graph.
+
+Everything extracted so far is committed (`data/bolt-graphs.json`,
+`data/bolt-edges.json`).
 
 What would then remain is an interpreter for the dispatcher: follow control flow
 from the `Click` event, evaluate the switches/branches, descend into `SuperUnit`

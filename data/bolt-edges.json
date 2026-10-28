@@ -1,0 +1,1158 @@
+{
+ "schema": 1,
+ "edges": [
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=default",
+    "switch=%0",
+    "macro:Disclaimer",
+    "ifTrue"
+   ],
+   "scene": "Disclaimer"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=default",
+    "switch=%1",
+    "macro:LoadScreen",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=default",
+    "switch=%2",
+    "macro:CutscenePlayer",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=default",
+    "switch=%3",
+    "macro:CutscenePlayer",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=default",
+    "switch=%4",
+    "macro:CutscenePlayer",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=default",
+    "switch=%5",
+    "macro:CutscenePlayer",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%No",
+    "switch=%0",
+    "macro:Disclaimer",
+    "ifTrue"
+   ],
+   "scene": "Disclaimer"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%No",
+    "switch=%1",
+    "macro:LoadScreen",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%No",
+    "switch=%2",
+    "macro:CutscenePlayer",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%No",
+    "switch=%3",
+    "macro:CutscenePlayer",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%No",
+    "switch=%4",
+    "macro:CutscenePlayer",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%No",
+    "switch=%5",
+    "macro:CutscenePlayer",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifTrue",
+    "macro:CutscenePlayer",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifTrue",
+    "macro:CutscenePlayer",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:CutscenePlayer",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:CutscenePlayer",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:CutscenePlayer",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%Yes",
+    "macro:LiveTimeline",
+    "ifTrue"
+   ],
+   "scene": "LiveTimeline"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifTrue",
+    "macro:CutscenePlayerDie",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=%No",
+    "ifTrue",
+    "macro:070.090.010_TheOutcomeOfTheUprising1",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.020_TheOutcomeOfTheUprising2",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.040_TheOutcomeOfTheUprising4",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.050_TheOutcomeOfTheUprising5",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.060_TheOutcomeOfTheUprising6",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.070_TheOutcomeOfTheUprising7",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.080_TheOutcomeOfTheUprising8",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.090_TheOutcomeOfTheUprising9",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "macro:Final_Provinces",
+    "ifTrue"
+   ],
+   "scene": "Final_Provinces"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=default",
+    "ifTrue",
+    "macro:070.090.010_TheOutcomeOfTheUprising1",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.020_TheOutcomeOfTheUprising2",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.040_TheOutcomeOfTheUprising4",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.050_TheOutcomeOfTheUprising5",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.060_TheOutcomeOfTheUprising6",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.070_TheOutcomeOfTheUprising7",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.080_TheOutcomeOfTheUprising8",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.090_TheOutcomeOfTheUprising9",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "macro:Final_Provinces",
+    "ifTrue"
+   ],
+   "scene": "Final_Provinces"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "switch=%Yes",
+    "macro:CutscenePlayerDie",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifTrue",
+    "macro:CutscenePlayerDie",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=%No",
+    "ifTrue",
+    "macro:070.090.010_TheOutcomeOfTheUprising1",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.020_TheOutcomeOfTheUprising2",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.040_TheOutcomeOfTheUprising4",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.050_TheOutcomeOfTheUprising5",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.060_TheOutcomeOfTheUprising6",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.070_TheOutcomeOfTheUprising7",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.080_TheOutcomeOfTheUprising8",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.090_TheOutcomeOfTheUprising9",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "macro:Final_Provinces",
+    "ifTrue"
+   ],
+   "scene": "Final_Provinces"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=default",
+    "ifTrue",
+    "macro:070.090.010_TheOutcomeOfTheUprising1",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.020_TheOutcomeOfTheUprising2",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.040_TheOutcomeOfTheUprising4",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.050_TheOutcomeOfTheUprising5",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.060_TheOutcomeOfTheUprising6",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.070_TheOutcomeOfTheUprising7",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.080_TheOutcomeOfTheUprising8",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifTrue",
+    "macro:070.090.090_TheOutcomeOfTheUprising9",
+    "ifTrue"
+   ],
+   "scene": "01.01.01"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=default",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "macro:Final_Provinces",
+    "ifTrue"
+   ],
+   "scene": "Final_Provinces"
+  },
+  {
+   "machine": "GameManager",
+   "event": "Click",
+   "trail": [
+    "switch=%Yes",
+    "macro:GameFinals",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "ifFalse",
+    "switch=%No",
+    "ifFalse",
+    "switch=%Yes",
+    "macro:CutscenePlayerDie",
+    "ifTrue"
+   ],
+   "scene": "LoadingScreen_Child"
+  }
+ ]
+}
