@@ -36,13 +36,16 @@ never touches the game's saves.
   Chinese): switch the language in the settings and the window rebuilds.
 - **Iron Man included.** The game disables its own save/load menu in Iron Man;
   the mod's window keeps working there, so a permadeath run can still be rewound.
-- **Playthrough history, as a tree.** The game records every scene the current
-  save has passed through. **History** draws that path left to right: one column
-  per scene, the answers offered there stacked underneath, and the answer you
-  picked joined by a darker line. The answers come from the game's own
-  translation table, so this works for scenes played before the mod too;
-  hovering shows the full text, and columns the mod has a save for can be
-  clicked to load them. **Explore** turns the tree into a path builder: click any
+- **Tree view of the playthrough.** The game records every scene the current
+  save has passed through. **Tree view** draws that path left to right: one
+  column per scene, every answer offered there stacked underneath, and the
+  answer you picked highlighted and joined to the next scene by a darker line.
+  After the scene you are on, the rest of the chapter follows in muted columns
+  ("upcoming"), with the answers each of those scenes will offer. The answers
+  come from the game's own translation table, so this works for scenes played
+  before the mod too; hovering shows the full text, columns the mod has a save
+  for can be clicked to load them, and the mouse wheel scrolls the tree
+  sideways. **Explore** turns the tree into a path builder: click any
   answer to move to the scene it leads to (the game's own scene chain is shipped
   with the mod), keep choosing to walk forward, and "Load this scene" jumps to
   the place you reached once it is one the mod has a save for. Decisions made before the mod was
@@ -111,16 +114,23 @@ mod's own saves (in `Brante-Save-Load/`) are not meant to be synced.
 
 `scene-texts.tsv` (every scene's title and answers) and `scene-edges.tsv` (the
 story's scene chains) are extracted from your installed copy of the game. They
-are what lets the history show answers for scenes played before the mod existed,
+are what lets the tree view show answers for scenes played before the mod existed,
 and what lets Explore walk forward through choices. After a game update they can
 be regenerated with `tools/localization.py` and `tools/bolt_edges.py` (see
 `docs/BRANCHES.md`).
 
 ### Known limitations
 
-- The history can only **load** scenes the mod recorded (from the moment it was
+- The tree can only **load** scenes the mod recorded (from the moment it was
   installed). Earlier scenes are shown, with their answers, but the game keeps no
   state for them.
+- Your answer is highlighted where the mod saw it: the click itself, or the
+  next choice scene's save (the game keeps the last clicked answer until the
+  next click). Answers given before the mod was installed are not recorded
+  anywhere, so those columns show every answer without a highlight.
+- Upcoming scenes follow the chapter's scene chain. Answers do not change that
+  chain in the extracted data, but stat checks inside a scene can still change
+  what it shows; chapter 4 is only partly covered and chapter 5 not at all.
 - Explore follows the game's scene chains, which are linear inside a chapter;
   real branches (deaths, finals, the three Lots) are separate chains.
 - Steam Cloud is not enabled for the game itself, so the game's saves do not sync

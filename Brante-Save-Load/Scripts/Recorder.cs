@@ -264,7 +264,7 @@ namespace Doorstop
 			}
 		}
 
-		private static SaveLoadHelper ReadHelper(string path)
+		public static SaveLoadHelper ReadHelper(string path)
 		{
 			using (FileStream fs = File.OpenRead(path))
 			{

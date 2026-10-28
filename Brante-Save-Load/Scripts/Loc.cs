@@ -17,7 +17,7 @@ namespace Doorstop
 			ConfirmLoad, ConfirmDelete, ConfirmSave, EmptySaves,
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, SaveAvailable, Current, NothingYet,
-			TreeChosen, TreeOffered, Explore, LoadScene, PickAnswer
+			TreeChosen, TreeOffered, Explore, LoadScene, PickAnswer, Upcoming
 		}
 
 		static Loc()
@@ -55,6 +55,17 @@ namespace Doorstop
 			AddHintWords(_ja, "答えを選ぶと道が続きます");
 			AddHintWords(_ko, "계속하려면 답을 선택하세요");
 			AddHintWords(_zh, "选择一个答案以继续路径");
+			AddUpcomingWord(_en, "upcoming");
+			AddUpcomingWord(_ru, "впереди");
+			AddUpcomingWord(_de, "kommt noch");
+			AddUpcomingWord(_fr, "à venir");
+			AddUpcomingWord(_es, "por venir");
+			AddUpcomingWord(_it, "in arrivo");
+			AddUpcomingWord(_pl, "przed tobą");
+			AddUpcomingWord(_tr, "sırada");
+			AddUpcomingWord(_ja, "この先");
+			AddUpcomingWord(_ko, "앞으로");
+			AddUpcomingWord(_zh, "接下来");
 		}
 
 		private static void AddTreeWords(Dictionary<K, string> d, string chosen, string offered)
@@ -67,6 +78,11 @@ namespace Doorstop
 		{
 			d[K.Explore] = explore;
 			d[K.LoadScene] = loadScene;
+		}
+
+		private static void AddUpcomingWord(Dictionary<K, string> d, string upcoming)
+		{
+			d[K.Upcoming] = upcoming;
 		}
 
 		private static void AddHintWords(Dictionary<K, string> d, string pickAnswer)
@@ -186,8 +202,8 @@ namespace Doorstop
 		}
 
 		private static readonly Dictionary<K, string> _en = Make(
-			"Save / Load", "Save now", "History", "Playthrough",
-			"Scenes this main save has been through, in order (recorded by the game).",
+			"Save / Load", "Save now", "Tree view", "Playthrough",
+			"The scenes this save has been through, your answers highlighted, then what lies ahead.",
 			"Close", "Load", "Delete", "Save", "Cancel",
 			"Load this save?\n\n{0}\n\nYour original save will not be modified.",
 			"Remove this save from the list?\n\n{0}\n\nThe file is deleted. Your game saves are not touched.",
@@ -197,8 +213,8 @@ namespace Doorstop
 			"Auto", "Manual", "save available", "current", "Nothing recorded yet.");
 
 		private static readonly Dictionary<K, string> _ru = Make(
-			"Сохранить / Загрузить", "Сохранить", "История", "Прохождение",
-			"Сцены, которые прошло это сохранение, по порядку (записано игрой).",
+			"Сохранить / Загрузить", "Сохранить", "Дерево выборов", "Прохождение",
+			"Сцены, которые прошло это сохранение, с вашими ответами, и то, что ждёт впереди.",
 			"Закрыть", "Загрузить", "Удалить", "Сохранить", "Отмена",
 			"Загрузить это сохранение?\n\n{0}\n\nВаше исходное сохранение не будет изменено.",
 			"Убрать это сохранение из списка?\n\n{0}\n\nФайл будет удалён. Сохранения игры не затрагиваются.",
@@ -208,8 +224,8 @@ namespace Doorstop
 			"Авто", "Вручную", "есть сохранение", "текущая", "Пока ничего не записано.");
 
 		private static readonly Dictionary<K, string> _de = Make(
-			"Speichern / Laden", "Jetzt speichern", "Verlauf", "Durchlauf",
-			"Szenen, die dieser Spielstand durchlaufen hat, in Reihenfolge (vom Spiel aufgezeichnet).",
+			"Speichern / Laden", "Jetzt speichern", "Baumansicht", "Durchlauf",
+			"Die Szenen dieses Spielstands mit deinen Antworten, danach, was noch kommt.",
 			"Schließen", "Laden", "Löschen", "Speichern", "Abbrechen",
 			"Diesen Spielstand laden?\n\n{0}\n\nDein ursprünglicher Spielstand wird nicht verändert.",
 			"Diesen Spielstand aus der Liste entfernen?\n\n{0}\n\nDie Datei wird gelöscht. Deine Spielstände des Spiels bleiben unberührt.",
@@ -219,8 +235,8 @@ namespace Doorstop
 			"Auto", "Manuell", "Spielstand vorhanden", "aktuell", "Noch nichts aufgezeichnet.");
 
 		private static readonly Dictionary<K, string> _fr = Make(
-			"Enregistrer / Charger", "Enregistrer", "Historique", "Partie",
-			"Scènes traversées par cette sauvegarde, dans l'ordre (enregistrées par le jeu).",
+			"Enregistrer / Charger", "Enregistrer", "Arborescence", "Partie",
+			"Les scènes de cette sauvegarde avec vos réponses, puis ce qui vous attend.",
 			"Fermer", "Charger", "Supprimer", "Enregistrer", "Annuler",
 			"Charger cette sauvegarde ?\n\n{0}\n\nVotre sauvegarde d'origine ne sera pas modifiée.",
 			"Retirer cette sauvegarde de la liste ?\n\n{0}\n\nLe fichier est supprimé. Vos sauvegardes du jeu ne sont pas touchées.",
@@ -230,8 +246,8 @@ namespace Doorstop
 			"Auto", "Manuel", "sauvegarde disponible", "actuelle", "Rien d'enregistré pour l'instant.");
 
 		private static readonly Dictionary<K, string> _es = Make(
-			"Guardar / Cargar", "Guardar ahora", "Historial", "Partida",
-			"Escenas por las que ha pasado esta partida guardada, en orden (registradas por el juego).",
+			"Guardar / Cargar", "Guardar ahora", "Vista de árbol", "Partida",
+			"Las escenas de esta partida con tus respuestas, y lo que queda por delante.",
 			"Cerrar", "Cargar", "Eliminar", "Guardar", "Cancelar",
 			"¿Cargar esta partida guardada?\n\n{0}\n\nTu partida guardada original no se modificará.",
 			"¿Quitar esta partida de la lista?\n\n{0}\n\nEl archivo se elimina. Tus partidas del juego no se tocan.",
@@ -241,8 +257,8 @@ namespace Doorstop
 			"Auto", "Manual", "guardado disponible", "actual", "Nada registrado todavía.");
 
 		private static readonly Dictionary<K, string> _it = Make(
-			"Salva / Carica", "Salva ora", "Cronologia", "Partita",
-			"Scene attraversate da questo salvataggio, in ordine (registrate dal gioco).",
+			"Salva / Carica", "Salva ora", "Vista ad albero", "Partita",
+			"Le scene di questo salvataggio con le tue risposte, poi ciò che ti attende.",
 			"Chiudi", "Carica", "Elimina", "Salva", "Annulla",
 			"Caricare questo salvataggio?\n\n{0}\n\nIl salvataggio originale non verrà modificato.",
 			"Rimuovere questo salvataggio dall'elenco?\n\n{0}\n\nIl file viene eliminato. I salvataggi del gioco non vengono toccati.",
@@ -252,8 +268,8 @@ namespace Doorstop
 			"Auto", "Manuale", "salvataggio disponibile", "attuale", "Niente di registrato.");
 
 		private static readonly Dictionary<K, string> _pl = Make(
-			"Zapisz / Wczytaj", "Zapisz teraz", "Historia", "Rozgrywka",
-			"Sceny, które przeszło to zapisanie, po kolei (zapisane przez grę).",
+			"Zapisz / Wczytaj", "Zapisz teraz", "Widok drzewa", "Rozgrywka",
+			"Sceny tego zapisu z twoimi odpowiedziami, a potem to, co przed tobą.",
 			"Zamknij", "Wczytaj", "Usuń", "Zapisz", "Anuluj",
 			"Wczytać to zapisanie?\n\n{0}\n\nTwoje pierwotne zapisanie nie zostanie zmienione.",
 			"Usunąć to zapisanie z listy?\n\n{0}\n\nPlik zostanie usunięty. Zapisania gry pozostaną nietknięte.",
@@ -263,8 +279,8 @@ namespace Doorstop
 			"Auto", "Ręcznie", "zapisanie dostępne", "bieżąca", "Nic jeszcze nie zapisano.");
 
 		private static readonly Dictionary<K, string> _tr = Make(
-			"Kaydet / Yükle", "Şimdi kaydet", "Geçmiş", "Oyun",
-			"Bu kaydın geçtiği sahneler, sırasıyla (oyun tarafından kaydedilir).",
+			"Kaydet / Yükle", "Şimdi kaydet", "Ağaç görünümü", "Oyun",
+			"Bu kaydın geçtiği sahneler ve cevapların, ardından seni bekleyenler.",
 			"Kapat", "Yükle", "Sil", "Kaydet", "İptal",
 			"Bu kayıt yüklensin mi?\n\n{0}\n\nÖzgün kaydınız değiştirilmeyecek.",
 			"Bu kayıt listeden kaldırılsın mı?\n\n{0}\n\nDosya silinir. Oyunun kayıtlarına dokunulmaz.",
@@ -274,8 +290,8 @@ namespace Doorstop
 			"Otomatik", "Elle", "kayıt var", "geçerli", "Henüz bir şey kaydedilmedi.");
 
 		private static readonly Dictionary<K, string> _ja = Make(
-			"保存 / 読み込み", "今すぐ保存", "履歴", "プレイ記録",
-			"このセーブが通ったシーン（ゲームが記録した順）。",
+			"保存 / 読み込み", "今すぐ保存", "ツリー表示", "プレイ記録",
+			"このセーブが通ったシーンとあなたの答え、そしてこの先の展開。",
 			"閉じる", "読み込む", "削除", "保存", "キャンセル",
 			"このセーブを読み込みますか？\n\n{0}\n\n元のセーブは変更されません。",
 			"このセーブを一覧から削除しますか？\n\n{0}\n\nファイルが削除されます。ゲームのセーブは変更されません。",
@@ -285,8 +301,8 @@ namespace Doorstop
 			"自動", "手動", "セーブあり", "現在", "まだ記録がありません。");
 
 		private static readonly Dictionary<K, string> _ko = Make(
-			"저장 / 불러오기", "지금 저장", "기록", "플레이 기록",
-			"이 저장이 지나온 장면 목록(게임이 기록한 순서).",
+			"저장 / 불러오기", "지금 저장", "트리 보기", "플레이 기록",
+			"이 저장이 지나온 장면과 당신의 답, 그리고 앞으로의 장면.",
 			"닫기", "불러오기", "삭제", "저장", "취소",
 			"이 저장을 불러올까요?\n\n{0}\n\n원래 저장은 변경되지 않습니다.",
 			"이 저장을 목록에서 삭제할까요?\n\n{0}\n\n파일이 삭제됩니다. 게임 저장은 건드리지 않습니다.",
@@ -296,8 +312,8 @@ namespace Doorstop
 			"자동", "수동", "저장 있음", "현재", "아직 기록이 없습니다.");
 
 		private static readonly Dictionary<K, string> _zh = Make(
-			"保存 / 读取", "立即保存", "历史", "游戏历程",
-			"此存档经历过的场景，按顺序排列（由游戏记录）。",
+			"保存 / 读取", "立即保存", "树状视图", "游戏历程",
+			"此存档经历过的场景及你的选择，以及接下来的内容。",
 			"关闭", "读取", "删除", "保存", "取消",
 			"读取此存档？\n\n{0}\n\n原始存档不会被修改。",
 			"从列表中移除此存档？\n\n{0}\n\n文件将被删除。游戏存档不受影响。",

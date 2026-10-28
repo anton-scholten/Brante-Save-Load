@@ -68,6 +68,7 @@ namespace Doorstop
 	public sealed class TreeWheel : MonoBehaviour, IScrollHandler
 	{
 		public ScrollRect Scroll;
+		private const float WheelColumns = 4f;
 
 		public void OnScroll(PointerEventData eventData)
 		{
@@ -78,7 +79,8 @@ namespace Doorstop
 			bool fitsVertically = Scroll.content.rect.height <= Scroll.viewport.rect.height + 0.5f;
 			if (fitsVertically && Mathf.Abs(eventData.scrollDelta.y) > Mathf.Abs(eventData.scrollDelta.x))
 			{
-				eventData.scrollDelta = new Vector2(eventData.scrollDelta.y, 0f);
+				// Columns are 360 wide: a notch moves a third of one.
+				eventData.scrollDelta = new Vector2(eventData.scrollDelta.y * WheelColumns, 0f);
 			}
 			Scroll.OnScroll(eventData);
 		}
@@ -276,6 +278,8 @@ namespace Doorstop
 		private static readonly Color ColTreeLine = new Color(0.55f, 0.50f, 0.42f, 0.55f);
 		private static readonly Color ColTreeChosen = new Color(0.55f, 0.30f, 0.25f);
 		private static readonly Color ColTreeChosenBg = new Color(1f, 0.93f, 0.72f);
+		private static readonly Color ColTreeUpcomingBg = new Color(0.84f, 0.79f, 0.68f, 0.45f);
+		private static readonly Color ColTreeMuted = new Color(0.45f, 0.40f, 0.32f);
 
 		private enum Pending { Load, Delete, SaveNow }
 
@@ -370,6 +374,7 @@ namespace Doorstop
 			public string SnapshotPath = "";
 			public bool Preview;
 			public bool Current;    // the scene on screen (the pending entry)
+			public bool Upcoming;   // ahead of the current scene, from scene-edges.tsv
 			public List<History.Choice> Choices = new List<History.Choice>();
 
 			public bool HasSnapshot
@@ -839,6 +844,9 @@ namespace Doorstop
 			Stretch(vrt);
 			vrt.offsetMin = new Vector2(0f, 18f); // room for the scrollbar
 			viewport.AddComponent<RectMask2D>();
+			// Invisible, but a raycast target: without it the wheel only
+			// reaches the tree while the pointer is on an answer.
+			viewport.AddComponent<Image>().color = Color.clear;
 			sc.viewport = vrt;
 			viewport.AddComponent<TreeWheel>().Scroll = sc;
 
@@ -950,6 +958,14 @@ namespace Doorstop
 			ModLog.Info("ChoiceWindow: explore mode " + (_explore ? "on" : "off"));
 			RefreshHistory();
 			Canvas.ForceUpdateCanvases();
+			if (_explore)
+			{
+				ScrollHistoryToEnd();
+			}
+			else
+			{
+				ScrollHistoryToFocus();
+			}
 		}
 
 		// Loads the scene the explore path currently ends on, when the mod has
@@ -975,7 +991,7 @@ namespace Doorstop
 			_historyPanel.SetActive(true);
 			_historyPanel.transform.SetAsLastSibling();
 			Canvas.ForceUpdateCanvases();
-			ScrollHistoryToEnd();
+			ScrollHistoryToFocus();
 			ModLog.Info("ChoiceWindow: history opened (" + n + " scene(s), "
 				+ _historyLoadable + " loadable)");
 		}
@@ -1069,6 +1085,11 @@ namespace Doorstop
 			{
 				cols.Add(preview);
 			}
+			_focusCol = pendingCol >= 0 ? pendingCol : cols.Count - 1;
+			if (!_explore && all.Count > 0)
+			{
+				AddUpcoming(cols, all[all.Count - 1].SceneName);
+			}
 			_tree = cols;
 			if (cols.Count == 0)
 			{
@@ -1114,10 +1135,14 @@ namespace Doorstop
 				string headText = e.Title;
 				if (e.Current)
 				{
-					headText += "  • " + Loc.T(Loc.K.Current);
+					headText += "  \u2022 " + Loc.T(Loc.K.Current);
+				}
+				else if (e.Upcoming && (i == 0 || !cols[i - 1].Upcoming))
+				{
+					headText += "  \u2022 " + Loc.T(Loc.K.Upcoming);
 				}
 				TextMeshProUGUI head = AddLabel(_historyList, "Head", headText,
-					18f, e.Preview ? new Color(0.45f, 0.40f, 0.32f) : ColTextDark, false);
+					18f, e.Preview || e.Upcoming ? ColTreeMuted : ColTextDark, false);
 				Wrap(head, x, 6f, TreeNodeW + TreeNodeX, 44f);
 				head.enableWordWrapping = true;
 				head.overflowMode = TextOverflowModes.Ellipsis;
@@ -1146,7 +1171,7 @@ namespace Doorstop
 					nrt.anchoredPosition = new Vector2(x + TreeNodeX, -y);
 					nrt.sizeDelta = new Vector2(TreeNodeW, TreeNodeH);
 					Image nimg = node.AddComponent<Image>();
-					nimg.color = c.Chosen ? ColTreeChosenBg : ColAuto;
+					nimg.color = c.Chosen ? ColTreeChosenBg : e.Upcoming ? ColTreeUpcomingBg : ColAuto;
 					// Explore mode: picking any answer extends the path. Otherwise
 					// clicking loads that decision's save (captured scenes only).
 					if (clickable)
@@ -1172,7 +1197,7 @@ namespace Doorstop
 					}
 
 					TextMeshProUGUI label = AddLabel(node.transform, "Text", c.Text, 17f,
-						clickable ? ColTextDark : new Color(0.12f, 0.10f, 0.08f, 0.6f), false);
+						clickable && !e.Upcoming ? ColTextDark : new Color(0.12f, 0.10f, 0.08f, 0.6f), false);
 					RectTransform lrt = label.rectTransform;
 					lrt.anchorMin = Vector2.zero;
 					lrt.anchorMax = Vector2.one;
@@ -1182,8 +1207,9 @@ namespace Doorstop
 					label.enableWordWrapping = false;
 
 					TreeHover hover = node.AddComponent<TreeHover>();
-					hover.Info = c.Text + "   • " + Loc.T(c.Chosen ? Loc.K.TreeChosen : Loc.K.TreeOffered)
-						+ (!_explore && e.HasSnapshot ? "   • " + Loc.T(Loc.K.SaveAvailable) : "");
+					hover.Info = c.Text + "   \u2022 " + Loc.T(c.Chosen ? Loc.K.TreeChosen
+							: e.Upcoming ? Loc.K.Upcoming : Loc.K.TreeOffered)
+						+ (!_explore && e.HasSnapshot ? "   \u2022 " + Loc.T(Loc.K.SaveAvailable) : "");
 					hover.OnShow = SetHistoryInfo;
 				}
 			}
@@ -1196,6 +1222,14 @@ namespace Doorstop
 				int fromRow = ChosenRow(cols[i], visible[i]);
 				if (fromRow < 0)
 				{
+					// No answer known yet (the scene on screen): a pale line
+					// still leads into the upcoming scenes.
+					if (cols[i + 1].Upcoming && visible[i].Count > 0 && visible[i + 1].Count > 0)
+					{
+						float ux = 30f + i * TreeColW;
+						AddLine(ux + TreeNodeX + TreeNodeW, RowCentre(0), ux + TreeColW + 16f,
+							RowCentre(0), ColTreeLine, 3f);
+					}
 					continue;
 				}
 				int toRow = Mathf.Max(0, ChosenRow(cols[i + 1], visible[i + 1]));
@@ -1261,6 +1295,7 @@ namespace Doorstop
 
 		private static string _lastLoadablePath = "";
 		private static int _exploreCut = -1;   // played columns kept in explore, -1 = all
+		private static int _focusCol = -1;     // the column to show on open (the current scene)
 
 		// Explore mode: picking an answer moves the preview to that answer's
 		// scene, so the player can walk a path without playing it.
@@ -1359,6 +1394,30 @@ namespace Doorstop
 			return TreeTop + row * TreeRowH + TreeNodeH * 0.5f;
 		}
 
+		// The scenes ahead of `from` on its chapter chain (scene-edges.tsv),
+		// each with every answer it will offer. Scenes without answers
+		// (chapter screens) are passed through, not shown.
+		private static void AddUpcoming(List<TreeCol> cols, string from)
+		{
+			HashSet<string> seen = new HashSet<string>();
+			foreach (TreeCol c in cols)
+			{
+				seen.Add(c.Scene);
+			}
+			string scene = SceneEdges.Next(from);
+			while (!string.IsNullOrEmpty(scene) && seen.Add(scene) && seen.Count < 400)
+			{
+				TreeCol col = PreviewCol(scene);
+				col.Preview = false;
+				col.Upcoming = true;
+				if (VisibleChoices(col).Count > 0)
+				{
+					cols.Add(col);
+				}
+				scene = SceneEdges.Next(scene);
+			}
+		}
+
 		private static int PlayedCount()
 		{
 			int n = 0;
@@ -1448,6 +1507,25 @@ namespace Doorstop
 			{
 				_historyScroll.horizontalNormalizedPosition = 1f;
 			}
+		}
+
+		// On open: the scene on screen, with one played column to its left
+		// and the upcoming ones to its right.
+		private static void ScrollHistoryToFocus()
+		{
+			if (_historyScroll == null || _historyScroll.viewport == null)
+			{
+				return;
+			}
+			float content = (_historyList as RectTransform).rect.width;
+			float view = _historyScroll.viewport.rect.width;
+			if (content <= view + 0.5f || _focusCol < 0)
+			{
+				_historyScroll.horizontalNormalizedPosition = 0f;
+				return;
+			}
+			float left = 30f + Mathf.Max(0, _focusCol - 1) * TreeColW - 10f;
+			_historyScroll.horizontalNormalizedPosition = Mathf.Clamp01(left / (content - view));
 		}
 
 		private static void SetHistoryInfo(string text)
@@ -1911,6 +1989,19 @@ namespace Doorstop
 			return dot >= 0 ? chapterKey.Substring(dot + 1) : chapterKey;
 		}
 
+		// "Chapter I. Childhood" -> "Childhood" (and "Глава I. Детство" ->
+		// "Детство"): the game's chapter names carry a numbered prefix ending
+		// in ". ". Names without one are returned as they are.
+		private static string WithoutChapterNumber(string name)
+		{
+			int dot = name.IndexOf(". ", StringComparison.Ordinal);
+			if (dot <= 0 || dot > 24 || dot + 2 >= name.Length)
+			{
+				return name;
+			}
+			return name.Substring(dot + 2).Trim();
+		}
+
 		// The chapter, translated from its key ("Chapter1.Childhood"), with
 		// the stripped name and then the number as fallbacks.
 		private static string ChapterText(SaveEntry e)
@@ -1918,7 +2009,7 @@ namespace Doorstop
 			string t = Translate(e.ChapterKey);
 			if (!string.IsNullOrEmpty(t) && t != e.ChapterKey)
 			{
-				return t;
+				return WithoutChapterNumber(t);
 			}
 			if (e.ChapterName.Length > 0)
 			{
@@ -2442,8 +2533,10 @@ namespace Doorstop
 			// history panel on top of it.
 			yield return new WaitForSeconds(8f);
 			OpenHistory();
+			yield return new WaitForSeconds(3f);
+			DevWheel();
 			// Dev: exercise explore mode - walk two answers forward.
-			yield return new WaitForSeconds(6f);
+			yield return new WaitForSeconds(3f);
 			ToggleExplore();
 			yield return new WaitForSeconds(1f);
 			for (int step = 0; step < 2 && _tree.Count > 0; step++)
@@ -2471,6 +2564,44 @@ namespace Doorstop
 		}
 
 		// Dev: flip the game language, to exercise the window rebuild.
+		// Dev: one wheel notch over an empty spot of the tree (bottom-left
+		// of the viewport, below the answers), through the real event system:
+		// the raycast must land in the tree and the tree must move sideways.
+		private static void DevWheel()
+		{
+			try
+			{
+				EventSystem es = EventSystem.current;
+				if (es == null || _historyScroll == null)
+				{
+					ModLog.Info("ChoiceWindow: dev wheel skipped (no event system)");
+					return;
+				}
+				Vector3[] corners = new Vector3[4];
+				_historyScroll.viewport.GetWorldCorners(corners);
+				Vector2 point = new Vector2(corners[0].x + 40f, corners[0].y + 30f);
+				PointerEventData data = new PointerEventData(es);
+				data.position = point;
+				List<RaycastResult> hits = new List<RaycastResult>();
+				es.RaycastAll(data, hits);
+				GameObject target = hits.Count > 0 ? hits[0].gameObject : null;
+				float before = _historyScroll.horizontalNormalizedPosition;
+				data.scrollDelta = new Vector2(0f, -1f);
+				GameObject handled = target != null
+					? ExecuteEvents.ExecuteHierarchy(target, data, ExecuteEvents.scrollHandler)
+					: null;
+				ModLog.Info("ChoiceWindow: dev wheel at " + point + ": hit '"
+					+ (target != null ? target.name : "(nothing)") + "', handled by '"
+					+ (handled != null ? handled.name : "(nobody)") + "', x "
+					+ before.ToString("0.000") + " -> "
+					+ _historyScroll.horizontalNormalizedPosition.ToString("0.000"));
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: dev wheel failed:\n" + e);
+			}
+		}
+
 		private static void DevSwitchLanguage()
 		{
 			try

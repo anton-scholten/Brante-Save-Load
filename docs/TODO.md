@@ -276,6 +276,13 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   the current scene is marked; explore picks on an earlier played scene cut the
   path there; horizontal scrollbar, and the wheel scrolls sideways while the
   tree fits vertically. Verified in-game with `dev-book.txt`.
+- [x] Tree view (28 Oct 2026): the History button is now "Tree view"; the
+  chosen answer comes from the next choice scene's snapshot (`CurrentConsequence`)
+  when no click was recorded - it used to read the live game's value for every
+  scene, so nothing was highlighted; the rest of the chapter is shown as muted
+  "upcoming" columns from `scene-edges.tsv`; the wheel scrolls the tree from
+  anywhere in it (the empty viewport was not a raycast target); the table's
+  Chapter column drops the "Chapter I." prefix. Verified in-game.
 - [ ] Achievement side-effects on load (verify).
 - [ ] Full in-game pass on a played run: chapter transition, death -> restart
   chapter, explore + load from the panel.

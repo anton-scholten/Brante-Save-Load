@@ -33,7 +33,7 @@ namespace Doorstop
 			public bool IsShowed;
 			public string Title;
 			public string SnapshotPath;
-			public string ChosenName;      // CurrentConsequence stored in the save
+			public string ChosenName;      // CurrentConsequence in this scene's snapshot
 			public List<Choice> Choices = new List<Choice>();
 
 			public bool HasSnapshot
@@ -63,11 +63,10 @@ namespace Doorstop
 				e.IsShowed = s.IsShowed;
 				e.Title = TitleOf(s.SceneName);
 				e.SnapshotPath = SnapshotFor(s.SceneName);
-				e.ChosenName = helper.CurrentConsequence ?? "";
 				LoadChoices(e);
 				list.Add(e);
 			}
-			MarkChosen(list);
+			MarkChosen(list, helper.CurrentConsequence ?? "");
 			return list;
 		}
 
@@ -96,11 +95,10 @@ namespace Doorstop
 				e.IsShowed = s.IsShowed;
 				e.Title = TitleOf(s.SceneName);
 				e.SnapshotPath = SnapshotFor(s.SceneName);
-				e.ChosenName = gm.CurrentConsequene ?? "";
 				LoadChoices(e);
 				list.Add(e);
 			}
-			MarkChosen(list);
+			MarkChosen(list, gm.CurrentConsequene ?? "");
 			return list;
 		}
 
@@ -226,10 +224,14 @@ namespace Doorstop
 			e.Choices = kept;
 		}
 
-		// The answer the player picked is stored in the NEXT snapshot
-		// (CurrentConsequence holds the clicked button's name), and, for the
-		// newest decision, in the sidecar by the click hook.
-		private static void MarkChosen(List<Entry> list)
+		// The answer the player picked is recorded by the click hook in the
+		// scene's sidecar (chosen=). Without that line it is read from the
+		// NEXT choice scene's snapshot: the game keeps the clicked button's
+		// name in CurrentConsequence until the next click, so the snapshot
+		// taken when the next choice scene opened still holds it. For the
+		// newest decision `latest` (the live game's or the save's own value)
+		// stands in when the scene on screen has no snapshot yet.
+		private static void MarkChosen(List<Entry> list, string latest)
 		{
 			for (int i = 0; i < list.Count; i++)
 			{
@@ -258,9 +260,23 @@ namespace Doorstop
 				{
 					// best effort
 				}
-				if (string.IsNullOrEmpty(chosen) && i + 1 < list.Count)
+				if (string.IsNullOrEmpty(chosen))
 				{
-					chosen = list[i + 1].ChosenName;
+					// The next scene that offers answers (machinery scenes in
+					// between have no click and leave the value alone).
+					for (int j = i + 1; j < list.Count; j++)
+					{
+						if (list[j].Choices.Count == 0)
+						{
+							continue;
+						}
+						chosen = ConsequenceIn(list[j]);
+						if (string.IsNullOrEmpty(chosen) && j == list.Count - 1)
+						{
+							chosen = latest;
+						}
+						break;
+					}
 				}
 				if (string.IsNullOrEmpty(chosen))
 				{
@@ -274,6 +290,42 @@ namespace Doorstop
 					}
 				}
 			}
+		}
+
+		// CurrentConsequence stored in the entry's snapshot ("" without one).
+		// Snapshot names carry a hash of their content, so a path always
+		// holds the same value and the cache never goes stale.
+		private static readonly Dictionary<string, string> _consequences =
+			new Dictionary<string, string>();
+
+		private static string ConsequenceIn(Entry e)
+		{
+			if (e.ChosenName != null)
+			{
+				return e.ChosenName;
+			}
+			e.ChosenName = "";
+			if (!e.HasSnapshot)
+			{
+				return "";
+			}
+			string cached;
+			if (_consequences.TryGetValue(e.SnapshotPath, out cached))
+			{
+				e.ChosenName = cached;
+				return cached;
+			}
+			try
+			{
+				SaveLoadHelper h = Recorder.ReadHelper(e.SnapshotPath);
+				e.ChosenName = h != null && h.CurrentConsequence != null ? h.CurrentConsequence : "";
+				_consequences[e.SnapshotPath] = e.ChosenName;
+			}
+			catch
+			{
+				// unreadable snapshot: no highlight for the scene before it
+			}
+			return e.ChosenName;
 		}
 
 		// The newest choice-point snapshot the mod has for a scene (its file
