@@ -198,4 +198,8 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   measures the marquees right after the canvas flush.
 - [x] History steps are clickable where the mod has a save for that scene
   (loads it through the confirm dialog); older scenes have no state to restore.
+- [x] History as a tree (27 Oct 2026): columns per captured decision, choices
+  stacked, taken branch on a darker path, hover shows the full text, clicking a
+  node loads that decision. The clicked answer is recorded (sidecar `chosen=`,
+  and derived from the next snapshot's `CurrentConsequence`).
 - [ ] In-game test pass, README final, design doc.

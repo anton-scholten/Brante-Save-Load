@@ -427,3 +427,24 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
   offered at that scene (`choices:` in the `.meta.txt` sidecar), and the
   playthrough path (`ShowedScenesList`). That gives a partial, player-specific
   tree: what was offered where, along the paths actually taken.
+
+## Determinism, and what a "replay" would need (27 Oct 2026)
+
+- The game's code uses **no `Random`** at all (no `UnityEngine.Random`, no
+  `System.Random` in Assembly-CSharp): outcomes are decided by parameters,
+  relations, objectives and scene conditions. A replay would therefore not
+  diverge by itself.
+- It would still need: (a) the answer chosen at every past decision - the save
+  stores only the LAST click (`CurrentConsequence`), not a history; (b) driving
+  the game through scenes, popups, cutscenes and Bolt events without a player
+  (`ParameterButtonChanger.Button_Click` expects the live UI; calling it on an
+  inactive button throws); (c) a valid starting state, which exists only at
+  chapter starts. That is a project of its own, not a data lookup.
+- What IS recorded now: each click writes `chosen=<button GameObject name>` into
+  the scene's sidecar (Harmony postfix on `Button_Click`), and the NEXT
+  snapshot's `CurrentConsequence` names the answer picked in the previous scene.
+  Sidecars list the offered choices with their button names, so the tree can mark
+  the branch taken from the moment the mod is installed.
+- A full graph of every possible choice is NOT available at runtime: branching
+  lives in Bolt machines; only choices of scenes actually reached and captured
+  are known.

@@ -36,12 +36,13 @@ never touches the game's saves.
   Chinese): switch the language in the settings and the window rebuilds.
 - **Iron Man included.** The game disables its own save/load menu in Iron Man;
   the mod's window keeps working there, so a permadeath run can still be rewound.
-- **Playthrough history.** The game records every scene the current save has
-  passed through. **History** in the same window lists that path in order,
-  including the part played before the mod was installed. Steps the mod has a
-  save for are marked and can be clicked to load them; older steps have no state
-  to restore, because the game's save records which scenes were shown, not which
-  answer was clicked, and keeps no history of states.
+- **Playthrough history, as a tree.** The game records every scene the current
+  save has passed through. **History** draws that path left to right: one column
+  per decision, the choices offered there stacked underneath, and the answer you
+  picked joined by a darker line. Hovering a choice shows its full text; clicking
+  one loads the save of that decision. Decisions made before the mod was
+  installed can be shown but not reopened — the game keeps no earlier states, and
+  only records the most recent answer.
 
 ### Platforms
 
