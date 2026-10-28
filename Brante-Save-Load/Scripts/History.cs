@@ -110,18 +110,31 @@ namespace Doorstop
 		private static void LoadChoices(Entry e)
 		{
 			e.Choices = new List<Choice>();
-			string sidecar = string.IsNullOrEmpty(e.SnapshotPath) ? "" :
-				Path.ChangeExtension(e.SnapshotPath, ".meta.txt");
-			if (string.IsNullOrEmpty(sidecar) || !File.Exists(sidecar))
+			// The localisation table is the clean source: scene ids and answer
+			// texts straight from the game, no stale sidecar entries (older
+			// builds recorded empty rows for unused buttons). The sidecar is only
+			// used when the table has no entry for this scene.
+			List<KeyValuePair<string, string>> table = SceneTexts.Buttons(e.SceneName);
+			if (table.Count > 0)
 			{
-				foreach (KeyValuePair<string, string> b in SceneTexts.Buttons(e.SceneName))
+				foreach (KeyValuePair<string, string> b in table)
 				{
+					if (string.IsNullOrEmpty(b.Value))
+					{
+						continue;
+					}
 					Choice c = new Choice();
 					c.Index = e.Choices.Count + 1;
 					c.Name = b.Key;
 					c.Text = b.Value;
 					e.Choices.Add(c);
 				}
+				return;
+			}
+			string sidecar = string.IsNullOrEmpty(e.SnapshotPath) ? "" :
+				Path.ChangeExtension(e.SnapshotPath, ".meta.txt");
+			if (string.IsNullOrEmpty(sidecar) || !File.Exists(sidecar))
+			{
 				return;
 			}
 			try
