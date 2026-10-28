@@ -57,10 +57,23 @@ namespace Doorstop
 
 		private void OnEnable()
 		{
+			MeasureNow();
+		}
+
+		// Re-measures and returns to the resting (ellipsised) look. Safe to
+		// call right after a layout rebuild, while the canvas is still
+		// inactive or before the first frame is drawn.
+		public void MeasureNow()
+		{
 			_measured = false;
 			_offset = 0f;
 			_phase = 0;
 			_timer = -Delay;
+			if (Text == null || Viewport == null)
+			{
+				return;
+			}
+			Measure();
 		}
 
 		private void Update()
@@ -290,6 +303,7 @@ namespace Doorstop
 		private static GameObject _saveNowBtn;
 		private static GameObject _historyBtn;
 		private static GameObject _historyPanel;
+		private static int _historyLoadable;
 		private static Transform _historyList;
 		private static Col _sortCol = Col.Saved;
 		private static bool _sortAsc;
@@ -349,51 +363,51 @@ namespace Doorstop
 
 		private static void AddPauseButton(GameObject pause)
 		{
-			// Visible, labelled, full menu width buttons.
-			List<Button> cands = new List<Button>();
-			foreach (Button b in pause.GetComponentsInChildren<Button>(true))
+			// The window is usually still inactive when this runs the first
+			// time (the button must exist before the player ever opens it), so
+			// lay it out now and judge buttons by their own active flag.
+			RectTransform prt = pause.GetComponent<RectTransform>();
+			if (prt != null)
 			{
-				if (!b.gameObject.activeInHierarchy || b.name.StartsWith("BranteSaveLoad_", StringComparison.Ordinal)
-					|| b.GetComponentInChildren<TMP_Text>(true) == null)
+				LayoutRebuilder.ForceRebuildLayoutImmediate(prt);
+			}
+
+			// The menu is the vertical list of button rows: the smallest
+			// layout whose children all carry a labelled button (Quit to main
+			// menu, Resume). Picking by geometry alone goes wrong while the
+			// window has never been laid out.
+			Transform menu = null;
+			int bestCount = int.MaxValue;
+			foreach (VerticalLayoutGroup v in pause.GetComponentsInChildren<VerticalLayoutGroup>(true))
+			{
+				Transform t = v.transform;
+				if (t == pause.transform || t.childCount < 2)
 				{
 					continue;
 				}
-				RectTransform r = b.GetComponent<RectTransform>();
-				if (r == null || r.rect.width < 300f)
+				bool rows = true;
+				for (int i = 0; i < t.childCount && rows; i++)
 				{
-					continue;
+					Transform c = t.GetChild(i);
+					Button b = c.GetComponentInChildren<Button>(true);
+					RectTransform r = c as RectTransform;
+					rows = b != null && b.GetComponentInChildren<TMP_Text>(true) != null
+						&& r != null && r.rect.width >= 300f;
 				}
-				cands.Add(b);
-			}
-			if (cands.Count == 0)
-			{
-				ModLog.Error("ChoiceWindow: no menu buttons found in the pause window");
-				return;
-			}
-
-			// The lowest one is the template.
-			Button template = cands[0];
-			foreach (Button b in cands)
-			{
-				if (b.transform.position.y < template.transform.position.y)
+				if (rows && t.childCount < bestCount)
 				{
-					template = b;
+					bestCount = t.childCount;
+					menu = t;
 				}
 			}
-
-			// Its row: the ancestor directly under a VerticalLayoutGroup.
-			// (A black frame is also a vertical layout, but it has its own Image.)
-			Transform row = template.transform;
-			for (int i = 0; i < 6 && row.parent != null && !IsMenuList(row.parent); i++)
+			if (menu == null)
 			{
-				row = row.parent;
-			}
-			if (row.parent == null || !IsMenuList(row.parent))
-			{
-				ModLog.Error("ChoiceWindow: menu row layout not found - settings button not added");
+				ModLog.Error("ChoiceWindow: menu list not found - settings button not added");
 				return;
 			}
-			Transform menu = row.parent;
+			// The bottom row is the template (Resume).
+			Transform row = menu.GetChild(menu.childCount - 1);
+
 
 			GameObject clone = UnityEngine.Object.Instantiate(row.gameObject, menu);
 			clone.name = "BranteSaveLoad_LoadAnyRow";
@@ -462,6 +476,7 @@ namespace Doorstop
 			// width and only sized by the layout groups on the first canvas
 			// rebuild; without this flush the text paints seconds late.
 			Canvas.ForceUpdateCanvases();
+			MeasureMarquees();
 			ModLog.Info("ChoiceWindow: opened (" + n + " save(s))");
 			return n;
 		}
@@ -781,7 +796,8 @@ namespace Doorstop
 			_historyPanel.SetActive(true);
 			_historyPanel.transform.SetAsLastSibling();
 			Canvas.ForceUpdateCanvases();
-			ModLog.Info("ChoiceWindow: history opened (" + n + " scene(s))");
+			ModLog.Info("ChoiceWindow: history opened (" + n + " scene(s), "
+				+ _historyLoadable + " loadable)");
 		}
 
 		private static void CloseHistory()
@@ -805,6 +821,7 @@ namespace Doorstop
 				old.SetActive(false);
 				UnityEngine.Object.Destroy(old);
 			}
+			_historyLoadable = 0;
 			List<History.Entry> entries = History.FromCurrentGame();
 			if (entries.Count == 0)
 			{
@@ -825,12 +842,30 @@ namespace Doorstop
 				rle.preferredHeight = 42f;
 				Image img = row.AddComponent<Image>();
 				img.color = shown % 2 == 0 ? ColAutoAlt : ColAuto;
+				// Scenes the mod captured are clickable: they load that
+				// choice point. Scenes from before the mod have no state to
+				// restore, so their row stays plain.
+				if (e.HasSnapshot)
+				{
+					_historyLoadable++;
+					Button btn = row.AddComponent<Button>();
+					btn.targetGraphic = img;
+					string path = e.SnapshotPath;
+					string title = e.Title;
+					btn.onClick.AddListener(delegate
+					{
+						// The history panel closes, so there is no row to mark
+						// behind the confirm dialog.
+						CloseHistory();
+						Ask(Pending.Load, path, title, null);
+					});
+				}
 
 				TextMeshProUGUI label = AddLabel(row.transform, "Text",
 					shown + ".  " + e.Title
 					+ (e.HasSnapshot ? "   [" + Loc.T(Loc.K.SaveAvailable) + "]" : "")
 					+ (e.IsShowed ? "" : "   [" + Loc.T(Loc.K.Current) + "]"),
-					19f, ColTextDark, false);
+					19f, e.HasSnapshot ? ColTextDark : new Color(0.35f, 0.30f, 0.24f), false);
 				label.overflowMode = TextOverflowModes.Ellipsis;
 				label.enableWordWrapping = false;
 				RectTransform lrt = label.rectTransform;
@@ -968,6 +1003,9 @@ namespace Doorstop
 			UpdateHeader();
 			BuildRows();
 			Canvas.ForceUpdateCanvases();
+			// The marquee measures in Update; without this the choice text is
+			// painted at zero width for one frame (the "blink" on sorting).
+			MeasureMarquees();
 		}
 
 		private static void UpdateHeader()
@@ -1450,6 +1488,20 @@ namespace Doorstop
 		}
 
 		// (Re)builds the table rows from _entries, in their current order.
+		// Gives every scrolling cell its width/ellipsis before the frame is
+		// drawn, instead of one frame later on the marquee's first Update.
+		private static void MeasureMarquees()
+		{
+			if (_itemContainer == null)
+			{
+				return;
+			}
+			foreach (Marquee m in _itemContainer.GetComponentsInChildren<Marquee>(true))
+			{
+				m.MeasureNow();
+			}
+		}
+
 		private static void BuildRows()
 		{
 			ClearMark();

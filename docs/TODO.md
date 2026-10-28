@@ -189,4 +189,13 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   paths go through `Path.Combine`/`Path.DirectorySeparatorChar`, backup README
   lists the Windows, Proton and macOS locations. Uninstall gained
   `--restore-backup` and `--purge` (tested against a throwaway prefix).
+- [x] Settings button visible on the FIRST open (27 Oct 2026): it is built at
+  startup, not on the first pause-menu toggle, and the menu is located by its
+  structure (the smallest layout whose children are labelled button rows) so it
+  works before the window has ever been laid out.
+- [x] Choice column no longer blinks while sorting (27 Oct 2026): the scrolling
+  cell measured in `Update`, one frame after the row was built; the table now
+  measures the marquees right after the canvas flush.
+- [x] History steps are clickable where the mod has a save for that scene
+  (loads it through the confirm dialog); older scenes have no state to restore.
 - [ ] In-game test pass, README final, design doc.

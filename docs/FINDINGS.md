@@ -414,3 +414,16 @@ that point must be pure managed code (`System.*`, reflection, Harmony IL patchin
 - Before the first rewind the mod copies `Saves/<id>/` (minus Steam's
   `steam_autocloud.vdf`) to `Brante-Save-Load/Backups/<id>/` and writes a
   `README.txt` with restore steps.
+
+## No full choice tree in the game data (checked 27 Oct 2026)
+
+- Choices are per-scene `ParameterButtonChanger` buttons; which choice leads to
+  which scene lives in **Bolt visual-scripting flow machines**, stored as
+  assets, not in C#. Nothing at runtime exposes the graph, so "every possible
+  choice and how it branches" cannot be read from a save (or from C#).
+  Enumerating it would mean parsing the Bolt assets offline - a separate
+  reverse-engineering project - and it would spoil the story.
+- What IS available: each captured choice point stores the exact choice texts
+  offered at that scene (`choices:` in the `.meta.txt` sidecar), and the
+  playthrough path (`ShowedScenesList`). That gives a partial, player-specific
+  tree: what was offered where, along the paths actually taken.

@@ -38,10 +38,10 @@ never touches the game's saves.
   the mod's window keeps working there, so a permadeath run can still be rewound.
 - **Playthrough history.** The game records every scene the current save has
   passed through. **History** in the same window lists that path in order,
-  including the part played before the mod was installed, and marks the scenes
-  the mod already has a save for. It is read-only: the game's save records which
-  scenes were shown, not which answer was clicked, so earlier choice points
-  cannot be restored from it.
+  including the part played before the mod was installed. Steps the mod has a
+  save for are marked and can be clicked to load them; older steps have no state
+  to restore, because the game's save records which scenes were shown, not which
+  answer was clicked, and keeps no history of states.
 
 ### Platforms
 

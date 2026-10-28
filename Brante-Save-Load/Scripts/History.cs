@@ -24,7 +24,12 @@ namespace Doorstop
 			public string SceneName;
 			public bool IsShowed;
 			public string Title;
-			public bool HasSnapshot;
+			public string SnapshotPath;
+
+			public bool HasSnapshot
+			{
+				get { return !string.IsNullOrEmpty(SnapshotPath); }
+			}
 		}
 
 		// Reads the scene path from a save (no game state is touched).
@@ -47,7 +52,7 @@ namespace Doorstop
 				e.SceneName = s.SceneName;
 				e.IsShowed = s.IsShowed;
 				e.Title = TitleOf(s.SceneName);
-				e.HasSnapshot = HasSnapshotFor(s.SceneName);
+				e.SnapshotPath = SnapshotFor(s.SceneName);
 				list.Add(e);
 			}
 			return list;
@@ -77,37 +82,46 @@ namespace Doorstop
 				e.SceneName = s.SceneName;
 				e.IsShowed = s.IsShowed;
 				e.Title = TitleOf(s.SceneName);
-				e.HasSnapshot = HasSnapshotFor(s.SceneName);
+				e.SnapshotPath = SnapshotFor(s.SceneName);
 				list.Add(e);
 			}
 			return list;
 		}
 
-		// The mod's own choice-point snapshots for the current main save,
-		// by scene name (file names start with the scene).
-		private static bool HasSnapshotFor(string sceneName)
+		// The newest choice-point snapshot the mod has for a scene (its file
+		// names start with the scene name), or "" when it has none. Scenes
+		// played before the mod was installed have no snapshot at all.
+		public static string SnapshotFor(string sceneName)
 		{
 			try
 			{
 				string dir = Recorder.RunDir(Recorder.CurrentRunId(), "Auto");
 				if (!Directory.Exists(dir))
 				{
-					return false;
+					return "";
 				}
 				string prefix = sceneName.Replace('/', '_') + "_";
+				string best = "";
+				DateTime bestTime = DateTime.MinValue;
 				foreach (string f in Directory.GetFiles(dir, "*.dat"))
 				{
-					if (Path.GetFileName(f).StartsWith(prefix, StringComparison.Ordinal))
+					if (!Path.GetFileName(f).StartsWith(prefix, StringComparison.Ordinal))
 					{
-						return true;
+						continue;
+					}
+					DateTime t = File.GetLastWriteTimeUtc(f);
+					if (t > bestTime)
+					{
+						bestTime = t;
+						best = f;
 					}
 				}
+				return best;
 			}
 			catch
 			{
-				// history is best effort
+				return "";
 			}
-			return false;
 		}
 
 		private static string TitleOf(string sceneName)
