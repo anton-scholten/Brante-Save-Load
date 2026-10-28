@@ -212,7 +212,12 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   community sheet into `data/graph.json` — scene ids ↔ event titles by title
   key, and choice → next scene edges from `trace.log`. Verified with a
   synthetic trace; the real save has 3 events mapped and 0 edges yet.
-- [ ] Collect edges by playing (traces do it automatically); a page-advancing
-  driver would allow clicking through a loaded scene instead.
+- [x] Bolt graph extraction (`tools/bolt_extract.py`): the game stores each
+  machine's graph as JSON in `resources.assets` - 481 graphs extracted in under
+  a second, 445 with `LoadScene` literals, 9 with the `Click` event.
+- [ ] Interpret that graph (Click -> switches -> SuperUnit macros -> LoadScene)
+  to produce the complete edge table.
+- [ ] Collect edges by playing (traces do it automatically) as a cross-check; a
+  page-advancing driver would allow clicking through a loaded scene instead.
 - [ ] Render the full tree from `data/graph.json`, path highlighted.
 - [ ] In-game test pass, README final, design doc.

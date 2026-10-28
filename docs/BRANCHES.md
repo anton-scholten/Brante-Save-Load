@@ -129,6 +129,53 @@ because no choice has been clicked since tracing was added.
 A synthetic trace (click → loading screen → next story scene) was used to test
 the pairing: both edges resolved with the right option text.
 
+## Reading the graph straight out of the game (Bolt)
+
+This turned out to be much more open than expected. Every Bolt machine stores its
+graph as a **JSON string** inside the Unity asset, starting with
+`{"graph":{"variables"`. It contains:
+
+- `elements[]` — units (`"$type":"Bolt.InvokeMember"`, `"Bolt.SwitchOnString"`,
+  `"Bolt.Branch"`, `"Bolt.SuperUnit"`, …) and connections
+  (`Bolt.ControlConnection`, `Bolt.ValueConnection`) that reference units by
+  `$id`/`$ref`;
+- `defaultValues` and `Bolt.Literal` units — the actual strings, including scene
+  names (`LoadingScreen_Child`, `070.240.130_FateOfTheFamily13`, …);
+- `SuperUnit` entries with `nest.macro = N`, i.e. references to macro assets
+  that hold further graphs.
+
+`tools/bolt_extract.py` extracts all of it in under a second:
+
+```sh
+python3 tools/bolt_extract.py            # -> data/bolt-graphs.json (~1.1 MB)
+```
+
+Current result: **481 graphs**, 445 of them calling
+`GameManager.LoadScene(sceneName)` with a literal name, and 9 handling a `Click`
+custom event. The story flow is: `ParameterButtonChanger.Button_Click` →
+`CustomEvent("Click")` on `TalismanFlowMachine` → the `GameManager` graph's
+`SwitchOnString`/`SwitchOnInteger` dispatcher → per-chapter `SuperUnit` macros →
+`LoadScene`.
+
+So a complete edge table is reachable **without playing and without a harness**.
+What is still needed is an interpreter for the dispatcher: follow control flow
+from the `Click` event, evaluate the switches/branches, descend into `SuperUnit`
+macros (resolving `nest.macro` to its graph) and record the `LoadScene` literal.
+The branch conditions (stats/relations) come along for free as strings.
+
+Online references used for this:
+
+- Bolt 1.4 API: `FlowGraph` (`controlConnections`, `elements`), `FlowGraphAsset`
+  / macros, `ControlConnection` — <https://docs.unity3d.com/Packages/com.unity.bolt@1.4/api/Ludiq.Bolt.FlowGraph.html>
+- Bolt manual: *Graphs, Machines and Macros* (embedded graphs vs macro assets) —
+  <https://docs.unity3d.com/Packages/com.unity.bolt@1.4/manual/bolt-graphs-machines-macros.html>
+- `EditorSerializationUtility.DeserializeYamlAsset(asset, "MonoBehaviour", "_data")`
+  documents that the graph lives as serialised data on the component.
+- Asset extractors, if a type-tree dump is ever needed: AssetRipper
+  <https://assetripper.github.io/AssetRipper/> and UnityPy
+  <https://github.com/K0lb3/UnityPy/> (not needed for this game: the JSON is
+  plain text in `resources.assets`).
+
 ## Getting edges in practice
 
 - **Normal play**: every click is traced, so edges accumulate as the game is
