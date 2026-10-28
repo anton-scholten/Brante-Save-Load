@@ -242,8 +242,25 @@ That means the tree does not need the unplayed-branch edges at all for the
 in order), the alternatives at each step come from this table, and the answer
 actually taken comes from the recorded `chosen=`/next snapshot.
 
-Remaining unknown (only for *unplayed* branches beyond one step): the transition
-order itself. It is not in the flow graphs,
+**Why the transition table cannot be read offline (checked 28 Oct 2026).**
+
+- The `Click` handler at runtime is the machine on `TalismanFlowMachine`. A new
+  dev dump (`BoltDump.cs`, marker `dev-bolt.txt`) reads the *live* graph and
+  confirms it is the same 35-unit graph as `GameManager`: cutscenes and chapter
+  finals (`Cutscene_1`…`7`, `GoToFinals`, `Chapter` switch) — **no `LoadScene`
+  at all**, so it does not route choices.
+- Bolt state graphs do not exist in the build.
+- Scene files carry no successor table (`01.06.01` appears in one of 25 files),
+  and build order does not match play order: the build lists
+  `01.02.01` before `01.02.01_2`, while a real playthrough went
+  `01.01.01 → 01.02.01_2 → 01.02.01`.
+- That leaves the Unity `UnityEvent` persistent-call arguments inside the scene
+  files (the `01.06.01` string sits in that area) — readable only with Unity
+  type trees, which release builds do not ship.
+
+So a fully static edge table would need a hand-written parser for the scene file's
+`m_PersistentCalls` layout. That is the remaining work for "Design A"; the live
+alternative (load a snapshot, click the answers) needs no new data. It is not in the flow graphs,
 not in the scene files as a table (1 of 25), and not in a Bolt state machine. The
 most likely holder is the C# `SceneStateMachine` per scene (its serialised event
 fields) or the story `TextBlock` data. Traces already record the true order for

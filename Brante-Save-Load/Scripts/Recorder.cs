@@ -1168,6 +1168,11 @@ namespace Doorstop
 			'\0', '/', '\\', ':', '*', '?', '"', '<', '>', '|', '\n', '\r', '\t'
 		};
 
+		public static string SafeName(string name)
+		{
+			return Sanitize(name);
+		}
+
 		private static string Sanitize(string name)
 		{
 			if (string.IsNullOrEmpty(name))

@@ -244,14 +244,15 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
     BRANCHES.md). Without them the view cannot know where an unplayed answer
     goes; with them it is only rendering.
   - Two possible designs:
-    1. **Offline graph** (preferred): `data/graph.json` + a full edge table, so
-       clicking is instant and needs no game state. Requires finishing the
-       transition decode.
+    1. **Offline graph**: `data/graph.json` + a full edge table, so clicking is
+       instant and needs no game state. **Blocked**: the transition is not in the
+       flow graphs, scene files or build order (see BRANCHES.md, "Why the
+       transition table cannot be read offline"). Unblocking it means parsing
+       `m_PersistentCalls` in the scene files by hand.
     2. **Live simulation**: load the nearest snapshot, then invoke the game's
        own `Button_Click` for each chosen answer and let the game advance. Works
-       today for captured scenes, but each step plays the consequence animation
-       (seconds per click) and needs the page-advance driver that is still
-       unresolved.
+       for captured scenes, but each step plays the consequence animation
+       (seconds per click) and needs the page-advance driver, still unresolved.
   - UI: a toggle in the History panel ("explore"), which unlocks clicking
     read-only answers; a "load this scene" button appears once the path reaches a
     scene the mod has a snapshot for, otherwise the path is only a preview.

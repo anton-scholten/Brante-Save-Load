@@ -232,6 +232,15 @@ namespace Doorstop
 						yield return new WaitForSeconds(1f);
 						DumpActiveScene();
 					}
+					// Dev: dump the Bolt graph that handles the choice click.
+					string bolt = Path.Combine(Recorder.SnapshotDir, "dev-bolt.txt");
+					if (File.Exists(bolt))
+					{
+						try { File.Delete(bolt); }
+						catch (Exception) { }
+						yield return new WaitForSeconds(2f);
+						BoltDump.DumpFor(SceneManager.GetActiveScene().name);
+					}
 					// Dev: page through the scene text until the answer panel
 					// is really up (the book opens a moment after the scene,
 					// so wait for its pager instead of giving up).
