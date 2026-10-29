@@ -121,7 +121,7 @@ namespace Doorstop
 			// the largest scale at which every category fits
 			float scale = 0.3f;
 			int rowsFit = 1;
-			for (float s = 1f; s >= 0.3f; s -= 0.02f)
+			for (float s = 1.3f; s >= 0.3f; s -= 0.02f)
 			{
 				int fit = Mathf.Max(1, Mathf.FloorToInt(usable / (natural.y * s)));
 				int subColumns = 0;
@@ -355,6 +355,9 @@ namespace Doorstop
 			rt.anchorMax = Vector2.one;
 			rt.offsetMin = Vector2.zero;
 			rt.offsetMax = Vector2.zero;
+			// the row lays its children out in a row: keep this one out of it,
+			// or it is squeezed to nothing and never hovered
+			go.AddComponent<LayoutElement>().ignoreLayout = true;
 			Image img = go.AddComponent<Image>();
 			img.color = Color.clear;
 			TreeHover hover = go.AddComponent<TreeHover>();

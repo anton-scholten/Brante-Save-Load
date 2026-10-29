@@ -47,7 +47,8 @@ wheel scrolls it sideways). The scrollbar doubles as a progress bar: its track
 is filled in red from the start of the story up to the scene you are on. The
 × in the top right corner closes it.
 
-- **Columns are scenes, boxes are answers.** Every scene this save has been
+- **Columns are scenes, boxes are answers.** The scene on screen says
+  "Current" at its foot, the next one "Upcoming". Every scene this save has been
   through, in order, then everything still ahead: the rest of this chapter and
   every later one, each chapter starting at a vertical rule with its name on
   top. Answer texts come from the game's own translation table, so scenes
@@ -63,8 +64,10 @@ is filled in red from the start of the story up to the scene you are on. The
 - **Click answers to build a path.** Each click picks that answer; the path
   follows it and the last pick carries a red dashed outline. Answers your hero
   could not take at that point are greyed out and cannot be picked. The
-  **reset path** button (top left, under the title) puts every pick back to
-  what you played.
+  **reset path** button (top right, next to the ×) puts every pick back to
+  what you played. If a pick changes the hero so much that an answer you
+  picked further on is no longer open to him there, that answer turns red
+  and Load scene is greyed out until you pick another one.
 - **Your hero's stats** fill the space under the tree's scrollbar (the tree
   takes only the height its answers need): one column per category, titled
   as the game's tabs (Personality, Family, The Province, Occupation, ...),
@@ -74,9 +77,9 @@ is filled in red from the start of the story up to the scene you are on. The
   and below in red, and go back to today's with reset path. Hover a stat for
   the game's own pop-up: what it means and every step of its scale, the
   hero's step highlighted.
-- **Load scene** (top right) takes you to the scene of your last pick along
+- **Load scene** (top middle) takes you to the scene of your last pick along
   your path. It is greyed out while that would load exactly the scene and
-  answers you have now. The mod loads its newest save from before the first answer you
+  answers you have now, or while a pick conflicts; hover it to see why. The mod loads its newest save from before the first answer you
   changed and plays your picked answers itself - at ten times speed, sound off,
   a few seconds a scene - until the selected scene is on screen, where it
   stops and leaves the choice to you.

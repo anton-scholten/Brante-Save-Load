@@ -528,6 +528,21 @@ a window drawn at a higher order is invisible until its canvas order is
 raised too. It is about 740 units tall - taller than the room above a row
 near the bottom of the screen.
 
+The row prefab `Parameter_Horizontal` carries a `HorizontalLayoutGroup` +
+`ContentSizeFitter`: any child added to it (a hover hit area, say) is laid
+out as one more cell and squeezed to 0 x 0, so it never receives the
+pointer. Give such a child a `LayoutElement` with `ignoreLayout`. Its row
+content is laid out at fixed widths: shrinking the row's width overlaps the
+icon, text and slider instead of narrowing them.
+
+## TextMesh Pro in this game (29 Oct 2026)
+
+The game's TMP build returns nonsense from `GetPreferredValues` /
+`preferredWidth` for labels made at runtime (10.8 units for "Load scene" at
+size 22, and the longest word's width when word wrap is on). To size
+something to its text, turn wrap off and overflow to `Overflow`, call
+`ForceMeshUpdate()` and read `textBounds` - which needs the label active.
+
 ## The book's HUD (29 Oct 2026)
 
 Each story scene brings its own HUD (`Buttons/HUD.*`), so anything added to

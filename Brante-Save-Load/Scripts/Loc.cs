@@ -17,7 +17,8 @@ namespace Doorstop
 			ConfirmLoad, ConfirmDelete, ConfirmSave, EmptySaves,
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, Current, NothingYet,
-			LoadScene, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath, BookTab
+			LoadScene, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath, BookTab,
+			PickConflict, NothingToLoad
 		}
 
 		static Loc()
@@ -55,6 +56,17 @@ namespace Doorstop
 			AddResetPath(_ja, "道筋をリセット", "セーブ\nロード\nMOD");
 			AddResetPath(_ko, "경로 초기화", "저장\n불러오기\n모드");
 			AddResetPath(_zh, "重置路径", "存档\n读档\n模组");
+			AddConflict(_en, "A picked answer in \"{0}\" conflicts with your hero's stats at that moment: an earlier pick changed them. Pick another answer there.", "Nothing to load: this is the scene and the answers you have now.");
+			AddConflict(_ru, "Ответ, выбранный в «{0}», противоречит характеристикам героя в тот момент: их изменил более ранний выбор. Выберите там другой ответ.", "Загружать нечего: это та же сцена и те же ответы, что сейчас.");
+			AddConflict(_de, "Die in „{0}“ gewählte Antwort passt nicht zu den Werten deines Helden in diesem Moment: eine frühere Wahl hat sie verändert. Wähle dort eine andere Antwort.", "Nichts zu laden: das ist die Szene mit den Antworten, die du jetzt hast.");
+			AddConflict(_fr, "La réponse choisie dans « {0} » n'est pas compatible avec les caractéristiques de votre héros à ce moment-là : un choix antérieur les a modifiées. Choisissez-y une autre réponse.", "Rien à charger : c'est la scène et les réponses que vous avez maintenant.");
+			AddConflict(_es, "La respuesta elegida en «{0}» choca con las características de tu héroe en ese momento: una elección anterior las cambió. Elige otra respuesta allí.", "Nada que cargar: es la escena y las respuestas que tienes ahora.");
+			AddConflict(_it, "La risposta scelta in «{0}» è in conflitto con le caratteristiche del tuo eroe in quel momento: una scelta precedente le ha cambiate. Scegli lì un'altra risposta.", "Niente da caricare: è la scena con le risposte che hai adesso.");
+			AddConflict(_pl, "Odpowiedź wybrana w „{0}” koliduje ze statystykami bohatera w tym momencie: zmienił je wcześniejszy wybór. Wybierz tam inną odpowiedź.", "Nie ma czego wczytać: to ta sama scena i te same odpowiedzi co teraz.");
+			AddConflict(_tr, "\"{0}\" içinde seçilen cevap, kahramanının o andaki değerleriyle çelişiyor: daha önceki bir seçim onları değiştirdi. Orada başka bir cevap seç.", "Yüklenecek bir şey yok: bu, şu anki sahne ve cevaplar.");
+			AddConflict(_ja, "「{0}」で選んだ回答は、その時点の主人公の能力値と矛盾しています（それ以前の選択で変わりました）。そこで別の回答を選んでください。", "読み込むものはありません：今と同じシーンと回答です。");
+			AddConflict(_ko, "\"{0}\"에서 고른 답이 그 시점 주인공의 능력치와 맞지 않습니다(앞선 선택이 능력치를 바꿨습니다). 그곳에서 다른 답을 고르세요.", "불러올 것이 없습니다: 지금과 같은 장면과 답입니다.");
+			AddConflict(_zh, "在“{0}”中选择的答案与主角当时的属性冲突：之前的选择改变了属性。请在那里选择其他答案。", "无需读取：这就是当前的场景和答案。");
 			AddPickBlocked(_en, "The answer picked in \"{0}\" would not be open to your hero there.");
 			AddPickBlocked(_ru, "Ответ, выбранный в «{0}», там будет недоступен вашему герою.");
 			AddPickBlocked(_de, "Die in „{0}“ gewählte Antwort stünde deinem Helden dort nicht offen.");
@@ -111,6 +123,12 @@ namespace Doorstop
 		private static void AddPickBlocked(Dictionary<K, string> d, string text)
 		{
 			d[K.PickBlocked] = text;
+		}
+
+		private static void AddConflict(Dictionary<K, string> d, string conflict, string nothing)
+		{
+			d[K.PickConflict] = conflict;
+			d[K.NothingToLoad] = nothing;
 		}
 
 		private static void AddResetPath(Dictionary<K, string> d, string text, string bookTab)
