@@ -42,7 +42,7 @@ never touches the game's saves.
 
 The **Tree view** button at the top of the Save / Load window - or the
 **save / load / mod** tab on top of the book's left page, next to the year and
-chapter tabs - opens the whole story as a tree, left to right, filling nearly the whole screen (the mouse
+chapter tabs - opens the whole story as a tree, left to right, filling the whole screen like the game's own pages (the mouse
 wheel scrolls it sideways). The scrollbar doubles as a progress bar: its track
 is filled in red from the start of the story up to the scene you are on. The
 × in the top right corner closes it.

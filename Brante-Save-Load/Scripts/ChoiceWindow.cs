@@ -61,6 +61,27 @@ namespace Doorstop
 		}
 	}
 
+	// The tree view fills the screen; when the window changes size while it is
+	// open, the tree and the stats are laid out again (once, the next frame).
+	public sealed class TreeResize : MonoBehaviour
+	{
+		private bool _dirty;
+
+		private void OnRectTransformDimensionsChange()
+		{
+			_dirty = true;
+		}
+
+		private void Update()
+		{
+			if (_dirty)
+			{
+				_dirty = false;
+				ChoiceWindow.Relayout();
+			}
+		}
+	}
+
 	// The history tree is wide, not tall: while it fits vertically, the mouse
 	// wheel scrolls it sideways (wheel down = towards the newest column).
 	// Unity's ScrollRect only does that when vertical scrolling is switched
@@ -985,13 +1006,13 @@ namespace Doorstop
 			Image overlay = _historyPanel.AddComponent<Image>();
 			overlay.color = new Color(0f, 0f, 0f, 0.55f);
 
-			// Nearly the whole screen: the more columns fit, the more of the
-			// story is in view.
+			// The whole screen, as the game's own pages: the canvas is always
+			// 1080 units tall and as wide as the window's aspect makes it, so
+			// the tree and the stats below are laid out from this box's size.
 			GameObject box = CreateUiObject("Box", _historyPanel.transform);
 			RectTransform brt = box.GetComponent<RectTransform>();
 			Stretch(brt);
-			brt.offsetMin = new Vector2(36f, 30f);
-			brt.offsetMax = new Vector2(-36f, -30f);
+			box.AddComponent<TreeResize>();
 			Image bimg = box.AddComponent<Image>();
 			bimg.color = ColPanel;
 			_historyBox = brt;
@@ -1003,7 +1024,7 @@ namespace Doorstop
 			trt.anchorMin = new Vector2(0f, 1f);
 			trt.anchorMax = new Vector2(1f, 1f);
 			trt.pivot = new Vector2(0.5f, 1f);
-			trt.anchoredPosition = new Vector2(0f, -12f);
+			trt.anchoredPosition = new Vector2(0f, -20f);
 			trt.sizeDelta = new Vector2(-120f, 46f);
 
 			// Scrollable list.
@@ -1082,7 +1103,7 @@ namespace Doorstop
 			irt2.anchorMin = new Vector2(0f, 1f);
 			irt2.anchorMax = new Vector2(1f, 1f);
 			irt2.pivot = new Vector2(0.5f, 1f);
-			irt2.anchoredPosition = new Vector2(0f, -60f);
+			irt2.anchoredPosition = new Vector2(0f, -68f);
 			irt2.sizeDelta = new Vector2(-52f, 26f);
 			_historyInfo.overflowMode = TextOverflowModes.Ellipsis;
 			_historyInfo.enableWordWrapping = false;
@@ -1093,7 +1114,7 @@ namespace Doorstop
 			cxrt.anchorMin = new Vector2(1f, 1f);
 			cxrt.anchorMax = new Vector2(1f, 1f);
 			cxrt.pivot = new Vector2(1f, 1f);
-			cxrt.anchoredPosition = new Vector2(-14f, -14f);
+			cxrt.anchoredPosition = new Vector2(-24f, -20f);
 			cxrt.sizeDelta = new Vector2(46f, 46f);
 			Image cximg = closeX.AddComponent<Image>();
 			cximg.color = Color.clear;
@@ -1110,7 +1131,7 @@ namespace Doorstop
 
 			// One header row: the title on the left, Load scene in the middle,
 			// reset (back to the answers actually played) left of the x.
-			_undoBtn = AddButton(box.transform, "Undo", new Vector2(1f, 1f), new Vector2(-74f, -14f),
+			_undoBtn = AddButton(box.transform, "Undo", new Vector2(1f, 1f), new Vector2(-84f, -20f),
 				new Vector2(58f, 46f), ColCancelButton, null, 0f, UndoSelections).gameObject;
 			TreeHover undoHover = _undoBtn.AddComponent<TreeHover>();
 			RectTransform undoRt = _undoBtn.GetComponent<RectTransform>();
@@ -1138,7 +1159,7 @@ namespace Doorstop
 
 			// Load scene: goes to the selected answer's scene along the selected
 			// path. Just wider than its label.
-			Button loadBtn = AddButton(box.transform, "LoadHere", new Vector2(0.5f, 1f), new Vector2(0f, -14f),
+			Button loadBtn = AddButton(box.transform, "LoadHere", new Vector2(0.5f, 1f), new Vector2(0f, -20f),
 				new Vector2(200f, 46f), ColLoadButton, Loc.T(Loc.K.LoadScene), 22f, LoadSelected);
 			ColorBlock lcb = loadBtn.colors;
 			lcb.disabledColor = Color.white;   // greyed by UpdateLoadButton's own colour
@@ -1795,14 +1816,32 @@ namespace Doorstop
 			"Unity", "Money", "Reputation",
 		};
 
-		private const float TreeAreaTop = 90f;     // below the header row and the hint line
-		private const float TreeAreaBottom = 14f;  // the stats reach down to the box's foot
+		private const float TreeAreaTop = 98f;     // below the header row and the hint line
+		private const float TreeAreaBottom = 18f;  // the stats reach down to the box's foot
 
 		// The tree takes the height its answers need (its scrollbar right
 		// under them); the stat columns get the rest, down to the box's foot.
 		// Called whenever the tree is drawn, which also rebuilds the stats.
+		private static float _contentHeight = -1f;
+
+		// After a change of window size: the tree's height and the stats again.
+		public static void Relayout()
+		{
+			if (_contentHeight < 0f || _historyPanel == null || !_historyPanel.activeInHierarchy)
+			{
+				return;
+			}
+			HidePopup();
+			StatPanel.HideTooltip();
+			LayoutTreeArea(_contentHeight);
+			StatPanel.Show(StatsHero(), SceneEffects.Now());
+			UpdateLoadButton();
+			ModLog.Info("ChoiceWindow: tree view laid out again for " + _historyBox.rect.size);
+		}
+
 		private static void LayoutTreeArea(float contentHeight)
 		{
+			_contentHeight = contentHeight;
 			if (_historyScrollRt == null || _historyBox == null)
 			{
 				return;
@@ -1813,12 +1852,12 @@ namespace Doorstop
 			_historyScrollRt.anchorMin = new Vector2(0f, 1f);
 			_historyScrollRt.anchorMax = new Vector2(1f, 1f);
 			_historyScrollRt.pivot = new Vector2(0.5f, 1f);
-			_historyScrollRt.offsetMin = new Vector2(26f, -(TreeAreaTop + treeH));
-			_historyScrollRt.offsetMax = new Vector2(-26f, -TreeAreaTop);
+			_historyScrollRt.offsetMin = new Vector2(32f, -(TreeAreaTop + treeH));
+			_historyScrollRt.offsetMax = new Vector2(-32f, -TreeAreaTop);
 			if (_statsArea != null)
 			{
-				_statsArea.offsetMin = new Vector2(26f, TreeAreaBottom);
-				_statsArea.offsetMax = new Vector2(-26f, -(TreeAreaTop + treeH + 12f));
+				_statsArea.offsetMin = new Vector2(32f, TreeAreaBottom);
+				_statsArea.offsetMax = new Vector2(-32f, -(TreeAreaTop + treeH + 12f));
 				SceneEffects.Hero now = SceneEffects.Now();
 				StatPanel.Build(_statsArea, now == null ? new List<_Scripts.AMVCC.Models.Static.Parameter>()
 					: SceneEffects.StatsToShow(StatOrder, p => now.Value(p) != 0));
