@@ -500,3 +500,20 @@ takes, all verified over chapters 1-2 and into 3:
   `Path.GetFileNameWithoutExtension(..) + ".dat"` = `X.meta.dat`, which never
   exists - so no click had ever been recorded and the tree relied entirely on
   the next snapshot's `CurrentConsequence`. Fixed.
+
+## The game's stat rows (tree view stats, 28 Oct 2026)
+
+The character/family/province tabs draw each stat with `ParameterComponent`
+(`_Scripts.AMVCC.Views.Windows`): `Icon`, `Name`, `TextValue`, `Descr` (the
+segment word, key `<ParametersList>.Segment<n>` for the scale step the value
+falls in), and a `SimpleSlider` or - when `MinValue == -MaxValue` - a
+`TwoSideSlider`, whose `ParameterSliderComponent.ScaleContainer` takes an
+instance of the stat's own `Parameter.ScalePrefab` (the scale marks). The
+row prefab `Parameter_Horizontal` (375 x 103) is loaded as an asset
+(`FindObjectsOfTypeAll`, scene not valid). Cloned inside an inactive parent,
+none of its scripts wake up; removing every non-UnityEngine/TMPro
+MonoBehaviour and disabling its Animator leaves a static row the mod fills
+itself. Tab titles: `HUD.Character` (Personality), `HUD.Family`, `HUD.Home`,
+`HUD.Empire` (The Province), `Work` (Occupation), `HUD.Insurrection`.
+`Animator` sits in UnityEngine.AnimationModule, which the build does not
+reference - disable it through its `Behaviour` base.

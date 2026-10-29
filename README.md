@@ -63,11 +63,13 @@ is filled in red from the start of the story up to the scene you are on. The
   follows it and the last pick carries a red dashed outline. Answers your hero
   could not take at that point are greyed out and cannot be picked. The
   **undo** button (bottom left) puts every pick back to what you played.
-- **Your hero's stats** run along the bottom, one column per stat with the
-  game's icon: will, traits and skills, family, and every other stat in play.
-  They show the hero after your last pick along the path - green above
-  today's value, red below - and go back to today's values with undo. Hover
-  an icon for the stat's name.
+- **Your hero's stats** fill the space under the tree's scrollbar (the tree
+  takes only the height its answers need): one column per category, titled
+  as the game's tabs (Personality, Family, The Province, Occupation, ...),
+  each stat a row in the game's own style - icon, name, value, the game's
+  word for the level, and its slider with the stat's scale. They show the
+  hero after your last pick along the path, values above today's in green
+  and below in red, and go back to today's with undo.
 - **Load scene** (bottom right) takes you to the scene of your last pick along
   your path. The mod loads its newest save from before the first answer you
   changed and plays your picked answers itself - at ten times speed, sound off,

@@ -32,6 +32,7 @@ Brante-Save-Load/            the folder that gets installed into the game dir
     SceneTexts.cs            loader for scene-texts.tsv (titles + answers)
     SceneFlow.cs             scene-flow.tsv: upcoming scenes, condition evaluator
     SceneEffects.cs          scene-effects.tsv: what each answer changes (tree pop-up)
+    StatPanel.cs             tree's stat columns: clones of the game's stat row
     Loc.cs                   the UI's own translations (11 languages)
     BoltDump.cs              runtime dump of the choice machine (dev only)
 doorstop/doorstop_config.ini the Doorstop config installed into the game folder

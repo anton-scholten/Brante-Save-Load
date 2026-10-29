@@ -395,7 +395,8 @@ namespace Doorstop
 		private static List<TreeCol> _tree = new List<TreeCol>();
 		private static RectTransform _historyBox;
 		private static RectTransform _historyProgress;
-		private static Transform _statsRow;
+		private static RectTransform _statsArea;
+		private static RectTransform _historyScrollRt;
 		private static RectTransform _popup;
 		private static TextMeshProUGUI _popupText;
 		private static TextMeshProUGUI _popupNote;
@@ -777,7 +778,8 @@ namespace Doorstop
 			_historyInfo = null;
 			_historyBox = null;
 			_historyProgress = null;
-			_statsRow = null;
+			_statsArea = null;
+			_historyScrollRt = null;
 			_popup = null;
 			_popupText = null;
 			_popupNote = null;
@@ -846,12 +848,8 @@ namespace Doorstop
 			// Scrollable list.
 			GameObject scroll = CreateUiObject("Scroll", box.transform);
 			RectTransform srt = scroll.GetComponent<RectTransform>();
-			srt.anchorMin = new Vector2(0f, 0f);
-			srt.anchorMax = new Vector2(1f, 1f);
-			// Bottom edge clears the stats row (116..174) and the hint line
-			// (82..108) below it.
-			srt.offsetMin = new Vector2(26f, 182f);
-			srt.offsetMax = new Vector2(-26f, -96f);
+			// placed by LayoutTreeArea: as tall as the answers, the stats below
+			_historyScrollRt = srt;
 			ScrollRect sc = scroll.AddComponent<ScrollRect>();
 			sc.horizontal = true;
 			sc.vertical = true;
@@ -943,25 +941,11 @@ namespace Doorstop
 			cxbtn.onClick.AddListener(CloseHistory);
 			AddCross(closeX.transform, 26f, 4f);
 
-			// The hero's stats along the path (UpdateStats), above the hint line.
-			GameObject stats = CreateUiObject("Stats", box.transform);
-			RectTransform strt = stats.GetComponent<RectTransform>();
-			strt.anchorMin = new Vector2(0f, 0f);
-			strt.anchorMax = new Vector2(1f, 0f);
-			strt.pivot = new Vector2(0.5f, 0f);
-			strt.anchoredPosition = new Vector2(0f, 116f);
-			strt.sizeDelta = new Vector2(-52f, 58f);
-			Image stimg = stats.AddComponent<Image>();
-			stimg.color = new Color(0f, 0f, 0f, 0.05f);
-			HorizontalLayoutGroup sth = stats.AddComponent<HorizontalLayoutGroup>();
-			sth.padding = new RectOffset(10, 10, 4, 4);
-			sth.spacing = 2f;
-			sth.childAlignment = TextAnchor.MiddleCenter;
-			sth.childControlWidth = true;
-			sth.childControlHeight = true;
-			sth.childForceExpandWidth = true;
-			sth.childForceExpandHeight = true;
-			_statsRow = stats.transform;
+			// The hero's stats along the path (StatPanel), between the tree's
+			// scrollbar and the hint line; placed by LayoutTreeArea.
+			_statsArea = CreateUiObject("Stats", box.transform).GetComponent<RectTransform>();
+			_statsArea.anchorMin = Vector2.zero;
+			_statsArea.anchorMax = Vector2.one;
 
 			// Undo (bottom left): back to the answers actually played.
 			_undoBtn = AddButton(box.transform, "Undo", new Vector2(0f, 0f), new Vector2(24f, 24f),
@@ -1261,7 +1245,7 @@ namespace Doorstop
 				}
 			}
 			DrawPath(cols);
-			UpdateStats();
+			StatPanel.Show(StatsHero(), SceneEffects.Now());
 			if (_loadHereBtn != null)
 			{
 				_loadHereBtn.SetActive(!string.IsNullOrEmpty(_selScene));
@@ -1296,6 +1280,7 @@ namespace Doorstop
 				ert.sizeDelta = new Vector2(400f, 40f);
 				SetContentSize(420f, 80f);
 				SetStoryProgress(0f);
+				LayoutTreeArea(80f);
 				return;
 			}
 
@@ -1313,6 +1298,7 @@ namespace Doorstop
 			float height = TreeTop + rows * TreeRowH + 20f;
 			SetContentSize(width, height);
 			SetStoryProgress(_focusCol >= 0 ? (30f + (_focusCol + 0.5f) * TreeColW) / width : 0f);
+			LayoutTreeArea(height);
 
 			int prevChapter = 0;
 			for (int i = 0; i < cols.Count; i++)
@@ -1514,8 +1500,9 @@ namespace Doorstop
 			return SceneEffects.Now();
 		}
 
-		// Order of the stats row: will, the five traits and the skills built
-		// from them, then the family, then whatever else the game tracks.
+		// Stats always listed, in this order: will, the five traits and the
+		// skills built from them, then the family; any other stat is listed
+		// when it is in play (not zero).
 		private static readonly string[] StatOrder =
 		{
 			"Will", "Curiosity", "Activity", "Discipline", "Cunning", "Spirituality",
@@ -1523,59 +1510,33 @@ namespace Doorstop
 			"Unity", "Money", "Reputation",
 		};
 
-		// One column per stat, with the game's icon: the always-present ones
-		// (StatOrder) and any other stat that is in play (not zero now or along
-		// the path). A value above today's is green, below red; hovering
-		// names the stat on the hint line.
-		private static void UpdateStats()
+		private const float TreeAreaTop = 96f;     // below the title and subtitle
+		private const float TreeAreaBottom = 112f; // above the hint line and buttons
+
+		// The tree takes the height its answers need (its scrollbar right
+		// under them); the stat columns get the rest, down to the hint line.
+		// Called whenever the tree is drawn, which also rebuilds the stats.
+		private static void LayoutTreeArea(float contentHeight)
 		{
-			if (_statsRow == null)
+			if (_historyScrollRt == null || _historyBox == null)
 			{
 				return;
 			}
-			for (int i = _statsRow.childCount - 1; i >= 0; i--)
+			float box = _historyBox.rect.height;
+			float treeH = Mathf.Clamp(contentHeight + 22f, 200f,
+				Mathf.Max(200f, box - TreeAreaTop - TreeAreaBottom - 180f));
+			_historyScrollRt.anchorMin = new Vector2(0f, 1f);
+			_historyScrollRt.anchorMax = new Vector2(1f, 1f);
+			_historyScrollRt.pivot = new Vector2(0.5f, 1f);
+			_historyScrollRt.offsetMin = new Vector2(26f, -(TreeAreaTop + treeH));
+			_historyScrollRt.offsetMax = new Vector2(-26f, -TreeAreaTop);
+			if (_statsArea != null)
 			{
-				GameObject old = _statsRow.GetChild(i).gameObject;
-				old.SetActive(false);
-				UnityEngine.Object.Destroy(old);
-			}
-			SceneEffects.Hero now = SceneEffects.Now();
-			SceneEffects.Hero shown = StatsHero();
-			if (now == null || shown == null)
-			{
-				return;
-			}
-			List<_Scripts.AMVCC.Models.Static.Parameter> stats = SceneEffects.StatsToShow(StatOrder,
-				p => now.Value(p) != 0 || shown.Value(p) != 0);
-			foreach (_Scripts.AMVCC.Models.Static.Parameter p in stats)
-			{
-				int value = shown.Value(p);
-				int today = now.Value(p);
-				GameObject cell = CreateUiObject("Stat", _statsRow);
-				VerticalLayoutGroup v = cell.AddComponent<VerticalLayoutGroup>();
-				v.childAlignment = TextAnchor.MiddleCenter;
-				v.childControlWidth = true;
-				v.childControlHeight = true;
-				v.childForceExpandWidth = true;
-				v.childForceExpandHeight = false;
-				GameObject ig = CreateUiObject("Icon", cell.transform);
-				LayoutElement le = ig.AddComponent<LayoutElement>();
-				le.preferredHeight = le.minHeight = 26f;
-				Image img = ig.AddComponent<Image>();
-				img.sprite = p.Icon;
-				img.preserveAspect = true;
-				img.raycastTarget = true;   // for the hover name
-				Color colour = value > today ? new Color(0.18f, 0.42f, 0.18f)
-					: value < today ? new Color(0.62f, 0.16f, 0.12f) : ColTextDark;
-				TextMeshProUGUI t = AddLabel(cell.transform, "Value", value.ToString(), 18f, colour, true);
-				// a line taller than its box would vanish under Ellipsis
-				t.overflowMode = TextOverflowModes.Overflow;
-				LayoutElement tle = t.gameObject.AddComponent<LayoutElement>();
-				tle.preferredHeight = tle.minHeight = 24f;
-				string name = SceneEffects.StatName(p) + ": " + value
-					+ (value != today ? " (" + today + ")" : "");
-				TreeHover hover = ig.AddComponent<TreeHover>();
-				hover.OnHover = delegate(bool on) { SetHistoryInfo(on ? name : null); };
+				_statsArea.offsetMin = new Vector2(26f, TreeAreaBottom);
+				_statsArea.offsetMax = new Vector2(-26f, -(TreeAreaTop + treeH + 12f));
+				SceneEffects.Hero now = SceneEffects.Now();
+				StatPanel.Build(_statsArea, now == null ? new List<_Scripts.AMVCC.Models.Static.Parameter>()
+					: SceneEffects.StatsToShow(StatOrder, p => now.Value(p) != 0));
 			}
 		}
 
