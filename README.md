@@ -42,7 +42,8 @@ never touches the game's saves.
 
 The **Tree view** button at the top of the Save / Load window opens the whole
 story as a tree, left to right, filling nearly the whole screen (the mouse
-wheel scrolls it sideways).
+wheel scrolls it sideways). The scrollbar doubles as a progress bar: its track
+is filled in red from the start of the story up to the scene you are on.
 
 - **Columns are scenes, boxes are answers.** Every scene this save has been
   through, in order, then everything still ahead: the rest of this chapter and

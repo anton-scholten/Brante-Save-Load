@@ -394,6 +394,7 @@ namespace Doorstop
 
 		private static List<TreeCol> _tree = new List<TreeCol>();
 		private static RectTransform _historyBox;
+		private static RectTransform _historyProgress;
 		private static RectTransform _popup;
 		private static TextMeshProUGUI _popupText;
 		private static TextMeshProUGUI _popupNote;
@@ -774,6 +775,7 @@ namespace Doorstop
 			_historyScroll = null;
 			_historyInfo = null;
 			_historyBox = null;
+			_historyProgress = null;
 			_popup = null;
 			_popupText = null;
 			_popupNote = null;
@@ -877,6 +879,18 @@ namespace Doorstop
 			htimg.color = new Color(0f, 0f, 0f, 0.12f);
 			Scrollbar hsb = track.AddComponent<Scrollbar>();
 			hsb.direction = Scrollbar.Direction.LeftToRight;
+			// Progress through the story: the track filled in the path's red
+			// from the start up to the scene on screen (SetStoryProgress),
+			// under the handle.
+			GameObject progress = CreateUiObject("Progress", track.transform);
+			_historyProgress = progress.GetComponent<RectTransform>();
+			_historyProgress.anchorMin = Vector2.zero;
+			_historyProgress.anchorMax = new Vector2(0f, 1f);
+			_historyProgress.offsetMin = Vector2.zero;
+			_historyProgress.offsetMax = Vector2.zero;
+			Image pimg2 = progress.AddComponent<Image>();
+			pimg2.color = new Color(ColTreeChosen.r, ColTreeChosen.g, ColTreeChosen.b, 0.75f);
+			pimg2.raycastTarget = false;
 			GameObject handle = CreateUiObject("Handle", track.transform);
 			Stretch(handle.GetComponent<RectTransform>());
 			Image hhimg = handle.AddComponent<Image>();
@@ -1229,6 +1243,7 @@ namespace Doorstop
 				ert.pivot = new Vector2(0f, 1f);
 				ert.sizeDelta = new Vector2(400f, 40f);
 				SetContentSize(420f, 80f);
+				SetStoryProgress(0f);
 				return 0;
 			}
 
@@ -1245,6 +1260,7 @@ namespace Doorstop
 			float width = 30f + cols.Count * TreeColW;
 			float height = TreeTop + rows * TreeRowH + 20f;
 			SetContentSize(width, height);
+			SetStoryProgress(_focusCol >= 0 ? (30f + (_focusCol + 0.5f) * TreeColW) / width : 0f);
 
 			int prevChapter = 0;
 			for (int i = 0; i < cols.Count; i++)
@@ -1803,6 +1819,16 @@ namespace Doorstop
 				col.Choices.Add(c);
 			}
 			return col;
+		}
+
+		// Fills the scrollbar track up to `fraction` of the story (0..1): where
+		// the scene on screen sits in the whole width of the tree.
+		private static void SetStoryProgress(float fraction)
+		{
+			if (_historyProgress != null)
+			{
+				_historyProgress.anchorMax = new Vector2(Mathf.Clamp01(fraction), 1f);
+			}
 		}
 
 		// Sets the content rect of a scroll view that is laid out by hand.
