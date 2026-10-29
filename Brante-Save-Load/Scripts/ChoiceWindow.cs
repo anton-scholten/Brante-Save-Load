@@ -620,13 +620,22 @@ namespace Doorstop
 
 				// the wooden strips behind the tabs are painted into the book's
 				// background images, not the buttons: cut the patch under the
-				// chapter tab out of each layer and lay the copies behind this one
+				// settings medallion (its strip is centred there, and no rope
+				// crosses it) out of each layer, and lay the copies behind this
+				// tab, centred on it and stretched wider
+				RectTransform srt = (RectTransform)settings.transform;
+				Vector3[] sc = new Vector3[4];
+				srt.GetWorldCorners(sc);
+				Vector3[] tc = new Vector3[4];
+				rt.GetWorldCorners(tc);
+				Vector3 woodAt = new Vector3((tc[0].x + tc[2].x) * 0.5f, (sc[0].y + sc[2].y) * 0.5f, tc[0].z);
+				Vector2 woodSize = new Vector2(srt.rect.width * 1.4f, srt.rect.height);
 				int at = tab.transform.GetSiblingIndex();
 				foreach (Image layer in hud.root.GetComponentsInChildren<Image>(true))
 				{
 					if (layer.sprite != null && (layer.sprite.name == "background" || layer.sprite.name == "book_new"))
 					{
-						Image patch = CopyPatch(layer, crt, hud, rt);
+						Image patch = CopyPatch(layer, srt, hud, woodAt, woodSize);
 						if (patch != null)
 						{
 							patch.transform.SetSiblingIndex(at++);
@@ -675,6 +684,10 @@ namespace Doorstop
 				lrt.offsetMin = lrt.offsetMax = Vector2.zero;
 
 				Button b = tab.GetComponent<Button>();
+				// the settings button swaps in its gear sprite on hover; a slight
+				// tint instead
+				b.transition = Selectable.Transition.ColorTint;
+				b.spriteState = new SpriteState();
 				// a fresh event: the copy would still carry the settings tab's
 				// persistent onClick
 				b.onClick = new Button.ButtonClickedEvent();
@@ -688,11 +701,27 @@ namespace Doorstop
 		}
 
 		// The part of `layer`'s sprite under `over`, as an Image under `parent`
-		// that sits where `place` is.
-		private static Image CopyPatch(Image layer, RectTransform over, Transform parent, RectTransform place)
+		// centred on the world point `at`, `size` units big.
+		private static Image CopyPatch(Image layer, RectTransform over, Transform parent, Vector3 at, Vector2 size)
 		{
 			RectTransform lrt = layer.rectTransform;
 			Rect lr = lrt.rect;
+			if (layer.preserveAspect && layer.sprite.rect.height > 0f && lr.height > 0f)
+			{
+				// drawn fitted inside its rect, centred: the book is narrower
+				// than a 16:9 screen
+				float aspect = layer.sprite.rect.width / layer.sprite.rect.height;
+				if (aspect < lr.width / lr.height)
+				{
+					float w = lr.height * aspect;
+					lr = new Rect(lr.center.x - w * 0.5f, lr.yMin, w, lr.height);
+				}
+				else
+				{
+					float h = lr.width / aspect;
+					lr = new Rect(lr.xMin, lr.center.y - h * 0.5f, lr.width, h);
+				}
+			}
 			Vector3[] c = new Vector3[4];
 			over.GetWorldCorners(c);
 			Vector2 lo = lrt.InverseTransformPoint(c[0]);
@@ -715,11 +744,8 @@ namespace Doorstop
 			img.sprite = Sprite.Create(sp.texture, cut, new Vector2(0.5f, 0.5f), sp.pixelsPerUnit);
 			img.raycastTarget = false;
 			RectTransform rt = go.GetComponent<RectTransform>();
-			rt.anchorMin = place.anchorMin;
-			rt.anchorMax = place.anchorMax;
-			rt.pivot = place.pivot;
-			rt.sizeDelta = place.sizeDelta;
-			rt.anchoredPosition = place.anchoredPosition;
+			rt.sizeDelta = size;
+			rt.position = at;
 			return img;
 		}
 
@@ -1139,7 +1165,7 @@ namespace Doorstop
 			{
 				if (on)
 				{
-					ShowPopup(undoRt, Loc.T(Loc.K.ResetPath), "", new List<SceneEffects.Effect>(), null);
+					ShowPopup(undoRt, Loc.T(Loc.K.ResetPath), "", new List<SceneEffects.Effect>(), null, true);
 				}
 				else
 				{
@@ -1165,6 +1191,7 @@ namespace Doorstop
 			lcb.disabledColor = Color.white;   // greyed by UpdateLoadButton's own colour
 			loadBtn.colors = lcb;
 			_loadHereBtn = loadBtn.gameObject;
+			_loadSized = false;
 			// greyed out, it says why on hover
 			TreeHover loadHover = _loadHereBtn.AddComponent<TreeHover>();
 			RectTransform loadRt = (RectTransform)loadBtn.transform;
@@ -1173,7 +1200,7 @@ namespace Doorstop
 				string why = on ? LoadBlockedReason() : null;
 				if (!string.IsNullOrEmpty(why))
 				{
-					ShowPopup(loadRt, why, "", new List<SceneEffects.Effect>(), null);
+					ShowPopup(loadRt, why, "", new List<SceneEffects.Effect>(), null, true);
 				}
 				else
 				{
@@ -1373,6 +1400,8 @@ namespace Doorstop
 			return PathChanged() ? null : Loc.T(Loc.K.NothingToLoad);
 		}
 
+		private static bool _loadSized;
+
 		private static void UpdateLoadButton()
 		{
 			if (_loadHereBtn == null)
@@ -1380,12 +1409,17 @@ namespace Doorstop
 				return;
 			}
 			bool on = PathChanged() && FirstConflict() == null;
-			// just wider than its label (measured once it is on screen)
-			TextMeshProUGUI text = _loadHereBtn.GetComponentInChildren<TextMeshProUGUI>();
-			float tw = text != null ? LineWidth(text) : 0f;
-			if (tw > 10f)
+			// just wider than its label: measured once, the first time it is
+			// on screen, and kept
+			if (!_loadSized)
 			{
-				((RectTransform)_loadHereBtn.transform).sizeDelta = new Vector2(tw + 44f, 46f);
+				TextMeshProUGUI text = _loadHereBtn.GetComponentInChildren<TextMeshProUGUI>();
+				float tw = text != null ? LineWidth(text) : 0f;
+				if (tw > 10f)
+				{
+					((RectTransform)_loadHereBtn.transform).sizeDelta = new Vector2(tw + 44f, 46f);
+					_loadSized = true;
+				}
 			}
 			_loadHereBtn.GetComponent<Button>().interactable = on;
 			_loadHereBtn.GetComponent<Image>().color = on ? ColLoadButton : ColCancelButton;
@@ -1438,6 +1472,7 @@ namespace Doorstop
 			int n = RefreshHistory(true);
 			_historyPanel.SetActive(true);
 			_historyPanel.transform.SetAsLastSibling();
+			UpdateLoadButton();   // its label can be measured now it is on screen
 			Canvas.ForceUpdateCanvases();
 			ScrollHistoryToFocus();
 			int ahead = 0, possible = 0;
@@ -1549,7 +1584,7 @@ namespace Doorstop
 				}
 			}
 			DrawPath(cols);
-			StatPanel.Show(StatsHero(), SceneEffects.Now());
+			StatPanel.Show(StatsHero(), SceneEffects.Now(), StatsChapter());
 			UpdateLoadButton();
 			ModLog.Info("ChoiceWindow: tree " + (rebuild ? "built" : "restyled") + " in "
 				+ sw.ElapsedMilliseconds + " ms (columns " + tData + ", path " + (tHero - tData)
@@ -1596,7 +1631,9 @@ namespace Doorstop
 				rows = Mathf.Max(rows, v.Count);
 			}
 			float width = 30f + cols.Count * TreeColW;
-			float height = TreeTop + rows * TreeRowH + 20f;
+			// room under the answers for a column's foot note (Current,
+			// Upcoming, Possible depending on ...: up to three lines)
+			float height = TreeTop + rows * TreeRowH + 20f + 52f;
 			SetContentSize(width, height);
 			SetStoryProgress(_focusCol >= 0 ? (30f + (_focusCol + 0.5f) * TreeColW) / width : 0f);
 			LayoutTreeArea(height);
@@ -1660,12 +1697,26 @@ namespace Doorstop
 				}
 				// The first scene ahead says so where played scenes from before
 				// the mod say theirs: at the bottom of the column.
+				// The scene on screen, the next one, and scenes that may not come
+				// at all (and on what that depends) say so at their foot.
+				List<string> foot = new List<string>();
 				if (e.Current || (e.Upcoming && (i == 0 || !cols[i - 1].Upcoming)))
 				{
 					string word = Loc.T(e.Current ? Loc.K.Current : Loc.K.Upcoming);
-					TextMeshProUGUI up = AddLabel(_historyList, "Upcoming",
-						word.Length > 0 ? char.ToUpper(word[0]) + word.Substring(1) : word, 15f, ColTreeMuted, true);
-					Wrap(up, x + 12f, height - 52f, TreeColW - 24f, 44f);
+					foot.Add(word.Length > 0 ? char.ToUpper(word[0]) + word.Substring(1) : word);
+				}
+				if (e.Possible)
+				{
+					foot.Add(PossibleReason(e.Scene));
+				}
+				if (foot.Count > 0)
+				{
+					TextMeshProUGUI up = AddLabel(_historyList, "Foot", string.Join("\n", foot.ToArray()),
+						15f, ColTreeMuted, true);
+					up.enableWordWrapping = true;
+					up.overflowMode = TextOverflowModes.Overflow;
+					up.alignment = TextAlignmentOptions.Bottom;
+					Wrap(up, x + 12f, height - 74f, TreeColW - 24f, 66f);
 				}
 				float barEnd = e.Current ? x + TreeNodeX + TreeNodeW * 0.5f : x + TreeColW;
 				AddLine(_historyList, x + 6f, TreeBarY, barEnd, TreeBarY,
@@ -1673,10 +1724,6 @@ namespace Doorstop
 
 				// Column header: the scene's title.
 				string headText = e.Title;
-				if (e.Possible)
-				{
-					headText += "  \u2022 " + Loc.T(Loc.K.Possible);
-				}
 				TextMeshProUGUI head = AddLabel(_historyList, "Head", headText,
 					18f, e.Upcoming ? ColTreeMuted : ColTextDark, false);
 				Wrap(head, x + 14f, TreeHeadY, TreeNodeW + TreeNodeX - 14f, 44f);
@@ -1806,15 +1853,22 @@ namespace Doorstop
 			return SceneEffects.Now();
 		}
 
-		// Stats always listed, in this order: will, the five traits and the
-		// skills built from them, then the family; any other stat is listed
-		// when it is in play (not zero).
-		private static readonly string[] StatOrder =
+		// The chapter of the hero the stats show: the selected scene's, else
+		// the scene on screen's.
+		private static int StatsChapter()
 		{
-			"Will", "Curiosity", "Activity", "Discipline", "Cunning", "Spirituality",
-			"Diplomacy", "Valor", "Manipulation", "Sabotage", "Theology", "Preaching",
-			"Unity", "Money", "Reputation",
-		};
+			int ch = SceneFlow.ChapterOf(_selScene);
+			if (ch <= 0)
+			{
+				TreeCol cur = _tree != null ? _tree.Find(c => c.Current) : null;
+				ch = cur != null ? SceneFlow.ChapterOf(cur.Scene) : 0;
+			}
+			if (ch <= 0 && GameManager.Instance != null)
+			{
+				ch = GameManager.Instance.Chapter;
+			}
+			return ch;
+		}
 
 		private const float TreeAreaTop = 98f;     // below the header row and the hint line
 		private const float TreeAreaBottom = 18f;  // the stats reach down to the box's foot
@@ -1834,7 +1888,7 @@ namespace Doorstop
 			HidePopup();
 			StatPanel.HideTooltip();
 			LayoutTreeArea(_contentHeight);
-			StatPanel.Show(StatsHero(), SceneEffects.Now());
+			StatPanel.Show(StatsHero(), SceneEffects.Now(), StatsChapter());
 			UpdateLoadButton();
 			ModLog.Info("ChoiceWindow: tree view laid out again for " + _historyBox.rect.size);
 		}
@@ -1858,9 +1912,7 @@ namespace Doorstop
 			{
 				_statsArea.offsetMin = new Vector2(32f, TreeAreaBottom);
 				_statsArea.offsetMax = new Vector2(-32f, -(TreeAreaTop + treeH + 12f));
-				SceneEffects.Hero now = SceneEffects.Now();
-				StatPanel.Build(_statsArea, now == null ? new List<_Scripts.AMVCC.Models.Static.Parameter>()
-					: SceneEffects.StatsToShow(StatOrder, p => now.Value(p) != 0));
+				StatPanel.Build(_statsArea);
 			}
 		}
 
@@ -2082,6 +2134,39 @@ namespace Doorstop
 			}
 		}
 
+		// "Possible depending on ...": what the scene's condition looks at -
+		// the hero's stats, relationships, the fates of characters, or story
+		// events (objectives the story sets, scenes already shown).
+		private static string PossibleReason(string scene)
+		{
+			SceneFlow.Row row = SceneFlow.Find(scene);
+			string cond = row != null ? row.Condition ?? "" : "";
+			List<string> on = new List<string>();
+			if (cond.Contains("GetParameterValue"))
+			{
+				on.Add(Loc.T(Loc.K.OnStats));
+			}
+			if (cond.Contains("GetCharacterRelation"))
+			{
+				on.Add(Loc.T(Loc.K.OnRelations));
+			}
+			if (cond.Contains("GetCharacterStatus"))
+			{
+				on.Add(Loc.T(Loc.K.OnFates));
+			}
+			if (cond.Contains("GetObjectiveStatus") || cond.Contains("GetSceneShowStatus")
+				|| cond.Contains("GetConditionBySceneName") || on.Count == 0)
+			{
+				on.Add(Loc.T(Loc.K.OnEvents));
+			}
+			string list = on[0];
+			for (int k = 1; k < on.Count; k++)
+			{
+				list += (k == on.Count - 1 ? " " + Loc.T(Loc.K.AndWord) + " " : ", ") + on[k];
+			}
+			return string.Format(Loc.T(Loc.K.PossibleOn), list);
+		}
+
 		// The game's own chapter name ("Chapter II. Adolescence").
 		private static string ChapterTitle(int chapter)
 		{
@@ -2139,7 +2224,7 @@ namespace Doorstop
 		}
 
 		private static void ShowPopup(RectTransform node, string text, string note,
-			List<SceneEffects.Effect> effects, SceneEffects.Hero live)
+			List<SceneEffects.Effect> effects, SceneEffects.Hero live, bool below = false)
 		{
 			if (_popup == null || _historyBox == null)
 			{
@@ -2216,8 +2301,15 @@ namespace Doorstop
 			{
 				x = topRight.x + 14f;
 			}
+			float y = topRight.y;
+			if (below)
+			{
+				// under a header button, centred on it
+				x = (topLeft.x + topRight.x - w) * 0.5f;
+				y = _historyBox.InverseTransformPoint(c[0]).y - 10f;
+			}
 			x = Mathf.Clamp(x, box.xMin + 10f, box.xMax - 10f - w);
-			float y = Mathf.Clamp(topRight.y, box.yMin + 10f + h, box.yMax - 10f);
+			y = Mathf.Clamp(y, box.yMin + 10f + h, box.yMax - 10f);
 			// anchored at the box's top-left corner
 			_popup.anchoredPosition = new Vector2(x - box.xMin, y - box.yMax);
 		}
@@ -3521,6 +3613,16 @@ namespace Doorstop
 				}
 			}
 			yield return new WaitForSeconds(3f);
+			// Dev: the first scene that may not come, and what it depends on.
+			int possibleAt = _tree.FindIndex(c => c.Possible);
+			if (possibleAt >= 0)
+			{
+				float range = contentRt.rect.width - _historyScroll.viewport.rect.width;
+				_historyScroll.horizontalNormalizedPosition = Mathf.Clamp01((30f + (possibleAt - 1) * TreeColW) / range);
+				ModLog.Info("ChoiceWindow: dev possible scene " + _tree[possibleAt].Scene + ": '"
+					+ PossibleReason(_tree[possibleAt].Scene) + "'");
+				yield return new WaitForSeconds(3f);
+			}
 			// Dev: pick the second answer of the first upcoming scene, show the
 			// mark, and log the load plan; then undo.
 			ScrollHistoryToFocus();

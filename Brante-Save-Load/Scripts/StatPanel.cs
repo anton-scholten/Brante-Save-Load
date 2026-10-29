@@ -27,27 +27,98 @@ namespace Doorstop
 			public TextMeshProUGUI Value;
 			public TextMeshProUGUI Descr;
 			public Slider Slider;
+			public Tab Tab;
+		}
+
+		// One of the game's stat tabs (its book tab, its window's stats) and
+		// the chapter the tab opens in.
+		private sealed class Tab
+		{
+			public string Hud;            // the HUD button that opens it
+			public int Chapter;
+			public string[] Order;        // the window's stats, in its order
+			public ParameterCategory[] Takes;   // stats of these categories not in any window
+			public readonly List<Parameter> Stats = new List<Parameter>();
+			public TextMeshProUGUI Title;
+		}
+
+		// The game's tabs and their windows' stats (Window_Character, _Home,
+		// _Soul, _Empire, _Work, _Insurrection); stats no window shows join the
+		// tab of their category, so every stat in the game has a row. A tab
+		// still locked at the hero's chapter is greyed out, its stats shown
+		// as the game already keeps them.
+		private static List<Tab> Tabs()
+		{
+			List<Tab> tabs = new List<Tab>
+			{
+				new Tab { Hud = "HUD.Character", Chapter = 1, Takes = new[] { ParameterCategory.CharacterParameter },
+					Order = new[] { "Will", "Curiosity", "Activity", "Discipline", "Cunning", "Spirituality",
+						"Diplomacy", "Valor", "Manipulation", "Sabotage", "Theology", "Preaching", "Death" } },
+				new Tab { Hud = "HUD.Home", Chapter = 1, Takes = new[] { ParameterCategory.HomeParameter },
+					Order = new[] { "Unity", "Money", "Reputation", "Heir" } },
+				new Tab { Hud = "HUD.Destiny", Chapter = 1,
+					Takes = new[] { ParameterCategory.FamilyParameter, ParameterCategory.SoulParameter },
+					Order = new[] { "Volition", "Love", "Rule" } },
+				new Tab { Hud = "HUD.Empire", Chapter = 2, Takes = new[] { ParameterCategory.EmpireParameter },
+					Order = new[] { "State", "Church", "Prosperity", "Order" } },
+				new Tab { Hud = "HUD.Inquisition", Chapter = 4, Takes = new[] { ParameterCategory.WorkParameter },
+					Order = new[] { "Authority", "Carier", "Protest", "Justice", "Repression", "Toleration" } },
+				new Tab { Hud = "HUD.Insurrection", Chapter = 5,
+					Takes = new[] { ParameterCategory.WarParameter, ParameterCategory.Insurrection },
+					Order = new[] { "Insurrection", "Army", "NoblesMans", "PriestsMans", "CommonerMans" } },
+			};
+			// the unlock chapter as the HUD button has it, where it is loaded
+			foreach (_Scripts.AMVCC.Views.HudButtonBehavior hb in Resources.FindObjectsOfTypeAll<_Scripts.AMVCC.Views.HudButtonBehavior>())
+			{
+				Tab t = hb != null && hb.gameObject.scene.IsValid() ? tabs.Find(x => x.Hud == hb.name) : null;
+				if (t != null && hb.ChapterToUnlock > 0)
+				{
+					t.Chapter = hb.ChapterToUnlock;
+				}
+			}
+			HashSet<Parameter> placed = new HashSet<Parameter>();
+			foreach (Tab t in tabs)
+			{
+				foreach (string name in t.Order)
+				{
+					Parameter p = SceneEffects.ParameterAsset(name);
+					if (p != null && p.Icon != null && placed.Add(p))
+					{
+						t.Stats.Add(p);
+					}
+				}
+			}
+			List<Parameter> rest = SceneEffects.AllStats();
+			rest.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+			foreach (Parameter p in rest)
+			{
+				Tab t = tabs.Find(x => Array.IndexOf(x.Takes, p.ParameterCategory) >= 0);
+				if (t != null && placed.Add(p))
+				{
+					t.Stats.Add(p);
+				}
+			}
+			tabs.RemoveAll(t => t.Stats.Count == 0);
+			return tabs;
+		}
+
+		private static string TabTitle(Tab t)
+		{
+			switch (t.Hud)
+			{
+				case "HUD.Character": return Loc.Game("HUD.Character", "Personality");
+				case "HUD.Home": return Loc.Game("HUD.Home", "House of Brante");
+				case "HUD.Destiny": return Loc.Game("HUD.Destiny", "Destiny");
+				case "HUD.Empire": return Loc.Game("HUD.Empire", "Province");
+				case "HUD.Inquisition": return Loc.Game("Work", "Work");
+				default: return Loc.Game(t.Hud, t.Hud);
+			}
 		}
 
 		private static readonly List<Row> _rows = new List<Row>();
+		private static readonly List<Tab> _tabs = new List<Tab>();
 		private static GameObject _template;
 		private static GameObject _holder;
-
-		// The game's tab title for each category.
-		private static string CategoryTitle(ParameterCategory c)
-		{
-			switch (c)
-			{
-				case ParameterCategory.CharacterParameter: return Loc.Game("HUD.Character", "Personality");
-				case ParameterCategory.FamilyParameter: return Loc.Game("HUD.Family", "Family");
-				case ParameterCategory.HomeParameter: return Loc.Game("HUD.Home", "House of Brante");
-				case ParameterCategory.EmpireParameter: return Loc.Game("HUD.Empire", "Province");
-				case ParameterCategory.WorkParameter: return Loc.Game("Work", "Work");
-				case ParameterCategory.WarParameter:
-				case ParameterCategory.Insurrection: return Loc.Game("HUD.Insurrection", "The Revolt");
-				default: return Loc.Game("HUD.Destiny", c.ToString());
-			}
-		}
 
 		// The game's row prefab (the asset, not one of the live tab rows).
 		private static GameObject Template()
@@ -80,7 +151,7 @@ namespace Doorstop
 		// Lays the stats out in `area`: categories side by side, a category
 		// with more stats than fit in one column taking several, rows scaled
 		// down from the game's size until everything fits.
-		public static void Build(RectTransform area, List<Parameter> stats)
+		public static void Build(RectTransform area)
 		{
 			for (int i = area.childCount - 1; i >= 0; i--)
 			{
@@ -90,32 +161,20 @@ namespace Doorstop
 			}
 			_rows.Clear();
 			_roots.Clear();
+			_tabs.Clear();
 			GameObject template = Template();
-			if (template == null || stats.Count == 0)
+			if (template == null)
 			{
 				return;
 			}
+			_tabs.AddRange(Tabs());
 			Vector2 natural = template.GetComponent<RectTransform>().rect.size;
 			if (natural.x < 1f || natural.y < 1f)
 			{
 				natural = new Vector2(375f, 103f);
 			}
-			Dictionary<ParameterCategory, List<Parameter>> groups = new Dictionary<ParameterCategory, List<Parameter>>();
-			List<ParameterCategory> order = new List<ParameterCategory>();
-			foreach (Parameter p in stats)
-			{
-				List<Parameter> list;
-				if (!groups.TryGetValue(p.ParameterCategory, out list))
-				{
-					list = new List<Parameter>();
-					groups[p.ParameterCategory] = list;
-					order.Add(p.ParameterCategory);
-				}
-				list.Add(p);
-			}
-			order.Sort();
 
-			const float header = 30f;
+			const float header = 56f;   // the title, and a locked tab's note under it
 			float width = area.rect.width;
 			float usable = Mathf.Max(40f, area.rect.height - header);
 			// the largest scale at which every category fits
@@ -125,9 +184,9 @@ namespace Doorstop
 			{
 				int fit = Mathf.Max(1, Mathf.FloorToInt(usable / (natural.y * s)));
 				int subColumns = 0;
-				foreach (ParameterCategory c in order)
+				foreach (Tab t in _tabs)
 				{
-					subColumns += Mathf.CeilToInt(groups[c].Count / (float)fit);
+					subColumns += Mathf.CeilToInt(t.Stats.Count / (float)fit);
 				}
 				if (natural.x * s <= width / subColumns - 8f)
 				{
@@ -139,22 +198,23 @@ namespace Doorstop
 				rowsFit = fit;
 			}
 			int total = 0;
-			foreach (ParameterCategory c in order)
+			foreach (Tab t in _tabs)
 			{
-				total += Mathf.CeilToInt(groups[c].Count / (float)rowsFit);
+				total += Mathf.CeilToInt(t.Stats.Count / (float)rowsFit);
 			}
 			float subW = width / Mathf.Max(1, total);
 
 			float x = 0f;
-			foreach (ParameterCategory c in order)
+			foreach (Tab tab in _tabs)
 			{
-				List<Parameter> list = groups[c];
+				List<Parameter> list = tab.Stats;
 				int subs = Mathf.CeilToInt(list.Count / (float)rowsFit);
 				if (x > 0f)
 				{
 					Separator(area, x);
 				}
-				TextMeshProUGUI title = Label(area, CategoryTitle(c), template);
+				TextMeshProUGUI title = Label(area, TabTitle(tab), template);
+				tab.Title = title;
 				RectTransform trt = title.rectTransform;
 				trt.anchorMin = new Vector2(0f, 1f);
 				trt.anchorMax = new Vector2(0f, 1f);
@@ -168,6 +228,7 @@ namespace Doorstop
 					{
 						continue;
 					}
+					row.Tab = tab;
 					RectTransform rrt = RowRoot(row);
 					rrt.SetParent(area, false);
 					rrt.anchorMin = new Vector2(0f, 1f);
@@ -299,14 +360,34 @@ namespace Doorstop
 
 		// The values of `shown` (the hero along the path); a value above
 		// `now` (the hero today) is green, below red.
-		public static void Show(SceneEffects.Hero shown, SceneEffects.Hero now)
+		public static void Show(SceneEffects.Hero shown, SceneEffects.Hero now, int chapter)
 		{
 			if (shown == null || now == null)
 			{
 				return;
 			}
+			// tabs the game has not opened yet at that chapter: greyed, with
+			// the game's own "opens in chapter N" under the title
+			foreach (Tab tab in _tabs)
+			{
+				if (tab.Title == null)
+				{
+					continue;
+				}
+				bool locked = chapter > 0 && tab.Chapter > chapter;
+				string name = TabTitle(tab);
+				tab.Title.text = locked
+					? name + "\n<size=58%>" + Loc.Game("HUD.WillOpen" + tab.Chapter, "") + "</size>"
+					: name;
+				tab.Title.color = locked ? new Color(0.55f, 0.30f, 0.25f, 0.45f) : new Color(0.55f, 0.30f, 0.25f);
+			}
 			foreach (Row row in _rows)
 			{
+				CanvasGroup cg = RowRoot(row) != null ? RowRoot(row).GetComponent<CanvasGroup>() : null;
+				if (cg != null)
+				{
+					cg.alpha = chapter > 0 && row.Tab != null && row.Tab.Chapter > chapter ? 0.35f : 1f;
+				}
 				int value = shown.Value(row.Param);
 				int today = now.Value(row.Param);
 				row.Shown = value;
@@ -479,8 +560,8 @@ namespace Doorstop
 				_tipComp.Icon.sprite = p.Icon;
 				_tipComp.Description.text = Loc.Game(p.ParameterName + ".Description", "");
 				// It is taller than the space above the stats, so it goes beside the
-				// row - right of it, or left where there is no room - with its foot
-				// level with the row's, then pushed inside the window.
+				// row - right of it, or left where there is no room - centred
+				// on the screen's height, and pushed inside the window.
 				RectTransform rt = _tip.GetComponent<RectTransform>();
 				rt.pivot = new Vector2(0f, 0f);
 				_tip.SetActive(true);
@@ -500,7 +581,8 @@ namespace Doorstop
 					x = lo.x - gap - size.x;
 				}
 				x = Mathf.Clamp(x, area.xMin + gap, area.xMax - gap - size.x);
-				float y = Mathf.Clamp(lo.y, area.yMin + gap, area.yMax - gap - size.y);
+				// every stat's pop-up at the same height: centred on the screen
+				float y = Mathf.Clamp(area.center.y - size.y * 0.5f, area.yMin + gap, area.yMax - gap - size.y);
 				_tip.transform.position = box.TransformPoint(new Vector3(x, y, 0f));
 			}
 			catch (Exception e)

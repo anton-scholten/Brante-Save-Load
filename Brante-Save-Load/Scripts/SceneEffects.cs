@@ -424,36 +424,14 @@ namespace Doorstop
 			return text.Replace("<el>", el).Replace("  ", " ");
 		}
 
-		// The stats for the tree's stats row: those named in `always`, in that
-		// order, then every other stat with an icon for which `inPlay` holds,
-		// grouped by the game's category (one asset per stat).
-		public static List<Parameter> StatsToShow(string[] always, Predicate<Parameter> inPlay)
+		// Every stat the game has (with an icon: one asset is a stray copy).
+		public static List<Parameter> AllStats()
 		{
 			ParameterAsset("");   // fills the cache
 			List<Parameter> list = new List<Parameter>();
-			HashSet<ParametersList> seen = new HashSet<ParametersList>();
-			foreach (string name in always)
-			{
-				Parameter p = ParameterAsset(name);
-				if (p != null && p.Icon != null && seen.Add(p.ParameterName))
-				{
-					list.Add(p);
-				}
-			}
-			List<Parameter> rest = new List<Parameter>();
 			foreach (Parameter p in _parameters.Values)
 			{
-				if (p != null && p.Icon != null && !seen.Contains(p.ParameterName) && inPlay(p))
-				{
-					rest.Add(p);
-				}
-			}
-			rest.Sort((a, b) => a.ParameterCategory != b.ParameterCategory
-				? a.ParameterCategory.CompareTo(b.ParameterCategory)
-				: string.CompareOrdinal(a.name, b.name));
-			foreach (Parameter p in rest)
-			{
-				if (seen.Add(p.ParameterName))
+				if (p != null && p.Icon != null)
 				{
 					list.Add(p);
 				}

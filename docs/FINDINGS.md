@@ -569,3 +569,37 @@ at runtime has every language, so the mod reads titles and answers live
 text. Button keys must be sorted by their number (`ButtonDescription10`
 comes after `2`).
 
+## Stat tabs and when they open (29 Oct 2026)
+
+Each book tab is a `HUD.*` button with a `HudButtonBehavior` whose
+`ChapterToUnlock` decides when it opens (`HUDController.CheckHudButtons`:
+unlocked when `<= GameManager.Instance.Chapter`; until then the tooltip is
+`HUD.WillOpen<N>`). The windows list fixed stats in their prefabs
+(`ParameterGetSet.Parameter`), not by category:
+
+| tab (opens in) | window | stats |
+|---|---|---|
+| `HUD.Character` (1) | Window_Character | Will, Curiosity, Activity, Discipline, Cunning, Spirituality, Diplomacy, Valor, Manipulation, Sabotage, Theology, Preaching, Death |
+| `HUD.Home` (1) | Window_Home | Unity, Money, Reputation (+ Heir) |
+| `HUD.Destiny` (1) | Window_Soul | Volition, Love, Rule |
+| `HUD.Empire` (2) | Window_Empire | State, Church, Prosperity, Order |
+| `HUD.Inquisition` (4) | Window_Work | Authority, Carier, Protest, Justice, Repression, Toleration |
+| `HUD.Insurrection` (5) | Window_Insurrection | Insurrection, Army, NoblesMans, PriestsMans, CommonerMans |
+
+Stats no window shows: Tolerance and GWrath (EmpireParameter), Control,
+Cruelty, Weight and Сontention (WarParameter; the first letter of
+"Сontention" is Cyrillic). The asset "Emperor" is a stray copy of Will with
+no icon. The values of a locked tab's stats exist in the save all along.
+
+`book_new` (the open book, `Back/Panel`) is drawn with `preserveAspect`: its
+sprite is 1.61:1, so on a 16:9 screen it is narrower than its rect. Mapping
+screen points onto it must use the fitted rect. The settings tab button
+swaps in its gear sprite on hover (Button sprite swap / `HudButtonBehavior.
+_highlightedButton`); a copy needs its transition changed.
+
+Scene conditions in `scene-flow.tsv` look at story objectives
+(`GetObjectiveStatus`, 413 uses), stats (`GetParameterValue`, 252),
+characters' fates (`GetCharacterStatus`, 199), scenes already shown
+(`GetSceneShowStatus`, 29), other scenes' conditions (5) and relationships
+(`GetCharacterRelation`, 4).
+

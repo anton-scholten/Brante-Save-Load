@@ -69,14 +69,16 @@ is filled in red from the start of the story up to the scene you are on. The
   picked further on is no longer open to him there, that answer turns red
   and Load scene is greyed out until you pick another one.
 - **Your hero's stats** fill the space under the tree's scrollbar (the tree
-  takes only the height its answers need): one column per category, titled
-  as the game's tabs (Personality, Family, The Province, Occupation, ...),
-  each stat a row in the game's own style - icon, name, value, the game's
+  takes only the height its answers need): every stat in the game, one
+  column per tab of the game's book (Personality, House of Brante, Destiny,
+  The Province, Occupation, The Revolt), each stat a row in the game's own style - icon, name, value, the game's
   word for the level, and its slider with the stat's scale. They show the
   hero after your last pick along the path, values above today's in green
   and below in red, and go back to today's with reset path. Hover a stat for
   the game's own pop-up: what it means and every step of its scale, the
-  hero's step highlighted.
+  hero's step highlighted. A tab the game has not opened yet at that
+  chapter is greyed out, with the game's own "will unlock in chapter ..."
+  under its title.
 - **Load scene** (top middle) takes you to the scene of your last pick along
   your path. It is greyed out while that would load exactly the scene and
   answers you have now, or while a pick conflicts; hover it to see why. The mod loads its newest save from before the first answer you
@@ -166,7 +168,9 @@ kept for reference; `tools/build_graph.py` maps it onto the game's scenes.
   them, on your run's track (your Lot in chapter 3, your post in chapter 4),
   then every later chapter. In a later chapter a track that is decided by
   then (the Lot, the post) is not known yet, so only what all tracks share is
-  listed, and every scene with a condition is marked "possible".
+  listed, and every scene with a condition says at its foot what it is
+  "possible depending on": stats, relationships, characters' fates or story
+  events.
   In your current chapter, conditions (objectives, stats, characters' fates)
   are checked against your save as it is now: a scene whose condition fails
   today is left out even if a later answer could still unlock it. The
