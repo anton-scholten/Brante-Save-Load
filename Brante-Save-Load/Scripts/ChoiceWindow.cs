@@ -540,6 +540,182 @@ namespace Doorstop
 		}
 
 		// ------------------------------------------------------------------
+		// The book tab: a way into the tree view from the game screen
+		// ------------------------------------------------------------------
+
+		// A tab on the book's left page, next to the year and chapter tabs, made
+		// like the settings tab: a copy of it (wooden strip and medallion are one
+		// sprite), with the chapter tab's plain medallion laid over the gear and
+		// "save / load / mod" written on it. Clicking it opens the tree view.
+		// Every story scene brings its own HUD, so this runs after each scene
+		// load (ModHost) and does nothing when the tab is there.
+		public static void EnsureBookTab()
+		{
+			try
+			{
+				Button settings = AutoPlay.FindNamed("HUD.Settings");
+				if (settings == null)
+				{
+					return;
+				}
+				Transform hud = settings.transform.parent;
+				Transform chapter = hud.Find("HUD.Chapter");
+				Transform year = hud.Find("HUD.Main");
+				if (chapter == null || hud.Find("HUD.SaveLoad") != null)
+				{
+					return;
+				}
+				GameObject tab = UnityEngine.Object.Instantiate(settings.gameObject, hud, false);
+				tab.name = "HUD.SaveLoad";
+				// the settings behaviours (open the settings, its notification dot,
+				// the hover animation) go; the hover sound stays
+				foreach (MonoBehaviour mb in tab.GetComponents<MonoBehaviour>())
+				{
+					string n = mb.GetType().Name;
+					if (n == "HudButtonBehavior" || n == "Notification")
+					{
+						UnityEngine.Object.DestroyImmediate(mb);
+					}
+				}
+				foreach (Behaviour bh in tab.GetComponents<Behaviour>())
+				{
+					if (bh.GetType().Name == "Animator")
+					{
+						bh.enabled = false;
+					}
+				}
+				RectTransform crt = (RectTransform)chapter;
+				RectTransform srt = (RectTransform)settings.transform;
+				RectTransform rt = tab.GetComponent<RectTransform>();
+				// one tab further along, the same step as year -> chapter
+				float step = year != null ? crt.anchoredPosition.x - ((RectTransform)year).anchoredPosition.x : 167f;
+				rt.anchorMin = crt.anchorMin;
+				rt.anchorMax = crt.anchorMax;
+				rt.anchoredPosition = new Vector2(crt.anchoredPosition.x + step, srt.anchoredPosition.y);
+
+				// the wooden strip behind the settings medallion is painted into the
+				// book's background images, not the button: cut the same patch out
+				// of each layer and lay the copies behind the new tab
+				int at = tab.transform.GetSiblingIndex();
+				foreach (Image layer in hud.root.GetComponentsInChildren<Image>(true))
+				{
+					if (layer.sprite != null && (layer.sprite.name == "background" || layer.sprite.name == "book_new"))
+					{
+						Image patch = CopyPatch(layer, srt, hud, rt);
+						if (patch != null)
+						{
+							patch.transform.SetSiblingIndex(at++);
+						}
+					}
+				}
+
+				GameObject face = new GameObject("Face", typeof(RectTransform));
+				face.transform.SetParent(tab.transform, false);
+				Image fimg = face.AddComponent<Image>();
+				fimg.sprite = chapter.GetComponent<Image>().sprite;
+				fimg.raycastTarget = false;
+				RectTransform frt = face.GetComponent<RectTransform>();
+				frt.anchorMin = frt.anchorMax = new Vector2(0.5f, 0.5f);
+				frt.sizeDelta = new Vector2(100f, 93f);
+				frt.anchoredPosition = new Vector2(0f, -3f);
+
+				TextMeshProUGUI word = null;
+				foreach (TextMeshProUGUI t in chapter.GetComponentsInChildren<TextMeshProUGUI>(true))
+				{
+					if (t.name != "Value")
+					{
+						word = t;
+						break;
+					}
+				}
+				GameObject label = word != null
+					? UnityEngine.Object.Instantiate(word.gameObject, face.transform, false)
+					: new GameObject("Text", typeof(RectTransform));
+				label.transform.SetParent(face.transform, false);
+				// the chapter word is kept in its language by a localisation
+				// script, which would put "chapter" back
+				foreach (MonoBehaviour mb in label.GetComponents<MonoBehaviour>())
+				{
+					string n = mb.GetType().Name;
+					if (n == "TextMeshProLocalization" || n == "LayoutElement")
+					{
+						UnityEngine.Object.DestroyImmediate(mb);
+					}
+				}
+				TextMeshProUGUI tx = label.GetComponent<TextMeshProUGUI>();
+				if (tx == null)
+				{
+					tx = label.AddComponent<TextMeshProUGUI>();
+				}
+				tx.text = Loc.T(Loc.K.BookTab);
+				tx.fontSize = 17f;
+				tx.lineSpacing = -14f;
+				tx.alignment = TextAlignmentOptions.Center;
+				tx.enableWordWrapping = false;
+				tx.overflowMode = TextOverflowModes.Overflow;
+				tx.raycastTarget = false;
+				RectTransform lrt = tx.rectTransform;
+				lrt.anchorMin = Vector2.zero;
+				lrt.anchorMax = Vector2.one;
+				lrt.offsetMin = lrt.offsetMax = Vector2.zero;
+
+				Button b = tab.GetComponent<Button>();
+				// a fresh event: the copy would still carry the settings tab's
+				// persistent onClick
+				b.onClick = new Button.ButtonClickedEvent();
+				b.onClick.AddListener(OpenTreeView);
+				ModLog.Info("ChoiceWindow: book tab added next to the chapter tab");
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: book tab failed:\n" + e);
+			}
+		}
+
+		// The part of `layer`'s sprite under `over`, as an Image under `parent`
+		// that sits where `place` is.
+		private static Image CopyPatch(Image layer, RectTransform over, Transform parent, RectTransform place)
+		{
+			RectTransform lrt = layer.rectTransform;
+			Rect lr = lrt.rect;
+			Vector3[] c = new Vector3[4];
+			over.GetWorldCorners(c);
+			Vector2 lo = lrt.InverseTransformPoint(c[0]);
+			Vector2 hi = lrt.InverseTransformPoint(c[2]);
+			Sprite sp = layer.sprite;
+			Rect tr = sp.textureRect;
+			Rect cut = new Rect(
+				tr.x + (lo.x - lr.xMin) / lr.width * tr.width,
+				tr.y + (lo.y - lr.yMin) / lr.height * tr.height,
+				(hi.x - lo.x) / lr.width * tr.width,
+				(hi.y - lo.y) / lr.height * tr.height);
+			if (cut.width <= 0f || cut.height <= 0f || cut.xMin < tr.xMin || cut.yMin < tr.yMin
+				|| cut.xMax > tr.xMax || cut.yMax > tr.yMax)
+			{
+				return null;
+			}
+			GameObject go = new GameObject("HUD.SaveLoadWood", typeof(RectTransform));
+			go.transform.SetParent(parent, false);
+			Image img = go.AddComponent<Image>();
+			img.sprite = Sprite.Create(sp.texture, cut, new Vector2(0.5f, 0.5f), sp.pixelsPerUnit);
+			img.raycastTarget = false;
+			RectTransform rt = go.GetComponent<RectTransform>();
+			rt.anchorMin = place.anchorMin;
+			rt.anchorMax = place.anchorMax;
+			rt.pivot = place.pivot;
+			rt.sizeDelta = place.sizeDelta;
+			rt.anchoredPosition = place.anchoredPosition;
+			return img;
+		}
+
+		// The tree view straight away, from the book tab.
+		public static void OpenTreeView()
+		{
+			Open();
+			OpenHistory();
+		}
+
+		// ------------------------------------------------------------------
 		// The save window
 		// ------------------------------------------------------------------
 
@@ -836,15 +1012,6 @@ namespace Doorstop
 			trt.anchoredPosition = new Vector2(0f, -12f);
 			trt.sizeDelta = new Vector2(-120f, 46f);
 
-			TextMeshProUGUI sub = AddLabel(box.transform, "Sub",
-				Loc.T(Loc.K.PlaythroughSub), 19f, ColTextDark, false);
-			RectTransform srt2 = sub.rectTransform;
-			srt2.anchorMin = new Vector2(0f, 1f);
-			srt2.anchorMax = new Vector2(1f, 1f);
-			srt2.pivot = new Vector2(0.5f, 1f);
-			srt2.anchoredPosition = new Vector2(0f, -58f);
-			srt2.sizeDelta = new Vector2(-120f, 30f);
-
 			// Scrollable list.
 			GameObject scroll = CreateUiObject("Scroll", box.transform);
 			RectTransform srt = scroll.GetComponent<RectTransform>();
@@ -921,7 +1088,7 @@ namespace Doorstop
 			irt2.anchorMin = new Vector2(0f, 0f);
 			irt2.anchorMax = new Vector2(1f, 0f);
 			irt2.pivot = new Vector2(0.5f, 0f);
-			irt2.anchoredPosition = new Vector2(0f, 82f);
+			irt2.anchoredPosition = new Vector2(0f, 16f);
 			irt2.sizeDelta = new Vector2(-52f, 26f);
 			_historyInfo.overflowMode = TextOverflowModes.Ellipsis;
 			_historyInfo.enableWordWrapping = false;
@@ -948,8 +1115,23 @@ namespace Doorstop
 			_statsArea.anchorMax = Vector2.one;
 
 			// Undo (bottom left): back to the answers actually played.
-			_undoBtn = AddButton(box.transform, "Undo", new Vector2(0f, 0f), new Vector2(24f, 24f),
+			// Reset (left) and Load scene (right) sit under the title, above the
+			// tree.
+			_undoBtn = AddButton(box.transform, "Undo", new Vector2(0f, 1f), new Vector2(24f, -66f),
 				new Vector2(64f, 52f), ColCancelButton, null, 0f, UndoSelections).gameObject;
+			TreeHover undoHover = _undoBtn.AddComponent<TreeHover>();
+			RectTransform undoRt = _undoBtn.GetComponent<RectTransform>();
+			undoHover.OnHover = delegate(bool on)
+			{
+				if (on)
+				{
+					ShowPopup(undoRt, Loc.T(Loc.K.ResetPath), "", new List<SceneEffects.Effect>(), null);
+				}
+				else
+				{
+					HidePopup();
+				}
+			};
 			GameObject uicon = CreateUiObject("Icon", _undoBtn.transform);
 			RectTransform uirt = uicon.GetComponent<RectTransform>();
 			Stretch(uirt);
@@ -963,11 +1145,15 @@ namespace Doorstop
 
 			// Load scene (bottom right): goes to the selected answer's scene
 			// along the selected path.
-			_loadHereBtn = AddButton(box.transform, "LoadHere", new Vector2(1f, 0f), new Vector2(-24f, 24f),
-				new Vector2(260f, 52f), ColLoadButton, Loc.T(Loc.K.LoadScene), 22f, LoadSelected).gameObject;
-			_loadHereBtn.SetActive(false);
+			Button loadBtn = AddButton(box.transform, "LoadHere", new Vector2(1f, 1f), new Vector2(-24f, -66f),
+				new Vector2(260f, 52f), ColLoadButton, Loc.T(Loc.K.LoadScene), 22f, LoadSelected);
+			ColorBlock lcb = loadBtn.colors;
+			lcb.disabledColor = Color.white;   // greyed by UpdateLoadButton's own colour
+			loadBtn.colors = lcb;
+			_loadHereBtn = loadBtn.gameObject;
 
 			BuildPopup(box.transform);
+			StatPanel.TooltipParent = box.transform;
 			_historyPanel.SetActive(false);
 		}
 
@@ -1093,6 +1279,56 @@ namespace Doorstop
 
 		private static LoadPlan _pendingPlan;
 
+		// Load scene is greyed out while it would bring back exactly what is on
+		// screen: nothing picked, or a pick in the scene on screen with every
+		// earlier answer as played. A different earlier answer, or a pick in
+		// another scene, enables it.
+		private static bool PathChanged()
+		{
+			if (string.IsNullOrEmpty(_selScene))
+			{
+				return false;
+			}
+			TreeCol target = _tree.Find(c => c.Scene == _selScene);
+			if (target == null)
+			{
+				return false;
+			}
+			if (!target.Current)
+			{
+				return true;
+			}
+			foreach (TreeCol col in _tree)
+			{
+				if (col == target)
+				{
+					break;
+				}
+				string pick;
+				if (_overrides.TryGetValue(col.Scene, out pick) && pick != col.PlayedChoice)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private static void UpdateLoadButton()
+		{
+			if (_loadHereBtn == null)
+			{
+				return;
+			}
+			bool on = PathChanged();
+			_loadHereBtn.GetComponent<Button>().interactable = on;
+			_loadHereBtn.GetComponent<Image>().color = on ? ColLoadButton : ColCancelButton;
+			TextMeshProUGUI label = _loadHereBtn.GetComponentInChildren<TextMeshProUGUI>();
+			if (label != null)
+			{
+				label.color = on ? ColTextLight : new Color(ColTextLight.r, ColTextLight.g, ColTextLight.b, 0.55f);
+			}
+		}
+
 		private static void LoadSelected()
 		{
 			string why;
@@ -1157,6 +1393,7 @@ namespace Doorstop
 		private static void CloseHistory()
 		{
 			HidePopup();
+			StatPanel.HideTooltip();
 			if (_historyPanel != null)
 			{
 				_historyPanel.SetActive(false);
@@ -1246,10 +1483,7 @@ namespace Doorstop
 			}
 			DrawPath(cols);
 			StatPanel.Show(StatsHero(), SceneEffects.Now());
-			if (_loadHereBtn != null)
-			{
-				_loadHereBtn.SetActive(!string.IsNullOrEmpty(_selScene));
-			}
+			UpdateLoadButton();
 			ModLog.Info("ChoiceWindow: tree " + (rebuild ? "built" : "restyled") + " in "
 				+ sw.ElapsedMilliseconds + " ms (columns " + tData + ", path " + (tHero - tData)
 				+ ", drawing " + (sw.ElapsedMilliseconds - tHero) + ")");
@@ -1357,6 +1591,15 @@ namespace Doorstop
 						nr.overflowMode = TextOverflowModes.Overflow;
 					}
 				}
+				// The first scene ahead says so where played scenes from before
+				// the mod say theirs: at the bottom of the column.
+				if (e.Upcoming && (i == 0 || !cols[i - 1].Upcoming))
+				{
+					string word = Loc.T(Loc.K.Upcoming);
+					TextMeshProUGUI up = AddLabel(_historyList, "Upcoming",
+						word.Length > 0 ? char.ToUpper(word[0]) + word.Substring(1) : word, 15f, ColTreeMuted, true);
+					Wrap(up, x + 12f, height - 52f, TreeColW - 24f, 44f);
+				}
 				float barEnd = e.Current ? x + TreeNodeX + TreeNodeW * 0.5f : x + TreeColW;
 				AddLine(_historyList, x + 6f, TreeBarY, barEnd, TreeBarY,
 					played ? ColTreeChosen : ColTreeLine, played ? 6f : 3f);
@@ -1366,10 +1609,6 @@ namespace Doorstop
 				if (e.Current)
 				{
 					headText += "  \u2022 " + Loc.T(Loc.K.Current);
-				}
-				else if (e.Upcoming && (i == 0 || !cols[i - 1].Upcoming))
-				{
-					headText += "  \u2022 " + Loc.T(Loc.K.Upcoming);
 				}
 				if (e.Possible)
 				{
@@ -1510,8 +1749,8 @@ namespace Doorstop
 			"Unity", "Money", "Reputation",
 		};
 
-		private const float TreeAreaTop = 96f;     // below the title and subtitle
-		private const float TreeAreaBottom = 112f; // above the hint line and buttons
+		private const float TreeAreaTop = 128f;    // below the title and the reset/load row
+		private const float TreeAreaBottom = 48f;  // above the hint line
 
 		// The tree takes the height its answers need (its scrollbar right
 		// under them); the stat columns get the rest, down to the hint line.
@@ -1867,7 +2106,7 @@ namespace Doorstop
 			_popup.SetAsLastSibling();
 			LayoutRebuilder.ForceRebuildLayoutImmediate(_popup);
 
-			// Beside the node, flipped to its left near the right edge, and
+			// Left of the node, or right of it where the left has no room;
 			// kept inside the box.
 			Vector3[] c = new Vector3[4];
 			node.GetWorldCorners(c);
@@ -1876,10 +2115,10 @@ namespace Doorstop
 			Rect box = _historyBox.rect;
 			float w = _popup.rect.width;
 			float h = _popup.rect.height;
-			float x = topRight.x + 14f;
-			if (x + w > box.xMax - 10f)
+			float x = topLeft.x - 14f - w;
+			if (x < box.xMin + 10f)
 			{
-				x = topLeft.x - 14f - w;
+				x = topRight.x + 14f;
 			}
 			x = Mathf.Clamp(x, box.xMin + 10f, box.xMax - 10f - w);
 			float y = Mathf.Clamp(topRight.y, box.yMin + 10f + h, box.yMax - 10f);
@@ -3019,6 +3258,16 @@ namespace Doorstop
 
 		private static IEnumerator DevBookDump()
 		{
+			// Dev: the book tab opens the tree view.
+			Button bookTab = AutoPlay.FindNamed("HUD.SaveLoad");
+			if (bookTab != null)
+			{
+				bookTab.onClick.Invoke();
+				yield return new WaitForSeconds(3f);
+				ModLog.Info("ChoiceWindow: dev book tab click -> tree view "
+					+ (_historyList != null && _historyList.gameObject.activeInHierarchy ? "open" : "NOT open"));
+				Close();
+			}
 			UIManager ui = UIManager.Initiate;
 			if (ui != null)
 			{
@@ -3053,6 +3302,23 @@ namespace Doorstop
 						withFx = th;
 					}
 				}
+			}
+			// Dev: the game's tooltip over a stat (the first row's hit area).
+			Transform statsHover = _statsArea != null ? _statsArea.Find("Parameter_Horizontal(Clone)/Hover") : null;
+			if (statsHover == null && _statsArea != null)
+			{
+				foreach (TreeHover th in _statsArea.GetComponentsInChildren<TreeHover>())
+				{
+					statsHover = th.transform;
+					break;
+				}
+			}
+			if (statsHover != null)
+			{
+				statsHover.GetComponent<TreeHover>().OnHover(true);
+				ModLog.Info("ChoiceWindow: dev stat tooltip shown");
+				yield return new WaitForSeconds(3f);
+				statsHover.GetComponent<TreeHover>().OnHover(false);
 			}
 			if (withFx != null)
 			{

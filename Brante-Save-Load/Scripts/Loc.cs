@@ -17,7 +17,7 @@ namespace Doorstop
 			ConfirmLoad, ConfirmDelete, ConfirmSave, EmptySaves,
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, Current, NothingYet,
-			LoadScene, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked
+			LoadScene, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath, BookTab
 		}
 
 		static Loc()
@@ -44,6 +44,17 @@ namespace Doorstop
 			AddRequirementWords(_ja, "必要条件", "いずれか", "ではない");
 			AddRequirementWords(_ko, "필요 조건", "다음 중 하나", "아님");
 			AddRequirementWords(_zh, "需要", "其中之一", "非");
+			AddResetPath(_en, "Reset path", "save\nload\nmod");
+			AddResetPath(_ru, "Сбросить путь", "сохр.\nзагр.\nмод");
+			AddResetPath(_de, "Pfad zurücksetzen", "speich.\nladen\nmod");
+			AddResetPath(_fr, "Réinitialiser le chemin", "sauv.\ncharger\nmod");
+			AddResetPath(_es, "Restablecer el camino", "guardar\ncargar\nmod");
+			AddResetPath(_it, "Ripristina il percorso", "salva\ncarica\nmod");
+			AddResetPath(_pl, "Resetuj ścieżkę", "zapis\nwczyt.\nmod");
+			AddResetPath(_tr, "Yolu sıfırla", "kaydet\nyükle\nmod");
+			AddResetPath(_ja, "道筋をリセット", "セーブ\nロード\nMOD");
+			AddResetPath(_ko, "경로 초기화", "저장\n불러오기\n모드");
+			AddResetPath(_zh, "重置路径", "存档\n读档\n模组");
 			AddPickBlocked(_en, "The answer picked in \"{0}\" would not be open to your hero there.");
 			AddPickBlocked(_ru, "Ответ, выбранный в «{0}», там будет недоступен вашему герою.");
 			AddPickBlocked(_de, "Die in „{0}“ gewählte Antwort stünde deinem Helden dort nicht offen.");
@@ -100,6 +111,12 @@ namespace Doorstop
 		private static void AddPickBlocked(Dictionary<K, string> d, string text)
 		{
 			d[K.PickBlocked] = text;
+		}
+
+		private static void AddResetPath(Dictionary<K, string> d, string text, string bookTab)
+		{
+			d[K.ResetPath] = text;
+			d[K.BookTab] = bookTab;
 		}
 
 		private static void AddUpcomingWord(Dictionary<K, string> d, string upcoming, string possible)

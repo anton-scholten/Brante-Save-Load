@@ -10,9 +10,13 @@ namespace Doorstop
 	//   S<TAB>sceneId<TAB>title
 	//   B<TAB>sceneId<TAB>ButtonDescriptionN<TAB>answer text
 	//
-	// It lets the history show every answer of a scene, including scenes that
-	// were played before the mod was installed (which have no snapshot and so
-	// no sidecar to read the answers from).
+	// It lists every answer of every scene, including scenes played before the
+	// mod was installed (no snapshot, no sidecar). The texts themselves come
+	// from the game's live localisation when it has them - that follows the
+	// game's language, and it is the only complete source: the CSV the table
+	// is extracted from is an older export with chapter 5 in Russian only,
+	// while the game's runtime language asset has every language. The table's
+	// own text is the fallback.
 	public static class SceneTexts
 	{
 		public sealed class Scene
@@ -88,8 +92,20 @@ namespace Doorstop
 		public static string Title(string scene)
 		{
 			Load();
+			string live = Loc.SceneTitle(scene);
+			if (!string.IsNullOrEmpty(live))
+			{
+				return live;
+			}
 			Scene s;
 			return _scenes != null && _scenes.TryGetValue(scene, out s) ? s.Title : "";
+		}
+
+		// The game's text for a key of this scene, else the table's.
+		private static string Live(string scene, string key, string tableText)
+		{
+			string live = Loc.Game(scene + "_" + key, "");
+			return string.IsNullOrEmpty(live) || live == scene + "_" + key ? tableText : live;
 		}
 
 		// The text of one answer, or "" when the table has no such key.
@@ -105,7 +121,7 @@ namespace Doorstop
 			{
 				if (b.Key == buttonName)
 				{
-					return b.Value;
+					return Live(scene, b.Key, b.Value);
 				}
 			}
 			return "";
@@ -120,13 +136,29 @@ namespace Doorstop
 			{
 				return new List<KeyValuePair<string, string>>();
 			}
-			List<KeyValuePair<string, string>> list =
-				new List<KeyValuePair<string, string>>(s.Buttons);
+			List<KeyValuePair<string, string>> list = new List<KeyValuePair<string, string>>();
+			foreach (KeyValuePair<string, string> b in s.Buttons)
+			{
+				list.Add(new KeyValuePair<string, string>(b.Key, Live(scene, b.Key, b.Value)));
+			}
+			// by number: ButtonDescription2 before ButtonDescription10
 			list.Sort(delegate (KeyValuePair<string, string> a, KeyValuePair<string, string> b)
 			{
-				return string.CompareOrdinal(a.Key, b.Key);
+				int c = Number(a.Key).CompareTo(Number(b.Key));
+				return c != 0 ? c : string.CompareOrdinal(a.Key, b.Key);
 			});
 			return list;
+		}
+
+		private static int Number(string key)
+		{
+			int end = key.Length, start = end;
+			while (start > 0 && char.IsDigit(key[start - 1]))
+			{
+				start--;
+			}
+			int n;
+			return start < end && int.TryParse(key.Substring(start), out n) ? n : 0;
 		}
 
 		private static string Unescape(string text)

@@ -40,6 +40,18 @@ namespace Doorstop
 		private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
 		{
 			Recorder.Trace("scene", scene.name, mode.ToString());
+			StartCoroutine(BookTabSoon());
+		}
+
+		// The scene's HUD is set up during its first frames; add the book tab
+		// once it is there.
+		private System.Collections.IEnumerator BookTabSoon()
+		{
+			for (int i = 0; i < 6; i++)
+			{
+				yield return new WaitForSecondsRealtime(0.5f);
+				ChoiceWindow.EnsureBookTab();
+			}
 		}
 
 		// Start fires the frame after the boot-hook postfix (see Entrypoint)

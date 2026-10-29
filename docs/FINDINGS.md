@@ -517,3 +517,40 @@ itself. Tab titles: `HUD.Character` (Personality), `HUD.Family`, `HUD.Home`,
 `HUD.Empire` (The Province), `Work` (Occupation), `HUD.Insurrection`.
 `Animator` sits in UnityEngine.AnimationModule, which the build does not
 reference - disable it through its `Behaviour` base.
+
+The stat pop-up is the game's own `ParameterValueTooltipComponent`
+(`_Scripts.AMVCC.Views.Windows.Components`, registered as
+`RegisterGO.Find("ParameterValueTooltip")`): `ClearTooltipWindow()`, then
+`SetRow(range, segmentWord, highlighted)` per scale step, and `Title`,
+`Icon`, `Description` (key `<ParametersList>.Description`). Its root carries
+its own `Canvas` with `overrideSorting` at order 9, so a clone parented into
+a window drawn at a higher order is invisible until its canvas order is
+raised too. It is about 740 units tall - taller than the room above a row
+near the bottom of the screen.
+
+## The book's HUD (29 Oct 2026)
+
+Each story scene brings its own HUD (`Buttons/HUD.*`), so anything added to
+it has to be added again after every scene load. `HUD.Settings` is one
+Image (`icon_menu_off`, the gear medallion) with Button, Notification,
+Animator, `HudButtonBehavior` and `PointerSfxPlayer`, anchored top right at
+(-544.6, -86.3). `HUD.Chapter` (`icon_chapter_on`, a plain medallion) and
+`HUD.Main` (the year) sit top left at x 542.4 and 375.9. The wooden strips
+behind the chapter and settings medallions are not part of the buttons:
+they are painted into the book's background images (`HUD/BG` sprite
+`background`, `Back/Panel` sprite `book_new`). A copy of a tab elsewhere
+needs the patch of those sprites under the original cut out
+(`Sprite.Create` on the same texture, no read access needed) and laid
+behind it. A copied Button keeps its persistent `onClick` - replace the
+event, or the copy also opens the settings.
+
+## Chapter 5's texts are not in the shipped CSV (29 Oct 2026)
+
+The localisation CSV inside `resources.assets` is an older export: the
+`060.*` keys (chapter 5) have Russian only, so a table built from it has no
+English titles or answers for that chapter. The I2 `LanguageSource` loaded
+at runtime has every language, so the mod reads titles and answers live
+(`Loc.Game`) and falls back to the shipped table only where the game has no
+text. Button keys must be sorted by their number (`ButtonDescription10`
+comes after `2`).
+

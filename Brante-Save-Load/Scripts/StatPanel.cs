@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using _Scripts.AMVCC.Models.Static;
 using _Scripts.AMVCC.Views.Windows;
+using _Scripts.AMVCC.Views.Windows.Components;
 
 namespace Doorstop
 {
@@ -22,6 +23,7 @@ namespace Doorstop
 		private sealed class Row
 		{
 			public Parameter Param;
+			public int Shown;           // the value on display (for the tooltip)
 			public TextMeshProUGUI Value;
 			public TextMeshProUGUI Descr;
 			public Slider Slider;
@@ -148,6 +150,10 @@ namespace Doorstop
 			{
 				List<Parameter> list = groups[c];
 				int subs = Mathf.CeilToInt(list.Count / (float)rowsFit);
+				if (x > 0f)
+				{
+					Separator(area, x);
+				}
 				TextMeshProUGUI title = Label(area, CategoryTitle(c), template);
 				RectTransform trt = title.rectTransform;
 				trt.anchorMin = new Vector2(0f, 1f);
@@ -173,6 +179,7 @@ namespace Doorstop
 					int r = j % rowsFit;
 					rrt.anchoredPosition = new Vector2(x + sub * subW + (subW - natural.x * scale) * 0.5f,
 						-(header + r * natural.y * scale));
+					AddHover(row, rrt);
 					rrt.gameObject.SetActive(true);
 					_rows.Add(row);
 				}
@@ -302,6 +309,7 @@ namespace Doorstop
 			{
 				int value = shown.Value(row.Param);
 				int today = now.Value(row.Param);
+				row.Shown = value;
 				if (row.Value != null)
 				{
 					row.Value.text = row.Param.ParameterName == ParametersList.Death ? "" : value.ToString();
@@ -316,6 +324,197 @@ namespace Doorstop
 				{
 					row.Descr.text = Segment(row.Param, value);
 				}
+			}
+		}
+
+		// A light vertical rule between two categories, in the colour of the
+		// tree's answer boxes.
+		private static void Separator(RectTransform area, float x)
+		{
+			GameObject go = new GameObject("Separator", typeof(RectTransform));
+			go.transform.SetParent(area, false);
+			RectTransform rt = go.GetComponent<RectTransform>();
+			rt.anchorMin = new Vector2(0f, 0f);
+			rt.anchorMax = new Vector2(0f, 1f);
+			rt.pivot = new Vector2(0.5f, 0.5f);
+			rt.anchoredPosition = new Vector2(x, 0f);
+			rt.sizeDelta = new Vector2(3f, -8f);
+			Image img = go.AddComponent<Image>();
+			img.color = new Color(0.84f, 0.79f, 0.68f);
+			img.raycastTarget = false;
+		}
+
+		// An invisible hit area over the row: hovering it opens the game's own
+		// stat tooltip.
+		private static void AddHover(Row row, RectTransform root)
+		{
+			GameObject go = new GameObject("Hover", typeof(RectTransform));
+			go.transform.SetParent(root, false);
+			RectTransform rt = go.GetComponent<RectTransform>();
+			rt.anchorMin = Vector2.zero;
+			rt.anchorMax = Vector2.one;
+			rt.offsetMin = Vector2.zero;
+			rt.offsetMax = Vector2.zero;
+			Image img = go.AddComponent<Image>();
+			img.color = Color.clear;
+			TreeHover hover = go.AddComponent<TreeHover>();
+			hover.OnHover = delegate(bool on)
+			{
+				if (on)
+				{
+					ShowTooltip(row, rt);
+				}
+				else
+				{
+					HideTooltip();
+				}
+			};
+		}
+
+		// The tooltip the game shows over a stat in its own tabs
+		// ("ParameterValueTooltip"): icon, name, description and the scale's
+		// steps, the step of the value marked. Cloned once into `TooltipParent`
+		// (the tree's box), since the game's own one lies under the mod's
+		// window; its registration script is removed so the game never finds
+		// the clone instead of its own.
+		public static Transform TooltipParent;
+		private static GameObject _tip;
+		private static ParameterValueTooltipComponent _tipComp;
+
+		private static bool EnsureTooltip()
+		{
+			if (_tip != null && _tipComp != null)
+			{
+				return true;
+			}
+			if (TooltipParent == null)
+			{
+				return false;
+			}
+			GameObject source = RegisterGO.Find("ParameterValueTooltip");
+			if (source == null)
+			{
+				foreach (ParameterValueTooltipComponent c in Resources.FindObjectsOfTypeAll<ParameterValueTooltipComponent>())
+				{
+					if (c != null)
+					{
+						source = c.gameObject;
+						break;
+					}
+				}
+			}
+			if (source == null)
+			{
+				return false;
+			}
+			if (_holder == null)
+			{
+				_holder = new GameObject("BranteSaveLoad_StatRows");
+				_holder.SetActive(false);
+				UnityEngine.Object.DontDestroyOnLoad(_holder);
+			}
+			_tip = UnityEngine.Object.Instantiate(source, _holder.transform, false);
+			_tip.name = "BranteSaveLoad_StatTooltip";
+			foreach (MonoBehaviour mb in _tip.GetComponentsInChildren<MonoBehaviour>(true))
+			{
+				if (mb.GetType().Name == "Registration")
+				{
+					UnityEngine.Object.DestroyImmediate(mb);
+				}
+			}
+			foreach (Graphic g in _tip.GetComponentsInChildren<Graphic>(true))
+			{
+				g.raycastTarget = false;
+			}
+			// the game fades its tooltips in with an Animator on a CanvasGroup;
+			// the clone shows at once
+			foreach (CanvasGroup cg in _tip.GetComponentsInChildren<CanvasGroup>(true))
+			{
+				cg.alpha = 1f;
+			}
+			foreach (Behaviour b in _tip.GetComponentsInChildren<Behaviour>(true))
+			{
+				if (b.GetType().Name == "Animator")
+				{
+					b.enabled = false;
+				}
+			}
+			// the prefab carries its own Canvas sorted at 9; the mod window draws at
+			// 8000, so lift it above that or it renders underneath the tree
+			foreach (Canvas cv in _tip.GetComponentsInChildren<Canvas>(true))
+			{
+				cv.overrideSorting = true;
+				cv.sortingOrder = 8100;
+			}
+			_tipComp = _tip.GetComponent<ParameterValueTooltipComponent>();
+			_tip.SetActive(false);
+			_tip.transform.SetParent(TooltipParent, false);
+			return _tipComp != null;
+		}
+
+		private static void ShowTooltip(Row row, RectTransform over)
+		{
+			try
+			{
+				if (!EnsureTooltip())
+				{
+					return;
+				}
+				Parameter p = row.Param;
+				_tipComp.ClearTooltipWindow();
+				if (p.Scales != null)
+				{
+					for (int i = 0; i < p.Scales.Length; i++)
+					{
+						Scale sc = p.Scales[i];
+						_tipComp.SetRow(sc.MinValue == sc.MaxValue ? sc.MinValue.ToString() : sc.MinValue + " ... " + sc.MaxValue,
+							Loc.Game(p.ParameterName + ".Segment" + (i + 1), ""),
+							row.Shown >= sc.MinValue && row.Shown <= sc.MaxValue);
+					}
+				}
+				_tipComp.Title.text = Loc.Game(p.ParameterName.ToString(), p.name);
+				_tipComp.Icon.sprite = p.Icon;
+				_tipComp.Description.text = Loc.Game(p.ParameterName + ".Description", "");
+				// It is taller than the space above the stats, so it goes beside the
+				// row - right of it, or left where there is no room - with its foot
+				// level with the row's, then pushed inside the window.
+				RectTransform rt = _tip.GetComponent<RectTransform>();
+				rt.pivot = new Vector2(0f, 0f);
+				_tip.SetActive(true);
+				_tip.transform.SetAsLastSibling();
+				LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
+				RectTransform box = (RectTransform)TooltipParent;
+				Vector3[] c = new Vector3[4];
+				over.GetWorldCorners(c);
+				Vector2 lo = box.InverseTransformPoint(c[0]);
+				Vector2 hi = box.InverseTransformPoint(c[2]);
+				Vector2 size = rt.rect.size;
+				Rect area = box.rect;
+				const float gap = 12f;
+				float x = hi.x + gap;
+				if (x + size.x > area.xMax - gap)
+				{
+					x = lo.x - gap - size.x;
+				}
+				x = Mathf.Clamp(x, area.xMin + gap, area.xMax - gap - size.x);
+				float y = Mathf.Clamp(lo.y, area.yMin + gap, area.yMax - gap - size.y);
+				_tip.transform.position = box.TransformPoint(new Vector3(x, y, 0f));
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("StatPanel: tooltip failed:\n" + e);
+			}
+		}
+
+		public static void HideTooltip()
+		{
+			if (_tip != null)
+			{
+				if (_tipComp != null)
+				{
+					_tipComp.ClearTooltipWindow();
+				}
+				_tip.SetActive(false);
 			}
 		}
 
