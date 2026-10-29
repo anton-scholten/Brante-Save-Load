@@ -19,7 +19,7 @@ namespace Doorstop
 			TypeAuto, TypeManual, Current, NothingYet,
 			LoadScene, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath, BookTab,
 			PickConflict, NothingToLoad,
-			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord
+			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText
 		}
 
 		static Loc()
@@ -68,17 +68,28 @@ namespace Doorstop
 			AddPossibleOn(_ja, "{0}次第で起こりうる", "能力値", "関係", "登場人物の運命", "物語の出来事", "と");
 			AddPossibleOn(_ko, "{0}에 따라 가능", "능력치", "관계", "인물의 운명", "이야기 사건", "및");
 			AddPossibleOn(_zh, "可能出现，取决于{0}", "属性", "关系", "角色命运", "剧情事件", "和");
-			AddConflict(_en, "A picked answer in \"{0}\" conflicts with your hero's stats at that moment: an earlier pick changed them. Pick another answer there.", "Nothing to load: choices selected correspond to the current scene.");
-			AddConflict(_ru, "Ответ, выбранный в «{0}», противоречит характеристикам героя в тот момент: их изменил более ранний выбор. Выберите там другой ответ.", "Загружать нечего: выбранные ответы соответствуют текущей сцене.");
-			AddConflict(_de, "Die in „{0}“ gewählte Antwort passt nicht zu den Werten deines Helden in diesem Moment: eine frühere Wahl hat sie verändert. Wähle dort eine andere Antwort.", "Nichts zu laden: die gewählten Antworten entsprechen der aktuellen Szene.");
-			AddConflict(_fr, "La réponse choisie dans « {0} » n'est pas compatible avec les caractéristiques de votre héros à ce moment-là : un choix antérieur les a modifiées. Choisissez-y une autre réponse.", "Rien à charger : les choix sélectionnés correspondent à la scène actuelle.");
-			AddConflict(_es, "La respuesta elegida en «{0}» choca con las características de tu héroe en ese momento: una elección anterior las cambió. Elige otra respuesta allí.", "Nada que cargar: las elecciones seleccionadas corresponden a la escena actual.");
-			AddConflict(_it, "La risposta scelta in «{0}» è in conflitto con le caratteristiche del tuo eroe in quel momento: una scelta precedente le ha cambiate. Scegli lì un'altra risposta.", "Niente da caricare: le scelte selezionate corrispondono alla scena attuale.");
-			AddConflict(_pl, "Odpowiedź wybrana w „{0}” koliduje ze statystykami bohatera w tym momencie: zmienił je wcześniejszy wybór. Wybierz tam inną odpowiedź.", "Nie ma czego wczytać: wybrane odpowiedzi odpowiadają bieżącej scenie.");
-			AddConflict(_tr, "\"{0}\" içinde seçilen cevap, kahramanının o andaki değerleriyle çelişiyor: daha önceki bir seçim onları değiştirdi. Orada başka bir cevap seç.", "Yüklenecek bir şey yok: seçilen cevaplar mevcut sahneye karşılık geliyor.");
-			AddConflict(_ja, "「{0}」で選んだ回答は、その時点の主人公の能力値と矛盾しています（それ以前の選択で変わりました）。そこで別の回答を選んでください。", "読み込むものはありません：選んだ回答は現在のシーンと同じです。");
-			AddConflict(_ko, "\"{0}\"에서 고른 답이 그 시점 주인공의 능력치와 맞지 않습니다(앞선 선택이 능력치를 바꿨습니다). 그곳에서 다른 답을 고르세요.", "불러올 것이 없습니다: 선택한 답이 현재 장면과 같습니다.");
-			AddConflict(_zh, "在“{0}”中选择的答案与主角当时的属性冲突：之前的选择改变了属性。请在那里选择其他答案。", "无需读取：所选答案与当前场景一致。");
+			AddNoStatText(_en, "The game has no description for this stat.");
+			AddNoStatText(_ru, "В игре нет описания этой характеристики.");
+			AddNoStatText(_de, "Das Spiel hat für diesen Wert keine Beschreibung.");
+			AddNoStatText(_fr, "Le jeu ne donne aucune description de cette caractéristique.");
+			AddNoStatText(_es, "El juego no tiene descripción para esta característica.");
+			AddNoStatText(_it, "Il gioco non ha una descrizione per questa caratteristica.");
+			AddNoStatText(_pl, "Gra nie ma opisu tej statystyki.");
+			AddNoStatText(_tr, "Oyunda bu değer için bir açıklama yok.");
+			AddNoStatText(_ja, "この能力値にはゲーム内の説明がありません。");
+			AddNoStatText(_ko, "게임에 이 능력치에 대한 설명이 없습니다.");
+			AddNoStatText(_zh, "游戏中没有这项属性的说明。");
+			AddConflict(_en, "The answer in \"{0}\" on your path conflicts with your hero's stats at that moment: an earlier pick changed them. Pick another answer there.", "Nothing to load: choices selected correspond to the current scene.");
+			AddConflict(_ru, "Ответ в «{0}» на вашем пути противоречит характеристикам героя в тот момент: их изменил более ранний выбор. Выберите там другой ответ.", "Загружать нечего: выбранные ответы соответствуют текущей сцене.");
+			AddConflict(_de, "Die Antwort in „{0}“ auf deinem Weg passt nicht zu den Werten deines Helden in diesem Moment: eine frühere Wahl hat sie verändert. Wähle dort eine andere Antwort.", "Nichts zu laden: die gewählten Antworten entsprechen der aktuellen Szene.");
+			AddConflict(_fr, "La réponse dans « {0} » sur votre chemin n'est pas compatible avec les caractéristiques de votre héros à ce moment-là : un choix antérieur les a modifiées. Choisissez-y une autre réponse.", "Rien à charger : les choix sélectionnés correspondent à la scène actuelle.");
+			AddConflict(_es, "La respuesta en «{0}» de tu camino choca con las características de tu héroe en ese momento: una elección anterior las cambió. Elige otra respuesta allí.", "Nada que cargar: las elecciones seleccionadas corresponden a la escena actual.");
+			AddConflict(_it, "La risposta in «{0}» sul tuo percorso è in conflitto con le caratteristiche del tuo eroe in quel momento: una scelta precedente le ha cambiate. Scegli lì un'altra risposta.", "Niente da caricare: le scelte selezionate corrispondono alla scena attuale.");
+			AddConflict(_pl, "Odpowiedź w „{0}” na twojej ścieżce koliduje ze statystykami bohatera w tym momencie: zmienił je wcześniejszy wybór. Wybierz tam inną odpowiedź.", "Nie ma czego wczytać: wybrane odpowiedzi odpowiadają bieżącej scenie.");
+			AddConflict(_tr, "Yolundaki \"{0}\" cevabı, kahramanının o andaki değerleriyle çelişiyor: daha önceki bir seçim onları değiştirdi. Orada başka bir cevap seç.", "Yüklenecek bir şey yok: seçilen cevaplar mevcut sahneye karşılık geliyor.");
+			AddConflict(_ja, "道筋上の「{0}」の回答は、その時点の主人公の能力値と矛盾しています（それ以前の選択で変わりました）。そこで別の回答を選んでください。", "読み込むものはありません：選んだ回答は現在のシーンと同じです。");
+			AddConflict(_ko, "경로에 있는 \"{0}\"의 답이 그 시점 주인공의 능력치와 맞지 않습니다(앞선 선택이 능력치를 바꿨습니다). 그곳에서 다른 답을 고르세요.", "불러올 것이 없습니다: 선택한 답이 현재 장면과 같습니다.");
+			AddConflict(_zh, "你路径上“{0}”中的答案与主角当时的属性冲突：之前的选择改变了属性。请在那里选择其他答案。", "无需读取：所选答案与当前场景一致。");
 			AddPickBlocked(_en, "The answer picked in \"{0}\" would not be open to your hero there.");
 			AddPickBlocked(_ru, "Ответ, выбранный в «{0}», там будет недоступен вашему герою.");
 			AddPickBlocked(_de, "Die in „{0}“ gewählte Antwort stünde deinem Helden dort nicht offen.");
@@ -146,6 +157,11 @@ namespace Doorstop
 			d[K.OnFates] = fates;
 			d[K.OnEvents] = events;
 			d[K.AndWord] = and;
+		}
+
+		private static void AddNoStatText(Dictionary<K, string> d, string text)
+		{
+			d[K.NoStatText] = text;
 		}
 
 		private static void AddConflict(Dictionary<K, string> d, string conflict, string nothing)

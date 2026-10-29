@@ -603,3 +603,30 @@ characters' fates (`GetCharacterStatus`, 199), scenes already shown
 (`GetSceneShowStatus`, 29), other scenes' conditions (5) and relationships
 (`GetCharacterRelation`, 4).
 
+## Fast replay pitfalls (29 Oct 2026)
+
+- **Fixed-step spiral.** At `Time.timeScale = 10` every frame owes ten times
+  as many `FixedUpdate` steps; one slow frame (the year interlude) then asks
+  for more steps than the next frame can run, and the game sank to 1 fps
+  with the CPU pegged. Scale `Time.fixedDeltaTime` by the same factor (and
+  cap `maximumDeltaTime`) for the replay, and put both back after.
+- **Double scene loads.** The answer screen's continue
+  (`SceneConsequenceGenerator.NPS_PanelNextButton_Click`) pages through the
+  relation and stat panels, then starts a fade (`ConsequenceAlphaAnim`); the
+  button turns itself off only when the fade ends (`GoNextScene`). A press
+  during the fade loads the next scene once more. With two copies loaded,
+  an answer click is broadcast (`GoToConsequenceEvent`) to both scene
+  controllers; the copy that was not clicked has no `SelectedButton`,
+  throws in `GoToConsequence`, and the throw ends the broadcast, so the
+  answer never registers. A driver must not press the same button again for
+  a while (kept per button: an event pop-up's button can come up in
+  between), and `GameManager.OpenedSceneName` changes when the fade starts,
+  so "the scene changed" is no sign the old button is gone.
+- **Objectives in saves.** `SaveLoadHelper.AllGameObjectives.Objectives` is
+  the list of `ObjectiveStatuses` (`Name`, `Status`, ...): a snapshot tells
+  exactly which story objectives were set at that scene, which answers'
+  objective requirements need.
+- Live texts: nine stats have no `<stat>.Description` and no `.Segment<n>` in
+  any language (Love, Rule, Volition, Tolerance, GWrath, Control, Cruelty,
+  Weight, Сontention); Heir has a description but no segment words.
+

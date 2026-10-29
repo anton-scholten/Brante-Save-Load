@@ -1369,8 +1369,9 @@ namespace Doorstop
 			return false;
 		}
 
-		// A picked answer the hero can no longer take there, now that an
-		// earlier pick changed his stats: the first such column, or null.
+		// An answer on the path - picked, or played and kept - that the hero
+		// can no longer take there, now that an earlier pick changed his
+		// stats: the first such column up to the selected scene, or null.
 		private static TreeCol FirstConflict()
 		{
 			foreach (TreeCol col in _tree)
@@ -1385,8 +1386,22 @@ namespace Doorstop
 
 		private static bool IsConflict(TreeCol col)
 		{
+			if (string.IsNullOrEmpty(_selScene))
+			{
+				return false;
+			}
 			string pick;
-			return _overrides.TryGetValue(col.Scene, out pick) && col.Blocked.Contains(pick);
+			if (!_overrides.TryGetValue(col.Scene, out pick))
+			{
+				pick = col.PlayedChoice;
+			}
+			if (string.IsNullOrEmpty(pick) || !col.Blocked.Contains(pick))
+			{
+				return false;
+			}
+			int at = _tree.IndexOf(col);
+			int target = _tree.FindIndex(c => c.Scene == _selScene);
+			return at >= 0 && at <= target;
 		}
 
 		// Why Load scene is greyed out (shown on hover), or null when it is not.
@@ -1715,8 +1730,9 @@ namespace Doorstop
 						15f, ColTreeMuted, true);
 					up.enableWordWrapping = true;
 					up.overflowMode = TextOverflowModes.Overflow;
-					up.alignment = TextAlignmentOptions.Bottom;
-					Wrap(up, x + 12f, height - 74f, TreeColW - 24f, 66f);
+					// centred in a two-line band at the column's foot
+					up.alignment = TextAlignmentOptions.Center;
+					Wrap(up, x + 12f, height - 60f, TreeColW - 24f, 46f);
 				}
 				float barEnd = e.Current ? x + TreeNodeX + TreeNodeW * 0.5f : x + TreeColW;
 				AddLine(_historyList, x + 6f, TreeBarY, barEnd, TreeBarY,
@@ -1814,10 +1830,10 @@ namespace Doorstop
 		private static void StyleNode(NodeRef n)
 		{
 			bool blocked = n.Col.Blocked.Contains(n.Choice.Name);
-			string pick;
-			// a pick the hero can no longer take (an earlier pick changed
-			// his stats) turns red; another answer there can replace it
-			bool conflict = blocked && _overrides.TryGetValue(n.Col.Scene, out pick) && pick == n.Choice.Name;
+			// an answer on the path the hero can no longer take (an earlier
+			// pick changed his stats) turns red; another answer there can
+			// replace it
+			bool conflict = blocked && n.Choice.Chosen && IsConflict(n.Col);
 			n.Img.color = conflict ? ColTreeConflictBg : n.Choice.Chosen ? ColTreeChosenBg : blocked ? ColTreeBlocked
 				: n.Col.Upcoming ? ColTreeUpcomingBg : ColAuto;
 			n.Label.color = conflict ? ColTextDark : blocked ? new Color(0.12f, 0.10f, 0.08f, 0.35f)
@@ -1919,7 +1935,8 @@ namespace Doorstop
 		// The taken or picked path: the red connector to each chosen answer, and
 		// from its right edge to the next column's spine, then along it to that
 		// column's chosen answer (none chosen there: the path waits at the
-		// spine). Into the scenes ahead after an unanswered one, a pale line.
+		// spine). A scene without an answer, played or picked, is joined to
+		// nothing.
 		private static void DrawPath(List<TreeCol> cols)
 		{
 			if (_pathLayer == null)
@@ -1945,12 +1962,7 @@ namespace Doorstop
 				float nextSpine = x + TreeColW + 16f;
 				if (fromRow < 0)
 				{
-					if (cols[i + 1].Upcoming && _visible[i].Count > 0)
-					{
-						AddLine(_pathLayer, x + TreeNodeX + TreeNodeW, RowCentre(0), nextSpine,
-							RowCentre(0), ColTreeLine, 3f);
-					}
-					continue;
+					continue;   // no answer here (yet): nothing joins it to the next scene
 				}
 				float fromY = RowCentre(fromRow);
 				AddLine(_pathLayer, x + TreeNodeX + TreeNodeW, fromY, nextSpine, fromY, ColTreeChosen, 5f);
@@ -3645,10 +3657,68 @@ namespace Doorstop
 			string lp = Path.Combine(Recorder.SnapshotDir, "dev-loadpath.txt");
 			if (File.Exists(lp))
 			{
-				try { File.Delete(lp); }
+				string lpArgs = "";
+				try { lpArgs = File.ReadAllText(lp).Trim(); File.Delete(lp); }
 				catch (Exception) { }
 				TreeCol cur = _tree.Find(c => c.Current);
 				int ci = cur != null ? _tree.IndexOf(cur) : -1;
+				int back;
+				// "back N": another answer N scenes back, then on to the scene on
+				// screen - a replay across several scenes (and years)
+				if (lpArgs.StartsWith("back ", StringComparison.Ordinal) && int.TryParse(lpArgs.Substring(5), out back)
+					&& ci - back >= 0)
+				{
+					TreeCol from = null;
+					History.Choice other = null;
+					// the first change N or more scenes back that leaves the path
+					// open all the way to the scene on screen
+					for (int k = ci - back; k >= 0 && other == null; k--)
+					{
+						foreach (History.Choice c in _tree[k].Choices)
+						{
+							if (c.Name == _tree[k].PlayedChoice || _tree[k].Blocked.Contains(c.Name))
+							{
+								continue;
+							}
+							_overrides.Clear();
+							SelectChoice(_tree[k].Scene, c.Name);
+							History.Choice open = cur.Choices.Find(x => !cur.Blocked.Contains(x.Name));
+							if (open == null)
+							{
+								continue;
+							}
+							SelectChoice(cur.Scene, open.Name);
+							if (FirstConflict() == null)
+							{
+								from = _tree[k];
+								other = c;
+								break;
+							}
+						}
+					}
+					if (other != null)
+					{
+						yield return new WaitForSeconds(1f);
+						string planWhy;
+						if (PlanLoad(out planWhy) == null)
+						{
+							ModLog.Info("ChoiceWindow: dev load-path: no plan: " + planWhy);
+						}
+						LoadSelected();
+						yield return new WaitForSeconds(1f);
+						ModLog.Info("ChoiceWindow: dev load-path: '" + other.Name + "' in " + from.Scene + ", replaying to " + cur.Scene);
+						RunPending();
+						yield return new WaitForSeconds(5f);
+						float until2 = Time.realtimeSinceStartup + 400f;
+						while (AutoPlay.Running && Time.realtimeSinceStartup < until2)
+						{
+							yield return new WaitForSeconds(1f);
+						}
+						ModLog.Info("ChoiceWindow: dev load-path: now at " + AutoPlay.Story()
+							+ (AutoPlay.Story() == cur.Scene ? " (the selected scene)" : " (NOT the selected scene)"));
+					}
+					yield break;
+				}
 				if (ci >= 0 && ci + 2 < _tree.Count)
 				{
 					SelectChoice(cur.Scene, cur.Choices[Math.Min(1, cur.Choices.Count - 1)].Name);

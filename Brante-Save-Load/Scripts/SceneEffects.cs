@@ -143,6 +143,9 @@ namespace Doorstop
 			public ModelParameters Stats;
 			public List<CharacterModel> Characters;
 			public bool Live;        // the hero right now (objectives can be checked)
+			// the story objectives set, as a save recorded them (null: not known;
+			// carried on past a changed answer, since answers do not set them)
+			public HashSet<_Scripts.AMVCC.Views.Windows.ObjectiveEnum> Objectives;
 
 			// Both models are flat classes of numbers and enums, so a field
 			// copy is a full copy (and far cheaper than serialising).
@@ -156,6 +159,8 @@ namespace Doorstop
 					h.Characters.Add(c == null ? null : (CharacterModel)ShallowCopy(c));
 				}
 				h.Live = false;
+				h.Objectives = Objectives == null ? null
+					: new HashSet<_Scripts.AMVCC.Views.Windows.ObjectiveEnum>(Objectives);
 				return h;
 			}
 
@@ -306,13 +311,26 @@ namespace Doorstop
 						default:
 						{
 							// objectives are unlocked by the story, not by answers:
-							// only the hero as he is now can tell
-							if (!Live)
+							// the hero as he is now, or as a save recorded him
+							Objective o = ObjectiveAsset(r.Name);
+							if (o == null)
 							{
 								return null;
 							}
-							Objective o = ObjectiveAsset(r.Name);
-							return o == null ? (bool?)null : (r.Op == 1 ? !o.Unlocked : o.Unlocked);
+							bool set;
+							if (Live)
+							{
+								set = o.Unlocked;
+							}
+							else if (Objectives != null && o.Name != _Scripts.AMVCC.Views.Windows.ObjectiveEnum.None)
+							{
+								set = Objectives.Contains(o.Name);
+							}
+							else
+							{
+								return null;
+							}
+							return r.Op == 1 ? !set : set;
 						}
 					}
 				}
@@ -340,6 +358,17 @@ namespace Doorstop
 				{
 					SaveLoadHelper helper = Recorder.ReadHelper(path);
 					h = new Hero { Stats = helper.ModelParameters, Characters = helper.CharacterModel };
+					if (helper.AllGameObjectives != null && helper.AllGameObjectives.Objectives != null)
+					{
+						h.Objectives = new HashSet<_Scripts.AMVCC.Views.Windows.ObjectiveEnum>();
+						foreach (ObjectiveStatuses os in helper.AllGameObjectives.Objectives)
+						{
+							if (os != null && os.Status)
+							{
+								h.Objectives.Add(os.Name);
+							}
+						}
+					}
 				}
 				catch (Exception)
 				{
@@ -361,6 +390,15 @@ namespace Doorstop
 			}
 			Hero h = new Hero { Stats = pm.Parameters, Characters = csh.Characters }.Clone();
 			h.Live = true;
+			ObjectiveAsset("");   // fills the cache
+			h.Objectives = new HashSet<_Scripts.AMVCC.Views.Windows.ObjectiveEnum>();
+			foreach (Objective o in _objectives.Values)
+			{
+				if (o != null && o.Unlocked && o.Name != _Scripts.AMVCC.Views.Windows.ObjectiveEnum.None)
+				{
+					h.Objectives.Add(o.Name);
+				}
+			}
 			return h;
 		}
 

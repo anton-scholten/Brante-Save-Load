@@ -24,6 +24,7 @@ namespace Doorstop
 		public static bool Running { get; private set; }
 		private const float FastScale = 10f;
 		private static float _readySince = -1f;
+		private static readonly Dictionary<int, float> _pressedAt = new Dictionary<int, float>();
 
 		// Dev probe: page and answer one scene, then log every interactable
 		// button (with its click handlers) whenever the set changes.
@@ -77,21 +78,32 @@ namespace Doorstop
 		public static IEnumerator Run(Picker pick, Func<string, bool> onScene, float stuckAfter, bool fast)
 		{
 			Running = true;
+			_pressedAt.Clear();
 			// Fast: the game's clock runs FastScale times faster (animations,
 			// page turns and timed waits follow it), the sound is off, and the
 			// driver looks for the next button every 50 ms. Scene loading is
 			// disk-bound and does not speed up.
 			float oldScale = Time.timeScale;
 			float oldVolume = AudioListener.volume;
+			float oldFixed = Time.fixedDeltaTime;
+			float oldMaxDelta = Time.maximumDeltaTime;
 			if (fast)
 			{
 				Time.timeScale = FastScale;
 				AudioListener.volume = 0f;
+				// The fixed step grows with the clock, so a frame still runs
+				// the same few FixedUpdates; left as it is, a slow frame (the
+				// year interlude) asks for ten times as many, which makes the
+				// next frame slower still - the game sank to 1 fps there.
+				Time.fixedDeltaTime = oldFixed * FastScale;
+				Time.maximumDeltaTime = Math.Min(oldMaxDelta, 0.1f);
 			}
 			string answered = "";
 			string seen = "";
 			float lastMove = Time.realtimeSinceStartup;
 			string lastButtons = "";
+			float fpsSince = Time.realtimeSinceStartup;
+			int fpsFrames = Time.frameCount;
 			ModLog.Info("AUTOPLAY: started at " + Story());
 			while (true)
 			{
@@ -133,6 +145,17 @@ namespace Doorstop
 						break;
 					}
 				}
+				// a frame rate that sinks is worth knowing about
+				if (Time.realtimeSinceStartup - fpsSince > 5f)
+				{
+					float fps = (Time.frameCount - fpsFrames) / (Time.realtimeSinceStartup - fpsSince);
+					if (fps < 10f)
+					{
+						ModLog.Info("AUTOPLAY: slow, " + fps.ToString("0.0") + " fps at " + scene);
+					}
+					fpsSince = Time.realtimeSinceStartup;
+					fpsFrames = Time.frameCount;
+				}
 				// after an error give the scene time to settle before retrying
 				yield return new WaitForSecondsRealtime(failed ? 0.5f : fast ? 0.05f : 0.35f);
 			}
@@ -140,6 +163,8 @@ namespace Doorstop
 			{
 				Time.timeScale = oldScale;
 				AudioListener.volume = oldVolume;
+				Time.fixedDeltaTime = oldFixed;
+				Time.maximumDeltaTime = oldMaxDelta;
 			}
 			Running = false;
 			ModLog.Info("AUTOPLAY: finished at " + Story());
@@ -196,8 +221,24 @@ namespace Doorstop
 				else
 				{
 					UnityEngine.UI.Button next = FindContinue();
+					// The same button again only after a pause: the answer
+					// screen's continue starts a fade on its last press and only
+					// turns itself off when the fade is over, and a press in
+					// between loads the next scene once more - two to four
+					// copies, whose answer clicks then throw in the game's
+					// GoToConsequence and never register. Kept per button, as
+					// other buttons (an event pop-up) come up in between.
+					// Pagers turn a page per press and may go again soon.
+					float at;
+					if (next != null && _pressedAt.TryGetValue(next.GetInstanceID(), out at)
+						&& Time.realtimeSinceStartup - at
+							< (next.gameObject.name == "Next" || next.gameObject.name == "RightArrow" ? 0.3f : 1.5f))
+					{
+						next = null;
+					}
 					if (next != null)
 					{
+						_pressedAt[next.GetInstanceID()] = Time.realtimeSinceStartup;
 						if (next.gameObject.name != "Next")
 						{
 							ModLog.Info("AUTOPLAY: continue via " + PathOf(next.transform));

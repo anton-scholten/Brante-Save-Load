@@ -173,8 +173,15 @@ namespace Doorstop
 			{
 				natural = new Vector2(375f, 103f);
 			}
+			// The row's box is taller than what it shows (icon and text fill
+			// 70 of its 103 units, 10 down from the top): rows are stacked
+			// by their content, so they can be drawn larger.
+			float contentTop = 0f, contentBottom = natural.y;
+			ContentSpan(template, ref contentTop, ref contentBottom);
+			_hoverInset = new Vector2(contentTop, natural.y - contentBottom);
+			float pitch = contentBottom - contentTop + 6f;
 
-			const float header = 56f;   // the title, and a locked tab's note under it
+			const float header = 50f;   // the title, and a locked tab's note under it
 			float width = area.rect.width;
 			float usable = Mathf.Max(40f, area.rect.height - header);
 			// the largest scale at which every category fits
@@ -182,7 +189,7 @@ namespace Doorstop
 			int rowsFit = 1;
 			for (float s = 1.3f; s >= 0.3f; s -= 0.02f)
 			{
-				int fit = Mathf.Max(1, Mathf.FloorToInt(usable / (natural.y * s)));
+				int fit = Mathf.Max(1, Mathf.FloorToInt(usable / (pitch * s)));
 				int subColumns = 0;
 				foreach (Tab t in _tabs)
 				{
@@ -239,7 +246,7 @@ namespace Doorstop
 					int sub = j / rowsFit;
 					int r = j % rowsFit;
 					rrt.anchoredPosition = new Vector2(x + sub * subW + (subW - natural.x * scale) * 0.5f,
-						-(header + r * natural.y * scale));
+						-(header + r * pitch * scale - contentTop * scale));
 					AddHover(row, rrt);
 					rrt.gameObject.SetActive(true);
 					_rows.Add(row);
@@ -247,6 +254,50 @@ namespace Doorstop
 				x += subs * subW;
 			}
 		}
+
+		// From the top of the row's box, where what it draws starts and ends:
+		// every graphic that shows (all its parents switched on), the slider
+		// included, which hangs below its layout group (left as they are when
+		// nothing is found).
+		private static void ContentSpan(GameObject template, ref float top, ref float bottom)
+		{
+			RectTransform root = template.GetComponent<RectTransform>();
+			float t = float.MaxValue, b = float.MinValue;
+			foreach (Graphic g in template.GetComponentsInChildren<Graphic>(true))
+			{
+				if (g.gameObject == template || !Shows(g.transform, root.transform)
+					|| g.rectTransform.rect.height < 1f || g.rectTransform.rect.width < 1f)
+				{
+					continue;
+				}
+				Vector3[] c = new Vector3[4];
+				g.rectTransform.GetWorldCorners(c);
+				float y0 = root.rect.yMax - root.InverseTransformPoint(c[1]).y;
+				float y1 = root.rect.yMax - root.InverseTransformPoint(c[0]).y;
+				t = Mathf.Min(t, y0);
+				b = Mathf.Max(b, y1);
+			}
+			if (t < b && b - t > 10f)
+			{
+				top = Mathf.Max(0f, t);
+				bottom = Mathf.Min(root.rect.height, b);
+			}
+			ModLog.Info("StatPanel: row content " + top.ToString("0") + ".." + bottom.ToString("0") + " of " + root.rect.height.ToString("0"));
+		}
+
+		private static bool Shows(Transform t, Transform root)
+		{
+			for (; t != null && t != root; t = t.parent)
+			{
+				if (!t.gameObject.activeSelf)
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private static Vector2 _hoverInset;   // (top, bottom) of the row box left out of its hover area
 
 		private static readonly Dictionary<Row, RectTransform> _roots = new Dictionary<Row, RectTransform>();
 
@@ -299,6 +350,17 @@ namespace Doorstop
 			if (pc.Name != null)
 			{
 				pc.Name.text = Loc.Game(p.ParameterName.ToString(), p.name);
+			}
+			// the row is drawn at about half size in the tree: its words a
+			// little larger than the game's, to stay readable
+			foreach (TextMeshProUGUI t in new[] { pc.Name, pc.TextValue, pc.Descr })
+			{
+				if (t != null)
+				{
+					t.enableAutoSizing = false;
+					t.fontSize *= 1.15f;
+					t.enableWordWrapping = false;   // a long level name stays on its line
+				}
 			}
 			Row row = new Row();
 			row.Param = p;
@@ -434,8 +496,9 @@ namespace Doorstop
 			RectTransform rt = go.GetComponent<RectTransform>();
 			rt.anchorMin = Vector2.zero;
 			rt.anchorMax = Vector2.one;
-			rt.offsetMin = Vector2.zero;
-			rt.offsetMax = Vector2.zero;
+			// over what the row shows only: the boxes of stacked rows overlap
+			rt.offsetMin = new Vector2(0f, _hoverInset.y);
+			rt.offsetMax = new Vector2(0f, -_hoverInset.x);
 			// the row lays its children out in a row: keep this one out of it,
 			// or it is squeezed to nothing and never hovered
 			go.AddComponent<LayoutElement>().ignoreLayout = true;
@@ -558,7 +621,10 @@ namespace Doorstop
 				}
 				_tipComp.Title.text = Loc.Game(p.ParameterName.ToString(), p.name);
 				_tipComp.Icon.sprite = p.Icon;
-				_tipComp.Description.text = Loc.Game(p.ParameterName + ".Description", "");
+				// some stats (Love, Cruelty, ...) the game never describes: say so
+				// rather than leave the pop-up looking broken
+				string descr = Loc.Game(p.ParameterName + ".Description", "");
+				_tipComp.Description.text = descr.Length > 0 ? descr : "<i>" + Loc.T(Loc.K.NoStatText) + "</i>";
 				// It is taller than the space above the stats, so it goes beside the
 				// row - right of it, or left where there is no room - centred
 				// on the screen's height, and pushed inside the window.

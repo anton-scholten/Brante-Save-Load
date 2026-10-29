@@ -176,11 +176,15 @@ kept for reference; `tools/build_graph.py` maps it onto the game's scenes.
   today is left out even if a later answer could still unlock it. The
   epilogue's fate pages have no answers, so the tree ends with the last choice
   of chapter 5.
-- Load scene replays the path in the game itself, about 5 seconds a scene.
+- Load scene replays the path in the game itself, about 5 to 10 seconds a scene.
 - Greying past a changed answer is an estimate: stat changes that happen
-  between scenes are not simulated, and objectives (unlocked by the story, not
-  by answers) are only checked for the scene on screen. If the replay meets an
-  answer the hero cannot take after all, it stops at that scene.
+  between scenes are not simulated, and story objectives are taken from the
+  mod's saves and carried forward unchanged past a changed answer. If the
+  replay meets an answer the hero cannot take after all, it stops at that
+  scene.
+- Some stats (Love, Rule, Volition, Tolerance, Wrath, Control, Cruelty, Weight,
+  Contention) have no description or level names in the game itself; their
+  pop-up says so.
 - Steam Cloud is not enabled for the game itself, so the game's saves do not sync
   between machines (see Steam Cloud above).
 
