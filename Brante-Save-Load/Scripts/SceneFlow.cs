@@ -314,7 +314,23 @@ namespace Doorstop
 		// Whether a scene is reachable under every value its chapter switches
 		// `key` to: some alternative ignores the switch, or the alternatives
 		// name every value the chapter uses.
+		private static readonly Dictionary<KeyValuePair<Row, string>, bool> _covers =
+			new Dictionary<KeyValuePair<Row, string>, bool>();
+
 		private static bool Covers(Row r, string key)
+		{
+			KeyValuePair<Row, string> ck = new KeyValuePair<Row, string>(r, key);
+			bool known;
+			if (_covers.TryGetValue(ck, out known))
+			{
+				return known;
+			}
+			known = CoversUncached(r, key);
+			_covers[ck] = known;
+			return known;
+		}
+
+		private static bool CoversUncached(Row r, string key)
 		{
 			HashSet<string> mine = new HashSet<string>();
 			foreach (List<KeyValuePair<string, string>> set in r.Labels)
@@ -660,12 +676,8 @@ namespace Doorstop
 						return Unknown;
 					}
 				}
-				foreach (MethodInfo m in t.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+				foreach (MethodInfo m in MethodsNamed(t, Member))
 				{
-					if (m.Name != Member)
-					{
-						continue;
-					}
 					object[] call = Bind(m.GetParameters(), given, ctx);
 					if (call != null)
 					{
@@ -719,6 +731,31 @@ namespace Doorstop
 				}
 				return call;
 			}
+		}
+
+		private static readonly Dictionary<KeyValuePair<Type, string>, MethodInfo[]> _methods =
+			new Dictionary<KeyValuePair<Type, string>, MethodInfo[]>();
+
+		// A type's public instance methods of one name (reflection is slow,
+		// and a refresh evaluates hundreds of calls).
+		private static MethodInfo[] MethodsNamed(Type t, string name)
+		{
+			KeyValuePair<Type, string> key = new KeyValuePair<Type, string>(t, name);
+			MethodInfo[] found;
+			if (!_methods.TryGetValue(key, out found))
+			{
+				List<MethodInfo> list = new List<MethodInfo>();
+				foreach (MethodInfo m in t.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+				{
+					if (m.Name == name)
+					{
+						list.Add(m);
+					}
+				}
+				found = list.ToArray();
+				_methods[key] = found;
+			}
+			return found;
 		}
 
 		private sealed class Parser

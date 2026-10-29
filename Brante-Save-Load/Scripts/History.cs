@@ -228,24 +228,7 @@ namespace Doorstop
 				}
 				string sidecar = string.IsNullOrEmpty(e.SnapshotPath) ? "" :
 					Path.ChangeExtension(e.SnapshotPath, ".meta.txt");
-				string chosen = "";
-				try
-				{
-					if (File.Exists(sidecar))
-					{
-						foreach (string raw in File.ReadAllLines(sidecar))
-						{
-							if (raw.StartsWith("chosen=", StringComparison.Ordinal))
-							{
-								chosen = raw.Substring(7).Trim();
-							}
-						}
-					}
-				}
-				catch
-				{
-					// best effort
-				}
+				string chosen = RecordedChoice(sidecar);
 				if (string.IsNullOrEmpty(chosen))
 				{
 					// The next scene that offers answers (machinery scenes in
@@ -275,6 +258,46 @@ namespace Doorstop
 						c.Chosen = true;
 					}
 				}
+			}
+		}
+
+		// The sidecar's "chosen=" line ("" without one), re-read only when the
+		// file changes (the click hook appends the line after the snapshot).
+		private static readonly Dictionary<string, KeyValuePair<DateTime, string>> _chosen =
+			new Dictionary<string, KeyValuePair<DateTime, string>>();
+
+		private static string RecordedChoice(string sidecar)
+		{
+			if (string.IsNullOrEmpty(sidecar))
+			{
+				return "";
+			}
+			try
+			{
+				if (!File.Exists(sidecar))
+				{
+					return "";
+				}
+				DateTime t = File.GetLastWriteTimeUtc(sidecar);
+				KeyValuePair<DateTime, string> hit;
+				if (_chosen.TryGetValue(sidecar, out hit) && hit.Key == t)
+				{
+					return hit.Value;
+				}
+				string chosen = "";
+				foreach (string raw in File.ReadAllLines(sidecar))
+				{
+					if (raw.StartsWith("chosen=", StringComparison.Ordinal))
+					{
+						chosen = raw.Substring(7).Trim();
+					}
+				}
+				_chosen[sidecar] = new KeyValuePair<DateTime, string>(t, chosen);
+				return chosen;
+			}
+			catch
+			{
+				return "";
 			}
 		}
 
@@ -319,34 +342,61 @@ namespace Doorstop
 		// played before the mod was installed have no snapshot at all.
 		public static string SnapshotFor(string sceneName)
 		{
+			string path;
+			return SnapshotMap().TryGetValue(sceneName.Replace('/', '_'), out path) ? path : "";
+		}
+
+		// Snapshot files are "<scene>_t<turn>_<hash>.dat"; the scene part is
+		// matched whole (a prefix test would let "01.02.01" pick up the files
+		// of "01.02.01_2").
+		private static readonly System.Text.RegularExpressions.Regex SnapshotName =
+			new System.Text.RegularExpressions.Regex(@"^(.+)_t\d+_[0-9a-f]+$");
+		private static string _mapDir;
+		private static DateTime _mapStamp;
+		private static Dictionary<string, string> _map = new Dictionary<string, string>();
+
+		// Scene -> newest snapshot of the current run, rebuilt only when the
+		// folder changes (a file added or removed).
+		private static Dictionary<string, string> SnapshotMap()
+		{
 			try
 			{
 				string dir = Recorder.RunDir(Recorder.CurrentRunId(), "Auto");
 				if (!Directory.Exists(dir))
 				{
-					return "";
+					return new Dictionary<string, string>();
 				}
-				string prefix = sceneName.Replace('/', '_') + "_";
-				string best = "";
-				DateTime bestTime = DateTime.MinValue;
+				DateTime stamp = Directory.GetLastWriteTimeUtc(dir);
+				if (dir == _mapDir && stamp == _mapStamp)
+				{
+					return _map;
+				}
+				Dictionary<string, string> map = new Dictionary<string, string>();
+				Dictionary<string, DateTime> when = new Dictionary<string, DateTime>();
 				foreach (string f in Directory.GetFiles(dir, "*.dat"))
 				{
-					if (!Path.GetFileName(f).StartsWith(prefix, StringComparison.Ordinal))
+					System.Text.RegularExpressions.Match m = SnapshotName.Match(Path.GetFileNameWithoutExtension(f));
+					if (!m.Success)
 					{
 						continue;
 					}
+					string scene = m.Groups[1].Value;
 					DateTime t = File.GetLastWriteTimeUtc(f);
-					if (t > bestTime)
+					DateTime seen;
+					if (!when.TryGetValue(scene, out seen) || t > seen)
 					{
-						bestTime = t;
-						best = f;
+						when[scene] = t;
+						map[scene] = f;
 					}
 				}
-				return best;
+				_mapDir = dir;
+				_mapStamp = stamp;
+				_map = map;
+				return map;
 			}
 			catch
 			{
-				return "";
+				return new Dictionary<string, string>();
 			}
 		}
 

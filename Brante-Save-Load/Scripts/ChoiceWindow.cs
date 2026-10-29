@@ -395,6 +395,7 @@ namespace Doorstop
 		private static List<TreeCol> _tree = new List<TreeCol>();
 		private static RectTransform _historyBox;
 		private static RectTransform _historyProgress;
+		private static Transform _statsRow;
 		private static RectTransform _popup;
 		private static TextMeshProUGUI _popupText;
 		private static TextMeshProUGUI _popupNote;
@@ -776,6 +777,7 @@ namespace Doorstop
 			_historyInfo = null;
 			_historyBox = null;
 			_historyProgress = null;
+			_statsRow = null;
 			_popup = null;
 			_popupText = null;
 			_popupNote = null;
@@ -846,8 +848,9 @@ namespace Doorstop
 			RectTransform srt = scroll.GetComponent<RectTransform>();
 			srt.anchorMin = new Vector2(0f, 0f);
 			srt.anchorMax = new Vector2(1f, 1f);
-			// Bottom edge clears the hover info line (82..108) below it.
-			srt.offsetMin = new Vector2(26f, 112f);
+			// Bottom edge clears the stats row (116..174) and the hint line
+			// (82..108) below it.
+			srt.offsetMin = new Vector2(26f, 182f);
 			srt.offsetMax = new Vector2(-26f, -96f);
 			ScrollRect sc = scroll.AddComponent<ScrollRect>();
 			sc.horizontal = true;
@@ -925,8 +928,40 @@ namespace Doorstop
 			_historyInfo.overflowMode = TextOverflowModes.Ellipsis;
 			_historyInfo.enableWordWrapping = false;
 
-			AddButton(box.transform, "Close", new Vector2(0.5f, 0f), new Vector2(0f, 24f),
-				new Vector2(240f, 52f), ColCancelButton, Loc.T(Loc.K.Close), 24f, CloseHistory);
+			// Close: an x in the top right corner, as on the save window.
+			GameObject closeX = CreateUiObject("Close", box.transform);
+			RectTransform cxrt = closeX.GetComponent<RectTransform>();
+			cxrt.anchorMin = new Vector2(1f, 1f);
+			cxrt.anchorMax = new Vector2(1f, 1f);
+			cxrt.pivot = new Vector2(1f, 1f);
+			cxrt.anchoredPosition = new Vector2(-14f, -14f);
+			cxrt.sizeDelta = new Vector2(46f, 46f);
+			Image cximg = closeX.AddComponent<Image>();
+			cximg.color = Color.clear;
+			Button cxbtn = closeX.AddComponent<Button>();
+			cxbtn.targetGraphic = cximg;
+			cxbtn.onClick.AddListener(CloseHistory);
+			AddCross(closeX.transform, 26f, 4f);
+
+			// The hero's stats along the path (UpdateStats), above the hint line.
+			GameObject stats = CreateUiObject("Stats", box.transform);
+			RectTransform strt = stats.GetComponent<RectTransform>();
+			strt.anchorMin = new Vector2(0f, 0f);
+			strt.anchorMax = new Vector2(1f, 0f);
+			strt.pivot = new Vector2(0.5f, 0f);
+			strt.anchoredPosition = new Vector2(0f, 116f);
+			strt.sizeDelta = new Vector2(-52f, 58f);
+			Image stimg = stats.AddComponent<Image>();
+			stimg.color = new Color(0f, 0f, 0f, 0.05f);
+			HorizontalLayoutGroup sth = stats.AddComponent<HorizontalLayoutGroup>();
+			sth.padding = new RectOffset(10, 10, 4, 4);
+			sth.spacing = 2f;
+			sth.childAlignment = TextAnchor.MiddleCenter;
+			sth.childControlWidth = true;
+			sth.childControlHeight = true;
+			sth.childForceExpandWidth = true;
+			sth.childForceExpandHeight = true;
+			_statsRow = stats.transform;
 
 			// Undo (bottom left): back to the answers actually played.
 			_undoBtn = AddButton(box.transform, "Undo", new Vector2(0f, 0f), new Vector2(24f, 24f),
@@ -978,7 +1013,7 @@ namespace Doorstop
 		{
 			RectTransform content = _historyList as RectTransform;
 			Vector2 at = content != null ? content.anchoredPosition : Vector2.zero;
-			RefreshHistory();
+			RefreshHistory(false);
 			Canvas.ForceUpdateCanvases();
 			if (content != null)
 			{
@@ -1113,7 +1148,7 @@ namespace Doorstop
 			{
 				return;
 			}
-			int n = RefreshHistory();
+			int n = RefreshHistory(true);
 			_historyPanel.SetActive(true);
 			_historyPanel.transform.SetAsLastSibling();
 			Canvas.ForceUpdateCanvases();
@@ -1160,29 +1195,447 @@ namespace Doorstop
 		private const float TreeHeadY = 34f;    // column titles (chapter names above)
 		private const float TreeBarY = 88f;     // the timeline bar under the titles
 
-		private static int RefreshHistory()
+		// The columns as built when the tree opened: reading the history and
+		// working out the scenes ahead is the slow part, and neither depends
+		// on the player's picks, so a click only re-applies them.
+		private static List<TreeCol> _baseCols = new List<TreeCol>();
+
+		// One drawn answer, kept so a click can restyle it instead of the
+		// whole tree being built again.
+		private sealed class NodeRef
+		{
+			public TreeCol Col;
+			public History.Choice Choice;
+			public Image Img;
+			public TextMeshProUGUI Label;
+			public Button Btn;
+			public GameObject Mark;
+		}
+
+		private static readonly List<NodeRef> _nodes = new List<NodeRef>();
+		private static List<List<int>> _visible = new List<List<int>>();
+		private static Transform _pathLayer;   // the lines that follow the picks
+
+		// `rebuild` (on open): read the history and the scenes ahead and draw
+		// everything. Otherwise (a pick, undo) re-apply the picks, restyle the
+		// drawn answers and redraw only the path.
+		private static int RefreshHistory(bool rebuild)
 		{
 			if (_historyList == null)
 			{
 				return 0;
 			}
+			System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+			SetHistoryInfo(null);
+			if (rebuild)
+			{
+				_baseCols = BuildColumns();
+			}
+			List<TreeCol> cols = _baseCols;
+			// The player's picks replace what was played (or nothing, ahead).
+			foreach (TreeCol col in cols)
+			{
+				string picked;
+				if (!_overrides.TryGetValue(col.Scene, out picked))
+				{
+					picked = col.PlayedChoice;
+				}
+				foreach (History.Choice c in col.Choices)
+				{
+					c.Chosen = !string.IsNullOrEmpty(picked) && c.Name == picked;
+				}
+			}
+			long tData = sw.ElapsedMilliseconds;
+			WorkOutOpenAnswers(cols);
+			long tHero = sw.ElapsedMilliseconds;
+			_tree = cols;
+			if (rebuild || _nodes.Count == 0 || _pathLayer == null)
+			{
+				DrawTree(cols);
+			}
+			else
+			{
+				foreach (NodeRef n in _nodes)
+				{
+					StyleNode(n);
+				}
+			}
+			DrawPath(cols);
+			UpdateStats();
+			if (_loadHereBtn != null)
+			{
+				_loadHereBtn.SetActive(!string.IsNullOrEmpty(_selScene));
+			}
+			ModLog.Info("ChoiceWindow: tree " + (rebuild ? "built" : "restyled") + " in "
+				+ sw.ElapsedMilliseconds + " ms (columns " + tData + ", path " + (tHero - tData)
+				+ ", drawing " + (sw.ElapsedMilliseconds - tHero) + ")");
+			return cols.Count;
+		}
+
+		// Everything that does not change with the picks: chapter rules, bands,
+		// bars, titles, spines, pale connectors and the answer boxes.
+		private static void DrawTree(List<TreeCol> cols)
+		{
 			for (int i = _historyList.childCount - 1; i >= 0; i--)
 			{
 				GameObject old = _historyList.GetChild(i).gameObject;
 				old.SetActive(false);
 				UnityEngine.Object.Destroy(old);
 			}
+			_nodes.Clear();
+			_pathLayer = null;
 			_historyLoadable = 0;
-			SetHistoryInfo(null);
+			if (cols.Count == 0)
+			{
+				TextMeshProUGUI empty = AddLabel(_historyList, "Empty",
+					Loc.T(Loc.K.NothingYet), 20f, ColTextDark, true);
+				RectTransform ert = empty.rectTransform;
+				ert.anchorMin = new Vector2(0f, 1f);
+				ert.anchorMax = new Vector2(0f, 1f);
+				ert.pivot = new Vector2(0f, 1f);
+				ert.sizeDelta = new Vector2(400f, 40f);
+				SetContentSize(420f, 80f);
+				SetStoryProgress(0f);
+				return;
+			}
 
+			// Blank answers are never drawn, and the rows close up around them
+			// (a gap would look like a missing answer).
+			_visible = new List<List<int>>();
+			int rows = 0;
+			foreach (TreeCol c in cols)
+			{
+				List<int> v = VisibleChoices(c);
+				_visible.Add(v);
+				rows = Mathf.Max(rows, v.Count);
+			}
+			float width = 30f + cols.Count * TreeColW;
+			float height = TreeTop + rows * TreeRowH + 20f;
+			SetContentSize(width, height);
+			SetStoryProgress(_focusCol >= 0 ? (30f + (_focusCol + 0.5f) * TreeColW) / width : 0f);
+
+			int prevChapter = 0;
+			for (int i = 0; i < cols.Count; i++)
+			{
+				TreeCol e = cols[i];
+				List<int> shown = _visible[i];
+				float x = 30f + i * TreeColW;
+				if (e.HasSnapshot)
+				{
+					_historyLoadable++;
+				}
+
+				// A new chapter starts here: a vertical rule, its name at the top.
+				int chapter = SceneFlow.ChapterOf(e.Scene);
+				if (chapter > 0 && chapter != prevChapter)
+				{
+					AddLine(_historyList, x + 2f, 0f, x + 2f, height, ColTreeChapter, 3f);
+					TextMeshProUGUI ch = AddLabel(_historyList, "Chapter", ChapterTitle(chapter),
+						20f, ColTreeChosen, false);
+					Wrap(ch, x + 14f, 2f, TreeColW * 2f, 28f);
+					ch.enableWordWrapping = false;
+				}
+				if (chapter > 0)
+				{
+					prevChapter = chapter;
+				}
+
+				// Played scenes - all of them, whether or not the mod saw the
+				// answer - sit on a tinted band with the path's bar above them;
+				// the bar ends at the scene on screen, and goes on pale through
+				// what is still ahead.
+				bool played = !e.Upcoming;
+				if (played)
+				{
+					GameObject band = CreateUiObject("Played", _historyList);
+					RectTransform brt2 = band.GetComponent<RectTransform>();
+					brt2.anchorMin = new Vector2(0f, 1f);
+					brt2.anchorMax = new Vector2(0f, 1f);
+					brt2.pivot = new Vector2(0f, 1f);
+					brt2.anchoredPosition = new Vector2(x + 6f, -(TreeHeadY - 4f));
+					brt2.sizeDelta = new Vector2(TreeColW - 8f, height - TreeHeadY - 6f);
+					Image bandImg = band.AddComponent<Image>();
+					bandImg.color = ColTreePlayedBand;
+					bandImg.raycastTarget = false;
+					if (!e.Recorded && !e.Current)
+					{
+						TextMeshProUGUI nr = AddLabel(band.transform, "NotRecorded",
+							Loc.T(Loc.K.NotRecorded), 15f, ColTreeMuted, true);
+						RectTransform nrt2 = nr.rectTransform;
+						nrt2.anchorMin = new Vector2(0f, 0f);
+						nrt2.anchorMax = new Vector2(1f, 0f);
+						nrt2.pivot = new Vector2(0.5f, 0f);
+						nrt2.anchoredPosition = new Vector2(0f, 8f);
+						nrt2.sizeDelta = new Vector2(-24f, 44f);
+						nr.enableWordWrapping = true;
+						nr.overflowMode = TextOverflowModes.Overflow;
+					}
+				}
+				float barEnd = e.Current ? x + TreeNodeX + TreeNodeW * 0.5f : x + TreeColW;
+				AddLine(_historyList, x + 6f, TreeBarY, barEnd, TreeBarY,
+					played ? ColTreeChosen : ColTreeLine, played ? 6f : 3f);
+
+				// Column header: the scene's title.
+				string headText = e.Title;
+				if (e.Current)
+				{
+					headText += "  \u2022 " + Loc.T(Loc.K.Current);
+				}
+				else if (e.Upcoming && (i == 0 || !cols[i - 1].Upcoming))
+				{
+					headText += "  \u2022 " + Loc.T(Loc.K.Upcoming);
+				}
+				if (e.Possible)
+				{
+					headText += "  \u2022 " + Loc.T(Loc.K.Possible);
+				}
+				TextMeshProUGUI head = AddLabel(_historyList, "Head", headText,
+					18f, e.Upcoming ? ColTreeMuted : ColTextDark, false);
+				Wrap(head, x + 14f, TreeHeadY, TreeNodeW + TreeNodeX - 14f, 44f);
+				head.enableWordWrapping = true;
+				head.overflowMode = TextOverflowModes.Ellipsis;
+
+				// The spine joins the node centres of this column.
+				if (shown.Count > 1)
+				{
+					AddLine(_historyList, x + 16f, RowCentre(0), x + 16f, RowCentre(shown.Count - 1), ColTreeLine, 3f);
+				}
+
+				// Answers, top to bottom, each on a pale connector (the picked
+				// one gets the path's red one on top, in DrawPath).
+				for (int r = 0; r < shown.Count; r++)
+				{
+					History.Choice c = e.Choices[shown[r]];
+					float y = TreeTop + r * TreeRowH;
+					AddLine(_historyList, x + 16f, RowCentre(r), x + TreeNodeX, RowCentre(r), ColTreeLine, 3f);
+					_nodes.Add(MakeNode(e, c, x + TreeNodeX, y));
+				}
+			}
+			// The path's lines go on top of everything else.
+			GameObject layer = CreateUiObject("Path", _historyList);
+			RectTransform lrt = layer.GetComponent<RectTransform>();
+			lrt.anchorMin = new Vector2(0f, 1f);
+			lrt.anchorMax = new Vector2(0f, 1f);
+			lrt.pivot = new Vector2(0f, 1f);
+			lrt.anchoredPosition = Vector2.zero;
+			lrt.sizeDelta = Vector2.zero;
+			_pathLayer = layer.transform;
+		}
+
+		// One answer box: clicking picks it, hovering opens its pop-up.
+		private static NodeRef MakeNode(TreeCol col, History.Choice c, float x, float y)
+		{
+			GameObject node = CreateUiObject("Choice", _historyList);
+			RectTransform nrt = node.GetComponent<RectTransform>();
+			nrt.anchorMin = new Vector2(0f, 1f);
+			nrt.anchorMax = new Vector2(0f, 1f);
+			nrt.pivot = new Vector2(0f, 1f);
+			nrt.anchoredPosition = new Vector2(x, -y);
+			nrt.sizeDelta = new Vector2(TreeNodeW, TreeNodeH);
+			NodeRef n = new NodeRef();
+			n.Col = col;
+			n.Choice = c;
+			n.Img = node.AddComponent<Image>();
+			n.Btn = node.AddComponent<Button>();
+			n.Btn.targetGraphic = n.Img;
+			ColorBlock cb = n.Btn.colors;
+			cb.disabledColor = Color.white;   // a greyed answer keeps StyleNode's colour
+			n.Btn.colors = cb;
+			string sceneId = col.Scene;
+			string choiceName = c.Name;
+			n.Btn.onClick.AddListener(delegate { SelectChoice(sceneId, choiceName); });
+
+			n.Label = AddLabel(node.transform, "Text", SceneEffects.NobleParticle(c.Text), 17f, ColTextDark, false);
+			RectTransform lrt = n.Label.rectTransform;
+			lrt.anchorMin = Vector2.zero;
+			lrt.anchorMax = Vector2.one;
+			lrt.offsetMin = new Vector2(10f, 2f);
+			lrt.offsetMax = new Vector2(-10f, -2f);
+			n.Label.enableWordWrapping = false;
+
+			List<SceneEffects.Effect> effects = SceneEffects.For(col.Scene, c.Name);
+			TreeHover hover = node.AddComponent<TreeHover>();
+			hover.HasEffects = effects.Count > 0;
+			hover.HasChoiceOfRequirements = effects.Exists(f => f.Or) && col.Upcoming;
+			hover.OnHover = delegate(bool on)
+			{
+				if (on)
+				{
+					// the hero at that scene as of now (it changes with the picks)
+					ShowPopup(nrt, c.Text, "", effects, col.Hero);
+				}
+				else
+				{
+					HidePopup();
+				}
+			};
+			StyleNode(n);
+			return n;
+		}
+
+		// Colours and state that follow the picks: picked, greyed (the hero
+		// could not take it there), ahead, or played; the dashed mark on the
+		// last pick.
+		private static void StyleNode(NodeRef n)
+		{
+			bool blocked = n.Col.Blocked.Contains(n.Choice.Name);
+			n.Img.color = n.Choice.Chosen ? ColTreeChosenBg : blocked ? ColTreeBlocked
+				: n.Col.Upcoming ? ColTreeUpcomingBg : ColAuto;
+			n.Label.color = blocked ? new Color(0.12f, 0.10f, 0.08f, 0.35f)
+				: !n.Col.Upcoming ? ColTextDark : new Color(0.12f, 0.10f, 0.08f, 0.6f);
+			n.Btn.interactable = !blocked;
+			bool selected = n.Col.Scene == _selScene && n.Choice.Name == _selChoice;
+			if (selected && n.Mark == null)
+			{
+				n.Mark = MarkNode(n.Img.gameObject);
+			}
+			else if (!selected && n.Mark != null)
+			{
+				UnityEngine.Object.Destroy(n.Mark);
+				n.Mark = null;
+			}
+		}
+
+		// The hero whose stats the row shows: after the last pick along the
+		// path when there is one (and the tree knows the hero there), else as
+		// he is now - which is also what Undo brings back.
+		private static SceneEffects.Hero StatsHero()
+		{
+			if (!string.IsNullOrEmpty(_selScene))
+			{
+				TreeCol col = _tree.Find(c => c.Scene == _selScene);
+				if (col != null && col.Hero != null)
+				{
+					SceneEffects.Hero h = col.Hero.Clone();
+					h.Apply(SceneEffects.For(_selScene, _selChoice));
+					return h;
+				}
+			}
+			return SceneEffects.Now();
+		}
+
+		// Order of the stats row: will, the five traits and the skills built
+		// from them, then the family, then whatever else the game tracks.
+		private static readonly string[] StatOrder =
+		{
+			"Will", "Curiosity", "Activity", "Discipline", "Cunning", "Spirituality",
+			"Diplomacy", "Valor", "Manipulation", "Sabotage", "Theology", "Preaching",
+			"Unity", "Money", "Reputation",
+		};
+
+		// One column per stat, with the game's icon: the always-present ones
+		// (StatOrder) and any other stat that is in play (not zero now or along
+		// the path). A value above today's is green, below red; hovering
+		// names the stat on the hint line.
+		private static void UpdateStats()
+		{
+			if (_statsRow == null)
+			{
+				return;
+			}
+			for (int i = _statsRow.childCount - 1; i >= 0; i--)
+			{
+				GameObject old = _statsRow.GetChild(i).gameObject;
+				old.SetActive(false);
+				UnityEngine.Object.Destroy(old);
+			}
+			SceneEffects.Hero now = SceneEffects.Now();
+			SceneEffects.Hero shown = StatsHero();
+			if (now == null || shown == null)
+			{
+				return;
+			}
+			List<_Scripts.AMVCC.Models.Static.Parameter> stats = SceneEffects.StatsToShow(StatOrder,
+				p => now.Value(p) != 0 || shown.Value(p) != 0);
+			foreach (_Scripts.AMVCC.Models.Static.Parameter p in stats)
+			{
+				int value = shown.Value(p);
+				int today = now.Value(p);
+				GameObject cell = CreateUiObject("Stat", _statsRow);
+				VerticalLayoutGroup v = cell.AddComponent<VerticalLayoutGroup>();
+				v.childAlignment = TextAnchor.MiddleCenter;
+				v.childControlWidth = true;
+				v.childControlHeight = true;
+				v.childForceExpandWidth = true;
+				v.childForceExpandHeight = false;
+				GameObject ig = CreateUiObject("Icon", cell.transform);
+				LayoutElement le = ig.AddComponent<LayoutElement>();
+				le.preferredHeight = le.minHeight = 26f;
+				Image img = ig.AddComponent<Image>();
+				img.sprite = p.Icon;
+				img.preserveAspect = true;
+				img.raycastTarget = true;   // for the hover name
+				Color colour = value > today ? new Color(0.18f, 0.42f, 0.18f)
+					: value < today ? new Color(0.62f, 0.16f, 0.12f) : ColTextDark;
+				TextMeshProUGUI t = AddLabel(cell.transform, "Value", value.ToString(), 18f, colour, true);
+				// a line taller than its box would vanish under Ellipsis
+				t.overflowMode = TextOverflowModes.Overflow;
+				LayoutElement tle = t.gameObject.AddComponent<LayoutElement>();
+				tle.preferredHeight = tle.minHeight = 24f;
+				string name = SceneEffects.StatName(p) + ": " + value
+					+ (value != today ? " (" + today + ")" : "");
+				TreeHover hover = ig.AddComponent<TreeHover>();
+				hover.OnHover = delegate(bool on) { SetHistoryInfo(on ? name : null); };
+			}
+		}
+
+		// The taken or picked path: the red connector to each chosen answer, and
+		// from its right edge to the next column's spine, then along it to that
+		// column's chosen answer (none chosen there: the path waits at the
+		// spine). Into the scenes ahead after an unanswered one, a pale line.
+		private static void DrawPath(List<TreeCol> cols)
+		{
+			if (_pathLayer == null)
+			{
+				return;
+			}
+			for (int i = _pathLayer.childCount - 1; i >= 0; i--)
+			{
+				UnityEngine.Object.Destroy(_pathLayer.GetChild(i).gameObject);
+			}
+			for (int i = 0; i < cols.Count; i++)
+			{
+				float x = 30f + i * TreeColW;
+				int fromRow = ChosenRow(cols[i], _visible[i]);
+				if (fromRow >= 0)
+				{
+					AddLine(_pathLayer, x + 16f, RowCentre(fromRow), x + TreeNodeX, RowCentre(fromRow), ColTreeChosen, 5f);
+				}
+				if (i + 1 >= cols.Count || _visible[i + 1].Count == 0)
+				{
+					continue;
+				}
+				float nextSpine = x + TreeColW + 16f;
+				if (fromRow < 0)
+				{
+					if (cols[i + 1].Upcoming && _visible[i].Count > 0)
+					{
+						AddLine(_pathLayer, x + TreeNodeX + TreeNodeW, RowCentre(0), nextSpine,
+							RowCentre(0), ColTreeLine, 3f);
+					}
+					continue;
+				}
+				float fromY = RowCentre(fromRow);
+				AddLine(_pathLayer, x + TreeNodeX + TreeNodeW, fromY, nextSpine, fromY, ColTreeChosen, 5f);
+				int toRow = ChosenRow(cols[i + 1], _visible[i + 1]);
+				if (toRow >= 0 && Mathf.Abs(RowCentre(toRow) - fromY) > 0.5f)
+				{
+					AddLine(_pathLayer, nextSpine, fromY, nextSpine, RowCentre(toRow), ColTreeChosen, 5f);
+				}
+			}
+		}
+
+		private static int _focusCol = -1;     // the column to show on open (the current scene)
+
+		// Every played scene with a known answer list becomes a column, then
+		// every scene still ahead (AddUpcoming).
+		private static List<TreeCol> BuildColumns()
+		{
 			List<History.Entry> all = History.FromCurrentGame();
 			if (all.Count == 0)
 			{
 				all = History.FromNewestSave();
 			}
-			// Every played scene with a known answer list becomes a column, then
-			// every scene still ahead (AddUpcoming); the player's picks
-			// (_overrides) replace the answers on both.
 			List<TreeCol> cols = new List<TreeCol>();
 			int pendingCol = -1;
 			foreach (History.Entry e in all)
@@ -1219,254 +1672,8 @@ namespace Doorstop
 			{
 				AddUpcoming(cols, all);
 			}
-			// The player's picks replace what was played (or nothing, ahead).
-			foreach (TreeCol col in cols)
-			{
-				string picked;
-				if (_overrides.TryGetValue(col.Scene, out picked))
-				{
-					foreach (History.Choice c in col.Choices)
-					{
-						c.Chosen = c.Name == picked;
-					}
-				}
-			}
-			WorkOutOpenAnswers(cols);
-			_tree = cols;
-			if (cols.Count == 0)
-			{
-				TextMeshProUGUI empty = AddLabel(_historyList, "Empty",
-					Loc.T(Loc.K.NothingYet), 20f, ColTextDark, true);
-				RectTransform ert = empty.rectTransform;
-				ert.anchorMin = new Vector2(0f, 1f);
-				ert.anchorMax = new Vector2(0f, 1f);
-				ert.pivot = new Vector2(0f, 1f);
-				ert.sizeDelta = new Vector2(400f, 40f);
-				SetContentSize(420f, 80f);
-				SetStoryProgress(0f);
-				return 0;
-			}
-
-			// Blank answers are never drawn, and the rows close up around them
-			// (a gap would look like a missing answer).
-			List<List<int>> visible = new List<List<int>>();
-			int rows = 0;
-			foreach (TreeCol c in cols)
-			{
-				List<int> v = VisibleChoices(c);
-				visible.Add(v);
-				rows = Mathf.Max(rows, v.Count);
-			}
-			float width = 30f + cols.Count * TreeColW;
-			float height = TreeTop + rows * TreeRowH + 20f;
-			SetContentSize(width, height);
-			SetStoryProgress(_focusCol >= 0 ? (30f + (_focusCol + 0.5f) * TreeColW) / width : 0f);
-
-			int prevChapter = 0;
-			for (int i = 0; i < cols.Count; i++)
-			{
-				TreeCol e = cols[i];
-				List<int> shown = visible[i];
-				float x = 30f + i * TreeColW;
-				// Every answer can be picked to build a path.
-				bool clickable = true;
-				if (e.HasSnapshot)
-				{
-					_historyLoadable++;
-				}
-
-				// A new chapter starts here: a vertical rule, its name at the top.
-				int chapter = SceneFlow.ChapterOf(e.Scene);
-				if (chapter > 0 && chapter != prevChapter)
-				{
-					AddLine(x + 2f, 0f, x + 2f, height, ColTreeChapter, 3f);
-					TextMeshProUGUI ch = AddLabel(_historyList, "Chapter", ChapterTitle(chapter),
-						20f, ColTreeChosen, false);
-					Wrap(ch, x + 14f, 2f, TreeColW * 2f, 28f);
-					ch.enableWordWrapping = false;
-					ch.raycastTarget = false;
-				}
-				if (chapter > 0)
-				{
-					prevChapter = chapter;
-				}
-
-				// Played scenes - all of them, whether or not the mod saw the
-				// answer - sit on a tinted band with the path's bar above them;
-				// the bar ends at the scene on screen, and goes on pale through
-				// what is still ahead.
-				bool played = !e.Upcoming;
-				if (played)
-				{
-					GameObject band = CreateUiObject("Played", _historyList);
-					RectTransform brt2 = band.GetComponent<RectTransform>();
-					brt2.anchorMin = new Vector2(0f, 1f);
-					brt2.anchorMax = new Vector2(0f, 1f);
-					brt2.pivot = new Vector2(0f, 1f);
-					brt2.anchoredPosition = new Vector2(x + 6f, -(TreeHeadY - 4f));
-					brt2.sizeDelta = new Vector2(TreeColW - 8f, height - TreeHeadY - 6f);
-					Image bandImg = band.AddComponent<Image>();
-					bandImg.color = ColTreePlayedBand;
-					bandImg.raycastTarget = false;
-					if (!e.Recorded && !e.Current)
-					{
-						TextMeshProUGUI nr = AddLabel(band.transform, "NotRecorded",
-							Loc.T(Loc.K.NotRecorded), 15f, ColTreeMuted, true);
-						RectTransform nrt2 = nr.rectTransform;
-						nrt2.anchorMin = new Vector2(0f, 0f);
-						nrt2.anchorMax = new Vector2(1f, 0f);
-						nrt2.pivot = new Vector2(0.5f, 0f);
-						nrt2.anchoredPosition = new Vector2(0f, 8f);
-						nrt2.sizeDelta = new Vector2(-24f, 40f);
-						nr.enableWordWrapping = true;
-						nr.overflowMode = TextOverflowModes.Overflow;
-					}
-				}
-				float barEnd = e.Current ? x + TreeNodeX + TreeNodeW * 0.5f : x + TreeColW;
-				AddLine(x + 6f, TreeBarY, barEnd, TreeBarY,
-					played ? ColTreeChosen : ColTreeLine, played ? 6f : 3f);
-
-				// Column header: the scene's title.
-				string headText = e.Title;
-				if (e.Current)
-				{
-					headText += "  \u2022 " + Loc.T(Loc.K.Current);
-				}
-				else if (e.Upcoming && (i == 0 || !cols[i - 1].Upcoming))
-				{
-					headText += "  \u2022 " + Loc.T(Loc.K.Upcoming);
-				}
-				if (e.Possible)
-				{
-					headText += "  \u2022 " + Loc.T(Loc.K.Possible);
-				}
-				TextMeshProUGUI head = AddLabel(_historyList, "Head", headText,
-					18f, e.Upcoming ? ColTreeMuted : ColTextDark, false);
-				Wrap(head, x + 14f, TreeHeadY, TreeNodeW + TreeNodeX - 14f, 44f);
-				head.enableWordWrapping = true;
-				head.overflowMode = TextOverflowModes.Ellipsis;
-
-				// The spine joins the node centres of this column.
-				if (shown.Count > 1)
-				{
-					AddLine(x + 16f, RowCentre(0), x + 16f, RowCentre(shown.Count - 1), ColTreeLine, 3f);
-				}
-
-				// Choices, top to bottom; the chosen one carries the dark path.
-				for (int r = 0; r < shown.Count; r++)
-				{
-					int k = shown[r];
-					History.Choice c = e.Choices[k];
-					float y = TreeTop + r * TreeRowH;
-					float cy = RowCentre(r);
-					Color line = c.Chosen ? ColTreeChosen : ColTreeLine;
-					AddLine(x + 16f, cy, x + TreeNodeX, cy, line, c.Chosen ? 5f : 3f);
-
-					GameObject node = CreateUiObject("Choice", _historyList);
-					RectTransform nrt = node.GetComponent<RectTransform>();
-					nrt.anchorMin = new Vector2(0f, 1f);
-					nrt.anchorMax = new Vector2(0f, 1f);
-					nrt.pivot = new Vector2(0f, 1f);
-					nrt.anchoredPosition = new Vector2(x + TreeNodeX, -y);
-					nrt.sizeDelta = new Vector2(TreeNodeW, TreeNodeH);
-					Image nimg = node.AddComponent<Image>();
-					bool blocked = e.Blocked.Contains(c.Name);
-					nimg.color = c.Chosen ? ColTreeChosenBg : blocked ? ColTreeBlocked
-						: e.Upcoming ? ColTreeUpcomingBg : ColAuto;
-					// Clicking picks the answer for the path - unless the hero
-					// could not take it at that point.
-					if (clickable && !blocked)
-					{
-						Button nb = node.AddComponent<Button>();
-						nb.targetGraphic = nimg;
-						int colIndex = i;
-						int choiceIndex = k;
-						string path = e.SnapshotPath;
-						string title = e.Title;
-						string sceneId = e.Scene;
-						string choiceName = c.Name;
-						nb.onClick.AddListener(delegate { SelectChoice(sceneId, choiceName); });
-					}
-
-					TextMeshProUGUI label = AddLabel(node.transform, "Text", c.Text, 17f,
-						blocked ? new Color(0.12f, 0.10f, 0.08f, 0.35f)
-						: !e.Upcoming ? ColTextDark : new Color(0.12f, 0.10f, 0.08f, 0.6f), false);
-					RectTransform lrt = label.rectTransform;
-					lrt.anchorMin = Vector2.zero;
-					lrt.anchorMax = Vector2.one;
-					lrt.offsetMin = new Vector2(10f, 2f);
-					lrt.offsetMax = new Vector2(-10f, -2f);
-					label.overflowMode = TextOverflowModes.Ellipsis;
-					label.enableWordWrapping = false;
-
-					string note = "";
-					List<SceneEffects.Effect> effects = SceneEffects.For(e.Scene, c.Name);
-					string fullText = c.Text;
-					SceneEffects.Hero live = e.Hero;
-					if (e.Scene == _selScene && c.Name == _selChoice)
-					{
-						MarkNode(node);
-					}
-					TreeHover hover = node.AddComponent<TreeHover>();
-				label.text = SceneEffects.NobleParticle(label.text);
-					hover.HasEffects = effects.Count > 0;
-					hover.HasChoiceOfRequirements = effects.Exists(f => f.Or) && e.Upcoming;
-					hover.OnHover = delegate(bool on)
-					{
-						if (on)
-						{
-							ShowPopup(nrt, fullText, note, effects, live);
-						}
-						else
-						{
-							HidePopup();
-						}
-					};
-				}
-			}
-
-			// The taken path between columns: from the chosen node's right edge
-			// to the next column's spine, then along it to that column's chosen
-			// node. Drawn last so the next column's pale spine cannot cover it.
-			for (int i = 0; i + 1 < cols.Count; i++)
-			{
-				int fromRow = ChosenRow(cols[i], visible[i]);
-				if (fromRow < 0)
-				{
-					// No answer known yet (the scene on screen): a pale line
-					// still leads into the upcoming scenes.
-					if (cols[i + 1].Upcoming && visible[i].Count > 0 && visible[i + 1].Count > 0)
-					{
-						float ux = 30f + i * TreeColW;
-						AddLine(ux + TreeNodeX + TreeNodeW, RowCentre(0), ux + TreeColW + 16f,
-							RowCentre(0), ColTreeLine, 3f);
-					}
-					continue;
-				}
-				if (visible[i + 1].Count == 0)
-				{
-					continue;
-				}
-				// Into the next column's spine; along it only to an answer that
-				// is chosen there (none chosen: the path waits at the spine).
-				int toRow = ChosenRow(cols[i + 1], visible[i + 1]);
-				float x = 30f + i * TreeColW;
-				float fromY = RowCentre(fromRow);
-				float nextSpine = x + TreeColW + 16f;
-				AddLine(x + TreeNodeX + TreeNodeW, fromY, nextSpine, fromY, ColTreeChosen, 5f);
-				if (toRow >= 0 && Mathf.Abs(RowCentre(toRow) - fromY) > 0.5f)
-				{
-					AddLine(nextSpine, fromY, nextSpine, RowCentre(toRow), ColTreeChosen, 5f);
-				}
-			}
-			if (_loadHereBtn != null)
-			{
-				_loadHereBtn.SetActive(!string.IsNullOrEmpty(_selScene));
-			}
-			return cols.Count;
+			return cols;
 		}
-
-		private static int _focusCol = -1;     // the column to show on open (the current scene)
 
 		// Which answers the hero could take at each scene of the shown path.
 		// A scene the mod has a save of, before any changed pick, uses the hero
@@ -1853,9 +2060,9 @@ namespace Doorstop
 		}
 
 		// An axis-aligned connector line in the tree.
-		private static void AddLine(float x1, float y1, float x2, float y2, Color color, float thickness)
+		private static void AddLine(Transform parent, float x1, float y1, float x2, float y2, Color color, float thickness)
 		{
-			GameObject go = CreateUiObject("Line", _historyList);
+			GameObject go = CreateUiObject("Line", parent);
 			RectTransform rt = go.GetComponent<RectTransform>();
 			rt.anchorMin = new Vector2(0f, 1f);
 			rt.anchorMax = new Vector2(0f, 1f);
@@ -2216,7 +2423,7 @@ namespace Doorstop
 		// A full-length strip along one edge: horizontal ones sit at the top
 		// (edge 1) or bottom (edge 0), vertical ones at the right (1) or left (0).
 		// The same red dashed outline, around the tree's selected answer.
-		private static void MarkNode(GameObject node)
+		private static GameObject MarkNode(GameObject node)
 		{
 			const float t = 3f;
 			GameObject mark = CreateUiObject("SelectedMark", node.transform);
@@ -2228,6 +2435,7 @@ namespace Doorstop
 			AddDashStrip(mark.transform, "Bottom", true, 0f, t, _dashH);
 			AddDashStrip(mark.transform, "Left", false, 0f, t, _dashV);
 			AddDashStrip(mark.transform, "Right", false, 1f, t, _dashV);
+			return mark;
 		}
 
 		private static void AddDashStrip(Transform parent, string name, bool horizontal, float edge,
@@ -2872,11 +3080,9 @@ namespace Doorstop
 			OpenHistory();
 			yield return new WaitForSeconds(3f);
 			DevWheel();
-			// Dev: the pop-up of an answer with known effects, then a load from
-			// the tree and Cancel - the tree must still be open after it.
+			// Dev: the pop-up of an answer with known effects.
 			yield return new WaitForSeconds(2f);
 			TreeHover withFx = null;
-			Button loadable = null;
 			foreach (TreeHover th in _historyList.GetComponentsInChildren<TreeHover>())
 			{
 				if (th.HasChoiceOfRequirements || (withFx == null && th.HasEffects))
@@ -2885,10 +3091,6 @@ namespace Doorstop
 					{
 						withFx = th;
 					}
-				}
-				if (loadable == null && th.GetComponent<Button>() != null)
-				{
-					loadable = th.GetComponent<Button>();
 				}
 			}
 			if (withFx != null)
@@ -2903,14 +3105,6 @@ namespace Doorstop
 					+ _popupEffects.childCount + " effect row(s))");
 				yield return new WaitForSeconds(4f);
 				withFx.OnHover(false);
-			}
-			if (loadable != null)
-			{
-				loadable.onClick.Invoke();
-				yield return new WaitForSeconds(3f);
-				CancelConfirm();
-				ModLog.Info("ChoiceWindow: dev load-cancel: tree still open = "
-					+ (_historyPanel != null && _historyPanel.activeSelf));
 			}
 			// Dev: show the first chapter boundary after the current scene.
 			RectTransform contentRt = _historyList as RectTransform;

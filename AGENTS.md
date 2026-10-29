@@ -145,7 +145,7 @@ on use) and must be paired with `dev-autoload.txt`:
 |---|---|
 | `dev-autoload.txt` | replay the vanilla load sequence onto the newest autosave |
 | `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
-| `dev-book.txt` | open the settings menu, dump its layout, then the tree view: wheel, pop-up, load + Cancel, a pick + its load plan |
+| `dev-book.txt` | open the settings menu, dump its layout, then the tree view: wheel, pop-up, chapter rule, a pick + its load plan, undo |
 | `dev-history.txt` | log the save's scene path (`ShowedScenesList`) |
 | `dev-autoplay.txt` | empty: log the buttons the game puts up after an answer; `chapters 2 3`: start a debug run (own main save `Debug_<date>`, from the newest `Chapter_1.dat`), play the first open answer everywhere and make a mod save when each listed chapter starts |
 | `dev-scene-tree.txt` | dump the loaded scene's UI components |

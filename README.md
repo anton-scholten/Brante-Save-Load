@@ -43,7 +43,8 @@ never touches the game's saves.
 The **Tree view** button at the top of the Save / Load window opens the whole
 story as a tree, left to right, filling nearly the whole screen (the mouse
 wheel scrolls it sideways). The scrollbar doubles as a progress bar: its track
-is filled in red from the start of the story up to the scene you are on.
+is filled in red from the start of the story up to the scene you are on. The
+× in the top right corner closes it.
 
 - **Columns are scenes, boxes are answers.** Every scene this save has been
   through, in order, then everything still ahead: the rest of this chapter and
@@ -62,6 +63,11 @@ is filled in red from the start of the story up to the scene you are on.
   follows it and the last pick carries a red dashed outline. Answers your hero
   could not take at that point are greyed out and cannot be picked. The
   **undo** button (bottom left) puts every pick back to what you played.
+- **Your hero's stats** run along the bottom, one column per stat with the
+  game's icon: will, traits and skills, family, and every other stat in play.
+  They show the hero after your last pick along the path - green above
+  today's value, red below - and go back to today's values with undo. Hover
+  an icon for the stat's name.
 - **Load scene** (bottom right) takes you to the scene of your last pick along
   your path. The mod loads its newest save from before the first answer you
   changed and plays your picked answers itself - at ten times speed, sound off,

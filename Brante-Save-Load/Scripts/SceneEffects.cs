@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using UnityEngine;
 using _Scripts.AMVCC.Models.Static;
@@ -143,11 +144,17 @@ namespace Doorstop
 			public List<CharacterModel> Characters;
 			public bool Live;        // the hero right now (objectives can be checked)
 
+			// Both models are flat classes of numbers and enums, so a field
+			// copy is a full copy (and far cheaper than serialising).
 			public Hero Clone()
 			{
 				Hero h = new Hero();
-				h.Stats = DeepCopy(Stats);
-				h.Characters = DeepCopy(Characters);
+				h.Stats = (ModelParameters)ShallowCopy(Stats);
+				h.Characters = new List<CharacterModel>(Characters.Count);
+				foreach (CharacterModel c in Characters)
+				{
+					h.Characters.Add(c == null ? null : (CharacterModel)ShallowCopy(c));
+				}
 				h.Live = false;
 				return h;
 			}
@@ -198,6 +205,30 @@ namespace Doorstop
 							// a character missing from this hero: skip that change
 						}
 					}
+				}
+				finally
+				{
+					pm.Parameters = real;
+				}
+			}
+
+			// A stat's value for this hero, by the game's own lookup.
+			public int Value(Parameter p)
+			{
+				ParametersManager pm = ParametersManager.Instance;
+				if (pm == null || p == null)
+				{
+					return 0;
+				}
+				ModelParameters real = pm.Parameters;
+				try
+				{
+					pm.Parameters = Stats;
+					return pm.GetParameterValue(p);
+				}
+				catch (Exception)
+				{
+					return 0;
 				}
 				finally
 				{
@@ -333,20 +364,12 @@ namespace Doorstop
 			return h;
 		}
 
-		private static T DeepCopy<T>(T value)
+		private static readonly MethodInfo MemberwiseCloneMethod =
+			typeof(object).GetMethod("MemberwiseClone", BindingFlags.Instance | BindingFlags.NonPublic);
+
+		private static object ShallowCopy(object value)
 		{
-			if (value == null)
-			{
-				return value;
-			}
-			System.Runtime.Serialization.Formatters.Binary.BinaryFormatter f =
-				new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-			using (MemoryStream ms = new MemoryStream())
-			{
-				f.Serialize(ms, value);
-				ms.Position = 0;
-				return (T)f.Deserialize(ms);
-			}
+			return value == null ? null : MemberwiseCloneMethod.Invoke(value, null);
 		}
 
 		public static Objective ObjectiveAsset(string name)
@@ -399,6 +422,49 @@ namespace Doorstop
 				el = "";
 			}
 			return text.Replace("<el>", el).Replace("  ", " ");
+		}
+
+		// The stats for the tree's stats row: those named in `always`, in that
+		// order, then every other stat with an icon for which `inPlay` holds,
+		// grouped by the game's category (one asset per stat).
+		public static List<Parameter> StatsToShow(string[] always, Predicate<Parameter> inPlay)
+		{
+			ParameterAsset("");   // fills the cache
+			List<Parameter> list = new List<Parameter>();
+			HashSet<ParametersList> seen = new HashSet<ParametersList>();
+			foreach (string name in always)
+			{
+				Parameter p = ParameterAsset(name);
+				if (p != null && p.Icon != null && seen.Add(p.ParameterName))
+				{
+					list.Add(p);
+				}
+			}
+			List<Parameter> rest = new List<Parameter>();
+			foreach (Parameter p in _parameters.Values)
+			{
+				if (p != null && p.Icon != null && !seen.Contains(p.ParameterName) && inPlay(p))
+				{
+					rest.Add(p);
+				}
+			}
+			rest.Sort((a, b) => a.ParameterCategory != b.ParameterCategory
+				? a.ParameterCategory.CompareTo(b.ParameterCategory)
+				: string.CompareOrdinal(a.name, b.name));
+			foreach (Parameter p in rest)
+			{
+				if (seen.Add(p.ParameterName))
+				{
+					list.Add(p);
+				}
+			}
+			return list;
+		}
+
+		// A stat's name in the game's language.
+		public static string StatName(Parameter p)
+		{
+			return Translated(p.name, p.ParameterName.ToString());
 		}
 
 		public static Parameter ParameterAsset(string name)

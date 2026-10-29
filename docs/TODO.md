@@ -315,6 +315,13 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   the game's own effect rules from the nearest exact save), Load scene refuses
   a path through a greyed pick; replay at 10x speed, muted (~5 s a scene).
   Verified in-game on the debug run.
+- [x] Tree view, round five (28 Oct 2026): opening ~470 -> ~310 ms and a pick
+  ~850 -> ~30 ms (history and scenes ahead built once per open, a pick only
+  restyles the drawn answers and redraws the path layer; one folder scan for
+  snapshots, cached sidecars, field copies instead of serialised clones,
+  cached reflection in SceneFlow); close as an x top right; stats row along
+  the path; two-line "not recorded" note. Fixed: a scene's snapshot lookup
+  also matched scenes whose id starts with it (01.02.01 / 01.02.01_2).
 - [ ] Achievement side-effects on load (verify).
 - [ ] Full in-game pass on a played run: chapter transition, death -> restart
   chapter, explore + load from the panel.
