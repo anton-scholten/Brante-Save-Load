@@ -36,42 +36,43 @@ never touches the game's saves.
   Chinese): switch the language in the settings and the window rebuilds.
 - **Iron Man included.** The game disables its own save/load menu in Iron Man;
   the mod's window keeps working there, so a permadeath run can still be rewound.
-- **Tree view of the playthrough.** The game records every scene the current
-  save has passed through. **Tree view** draws that path left to right: one
-  column per scene, every answer offered there stacked underneath, and the
-  answer you picked highlighted and joined to the next scene by a darker line.
-  Every scene you have played sits on a tinted band under a dark timeline bar,
-  whether or not the mod saw your answer. After the scene you are on, the rest
-  of the story follows in muted columns ("upcoming"): the rest of this chapter
-  and every later one, each chapter starting at a vertical rule with its name
-  on top. The answers come from the game's own translation table, so this works
-  for scenes played before the mod too. Hovering an answer opens a pop-up with
-  its full text, what it changes - stats with the game's own icons, relations
-  and fates with the character's portrait - and what it requires (all of the
-  listed ones, or one of a "one of" group). For the scene on screen and the
-  ones ahead, each requirement is checked against your hero: green when met,
-  red when not. Clicking answers builds a path: each click selects that answer
-  (the path follows it, and the last one clicked carries a red dashed outline).
-  **Load scene** then takes you to the scene of that last pick along your path:
-  the mod loads its newest save from before the first answer you changed and
-  plays the picked answers itself, scene by scene, until the selected scene is
-  on screen, where it stops for you. The replay runs the game at ten times
-  speed with the sound off (a few seconds a scene). Answers your hero could
-  not take at that point are greyed out and cannot be picked: the tree works
-  out the hero along your path - exactly as saved where the mod has a save,
-  and from your first changed answer on by applying each picked answer's
-  effects with the game's own rules. The **undo** button puts every pick back
-  to what you actually played. Played scenes from before the mod was installed
-  say so at the bottom of their band. The tree fills nearly the whole screen,
-  the mouse wheel scrolls it sideways, and its button sits at the top of the
-  save window. Decisions made before the mod was
-  installed can be shown but not reopened — the game keeps no earlier states, and
-  only records the most recent answer. A dataset of the game's events — all five
-  chapters, 175 events with every option, requirement and outcome — lives in
-  `data/events.json` (raw sheet in `data/events.csv`, see `docs/BRANCHES.md`);
-  it is the base for showing the full tree later; `tools/build_graph.py` merges
-  it with the mod's traces to map scenes to events and to record which choice
-  leads where (`data/graph.json`).
+- **A tree view of the whole story.** See below.
+
+## Tree view
+
+The **Tree view** button at the top of the Save / Load window opens the whole
+story as a tree, left to right, filling nearly the whole screen (the mouse
+wheel scrolls it sideways).
+
+- **Columns are scenes, boxes are answers.** Every scene this save has been
+  through, in order, then everything still ahead: the rest of this chapter and
+  every later one, each chapter starting at a vertical rule with its name on
+  top. Answer texts come from the game's own translation table, so scenes
+  played before the mod was installed show theirs too.
+- **What you played is highlighted.** Played scenes sit on a tinted band under
+  a dark timeline bar, your answer joined to the next scene by a dark line.
+  Answers given before the mod was installed were never recorded by anyone;
+  those scenes say so at the bottom of their band.
+- **Hover an answer** for its full text, what it changes (stats with the game's
+  own icons, relations and fates with the character's portrait) and what it
+  requires: all of the listed requirements, or one of a "one of" group, green
+  when the hero meets it at that point, red when not.
+- **Click answers to build a path.** Each click picks that answer; the path
+  follows it and the last pick carries a red dashed outline. Answers your hero
+  could not take at that point are greyed out and cannot be picked. The
+  **undo** button (bottom left) puts every pick back to what you played.
+- **Load scene** (bottom right) takes you to the scene of your last pick along
+  your path. The mod loads its newest save from before the first answer you
+  changed and plays your picked answers itself - at ten times speed, sound off,
+  a few seconds a scene - until the selected scene is on screen, where it
+  stops and leaves the choice to you.
+
+To grey answers out, the tree works out the hero at every scene of the path:
+exactly as the mod saved him there where it has a save, and from your first
+changed answer on by applying each picked answer's effects with the game's own
+rules.
+
+## Notes
 
 ### Platforms
 
@@ -128,42 +129,39 @@ mod's own saves (in `Brante-Save-Load/`) are not meant to be synced.
 
 ### What the mod ships besides the DLL
 
-`scene-texts.tsv` (every scene's title and answers, all five chapters),
-`scene-effects.tsv` (what each answer changes) and `scene-flow.tsv` (the order in which each chapter reaches its scenes, with the
-conditions on the way) are extracted from your installed copy of the game. They
-are what lets the tree view show answers for scenes played before the mod
-existed and list the scenes still ahead. After a game
-update they can be regenerated with `tools/bolt_story.py` and
-`tools/localization.py` (see `docs/BRANCHES.md`).
+Three tables extracted from your installed copy of the game feed the tree view:
+`scene-flow.tsv` (the order in which each chapter reaches its scenes, with the
+conditions on the way), `scene-texts.tsv` (every scene's title and answers) and
+`scene-effects.tsv` (what each answer changes and requires). After a game
+update, regenerate them with `tools/bolt_story.py`, `tools/localization.py` and
+`tools/scene_effects.py`, in that order (see `docs/BRANCHES.md`).
+
+The community event sheet in `data/events.json` (all five chapters, 175 events
+with every option, requirement and outcome; raw sheet in `data/events.csv`) is
+kept for reference; `tools/build_graph.py` maps it onto the game's scenes.
 
 ### Known limitations
 
-- The tree can only **load** scenes the mod recorded (from the moment it was
-  installed). Earlier scenes are shown, with their answers, but the game keeps no
-  state for them.
-- Your answer is highlighted where the mod saw it: the click itself, or the
-  next choice scene's save (the game keeps the last clicked answer until the
-  next click). Answers given before the mod was installed are not recorded
-  anywhere, so those columns show every answer without a highlight.
+- Load scene needs a mod save at or before the first changed answer, so it
+  cannot reach back past the moment the mod was installed: the game keeps no
+  earlier states.
 - Upcoming scenes are the rest of your chapter in the order the game reaches
   them, on your run's track (your Lot in chapter 3, your post in chapter 4),
   then every later chapter. In a later chapter a track that is decided by
   then (the Lot, the post) is not known yet, so only what all tracks share is
   listed, and every scene with a condition is marked "possible".
-  Their conditions (objectives, stats, characters' fates) are checked against
-  your save as it is now: a scene whose condition fails today is left out even
-  if a later answer could still unlock it, and one the mod cannot check is
-  marked "possible". The epilogue's fate pages have no answers, so the tree
-  ends with the last choice of chapter 5.
-- Load scene replays the path in the game itself, about 5 seconds a scene. It
-  needs a mod save at or before the first changed answer; scenes from before
-  the mod was installed have none.
+  In your current chapter, conditions (objectives, stats, characters' fates)
+  are checked against your save as it is now: a scene whose condition fails
+  today is left out even if a later answer could still unlock it. The
+  epilogue's fate pages have no answers, so the tree ends with the last choice
+  of chapter 5.
+- Load scene replays the path in the game itself, about 5 seconds a scene.
 - Greying past a changed answer is an estimate: stat changes that happen
   between scenes are not simulated, and objectives (unlocked by the story, not
   by answers) are only checked for the scene on screen. If the replay meets an
   answer the hero cannot take after all, it stops at that scene.
 - Steam Cloud is not enabled for the game itself, so the game's saves do not sync
-  between machines (see below).
+  between machines (see Steam Cloud above).
 
 ## Why it works this way
 

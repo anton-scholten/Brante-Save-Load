@@ -271,7 +271,6 @@ namespace Doorstop
 		private static readonly Color ColButtonDark = new Color(0.30f, 0.26f, 0.20f, 0.95f);
 		private static readonly Color ColLoadButton = new Color(0.55f, 0.30f, 0.25f);
 		private static readonly Color ColCancelButton = new Color(0.55f, 0.53f, 0.48f);
-		private static readonly Color ColDeleteButton = new Color(0.45f, 0.20f, 0.18f);
 		private static readonly Color ColTextLight = new Color(0.95f, 0.92f, 0.82f);
 		private static readonly Color ColTextDark = new Color(0.12f, 0.10f, 0.08f);
 		private static readonly Color ColDashRed = new Color(0.85f, 0.10f, 0.10f);
@@ -340,7 +339,7 @@ namespace Doorstop
 					// Titles are localised at display time, so a language
 					// switch also changes them (they were captured in whatever
 					// language was active then).
-					string live = TitleOf(Scene);
+					string live = Loc.SceneTitle(Scene);
 					if (!string.IsNullOrEmpty(live))
 					{
 						return live;
@@ -378,7 +377,6 @@ namespace Doorstop
 			public string Scene = "";
 			public string Title = "";
 			public string SnapshotPath = "";
-			public bool Preview;
 			public bool Current;    // the scene on screen (the pending entry)
 			public bool Recorded;   // the answer played here is known
 			public string PlayedChoice = "";   // that answer's name
@@ -451,14 +449,6 @@ namespace Doorstop
 			{
 				ModLog.Error("ChoiceWindow: settings button failed:\n" + e);
 			}
-		}
-
-		// The settings menu is a VerticalLayoutGroup of rows; each row is a
-		// horizontal wrapper around the black frame that holds one button. The
-		// new button is a copy of the lowest row, placed by the same layout.
-		private static bool IsMenuList(Transform t)
-		{
-			return t.GetComponent<VerticalLayoutGroup>() != null && t.GetComponent<Image>() == null;
 		}
 
 		private static void AddPauseButton(GameObject pause)
@@ -707,21 +697,9 @@ namespace Doorstop
 			BuildScrollbar(scroll.transform);
 
 			// Save now (bottom centre).
-			_saveNowBtn = CreateUiObject("SaveNow", panel.transform);
-			RectTransform nrt = _saveNowBtn.GetComponent<RectTransform>();
-			nrt.anchorMin = new Vector2(0.5f, 0f);
-			nrt.anchorMax = new Vector2(0.5f, 0f);
-			nrt.pivot = new Vector2(0.5f, 0f);
-			nrt.anchoredPosition = new Vector2(0f, 20f);
-			nrt.sizeDelta = new Vector2(260f, 52f);
-			Image nimg = _saveNowBtn.AddComponent<Image>();
-			nimg.color = ColLoadButton;
-			Button nbtn = _saveNowBtn.AddComponent<Button>();
-			nbtn.targetGraphic = nimg;
-			nbtn.onClick.AddListener(delegate { Ask(Pending.SaveNow, "", "", null); });
-			TextMeshProUGUI nlabel = AddLabel(_saveNowBtn.transform, "Label",
-				Loc.T(Loc.K.SaveNow), 24f, ColTextLight, true);
-			Stretch(nlabel.rectTransform);
+			_saveNowBtn = AddButton(panel.transform, "SaveNow", new Vector2(0.5f, 0f), new Vector2(0f, 20f),
+				new Vector2(260f, 52f), ColLoadButton, Loc.T(Loc.K.SaveNow), 24f,
+				delegate { Ask(Pending.SaveNow, "", "", null); }).gameObject;
 
 			// History (bottom right): the scene path this playthrough took,
 			// as recorded by the game itself (Phase 6).
@@ -933,34 +911,12 @@ namespace Doorstop
 			_historyInfo.overflowMode = TextOverflowModes.Ellipsis;
 			_historyInfo.enableWordWrapping = false;
 
-			GameObject close = CreateUiObject("Close", box.transform);
-			RectTransform crt = close.GetComponent<RectTransform>();
-			crt.anchorMin = new Vector2(0.5f, 0f);
-			crt.anchorMax = new Vector2(0.5f, 0f);
-			crt.pivot = new Vector2(0.5f, 0f);
-			crt.anchoredPosition = new Vector2(0f, 24f);
-			crt.sizeDelta = new Vector2(240f, 52f);
-			Image cimg = close.AddComponent<Image>();
-			cimg.color = ColCancelButton;
-			Button cbtn = close.AddComponent<Button>();
-			cbtn.targetGraphic = cimg;
-			cbtn.onClick.AddListener(CloseHistory);
-			TextMeshProUGUI cl = AddLabel(close.transform, "Label", Loc.T(Loc.K.Close), 24f, ColTextLight, true);
-			Stretch(cl.rectTransform);
+			AddButton(box.transform, "Close", new Vector2(0.5f, 0f), new Vector2(0f, 24f),
+				new Vector2(240f, 52f), ColCancelButton, Loc.T(Loc.K.Close), 24f, CloseHistory);
 
 			// Undo (bottom left): back to the answers actually played.
-			_undoBtn = CreateUiObject("Undo", box.transform);
-			RectTransform urt = _undoBtn.GetComponent<RectTransform>();
-			urt.anchorMin = new Vector2(0f, 0f);
-			urt.anchorMax = new Vector2(0f, 0f);
-			urt.pivot = new Vector2(0f, 0f);
-			urt.anchoredPosition = new Vector2(24f, 24f);
-			urt.sizeDelta = new Vector2(64f, 52f);
-			Image uimg = _undoBtn.AddComponent<Image>();
-			uimg.color = ColCancelButton;
-			Button ubtn = _undoBtn.AddComponent<Button>();
-			ubtn.targetGraphic = uimg;
-			ubtn.onClick.AddListener(UndoSelections);
+			_undoBtn = AddButton(box.transform, "Undo", new Vector2(0f, 0f), new Vector2(24f, 24f),
+				new Vector2(64f, 52f), ColCancelButton, null, 0f, UndoSelections).gameObject;
 			GameObject uicon = CreateUiObject("Icon", _undoBtn.transform);
 			RectTransform uirt = uicon.GetComponent<RectTransform>();
 			Stretch(uirt);
@@ -974,21 +930,8 @@ namespace Doorstop
 
 			// Load scene (bottom right): goes to the selected answer's scene
 			// along the selected path.
-			_loadHereBtn = CreateUiObject("LoadHere", box.transform);
-			RectTransform lrt2 = _loadHereBtn.GetComponent<RectTransform>();
-			lrt2.anchorMin = new Vector2(1f, 0f);
-			lrt2.anchorMax = new Vector2(1f, 0f);
-			lrt2.pivot = new Vector2(1f, 0f);
-			lrt2.anchoredPosition = new Vector2(-24f, 24f);
-			lrt2.sizeDelta = new Vector2(260f, 52f);
-			Image limg2 = _loadHereBtn.AddComponent<Image>();
-			limg2.color = ColLoadButton;
-			Button lbtn2 = _loadHereBtn.AddComponent<Button>();
-			lbtn2.targetGraphic = limg2;
-			lbtn2.onClick.AddListener(LoadSelected);
-			TextMeshProUGUI llabel2 = AddLabel(_loadHereBtn.transform, "Label",
-				Loc.T(Loc.K.LoadScene), 22f, ColTextLight, true);
-			Stretch(llabel2.rectTransform);
+			_loadHereBtn = AddButton(box.transform, "LoadHere", new Vector2(1f, 0f), new Vector2(-24f, 24f),
+				new Vector2(260f, 52f), ColLoadButton, Loc.T(Loc.K.LoadScene), 22f, LoadSelected).gameObject;
 			_loadHereBtn.SetActive(false);
 
 			BuildPopup(box.transform);
@@ -1190,11 +1133,10 @@ namespace Doorstop
 			_selChoice = null;
 		}
 
-		// (Re)builds the history rows; returns how many are shown.
-		// The history as a left-to-right tree: one column per captured
-		// decision, its offered choices stacked vertically, the answer taken
-		// on a darker path. Hovering a choice shows its full text; clicking
-		// one loads that decision's save.
+		// (Re)builds the tree; returns how many columns it shows. Left to
+		// right, one column per scene - played, then ahead - its answers
+		// stacked, the taken or picked one on a darker path. Hovering an answer
+		// opens its pop-up; clicking picks it for the path (SelectChoice).
 		private const float TreeColW = 360f;
 		private const float TreeNodeW = 290f;
 		private const float TreeNodeH = 48f;
@@ -1224,12 +1166,9 @@ namespace Doorstop
 			{
 				all = History.FromNewestSave();
 			}
-			// Every played scene with a known answer list becomes a column; only
-			// the ones the mod captured can be loaded (the rest are pre-mod).
-			// Columns with Preview=true are the explore-mode ones and survive a
-			// re-render until the player closes or toggles the mode.
-			// In explore mode a pick on a played column cuts the played path
-			// there (_exploreCut columns kept) and the preview continues from it.
+			// Every played scene with a known answer list becomes a column, then
+			// every scene still ahead (AddUpcoming); the player's picks
+			// (_overrides) replace the answers on both.
 			List<TreeCol> cols = new List<TreeCol>();
 			int pendingCol = -1;
 			foreach (History.Entry e in all)
@@ -1340,7 +1279,7 @@ namespace Doorstop
 				// answer - sit on a tinted band with the path's bar above them;
 				// the bar ends at the scene on screen, and goes on pale through
 				// what is still ahead.
-				bool played = !e.Preview && !e.Upcoming;
+				bool played = !e.Upcoming;
 				if (played)
 				{
 					GameObject band = CreateUiObject("Played", _historyList);
@@ -1386,7 +1325,7 @@ namespace Doorstop
 					headText += "  \u2022 " + Loc.T(Loc.K.Possible);
 				}
 				TextMeshProUGUI head = AddLabel(_historyList, "Head", headText,
-					18f, e.Preview || e.Upcoming ? ColTreeMuted : ColTextDark, false);
+					18f, e.Upcoming ? ColTreeMuted : ColTextDark, false);
 				Wrap(head, x + 14f, TreeHeadY, TreeNodeW + TreeNodeX - 14f, 44f);
 				head.enableWordWrapping = true;
 				head.overflowMode = TextOverflowModes.Ellipsis;
@@ -1625,8 +1564,7 @@ namespace Doorstop
 			}
 			foreach (SceneFlow.Ahead a in SceneFlow.After(from, shown, true))
 			{
-				TreeCol col = PreviewCol(a.Row.Scene);
-				col.Preview = false;
+				TreeCol col = SceneCol(a.Row.Scene);
 				col.Upcoming = true;
 				col.Possible = a.Condition != SceneFlow.Tri.True;
 				if (VisibleChoices(col).Count > 0)
@@ -1641,7 +1579,7 @@ namespace Doorstop
 		{
 			string[] keys = { "", "Chapter1.Childhood", "Chapter2.Teen", "Chapter3.Youth",
 				"Chapter4.Peace", "Chapter5.War" };
-			return chapter > 0 && chapter < keys.Length ? Translate(keys[chapter]) : "";
+			return chapter > 0 && chapter < keys.Length ? Loc.Game(keys[chapter], keys[chapter]) : "";
 		}
 
 		private const float PopupWidth = 470f;
@@ -1769,29 +1707,7 @@ namespace Doorstop
 		{
 			Sprite icon;
 			string name = SceneEffects.Label(fx, out icon);
-			GameObject row = CreateUiObject("Effect", _popupEffects);
-			HorizontalLayoutGroup h = row.AddComponent<HorizontalLayoutGroup>();
-			h.spacing = 10f;
-			h.childAlignment = TextAnchor.MiddleLeft;
-			h.childControlWidth = true;
-			h.childControlHeight = true;
-			h.childForceExpandWidth = false;
-			h.childForceExpandHeight = false;
-
-			GameObject ig = CreateUiObject("Icon", row.transform);
-			LayoutElement ile = ig.AddComponent<LayoutElement>();
-			ile.preferredWidth = 34f;
-			ile.preferredHeight = 34f;
-			ile.minWidth = 34f;
-			ile.minHeight = 34f;
-			if (icon != null)
-			{
-				Image img = ig.AddComponent<Image>();
-				img.sprite = icon;
-				img.preserveAspect = true;
-				img.raycastTarget = false;
-			}
-
+			GameObject row = PopupRow("Effect", icon, 34f);
 			TextMeshProUGUI label = AddLabel(row.transform, "Name", name, 18f, ColTextDark, false);
 			label.enableWordWrapping = true;
 			LayoutElement nle = label.gameObject.AddComponent<LayoutElement>();
@@ -1808,6 +1724,32 @@ namespace Doorstop
 			}
 		}
 
+		// A pop-up line: the icon (a fixed square, empty without a sprite),
+		// then whatever the caller adds.
+		private static GameObject PopupRow(string name, Sprite icon, float iconSize)
+		{
+			GameObject row = CreateUiObject(name, _popupEffects);
+			HorizontalLayoutGroup h = row.AddComponent<HorizontalLayoutGroup>();
+			h.spacing = 10f;
+			h.childAlignment = TextAnchor.MiddleLeft;
+			h.childControlWidth = true;
+			h.childControlHeight = true;
+			h.childForceExpandWidth = false;
+			h.childForceExpandHeight = false;
+			GameObject ig = CreateUiObject("Icon", row.transform);
+			LayoutElement ile = ig.AddComponent<LayoutElement>();
+			ile.preferredWidth = ile.minWidth = iconSize;
+			ile.preferredHeight = ile.minHeight = iconSize;
+			if (icon != null)
+			{
+				Image img = ig.AddComponent<Image>();
+				img.sprite = icon;
+				img.preserveAspect = true;
+				img.raycastTarget = false;
+			}
+			return row;
+		}
+
 		private static void AddPopupHeading(string text)
 		{
 			TextMeshProUGUI head = AddLabel(_popupEffects, "Heading", text, 16f, ColTreeMuted, false);
@@ -1821,30 +1763,9 @@ namespace Doorstop
 		private static void AddRequirementRow(SceneEffects.Effect req, SceneEffects.Hero hero)
 		{
 			Sprite icon;
-			bool? met;
-			string text = SceneEffects.RequirementLabel(req, out icon, out met);
-			met = hero != null ? hero.Meets(req) : null;
-			GameObject row = CreateUiObject("Requirement", _popupEffects);
-			HorizontalLayoutGroup h = row.AddComponent<HorizontalLayoutGroup>();
-			h.spacing = 10f;
-			h.childAlignment = TextAnchor.MiddleLeft;
-			h.childControlWidth = true;
-			h.childControlHeight = true;
-			h.childForceExpandWidth = false;
-			h.childForceExpandHeight = false;
-			GameObject ig = CreateUiObject("Icon", row.transform);
-			LayoutElement ile = ig.AddComponent<LayoutElement>();
-			ile.preferredWidth = 30f;
-			ile.preferredHeight = 30f;
-			ile.minWidth = 30f;
-			ile.minHeight = 30f;
-			if (icon != null)
-			{
-				Image img = ig.AddComponent<Image>();
-				img.sprite = icon;
-				img.preserveAspect = true;
-				img.raycastTarget = false;
-			}
+			string text = SceneEffects.Label(req, out icon);
+			bool? met = hero != null ? hero.Meets(req) : null;
+			GameObject row = PopupRow("Requirement", icon, 30f);
 			Color colour = met == null ? ColTextDark
 				: met.Value ? new Color(0.18f, 0.42f, 0.18f) : new Color(0.62f, 0.16f, 0.12f);
 			TextMeshProUGUI label = AddLabel(row.transform, "Text", text, 17f, colour, false);
@@ -1861,24 +1782,11 @@ namespace Doorstop
 			}
 		}
 
-		private static int PlayedCount()
-		{
-			int n = 0;
-			foreach (TreeCol c in _tree)
-			{
-				if (!c.Preview)
-				{
-					n++;
-				}
-			}
-			return n;
-		}
-
-		private static TreeCol PreviewCol(string scene)
+		// A column for a scene by id, with every answer it offers.
+		private static TreeCol SceneCol(string scene)
 		{
 			TreeCol col = new TreeCol();
 			col.Scene = scene;
-			col.Preview = true;
 			col.Title = SceneTexts.Title(scene);
 			if (string.IsNullOrEmpty(col.Title))
 			{
@@ -1940,16 +1848,6 @@ namespace Doorstop
 			Image img = go.AddComponent<Image>();
 			img.color = color;
 			img.raycastTarget = false;
-		}
-
-		// The newest column is the interesting one (the end of the path, or the
-		// scene explore mode just reached), so show the right-hand end.
-		private static void ScrollHistoryToEnd()
-		{
-			if (_historyScroll != null)
-			{
-				_historyScroll.horizontalNormalizedPosition = 1f;
-			}
 		}
 
 		// On open: the scene on screen, with one played column to its left
@@ -2142,36 +2040,11 @@ namespace Doorstop
 			mrt.offsetMin = new Vector2(30f, 92f);
 			mrt.offsetMax = new Vector2(-30f, -26f);
 
-			GameObject loadBtn = CreateUiObject("Load", box.transform);
-			RectTransform lrt = loadBtn.GetComponent<RectTransform>();
-			lrt.anchorMin = new Vector2(0f, 0f);
-			lrt.anchorMax = new Vector2(0f, 0f);
-			lrt.pivot = new Vector2(0f, 0f);
-			lrt.anchoredPosition = new Vector2(30f, 26f);
-			lrt.sizeDelta = new Vector2(250f, 56f);
-			Image limg = loadBtn.AddComponent<Image>();
-			limg.color = ColLoadButton;
-			_confirmLoadBtn = loadBtn.AddComponent<Button>();
-			_confirmLoadBtn.targetGraphic = limg;
-			_confirmLoadBtn.onClick.AddListener(delegate { RunPending(); });
-			TextMeshProUGUI lt = AddLabel(loadBtn.transform, "Label", Loc.T(Loc.K.Load), 24f, ColTextLight, true);
-			Stretch(lt.rectTransform);
-			_confirmLoadLabel = lt;
-
-			GameObject cancelBtn = CreateUiObject("Cancel", box.transform);
-			RectTransform xrt = cancelBtn.GetComponent<RectTransform>();
-			xrt.anchorMin = new Vector2(1f, 0f);
-			xrt.anchorMax = new Vector2(1f, 0f);
-			xrt.pivot = new Vector2(1f, 0f);
-			xrt.anchoredPosition = new Vector2(-30f, 26f);
-			xrt.sizeDelta = new Vector2(250f, 56f);
-			Image ximg = cancelBtn.AddComponent<Image>();
-			ximg.color = ColCancelButton;
-			Button xbtn = cancelBtn.AddComponent<Button>();
-			xbtn.targetGraphic = ximg;
-			xbtn.onClick.AddListener(CancelConfirm);
-			TextMeshProUGUI xt = AddLabel(cancelBtn.transform, "Label", Loc.T(Loc.K.Cancel), 24f, ColTextLight, true);
-			Stretch(xt.rectTransform);
+			_confirmLoadBtn = AddButton(box.transform, "Load", new Vector2(0f, 0f), new Vector2(30f, 26f),
+				new Vector2(250f, 56f), ColLoadButton, Loc.T(Loc.K.Load), 24f, delegate { RunPending(); });
+			_confirmLoadLabel = _confirmLoadBtn.GetComponentInChildren<TextMeshProUGUI>();
+			AddButton(box.transform, "Cancel", new Vector2(1f, 0f), new Vector2(-30f, 26f),
+				new Vector2(250f, 56f), ColCancelButton, Loc.T(Loc.K.Cancel), 24f, CancelConfirm);
 
 			_confirmPanel.SetActive(false);
 		}
@@ -2473,7 +2346,7 @@ namespace Doorstop
 		// the stripped name and then the number as fallbacks.
 		private static string ChapterText(SaveEntry e)
 		{
-			string t = Translate(e.ChapterKey);
+			string t = Loc.Game(e.ChapterKey, e.ChapterKey);
 			if (!string.IsNullOrEmpty(t) && t != e.ChapterKey)
 			{
 				return WithoutChapterNumber(t);
@@ -2486,36 +2359,6 @@ namespace Doorstop
 		}
 
 		// A game localisation key in the current language, key as fallback.
-		private static string Translate(string key)
-		{
-			try
-			{
-				string t = I2.Loc.LocalizationManager.GetTranslation(key);
-				return string.IsNullOrEmpty(t) ? key : t;
-			}
-			catch
-			{
-				return key;
-			}
-		}
-
-		// The scene's title in the current language, "" if the key is missing.
-		private static string TitleOf(string scene)
-		{
-			if (string.IsNullOrEmpty(scene))
-			{
-				return "";
-			}
-			try
-			{
-				string t = I2.Loc.LocalizationManager.GetTranslation(scene + "_Title");
-				return string.IsNullOrEmpty(t) || t == scene + "_Title" ? "" : t;
-			}
-			catch
-			{
-				return "";
-			}
-		}
 
 		// The sidecar's "recorded=" timestamp, or DateTime.MinValue.
 		private static DateTime ReadRecorded(string datPath)
@@ -3198,39 +3041,10 @@ namespace Doorstop
 			}
 		}
 
-		// Logs a UI object's screen rect and its parent chain (name, active,
-		// canvas), so placement problems show up in the log.
-		private static void DumpWorld(string label, GameObject go)
-		{
-			RectTransform rt = go.GetComponent<RectTransform>();
-			Vector3[] c = new Vector3[4];
-			if (rt != null)
-			{
-				rt.GetWorldCorners(c);
-			}
-			ModLog.Info("DEV BOOK: " + label + " '" + go.name + "' active=" + go.activeInHierarchy
-				+ " world bl=" + c[0] + " tr=" + c[2] + " size=" + (rt != null ? rt.rect.size.ToString() : "-"));
-			Transform t = go.transform.parent;
-			string chain = "";
-			int depth = 0;
-			while (t != null && depth < 12)
-			{
-				Canvas cv = t.GetComponent<Canvas>();
-				chain += " > " + t.name + (t.gameObject.activeSelf ? "" : "(OFF)")
-					+ (cv != null ? "[canvas order=" + cv.sortingOrder + " " + cv.renderMode + "]" : "")
-					+ (t.GetComponent<RectMask2D>() != null ? "[mask]" : "")
-					+ (t.GetComponent<ScrollRect>() != null ? "[scroll]" : "");
-				t = t.parent;
-				depth++;
-			}
-			ModLog.Info("DEV BOOK:    chain" + chain);
-		}
-
 		// ------------------------------------------------------------------
 		// Small UI helpers
 		// ------------------------------------------------------------------
 
-		// Filled triangle, pointing up or down, sized for the header text.
 		// Pixel canvas for the icons below: white shapes on transparent, tinted
 		// by the Image that shows them.
 		private sealed class Canvas32
@@ -3364,6 +3178,7 @@ namespace Doorstop
 			return c.ToSprite();
 		}
 
+		// Filled triangle, pointing up or down, sized for the header text.
 		private static Sprite MakeTriangle(bool up)
 		{
 			const int w = 56;
@@ -3440,6 +3255,30 @@ namespace Doorstop
 			}
 			CrossHover hover = parent.gameObject.AddComponent<CrossHover>();
 			hover.Bars = bars;
+		}
+
+		// A flat button anchored (and pivoted) at `anchor` of its parent, `pos`
+		// from there, with a centred label unless `label` is null.
+		private static Button AddButton(Transform parent, string name, Vector2 anchor, Vector2 pos,
+			Vector2 size, Color color, string label, float fontSize, UnityEngine.Events.UnityAction onClick)
+		{
+			GameObject go = CreateUiObject(name, parent);
+			RectTransform rt = go.GetComponent<RectTransform>();
+			rt.anchorMin = anchor;
+			rt.anchorMax = anchor;
+			rt.pivot = anchor;
+			rt.anchoredPosition = pos;
+			rt.sizeDelta = size;
+			Image img = go.AddComponent<Image>();
+			img.color = color;
+			Button b = go.AddComponent<Button>();
+			b.targetGraphic = img;
+			b.onClick.AddListener(onClick);
+			if (label != null)
+			{
+				Stretch(AddLabel(go.transform, "Label", label, fontSize, ColTextLight, true).rectTransform);
+			}
+			return b;
 		}
 
 		private static GameObject CreateUiObject(string name, Transform parent)

@@ -332,11 +332,6 @@
     "But you do not feel as though you have made a mistake.\nYou did what was right for you."
    ]
   },
-  "01.N.01": {
-   "title": "",
-   "buttons": {},
-   "consequences": []
-  },
   "01.N.01_Mama": {
    "title": "The Ant Farm",
    "buttons": {
@@ -352,11 +347,6 @@
     "The door creaks quietly as it closes, and you are left to your own devices. You spend a long time watching the ants at work, and then you decide to go outside and find them some bugs to feed on.\nOnce your haul is in the tray, you note which bugs they drag away and which they leave untouched.",
     "Day after day, you keep the tray full of food, provide the insects with plenty of water, and remove dead ants from the farm. Your tiny subjects still refuse to change their peculiar ways.\nIt is just as Mother said: the ant farm is exactly like the world we live in.\nThe ants will never know that you are there."
    ]
-  },
-  "01.N2.01": {
-   "title": "",
-   "buttons": {},
-   "consequences": []
   },
   "01.N2.01_Papa": {
    "title": "Father's Sword",
@@ -8443,11 +8433,6 @@
    "buttons": {},
    "consequences": []
   },
-  "Inquisitor": {
-   "title": "",
-   "buttons": {},
-   "consequences": []
-  },
   "Insurrection_Incident_1": {
    "title": "",
    "buttons": {},
@@ -8528,18 +8513,8 @@
    "buttons": {},
    "consequences": []
   },
-  "Prefect": {
-   "title": "",
-   "buttons": {},
-   "consequences": []
-  },
   "TeenChapterStart": {
    "title": "Chapter II. Adolescence",
-   "buttons": {},
-   "consequences": []
-  },
-  "Underground": {
-   "title": "",
    "buttons": {},
    "consequences": []
   },

@@ -59,7 +59,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import bolt_graph as bg  # noqa: E402
-import bolt_story  # noqa: E402
+import gamedir  # noqa: E402
 
 
 class Reader:
@@ -109,7 +109,7 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--game", help="game folder (default: auto-detect)")
     args = ap.parse_args()
-    game = pathlib.Path(args.game) if args.game else bolt_story.detect_game()
+    game = gamedir.find_game(args.game)
     if not game:
         print("Game folder not found; pass --game DIR.", file=sys.stderr)
         return 1

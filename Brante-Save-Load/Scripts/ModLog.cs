@@ -33,11 +33,6 @@ namespace Doorstop
 			Write("ERROR", message);
 		}
 
-		public static void Unsafe(string message)
-		{
-			Write("INFO ", message);
-		}
-
 		private static void Write(string level, string message)
 		{
 			try

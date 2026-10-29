@@ -24,12 +24,6 @@ namespace Doorstop
 		public static bool Running { get; private set; }
 		private const float FastScale = 10f;
 		private static float _readySince = -1f;
-		private static bool _stop;
-
-		public static void Stop()
-		{
-			_stop = true;
-		}
 
 		// Dev probe: page and answer one scene, then log every interactable
 		// button (with its click handlers) whenever the set changes.
@@ -83,7 +77,6 @@ namespace Doorstop
 		public static IEnumerator Run(Picker pick, Func<string, bool> onScene, float stuckAfter, bool fast)
 		{
 			Running = true;
-			_stop = false;
 			// Fast: the game's clock runs FastScale times faster (animations,
 			// page turns and timed waits follow it), the sound is off, and the
 			// driver looks for the next button every 50 ms. Scene loading is
@@ -100,7 +93,7 @@ namespace Doorstop
 			float lastMove = Time.realtimeSinceStartup;
 			string lastButtons = "";
 			ModLog.Info("AUTOPLAY: started at " + Story());
-			while (!_stop)
+			while (true)
 			{
 				string scene = Story();
 				bool moved = false;
@@ -368,60 +361,6 @@ namespace Doorstop
 			return string.IsNullOrEmpty(wanted) ? first : null;
 		}
 
-		// One page further in the scene text, when there is one.
-		public static bool PageOn()
-		{
-			foreach (_Scripts.AMVCC.Controllers.TextController c in
-				Resources.FindObjectsOfTypeAll<_Scripts.AMVCC.Controllers.TextController>())
-			{
-				if (c == null || !c.gameObject.scene.IsValid() || !c.gameObject.activeInHierarchy
-					|| c.ItsConsequence || c.NextButton == null)
-				{
-					continue;
-				}
-				UnityEngine.UI.Button b = c.NextButton.GetComponent<UnityEngine.UI.Button>();
-				if (b != null && !b.interactable)
-				{
-					continue;
-				}
-				try
-				{
-					c.NextPage();
-					return true;
-				}
-				catch (Exception)
-				{
-					return false;
-				}
-			}
-			return false;
-		}
-
-		// What the pointer would hit at a point given as a fraction of the screen.
-		public static string HitsAt(float fx, float fy)
-		{
-			UnityEngine.EventSystems.EventSystem es = UnityEngine.EventSystems.EventSystem.current;
-			if (es == null)
-			{
-				return "(no event system)";
-			}
-			UnityEngine.EventSystems.PointerEventData d = new UnityEngine.EventSystems.PointerEventData(es);
-			d.position = new Vector2(fx * Screen.width, fy * Screen.height);
-			List<UnityEngine.EventSystems.RaycastResult> hits = new List<UnityEngine.EventSystems.RaycastResult>();
-			es.RaycastAll(d, hits);
-			StringBuilder sb = new StringBuilder();
-			foreach (UnityEngine.EventSystems.RaycastResult h in hits)
-			{
-				sb.Append("\n    ").Append(PathOf(h.gameObject.transform)).Append(" {");
-				foreach (Component c in h.gameObject.GetComponents<Component>())
-				{
-					sb.Append(c != null ? c.GetType().Name : "null").Append(' ');
-				}
-				sb.Append('}');
-			}
-			return sb.ToString();
-		}
-
 		private static readonly System.Text.RegularExpressions.Regex ContinueWord =
 			new System.Text.RegularExpressions.Regex("Next|Continue|Close|Skip|Accept|Confirm|Ok\\b|OK\\b|Hide|Finish|StartPicture");
 		private static readonly System.Text.RegularExpressions.Regex NeverWord =
@@ -501,29 +440,6 @@ namespace Doorstop
 			UnityEngine.EventSystems.ExecuteEvents.Execute(go, d, UnityEngine.EventSystems.ExecuteEvents.pointerUpHandler);
 			UnityEngine.EventSystems.ExecuteEvents.Execute(go, d, UnityEngine.EventSystems.ExecuteEvents.pointerClickHandler);
 			UnityEngine.EventSystems.ExecuteEvents.Execute(go, d, UnityEngine.EventSystems.ExecuteEvents.pointerExitHandler);
-		}
-
-		public static string Diagnose()
-		{
-			StringBuilder sb = new StringBuilder();
-			sb.Append("timeScale=").Append(Time.timeScale)
-				.Append(" choiceDesc=").Append(GameObject.Find("ChoiseDescription") != null)
-				.Append(" choices=").Append(VisibleChoices().Count).Append(" pagers:");
-			foreach (_Scripts.AMVCC.Controllers.TextController c in
-				Resources.FindObjectsOfTypeAll<_Scripts.AMVCC.Controllers.TextController>())
-			{
-				if (c == null || !c.gameObject.scene.IsValid())
-				{
-					continue;
-				}
-				UnityEngine.UI.Button b = c.NextButton != null ? c.NextButton.GetComponent<UnityEngine.UI.Button>() : null;
-				sb.Append(" [").Append(c.gameObject.name).Append(" active=").Append(c.gameObject.activeInHierarchy)
-					.Append(" cons=").Append(c.ItsConsequence)
-					.Append(" next=").Append(c.NextButton != null ? c.NextButton.name : "null")
-					.Append(" nextActive=").Append(c.NextButton != null && c.NextButton.activeInHierarchy)
-					.Append(" interactable=").Append(b != null && b.interactable).Append(']');
-			}
-			return sb.ToString();
 		}
 
 		public static string DescribeButtons()

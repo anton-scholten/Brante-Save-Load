@@ -27,6 +27,9 @@ import struct
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+
+import gamedir  # noqa: E402
 GRAPH_START = b'{"graph":{"variables"'
 MAX_DEPTH = 40
 
@@ -252,20 +255,7 @@ def main():
     ap.add_argument("--out", default=str(ROOT / "data" / "bolt-edges.json"))
     args = ap.parse_args()
 
-    game = args.game
-    if not game:
-        home = pathlib.Path.home()
-        for vdf in (home / ".steam/steam/steamapps/libraryfolders.vdf",
-                    home / ".local/share/Steam/steamapps/libraryfolders.vdf"):
-            if not vdf.is_file():
-                continue
-            for lib in re.findall(r'"path"\s+"([^"]+)"', vdf.read_text(encoding="utf-8", errors="replace")):
-                cand = pathlib.Path(lib) / "steamapps/common/The Life and Suffering of Sir Brante"
-                if cand.is_dir():
-                    game = cand
-                    break
-            if game:
-                break
+    game = gamedir.find_game(args.game)
     if not game:
         print("Game folder not found; pass --game DIR.", file=sys.stderr)
         return 1

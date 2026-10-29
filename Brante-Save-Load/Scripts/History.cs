@@ -45,29 +45,8 @@ namespace Doorstop
 		// Reads the scene path from a save (no game state is touched).
 		public static List<Entry> FromHelper(SaveLoadHelper helper)
 		{
-			List<Entry> list = new List<Entry>();
-			if (helper == null || helper.ShowedScenesList == null)
-			{
-				return list;
-			}
-			for (int i = 0; i < helper.ShowedScenesList.Count; i++)
-			{
-				ShowedScenes s = helper.ShowedScenesList[i];
-				if (s == null || string.IsNullOrEmpty(s.SceneName))
-				{
-					continue;
-				}
-				Entry e = new Entry();
-				e.Index = i;
-				e.SceneName = s.SceneName;
-				e.IsShowed = s.IsShowed;
-				e.Title = TitleOf(s.SceneName);
-				e.SnapshotPath = SnapshotFor(s.SceneName);
-				LoadChoices(e);
-				list.Add(e);
-			}
-			MarkChosen(list, helper.CurrentConsequence ?? "");
-			return list;
+			return helper == null ? new List<Entry>()
+				: FromList(helper.ShowedScenesList, helper.CurrentConsequence);
 		}
 
 		public static List<Entry> FromCurrentGame()
@@ -77,14 +56,21 @@ namespace Doorstop
 			{
 				gm = UnityEngine.Object.FindObjectOfType<GameManager>();
 			}
-			if (gm == null || gm.ShowedScenesList == null)
-			{
-				return new List<Entry>();
-			}
+			return gm == null ? new List<Entry>() : FromList(gm.ShowedScenesList, gm.CurrentConsequene);
+		}
+
+		// The game's ShowedScenesList as entries; `latest` is the answer the
+		// game holds now (CurrentConsequence), for the newest decision.
+		private static List<Entry> FromList(List<ShowedScenes> shown, string latest)
+		{
 			List<Entry> list = new List<Entry>();
-			for (int i = 0; i < gm.ShowedScenesList.Count; i++)
+			if (shown == null)
 			{
-				ShowedScenes s = gm.ShowedScenesList[i];
+				return list;
+			}
+			for (int i = 0; i < shown.Count; i++)
+			{
+				ShowedScenes s = shown[i];
 				if (s == null || string.IsNullOrEmpty(s.SceneName))
 				{
 					continue;
@@ -93,12 +79,12 @@ namespace Doorstop
 				e.Index = i;
 				e.SceneName = s.SceneName;
 				e.IsShowed = s.IsShowed;
-				e.Title = TitleOf(s.SceneName);
+				e.Title = Loc.SceneTitle(s.SceneName);
 				e.SnapshotPath = SnapshotFor(s.SceneName);
 				LoadChoices(e);
 				list.Add(e);
 			}
-			MarkChosen(list, gm.CurrentConsequene ?? "");
+			MarkChosen(list, latest ?? "");
 			return list;
 		}
 
@@ -357,19 +343,6 @@ namespace Doorstop
 					}
 				}
 				return best;
-			}
-			catch
-			{
-				return "";
-			}
-		}
-
-		private static string TitleOf(string sceneName)
-		{
-			try
-			{
-				string t = LocalizationManager.GetTranslation(sceneName + "_Title");
-				return string.IsNullOrEmpty(t) ? "" : t;
 			}
 			catch
 			{

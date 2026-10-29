@@ -376,89 +376,6 @@ namespace Doorstop
 			return (op >= 0 && op < ops.Length ? ops[op] : "?") + " " + value;
 		}
 
-		// A requirement's text and icon, and whether the hero meets it right
-		// now (null when it cannot be told).
-		public static string RequirementLabel(Effect r, out Sprite icon, out bool? met)
-		{
-			icon = null;
-			met = null;
-			try
-			{
-				ParametersManager pm = ParametersManager.Instance;
-				CharacterParametersSerializeHelper h = CharacterParametersSerializeHelper.Initiate;
-				switch (r.Kind)
-				{
-					case 'Q':
-					{
-						Parameter p = ParameterAsset(r.Name);
-						string name = p != null ? Translated(r.Name, p.ParameterName.ToString()) : r.Name;
-						if (p != null)
-						{
-							icon = p.Icon;
-							if (pm != null)
-							{
-								met = pm.CompareParametersValue(p.ParameterName, pm.GetParameterValue(p),
-									(Assets._Scripts.AMVCC.Views.Operations)r.Op, r.Value);
-							}
-						}
-						return name + " " + OpText(r.Op, r.Value);
-					}
-					case 'W':
-					{
-						Character c = CharacterAsset(r.Name);
-						string name = r.Name;
-						if (c != null)
-						{
-							icon = c.TooltipPortret;
-							name = Translated(c.Name.ToString(), r.Name);
-							if (pm != null && h != null)
-							{
-								met = pm.CompareCharacterRelation(c, r.Value,
-									(Assets._Scripts.AMVCC.Views.Operations)r.Op, h.Characters);
-							}
-						}
-						return name + " " + OpText(r.Op, r.Value);
-					}
-					case 'T':
-					{
-						Character c = CharacterAsset(r.Name);
-						string name = r.Name;
-						string key = r.Name;
-						string status = Enum.GetName(typeof(CharacterStatus), r.Value) ?? r.Value.ToString();
-						if (c != null)
-						{
-							icon = c.TooltipPortret;
-							key = c.Name.ToString();
-							name = Translated(key, r.Name);
-							if (pm != null && h != null)
-							{
-								met = pm.CompareCharacterStatus(c, (CharacterStatus)r.Value, r.Op == 1, h.Characters);
-							}
-						}
-						string text = Translated(key + "." + status, Translated(status, status));
-						return name + ": " + (r.Op == 1 ? Loc.T(Loc.K.NotWord) + " " : "") + text;
-					}
-					default:
-					{
-						Objective o = ObjectiveAsset(r.Name);
-						string title = r.Name;
-						if (o != null)
-						{
-							icon = o.Icon;
-							string key = o.Name == _Scripts.AMVCC.Views.Windows.ObjectiveEnum.None ? o.name : o.Name.ToString();
-							title = Translated(key + ".Title", r.Name);
-							met = r.Op == 1 ? !o.Unlocked : o.Unlocked;
-						}
-						return (r.Op == 1 ? Loc.T(Loc.K.NotWord) + " " : "") + title;
-					}
-				}
-			}
-			catch (Exception e)
-			{
-				met = null;
-				return r.Name + " (" + e.GetType().Name + ")";
-			}
-		}
 
 		// The game's "<el>" placeholder: the noble particle once the family
 		// holds the noble sword, nothing before (ParameterButtonChanger.Start).
@@ -518,53 +435,65 @@ namespace Doorstop
 			return _characters.TryGetValue(name, out found) && found != null ? found : null;
 		}
 
-		// Display name and icon for an effect, in the game's language.
+		// An effect's or requirement's text and icon, in the game's language:
+		// "Perception", "Perception >= 4", "Nathan Brante", "Nathan Brante:
+		// GRATITUDE", "not <objective>". Whether a requirement is met is
+		// Hero.Meets's business.
 		public static string Label(Effect e, out Sprite icon)
 		{
 			icon = null;
-			if (e.Kind == 'P')
+			string not = e.Op == 1 && (e.Kind == 'T' || e.Kind == 'O') ? Loc.T(Loc.K.NotWord) + " " : "";
+			switch (e.Kind)
 			{
-				Parameter p = ParameterAsset(e.Name);
-				if (p != null)
+				case 'P':
+				case 'Q':
 				{
-					icon = p.Icon;
-					return Translated(e.Name, p.ParameterName.ToString());
+					Parameter p = ParameterAsset(e.Name);
+					icon = p != null ? p.Icon : null;
+					string name = Translated(e.Name, p != null ? p.ParameterName.ToString() : e.Name);
+					return e.Kind == 'Q' ? name + " " + OpText(e.Op, e.Value) : name;
 				}
-				return Translated(e.Name, e.Name);
+				case 'O':
+				{
+					Objective o = ObjectiveAsset(e.Name);
+					if (o == null)
+					{
+						return not + e.Name;
+					}
+					icon = o.Icon;
+					string key = o.Name == _Scripts.AMVCC.Views.Windows.ObjectiveEnum.None ? o.name : o.Name.ToString();
+					return not + Translated(key + ".Title", e.Name);
+				}
+				default:
+				{
+					Character c = CharacterAsset(e.Name);
+					string key = c != null ? c.Name.ToString() : e.Name;
+					icon = c != null ? c.TooltipPortret : null;
+					string person = Translated(key, e.Name);
+					if (e.Kind == 'W')
+					{
+						return person + " " + OpText(e.Op, e.Value);
+					}
+					if (e.Kind == 'S' || e.Kind == 'T')
+					{
+						string status = Enum.GetName(typeof(CharacterStatus), e.Value) ?? e.Value.ToString();
+						return person + ": " + not + Translated(key + "." + status, Translated(status, status));
+					}
+					return person;
+				}
 			}
-			Character c = CharacterAsset(e.Name);
-			string person = e.Name;
-			string key = e.Name;
-			if (c != null)
-			{
-				icon = c.TooltipPortret;
-				key = c.Name.ToString();
-				person = Translated(key, e.Name);
-			}
-			if (e.Kind == 'S')
-			{
-				string status = Enum.GetName(typeof(CharacterStatus), e.Value) ?? e.Value.ToString();
-				return person + ": " + Translated(key + "." + status, Translated(status, status));
-			}
-			return person;
 		}
 
-		// The game's translation of `key`, else of `fallbackKey`, else that key.
+		// The game's translation of `key`, else of `fallbackKey`, else that key
+		// (a one-character translation is a placeholder such as "—").
 		private static string Translated(string key, string fallbackKey)
 		{
 			foreach (string k in new[] { key, fallbackKey })
 			{
-				try
+				string t = Loc.Game(k, "");
+				if (t.Trim().Length > 1)
 				{
-					string t = I2.Loc.LocalizationManager.GetTranslation(k);
-					if (!string.IsNullOrEmpty(t) && t.Trim().Length > 1)
-					{
-						return NobleParticle(t);
-					}
-				}
-				catch
-				{
-					// fall through to the next key
+					return NobleParticle(t);
 				}
 			}
 			return fallbackKey;

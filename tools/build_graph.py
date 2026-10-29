@@ -30,6 +30,9 @@ import sys
 from datetime import datetime
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+
+import gamedir  # noqa: E402
 STORY = re.compile(r"^\d{2}\.\d{2}\.\d{2}(_\d+)?$")
 LINE = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\t(\w+)\t([^\t]*)\t(.*)$")
 SIDE_PREFIX = "<data>/Brante-Save-Load/Runs"
@@ -41,25 +44,6 @@ def norm(text):
     """Lowercase, keep letters/digits only - the sheet and the game differ in
     capitalisation and punctuation ("Reach Out To The Palm" / "Reach out to the Palm")."""
     return re.sub(r"[^a-z0-9]", "", (text or "").lower())
-
-
-def find_runs_dir():
-    """Locate .../Brante-Save-Load/Runs inside the Proton prefix."""
-    home = pathlib.Path.home()
-    roots = []
-    for vdf in (home / ".steam/steam/steamapps/libraryfolders.vdf",
-                home / ".local/share/Steam/steamapps/libraryfolders.vdf"):
-        if not vdf.is_file():
-            continue
-        libs = re.findall(r'"path"\s+"([^"]+)"', vdf.read_text(encoding="utf-8", errors="replace"))
-        roots += [pathlib.Path(lib) for lib in libs]
-    roots += [home / ".steam/steam", home / ".local/share/Steam"]
-    for root in roots:
-        pfx = root / "steamapps/compatdata/1272160/pfx"
-        for cand in pfx.glob("drive_c/users/*/AppData/LocalLow/SEVER/"
-                             "The Life and Suffering of Sir Brante/Brante-Save-Load/Runs"):
-            return cand
-    return None
 
 
 def parse_trace(path):
@@ -224,7 +208,7 @@ def main():
     ap.add_argument("--quiet", action="store_true")
     args = ap.parse_args()
 
-    runs = pathlib.Path(args.runs) if args.runs else find_runs_dir()
+    runs = pathlib.Path(args.runs) if args.runs else gamedir.find_runs_dir()
     if runs is None or not runs.is_dir():
         print("No Runs directory found. Pass --runs PATH "
               "(<persistentDataPath>/Brante-Save-Load/Runs).", file=sys.stderr)

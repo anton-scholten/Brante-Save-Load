@@ -275,8 +275,9 @@ Lotless `..._Recruitment`), each ending in its `030.080.010_Departure_*`.
 python3 tools/bolt_edges.py     # -> data/scene-edges.json + Brante-Save-Load/scene-edges.tsv
 ```
 
-58 edges in four chapter chains. This was the first version of the path
-builder's data; it only sees links where one scene macro's `Exit` is wired
+58 edges in four chapter chains (`tools/bolt_edges.py`, since removed together
+with `tools/bolt_scenes.py`, the per-chapter scene catalogue). This was the first
+version of the path builder's data; it only sees links where one scene macro's `Exit` is wired
 straight to the next, so it missed everything behind a branch and all of
 chapters 4 and 5. `tools/bolt_story.py` replaces it (next section).
 

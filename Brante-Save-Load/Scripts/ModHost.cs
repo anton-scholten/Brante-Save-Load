@@ -241,30 +241,6 @@ namespace Doorstop
 						yield return new WaitForSeconds(2f);
 						BoltDump.DumpFor(SceneManager.GetActiveScene().name);
 					}
-					// Dev: page through the scene text until the answer panel
-					// is really up (the book opens a moment after the scene,
-					// so wait for its pager instead of giving up).
-					string advance = Path.Combine(Recorder.SnapshotDir, "dev-advance.txt");
-					if (File.Exists(advance))
-					{
-						try { File.Delete(advance); }
-						catch (Exception) { }
-						bool ready = false;
-						for (int step = 0; step < 120 && !ready; step++)
-						{
-							ready = ChoiceReady();
-							if (!ready)
-							{
-								_Scripts.AMVCC.Controllers.TextController pager = FindPager();
-								if (pager != null)
-								{
-									pager.NextPage();
-								}
-							}
-							yield return new WaitForSeconds(0.5f);
-						}
-						ModLog.Info("DEV ADVANCE: answer panel " + (ready ? "is up" : "never appeared"));
-					}
 					// Dev: auto-play probe - page, answer, then log the buttons the
 					// game puts up next.
 					string autoplay = Path.Combine(Recorder.SnapshotDir, "dev-autoplay.txt");
@@ -289,33 +265,6 @@ namespace Doorstop
 						else
 						{
 							yield return AutoPlay.Probe(80f);
-						}
-					}
-					// Dev: click the first offered choice.
-					string click = Path.Combine(Recorder.SnapshotDir, "dev-click.txt");
-					if (File.Exists(click))
-					{
-						try { File.Delete(click); }
-						catch (Exception) { }
-						ParameterButtonChanger btn = null;
-						for (int tries = 0; tries < 40 && btn == null; tries++)
-						{
-							btn = ChoiceReady() ? FirstVisibleChoice() : null;
-							if (btn == null)
-							{
-								yield return new WaitForSeconds(0.5f);
-							}
-						}
-						if (btn != null)
-						{
-							ModLog.Info("DEV CLICK: clicking choice [" + btn.ButtonIndex + "] on "
-								+ btn.gameObject.name + " in " + btn.gameObject.scene.name);
-							btn.Button_Click();
-							yield return new WaitForSeconds(5f);
-						}
-						else
-						{
-							ModLog.Info("DEV CLICK: no usable choice button");
 						}
 					}
 					// Phase 6: dump the scene path the playthrough has taken.
@@ -417,60 +366,6 @@ namespace Doorstop
 			{
 				DumpGo(t.GetChild(i), depth + 1);
 			}
-		}
-
-		// The scene's text pager, if it has one.
-		private static _Scripts.AMVCC.Controllers.TextController FindPager()
-		{
-			foreach (_Scripts.AMVCC.Controllers.TextController c in
-				Resources.FindObjectsOfTypeAll<_Scripts.AMVCC.Controllers.TextController>())
-			{
-				if (c != null && c.gameObject.scene.IsValid() && c.gameObject.activeInHierarchy
-					&& !c.ItsConsequence && CanPageNext(c))
-				{
-					return c;
-				}
-			}
-			return null;
-		}
-
-		// Whether the pager still has a page to go (its Next button is the
-		// game's own "there is more" flag; NextPage() past the end throws).
-		private static bool CanPageNext(_Scripts.AMVCC.Controllers.TextController pager)
-		{
-			try
-			{
-				if (pager.NextButton == null)
-				{
-					return false;
-				}
-				UnityEngine.UI.Button b = pager.NextButton.GetComponent<UnityEngine.UI.Button>();
-				return b == null || b.interactable;
-			}
-			catch
-			{
-				return false;
-			}
-		}
-
-		// Buttons visible AND the description object the click handler uses.
-		private static bool ChoiceReady()
-		{
-			return FirstVisibleChoice() != null
-				&& GameObject.Find("ChoiseDescription") != null;
-		}
-
-		// The first choice button that is actually visible right now.
-		private static ParameterButtonChanger FirstVisibleChoice()
-		{
-			foreach (ParameterButtonChanger b in Resources.FindObjectsOfTypeAll<ParameterButtonChanger>())
-			{
-				if (b != null && b.gameObject.scene.IsValid() && b.gameObject.activeInHierarchy)
-				{
-					return b;
-				}
-			}
-			return null;
 		}
 
 		// Does the file+reflection part of the dev autoload; no yields in

@@ -26,23 +26,11 @@ import struct
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+
+import gamedir  # noqa: E402
 HEADER = b"Key,Type,Desc,Russian,English,Chinese"
 KEY = re.compile(r"^(\d{2,3}\.\d{2,3}\.\d{2,3}(?:_\d+)?)(?:_(Title|ButtonDescription\d+|ConsequenceText_\d+_\d+))?$")
-
-
-def find_game(explicit):
-    if explicit:
-        return pathlib.Path(explicit)
-    home = pathlib.Path.home()
-    for vdf in (home / ".steam/steam/steamapps/libraryfolders.vdf",
-                home / ".local/share/Steam/steamapps/libraryfolders.vdf"):
-        if not vdf.is_file():
-            continue
-        for lib in re.findall(r'"path"\s+"([^"]+)"', vdf.read_text(encoding="utf-8", errors="replace")):
-            cand = pathlib.Path(lib) / "steamapps/common/The Life and Suffering of Sir Brante"
-            if cand.is_dir():
-                return cand
-    return None
 
 
 def extract_csv(asset):
@@ -67,19 +55,14 @@ def parse(csv_text):
 
 
 def catalogue():
-    """Scene names from the Bolt chapter macros, if they have been extracted:
-    data/scene-flow.json (every chapter, tools/bolt_story.py) and the older
-    data/scene-catalog.json (chapters 1-4, tools/bolt_scenes.py)."""
-    names = set()
+    """Scene names from data/scene-flow.json (tools/bolt_story.py), longest
+    first so "051.000.020_Arrive_Inquisitor" wins over a shorter prefix."""
     path = ROOT / "data" / "scene-flow.json"
-    if path.is_file():
-        doc = json.loads(path.read_text(encoding="utf-8"))
-        names |= {r["scene"] for r in doc.get("scenes", [])}
-    path = ROOT / "data" / "scene-catalog.json"
-    if path.is_file():
-        doc = json.loads(path.read_text(encoding="utf-8"))
-        names |= {s for scenes in doc.get("chapters", {}).values() for s in scenes}
-    return sorted(names, key=len, reverse=True)   # longest first
+    if not path.is_file():
+        return []
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    names = {r["scene"] for r in doc.get("scenes", [])}
+    return sorted(names, key=len, reverse=True)
 
 
 def build_scenes(table, known):
@@ -112,7 +95,7 @@ def main():
     ap.add_argument("--game", help="game folder (default: auto-detect)")
     args = ap.parse_args()
 
-    game = find_game(args.game)
+    game = gamedir.find_game(args.game)
     if not game:
         print("Game folder not found; pass --game DIR.", file=sys.stderr)
         return 1

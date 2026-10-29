@@ -42,6 +42,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import bolt_graph as bg  # noqa: E402
+import gamedir  # noqa: E402
 
 # Chapter macros, in story order, with the chapter number the game uses.
 CHAPTERS = [
@@ -57,16 +58,6 @@ MAX_STACK = 12
 
 def find_asset(game):
     return pathlib.Path(game) / "The Life and Suffering of Sir Brante_Data/resources.assets"
-
-
-def detect_game():
-    import subprocess
-    try:
-        out = subprocess.run(["bash", "-c", "source '%s'; find_game" % (ROOT / "tools" / "steam.sh")],
-                             capture_output=True, text=True, check=True).stdout.strip()
-        return pathlib.Path(out) if out else None
-    except (OSError, subprocess.CalledProcessError):
-        return None
 
 
 def short(type_name):
@@ -460,7 +451,7 @@ def main():
     ap.add_argument("--out", default=str(ROOT / "data" / "scene-flow.json"))
     args = ap.parse_args()
 
-    game = pathlib.Path(args.game) if args.game else detect_game()
+    game = gamedir.find_game(args.game)
     if not game:
         print("Game folder not found; pass --game DIR.", file=sys.stderr)
         return 1

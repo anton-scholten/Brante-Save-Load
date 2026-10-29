@@ -26,23 +26,11 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+
+import gamedir  # noqa: E402
 START = b'{"graph":{"variables"'
 SCENEISH = re.compile(r"^(?:\d{2,3}\.\d{2,3}\.\d{2,3}(?:_\d+)?|[A-Z][A-Za-z0-9_]+)$")
-
-
-def find_game(explicit):
-    if explicit:
-        return pathlib.Path(explicit)
-    home = pathlib.Path.home()
-    for vdf in (home / ".steam/steam/steamapps/libraryfolders.vdf",
-                home / ".local/share/Steam/steamapps/libraryfolders.vdf"):
-        if not vdf.is_file():
-            continue
-        for lib in re.findall(r'"path"\s+"([^"]+)"', vdf.read_text(encoding="utf-8", errors="replace")):
-            cand = pathlib.Path(lib) / "steamapps/common/The Life and Suffering of Sir Brante"
-            if cand.is_dir():
-                return cand
-    return None
 
 
 def iter_blobs(buf):
@@ -158,7 +146,7 @@ def main():
     ap.add_argument("--out", default=str(ROOT / "data" / "bolt-graphs.json"))
     args = ap.parse_args()
 
-    game = find_game(args.game)
+    game = gamedir.find_game(args.game)
     if game is None:
         print("Game folder not found; pass --game DIR.", file=sys.stderr)
         return 1

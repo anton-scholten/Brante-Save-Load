@@ -16,45 +16,23 @@ namespace Doorstop
 			Load, Delete, Save, Cancel,
 			ConfirmLoad, ConfirmDelete, ConfirmSave, EmptySaves,
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
-			TypeAuto, TypeManual, SaveAvailable, Current, NothingYet,
-			TreeChosen, TreeOffered, Explore, LoadScene, PickAnswer, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked
+			TypeAuto, TypeManual, Current, NothingYet,
+			LoadScene, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked
 		}
 
 		static Loc()
 		{
-			AddTreeWords(_en, "chosen", "offered");
-			AddTreeWords(_ru, "выбрано", "предложено");
-			AddTreeWords(_de, "gewählt", "angeboten");
-			AddTreeWords(_fr, "choisi", "proposé");
-			AddTreeWords(_es, "elegido", "ofrecido");
-			AddTreeWords(_it, "scelto", "offerto");
-			AddTreeWords(_pl, "wybrano", "zaproponowano");
-			AddTreeWords(_tr, "seçildi", "sunuldu");
-			AddTreeWords(_ja, "選択済み", "候補");
-			AddTreeWords(_ko, "선택됨", "제시됨");
-			AddTreeWords(_zh, "已选择", "可选");
-			AddExploreWords(_en, "Explore", "Load scene");
-			AddExploreWords(_ru, "Обзор", "Загрузить сцену");
-			AddExploreWords(_de, "Erkunden", "Szene laden");
-			AddExploreWords(_fr, "Explorer", "Charger la scène");
-			AddExploreWords(_es, "Explorar", "Cargar escena");
-			AddExploreWords(_it, "Esplora", "Carica scena");
-			AddExploreWords(_pl, "Odkrywaj", "Wczytaj scenę");
-			AddExploreWords(_tr, "Keşfet", "Sahneyi yükle");
-			AddExploreWords(_ja, "探索", "シーンを読み込む");
-			AddExploreWords(_ko, "탐색", "장면 불러오기");
-			AddExploreWords(_zh, "探索", "读取场景");
-			AddHintWords(_en, "Pick an answer to continue the path");
-			AddHintWords(_ru, "Выберите ответ, чтобы продолжить путь");
-			AddHintWords(_de, "Wähle eine Antwort, um den Pfad fortzusetzen");
-			AddHintWords(_fr, "Choisissez une réponse pour continuer le chemin");
-			AddHintWords(_es, "Elige una respuesta para continuar el camino");
-			AddHintWords(_it, "Scegli una risposta per continuare il percorso");
-			AddHintWords(_pl, "Wybierz odpowiedź, aby kontynuować ścieżkę");
-			AddHintWords(_tr, "Yola devam etmek için bir yanıt seçin");
-			AddHintWords(_ja, "答えを選ぶと道が続きます");
-			AddHintWords(_ko, "계속하려면 답을 선택하세요");
-			AddHintWords(_zh, "选择一个答案以继续路径");
+			AddLoadSceneWord(_en, "Load scene");
+			AddLoadSceneWord(_ru, "Загрузить сцену");
+			AddLoadSceneWord(_de, "Szene laden");
+			AddLoadSceneWord(_fr, "Charger la scène");
+			AddLoadSceneWord(_es, "Cargar escena");
+			AddLoadSceneWord(_it, "Carica scena");
+			AddLoadSceneWord(_pl, "Wczytaj scenę");
+			AddLoadSceneWord(_tr, "Sahneyi yükle");
+			AddLoadSceneWord(_ja, "シーンを読み込む");
+			AddLoadSceneWord(_ko, "장면 불러오기");
+			AddLoadSceneWord(_zh, "读取场景");
 			AddRequirementWords(_en, "Requires", "One of", "not");
 			AddRequirementWords(_ru, "Требуется", "Одно из", "не");
 			AddRequirementWords(_de, "Erfordert", "Eines von", "nicht");
@@ -101,15 +79,8 @@ namespace Doorstop
 			AddUpcomingWord(_zh, "接下来", "视条件而定");
 		}
 
-		private static void AddTreeWords(Dictionary<K, string> d, string chosen, string offered)
+		private static void AddLoadSceneWord(Dictionary<K, string> d, string loadScene)
 		{
-			d[K.TreeChosen] = chosen;
-			d[K.TreeOffered] = offered;
-		}
-
-		private static void AddExploreWords(Dictionary<K, string> d, string explore, string loadScene)
-		{
-			d[K.Explore] = explore;
 			d[K.LoadScene] = loadScene;
 		}
 
@@ -137,17 +108,37 @@ namespace Doorstop
 			d[K.Possible] = possible;
 		}
 
-		private static void AddHintWords(Dictionary<K, string> d, string pickAnswer)
-		{
-			d[K.PickAnswer] = pickAnswer;
-		}
-
 		private static Dictionary<K, string> _english;
 		private static Dictionary<K, string> _current;
 		private static string _currentFor;
 
 		// The translation for the game's current language, English if there
 		// is none.
+		// The game's own translation of one of its keys, or `fallback`.
+		public static string Game(string key, string fallback)
+		{
+			try
+			{
+				string t = LocalizationManager.GetTranslation(key);
+				return string.IsNullOrEmpty(t) ? fallback : t;
+			}
+			catch
+			{
+				return fallback;
+			}
+		}
+
+		// A scene's title in the game's language, "" when it has none.
+		public static string SceneTitle(string scene)
+		{
+			if (string.IsNullOrEmpty(scene))
+			{
+				return "";
+			}
+			string t = Game(scene + "_Title", "");
+			return t == scene + "_Title" ? "" : t;
+		}
+
 		public static string T(K key)
 		{
 			string lang = Language();
@@ -218,7 +209,7 @@ namespace Doorstop
 			string confirmLoad, string confirmDelete, string confirmSave, string emptySaves,
 			string colType, string colSaved, string colChapter, string colAge, string colYear,
 			string colSeason, string colTurn, string colScene, string colChoice,
-			string typeAuto, string typeManual, string saveAvailable, string current, string nothingYet)
+			string typeAuto, string typeManual, string current, string nothingYet)
 		{
 			return new Dictionary<K, string>
 			{
@@ -247,7 +238,6 @@ namespace Doorstop
 				{ K.ColChoice, colChoice },
 				{ K.TypeAuto, typeAuto },
 				{ K.TypeManual, typeManual },
-				{ K.SaveAvailable, saveAvailable },
 				{ K.Current, current },
 				{ K.NothingYet, nothingYet }
 			};
@@ -262,7 +252,7 @@ namespace Doorstop
 			"Save the current game now?\n\nIt is added to the list as a new row. Your game saves are not touched.",
 			"No saves yet. Choice points are recorded automatically; use \"Save now\" below.",
 			"Save type", "Saved", "Chapter", "Age", "Year", "Season", "Turn", "Scene", "Choice",
-			"Auto", "Manual", "save available", "current", "Nothing recorded yet.");
+			"Auto", "Manual", "current", "Nothing recorded yet.");
 
 		private static readonly Dictionary<K, string> _ru = Make(
 			"Сохранить / Загрузить", "Сохранить", "Дерево выборов", "Прохождение",
@@ -273,7 +263,7 @@ namespace Doorstop
 			"Сохранить игру сейчас?\n\nОно добавится в список новой строкой. Сохранения игры не затрагиваются.",
 			"Сохранений пока нет. Точки выбора записываются автоматически; используйте «Сохранить» ниже.",
 			"Тип", "Сохранено", "Глава", "Возраст", "Год", "Сезон", "Ход", "Сцена", "Выбор",
-			"Авто", "Вручную", "есть сохранение", "текущая", "Пока ничего не записано.");
+			"Авто", "Вручную", "текущая", "Пока ничего не записано.");
 
 		private static readonly Dictionary<K, string> _de = Make(
 			"Speichern / Laden", "Jetzt speichern", "Baumansicht", "Durchlauf",
@@ -284,7 +274,7 @@ namespace Doorstop
 			"Das aktuelle Spiel jetzt speichern?\n\nEs wird als neue Zeile hinzugefügt. Deine Spielstände des Spiels bleiben unberührt.",
 			"Noch keine Spielstände. Entscheidungspunkte werden automatisch aufgezeichnet; nutze \"Jetzt speichern\" unten.",
 			"Typ", "Gespeichert", "Kapitel", "Alter", "Jahr", "Jahreszeit", "Zug", "Szene", "Wahl",
-			"Auto", "Manuell", "Spielstand vorhanden", "aktuell", "Noch nichts aufgezeichnet.");
+			"Auto", "Manuell", "aktuell", "Noch nichts aufgezeichnet.");
 
 		private static readonly Dictionary<K, string> _fr = Make(
 			"Enregistrer / Charger", "Enregistrer", "Arborescence", "Partie",
@@ -295,7 +285,7 @@ namespace Doorstop
 			"Enregistrer la partie en cours ?\n\nElle sera ajoutée à la liste. Vos sauvegardes du jeu ne sont pas touchées.",
 			"Aucune sauvegarde. Les points de choix sont enregistrés automatiquement ; utilisez « Enregistrer » ci-dessous.",
 			"Type", "Enregistré", "Chapitre", "Âge", "Année", "Saison", "Tour", "Scène", "Choix",
-			"Auto", "Manuel", "sauvegarde disponible", "actuelle", "Rien d'enregistré pour l'instant.");
+			"Auto", "Manuel", "actuelle", "Rien d'enregistré pour l'instant.");
 
 		private static readonly Dictionary<K, string> _es = Make(
 			"Guardar / Cargar", "Guardar ahora", "Vista de árbol", "Partida",
@@ -306,7 +296,7 @@ namespace Doorstop
 			"¿Guardar la partida actual?\n\nSe añadirá como una fila nueva. Tus partidas del juego no se tocan.",
 			"Aún no hay partidas guardadas. Los puntos de decisión se registran automáticamente; usa «Guardar ahora» abajo.",
 			"Tipo", "Guardado", "Capítulo", "Edad", "Año", "Estación", "Turno", "Escena", "Elección",
-			"Auto", "Manual", "guardado disponible", "actual", "Nada registrado todavía.");
+			"Auto", "Manual", "actual", "Nada registrado todavía.");
 
 		private static readonly Dictionary<K, string> _it = Make(
 			"Salva / Carica", "Salva ora", "Vista ad albero", "Partita",
@@ -317,7 +307,7 @@ namespace Doorstop
 			"Salvare la partita in corso?\n\nVerrà aggiunta come nuova riga. I salvataggi del gioco non vengono toccati.",
 			"Nessun salvataggio. I punti di scelta vengono registrati automaticamente; usa «Salva ora» sotto.",
 			"Tipo", "Salvato", "Capitolo", "Età", "Anno", "Stagione", "Turno", "Scena", "Scelta",
-			"Auto", "Manuale", "salvataggio disponibile", "attuale", "Niente di registrato.");
+			"Auto", "Manuale", "attuale", "Niente di registrato.");
 
 		private static readonly Dictionary<K, string> _pl = Make(
 			"Zapisz / Wczytaj", "Zapisz teraz", "Widok drzewa", "Rozgrywka",
@@ -328,7 +318,7 @@ namespace Doorstop
 			"Zapisać bieżącą grę?\n\nZostanie dodane jako nowy wiersz. Zapisania gry pozostaną nietknięte.",
 			"Brak zapisań. Punkty wyboru są zapisywane automatycznie; użyj „Zapisz teraz” poniżej.",
 			"Typ", "Zapisano", "Rozdział", "Wiek", "Rok", "Pora roku", "Tura", "Scena", "Wybór",
-			"Auto", "Ręcznie", "zapisanie dostępne", "bieżąca", "Nic jeszcze nie zapisano.");
+			"Auto", "Ręcznie", "bieżąca", "Nic jeszcze nie zapisano.");
 
 		private static readonly Dictionary<K, string> _tr = Make(
 			"Kaydet / Yükle", "Şimdi kaydet", "Ağaç görünümü", "Oyun",
@@ -339,7 +329,7 @@ namespace Doorstop
 			"Oyun şimdi kaydedilsin mi?\n\nListeye yeni bir satır olarak eklenir. Oyunun kayıtlarına dokunulmaz.",
 			"Henüz kayıt yok. Seçim noktaları otomatik kaydedilir; aşağıdaki «Şimdi kaydet»i kullanın.",
 			"Tür", "Kayıt", "Bölüm", "Yaş", "Yıl", "Mevsim", "Tur", "Sahne", "Seçim",
-			"Otomatik", "Elle", "kayıt var", "geçerli", "Henüz bir şey kaydedilmedi.");
+			"Otomatik", "Elle", "geçerli", "Henüz bir şey kaydedilmedi.");
 
 		private static readonly Dictionary<K, string> _ja = Make(
 			"保存 / 読み込み", "今すぐ保存", "ツリー表示", "プレイ記録",
@@ -350,7 +340,7 @@ namespace Doorstop
 			"現在のゲームを保存しますか？\n\n一覧に新しい行として追加されます。ゲームのセーブは変更されません。",
 			"まだセーブがありません。選択地点は自動で記録されます。下の「今すぐ保存」を使ってください。",
 			"種類", "保存日時", "章", "年齢", "年", "季節", "ターン", "シーン", "選択",
-			"自動", "手動", "セーブあり", "現在", "まだ記録がありません。");
+			"自動", "手動", "現在", "まだ記録がありません。");
 
 		private static readonly Dictionary<K, string> _ko = Make(
 			"저장 / 불러오기", "지금 저장", "트리 보기", "플레이 기록",
@@ -361,7 +351,7 @@ namespace Doorstop
 			"현재 게임을 저장할까요?\n\n목록에 새 줄로 추가됩니다. 게임 저장은 건드리지 않습니다.",
 			"아직 저장이 없습니다. 선택 지점은 자동으로 기록됩니다. 아래의 «지금 저장»을 사용하세요.",
 			"종류", "저장 시각", "장", "나이", "연도", "계절", "턴", "장면", "선택",
-			"자동", "수동", "저장 있음", "현재", "아직 기록이 없습니다.");
+			"자동", "수동", "현재", "아직 기록이 없습니다.");
 
 		private static readonly Dictionary<K, string> _zh = Make(
 			"保存 / 读取", "立即保存", "树状视图", "游戏历程",
@@ -372,6 +362,6 @@ namespace Doorstop
 			"现在保存游戏？\n\n将作为新的一行加入列表。游戏存档不受影响。",
 			"还没有存档。选择点会自动记录；请使用下方的“立即保存”。",
 			"类型", "保存时间", "章节", "年龄", "年份", "季节", "回合", "场景", "选择",
-			"自动", "手动", "有存档", "当前", "还没有记录。");
+			"自动", "手动", "当前", "还没有记录。");
 	}
 }

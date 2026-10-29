@@ -41,13 +41,12 @@ vendor/                      vendored third-party binaries + their licenses
 tools/build.sh               compile against the game's own Managed/ DLLs (UI, TMP, Audio modules)
 tools/install.sh             build, then symlink/copy into the game folder
 tools/steam.sh               Steam library lookup (distro/Flatpak/Snap), sourced by both
+tools/gamedir.py             the same lookup for the Python tools (+ the prefix's Runs/)
 tools/localization.py        extract titles/answers -> data/, shipped TSV
 tools/bolt_extract.py        dump every Bolt graph as JSON (no UnityPy needed)
 tools/bolt_graph.py          Walk Bolt graphs (macro resolution, LoadScene)
-tools/bolt_scenes.py         scene catalogue per chapter
 tools/bolt_story.py          every chapter's scene flow + conditions -> shipped TSV
 tools/scene_effects.py       answer effects from the scene files -> shipped TSV
-tools/bolt_edges.py          direct scene -> scene links only (superseded, data/ only)
 tools/build_graph.py         merge traces + snapshots + event sheet
 data/                        extracted game data (see docs/BRANCHES.md)
 docs/                        FINDINGS (game internals), BRANCHES (choice data), TODO
@@ -89,8 +88,8 @@ python3 tools/localization.py     # scene-texts.tsv (+ data/localization.csv)
 python3 tools/scene_effects.py    # scene-effects.tsv (needs UnityPy)
 ```
 
-`tools/bolt_*.py` / `tools/localization.py` need the game installed; the Bolt
-readers need UnityPy (`pip install unitypy`, or PYTHONPATH pointing at it).
+`tools/bolt_*.py`, `tools/scene_effects.py` and `tools/localization.py` need the
+game installed; all but `localization.py` and `bolt_extract.py` need UnityPy (`pip install unitypy`, or PYTHONPATH pointing at it).
 `tools/build_graph.py` is optional tooling that merges the mod's traces with the
 community event sheet (`data/events.json`).
 
@@ -148,8 +147,6 @@ on use) and must be paired with `dev-autoload.txt`:
 | `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
 | `dev-book.txt` | open the settings menu, dump its layout, then the tree view: wheel, pop-up, load + Cancel, a pick + its load plan |
 | `dev-history.txt` | log the save's scene path (`ShowedScenesList`) |
-| `dev-advance.txt` | page through the scene text (experimental) |
-| `dev-click.txt` | click the first visible answer (experimental) |
 | `dev-autoplay.txt` | empty: log the buttons the game puts up after an answer; `chapters 2 3`: start a debug run (own main save `Debug_<date>`, from the newest `Chapter_1.dat`), play the first open answer everywhere and make a mod save when each listed chapter starts |
 | `dev-scene-tree.txt` | dump the loaded scene's UI components |
 | `dev-bolt.txt` | dump the live Bolt graph of the choice machine |
