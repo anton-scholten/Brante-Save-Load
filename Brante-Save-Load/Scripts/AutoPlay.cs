@@ -22,6 +22,8 @@ namespace Doorstop
 		public delegate string Picker(string scene);
 
 		public static bool Running { get; private set; }
+		private const float FastScale = 10f;
+		private static float _readySince = -1f;
 		private static bool _stop;
 
 		public static void Stop()
@@ -78,10 +80,21 @@ namespace Doorstop
 		// `pick`'s answer (null = the first one open to the hero). `onScene`
 		// runs once whenever a new choice scene is ready, before answering;
 		// returning false stops the run there (the scene stays unanswered).
-		public static IEnumerator Run(Picker pick, Func<string, bool> onScene, float stuckAfter)
+		public static IEnumerator Run(Picker pick, Func<string, bool> onScene, float stuckAfter, bool fast)
 		{
 			Running = true;
 			_stop = false;
+			// Fast: the game's clock runs FastScale times faster (animations,
+			// page turns and timed waits follow it), the sound is off, and the
+			// driver looks for the next button every 50 ms. Scene loading is
+			// disk-bound and does not speed up.
+			float oldScale = Time.timeScale;
+			float oldVolume = AudioListener.volume;
+			if (fast)
+			{
+				Time.timeScale = FastScale;
+				AudioListener.volume = 0f;
+			}
 			string answered = "";
 			string seen = "";
 			float lastMove = Time.realtimeSinceStartup;
@@ -94,6 +107,7 @@ namespace Doorstop
 				string stopWhy = null;
 				// One step, guarded: an exception inside a coroutine would end
 				// it without a word (seen right after a scene opened twice).
+				bool failed = false;
 				try
 				{
 					moved = Step(pick, onScene, scene, ref answered, ref seen, out stopWhy);
@@ -101,6 +115,7 @@ namespace Doorstop
 				catch (Exception e)
 				{
 					ModLog.Error("AUTOPLAY: step failed at " + scene + " (retrying):\n" + e);
+					failed = true;
 				}
 				if (stopWhy != null)
 				{
@@ -125,7 +140,13 @@ namespace Doorstop
 						break;
 					}
 				}
-				yield return new WaitForSecondsRealtime(0.35f);
+				// after an error give the scene time to settle before retrying
+				yield return new WaitForSecondsRealtime(failed ? 0.5f : fast ? 0.05f : 0.35f);
+			}
+			if (fast)
+			{
+				Time.timeScale = oldScale;
+				AudioListener.volume = oldVolume;
 			}
 			Running = false;
 			ModLog.Info("AUTOPLAY: finished at " + Story());
@@ -139,7 +160,23 @@ namespace Doorstop
 			stopWhy = null;
 			bool moved = false;
 			{
-				if (AnswerReady() && scene != answered)
+				// Answer only once the panel has been up a moment: right after
+				// it appears the scene is not fully set up, and the game's own
+				// GoToConsequence throws (seen at ten times speed).
+				bool ready = AnswerReady() && scene != answered;
+				if (!ready)
+				{
+					_readySince = -1f;
+				}
+				else if (_readySince < 0f)
+				{
+					_readySince = Time.realtimeSinceStartup;
+				}
+				if (ready && Time.realtimeSinceStartup - _readySince < 0.25f)
+				{
+					return false;
+				}
+				if (ready)
 				{
 					if (scene != seen)
 					{
@@ -218,7 +255,7 @@ namespace Doorstop
 					}
 				}
 				return chapter <= last && saved.Count < chapters.Length || chapter < last;
-			}, 90f);
+			}, 90f, true);
 		}
 
 		// After LoadSnapshot: the loading screen has come and gone.

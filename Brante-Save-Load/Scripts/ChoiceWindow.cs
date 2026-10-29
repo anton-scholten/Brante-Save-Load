@@ -281,6 +281,7 @@ namespace Doorstop
 		private static readonly Color ColTreeChosenBg = new Color(1f, 0.93f, 0.72f);
 		private static readonly Color ColTreeUpcomingBg = new Color(0.84f, 0.79f, 0.68f, 0.45f);
 		private static readonly Color ColTreeMuted = new Color(0.45f, 0.40f, 0.32f);
+		private static readonly Color ColTreeBlocked = new Color(0.72f, 0.70f, 0.66f, 0.55f);
 		private static readonly Color ColTreeChapter = new Color(0.55f, 0.30f, 0.25f, 0.55f);
 		private static readonly Color ColTreePlayedBand = new Color(0.55f, 0.30f, 0.25f, 0.07f);
 
@@ -381,6 +382,8 @@ namespace Doorstop
 			public bool Current;    // the scene on screen (the pending entry)
 			public bool Recorded;   // the answer played here is known
 			public string PlayedChoice = "";   // that answer's name
+			public SceneEffects.Hero Hero;     // the hero at this scene along the path (null: unknown)
+			public HashSet<string> Blocked = new HashSet<string>();   // answers he could not take
 			public bool Upcoming;   // ahead of the current scene, from scene-flow.tsv
 			public bool Possible;   // upcoming, but its conditions are not decided yet
 			public List<History.Choice> Choices = new List<History.Choice>();
@@ -1099,6 +1102,11 @@ namespace Doorstop
 				{
 					pick = _tree[i].PlayedChoice;
 				}
+				if (!string.IsNullOrEmpty(pick) && _tree[i].Blocked.Contains(pick))
+				{
+					why = string.Format(Loc.T(Loc.K.PickBlocked), _tree[i].Title);
+					return null;
+				}
 				if (!string.IsNullOrEmpty(pick))
 				{
 					plan.Picks[_tree[i].Scene] = pick;
@@ -1139,7 +1147,7 @@ namespace Doorstop
 			{
 				string pick;
 				return plan.Picks.TryGetValue(scene, out pick) ? pick : null;
-			}, delegate(string scene) { return scene != plan.Target; }, 60f);
+			}, delegate(string scene) { return scene != plan.Target; }, 60f, true);
 		}
 
 		private static void OpenHistory()
@@ -1270,6 +1278,7 @@ namespace Doorstop
 					}
 				}
 			}
+			WorkOutOpenAnswers(cols);
 			_tree = cols;
 			if (cols.Count == 0)
 			{
@@ -1406,10 +1415,12 @@ namespace Doorstop
 					nrt.anchoredPosition = new Vector2(x + TreeNodeX, -y);
 					nrt.sizeDelta = new Vector2(TreeNodeW, TreeNodeH);
 					Image nimg = node.AddComponent<Image>();
-					nimg.color = c.Chosen ? ColTreeChosenBg : e.Upcoming ? ColTreeUpcomingBg : ColAuto;
-					// Explore mode: picking any answer extends the path. Otherwise
-					// clicking loads that decision's save (captured scenes only).
-					if (clickable)
+					bool blocked = e.Blocked.Contains(c.Name);
+					nimg.color = c.Chosen ? ColTreeChosenBg : blocked ? ColTreeBlocked
+						: e.Upcoming ? ColTreeUpcomingBg : ColAuto;
+					// Clicking picks the answer for the path - unless the hero
+					// could not take it at that point.
+					if (clickable && !blocked)
 					{
 						Button nb = node.AddComponent<Button>();
 						nb.targetGraphic = nimg;
@@ -1423,7 +1434,8 @@ namespace Doorstop
 					}
 
 					TextMeshProUGUI label = AddLabel(node.transform, "Text", c.Text, 17f,
-						clickable && !e.Upcoming ? ColTextDark : new Color(0.12f, 0.10f, 0.08f, 0.6f), false);
+						blocked ? new Color(0.12f, 0.10f, 0.08f, 0.35f)
+						: !e.Upcoming ? ColTextDark : new Color(0.12f, 0.10f, 0.08f, 0.6f), false);
 					RectTransform lrt = label.rectTransform;
 					lrt.anchorMin = Vector2.zero;
 					lrt.anchorMax = Vector2.one;
@@ -1435,7 +1447,7 @@ namespace Doorstop
 					string note = "";
 					List<SceneEffects.Effect> effects = SceneEffects.For(e.Scene, c.Name);
 					string fullText = c.Text;
-					bool live = e.Current || e.Upcoming;
+					SceneEffects.Hero live = e.Hero;
 					if (e.Scene == _selScene && c.Name == _selChoice)
 					{
 						MarkNode(node);
@@ -1500,6 +1512,64 @@ namespace Doorstop
 		}
 
 		private static int _focusCol = -1;     // the column to show on open (the current scene)
+
+		// Which answers the hero could take at each scene of the shown path.
+		// A scene the mod has a save of, before any changed pick, uses the hero
+		// exactly as saved there; from the first changed pick on (and for the
+		// scenes ahead) the hero of the scene before is carried forward with
+		// the picked answer's effects applied by the game's own rules. Stat
+		// changes between scenes and objectives (unlocked by the story) are not
+		// simulated, so past a changed pick this is a close estimate.
+		private static void WorkOutOpenAnswers(List<TreeCol> cols)
+		{
+			SceneEffects.Hero carry = null;
+			bool changed = false;
+			foreach (TreeCol col in cols)
+			{
+				SceneEffects.Hero at = null;
+				if (!col.Upcoming && !changed && col.HasSnapshot)
+				{
+					at = SceneEffects.FromSnapshot(col.SnapshotPath);
+				}
+				if (at == null && col.Current && !changed)
+				{
+					at = SceneEffects.Now();
+				}
+				if (at != null && col.Current && !changed)
+				{
+					at.Live = true;   // the scene on screen: objectives are as they are
+				}
+				if (at == null)
+				{
+					at = carry;
+				}
+				col.Hero = at;
+				col.Blocked.Clear();
+				History.Choice chosen = null;
+				foreach (History.Choice c in col.Choices)
+				{
+					if (at != null && !at.Allows(SceneEffects.For(col.Scene, c.Name)))
+					{
+						col.Blocked.Add(c.Name);
+					}
+					if (c.Chosen)
+					{
+						chosen = c;
+					}
+				}
+				carry = null;
+				if (at != null && chosen != null)
+				{
+					carry = at.Clone();
+					carry.Apply(SceneEffects.For(col.Scene, chosen.Name));
+				}
+				string pick;
+				if (_overrides.TryGetValue(col.Scene, out pick) && pick != col.PlayedChoice)
+				{
+					changed = true;
+				}
+			}
+		}
 
 		// Indices of the answers that have text, in display order.
 		private static List<int> VisibleChoices(TreeCol col)
@@ -1623,7 +1693,7 @@ namespace Doorstop
 		}
 
 		private static void ShowPopup(RectTransform node, string text, string note,
-			List<SceneEffects.Effect> effects, bool live)
+			List<SceneEffects.Effect> effects, SceneEffects.Hero live)
 		{
 			if (_popup == null || _historyBox == null)
 			{
@@ -1639,9 +1709,8 @@ namespace Doorstop
 				UnityEngine.Object.Destroy(old);
 			}
 			// What it changes, then what it requires: all of the "and" ones,
-			// and one of the "or" group. Requirements are checked against the
-			// hero only where that means something (`live`: the scene on
-			// screen and what lies ahead); met ones are green, unmet red.
+			// and one of the "or" group, checked against the hero at that scene
+			// along the path (`live`, null when unknown): met green, unmet red.
 			bool reqHead = false, orHead = false;
 			foreach (SceneEffects.Effect fx in effects)
 			{
@@ -1747,15 +1816,14 @@ namespace Doorstop
 			le.minHeight = 26f;
 		}
 
-		private static void AddRequirementRow(SceneEffects.Effect req, bool live)
+		// A requirement, coloured against the hero at that scene (`hero`, from
+		// WorkOutOpenAnswers; null leaves it uncoloured).
+		private static void AddRequirementRow(SceneEffects.Effect req, SceneEffects.Hero hero)
 		{
 			Sprite icon;
 			bool? met;
 			string text = SceneEffects.RequirementLabel(req, out icon, out met);
-			if (!live)
-			{
-				met = null;
-			}
+			met = hero != null ? hero.Meets(req) : null;
 			GameObject row = CreateUiObject("Requirement", _popupEffects);
 			HorizontalLayoutGroup h = row.AddComponent<HorizontalLayoutGroup>();
 			h.spacing = 10f;

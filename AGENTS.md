@@ -38,7 +38,7 @@ doorstop/doorstop_config.ini the Doorstop config installed into the game folder
 vendor/                      vendored third-party binaries + their licenses
   doorstop/winhttp.dll       Unity Doorstop 4.6.0 (x64), LGPL-2.1
   0Harmony.dll               Lib.Harmony 2.3.3 (net472), MIT
-tools/build.sh               compile against the game's own Managed/ DLLs
+tools/build.sh               compile against the game's own Managed/ DLLs (UI, TMP, Audio modules)
 tools/install.sh             build, then symlink/copy into the game folder
 tools/steam.sh               Steam library lookup (distro/Flatpak/Snap), sourced by both
 tools/localization.py        extract titles/answers -> data/, shipped TSV

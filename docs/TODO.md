@@ -311,6 +311,10 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
   at the top of the save window. Debug runs (`dev-autoplay.txt`) make test
   saves at chapters 2 and 3. Fixed the click recorder (it never wrote
   `chosen=`). Verified in-game, including a two-answer replay.
+- [x] Blocked answers greyed out along the picked path (hero simulated with
+  the game's own effect rules from the nearest exact save), Load scene refuses
+  a path through a greyed pick; replay at 10x speed, muted (~5 s a scene).
+  Verified in-game on the debug run.
 - [ ] Achievement side-effects on load (verify).
 - [ ] Full in-game pass on a played run: chapter transition, death -> restart
   chapter, explore + load from the panel.

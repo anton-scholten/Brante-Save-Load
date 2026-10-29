@@ -17,7 +17,7 @@ namespace Doorstop
 			ConfirmLoad, ConfirmDelete, ConfirmSave, EmptySaves,
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, SaveAvailable, Current, NothingYet,
-			TreeChosen, TreeOffered, Explore, LoadScene, PickAnswer, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore
+			TreeChosen, TreeOffered, Explore, LoadScene, PickAnswer, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked
 		}
 
 		static Loc()
@@ -66,6 +66,17 @@ namespace Doorstop
 			AddRequirementWords(_ja, "必要条件", "いずれか", "ではない");
 			AddRequirementWords(_ko, "필요 조건", "다음 중 하나", "아님");
 			AddRequirementWords(_zh, "需要", "其中之一", "非");
+			AddPickBlocked(_en, "The answer picked in \"{0}\" would not be open to your hero there.");
+			AddPickBlocked(_ru, "Ответ, выбранный в «{0}», там будет недоступен вашему герою.");
+			AddPickBlocked(_de, "Die in „{0}“ gewählte Antwort stünde deinem Helden dort nicht offen.");
+			AddPickBlocked(_fr, "La réponse choisie dans « {0} » ne serait pas accessible à votre héros.");
+			AddPickBlocked(_es, "La respuesta elegida en «{0}» no estaría disponible para tu héroe allí.");
+			AddPickBlocked(_it, "La risposta scelta in «{0}» non sarebbe disponibile per il tuo eroe.");
+			AddPickBlocked(_pl, "Odpowiedź wybrana w „{0}” nie byłaby tam dostępna dla twojego bohatera.");
+			AddPickBlocked(_tr, "\"{0}\" içinde seçilen cevap kahramanına orada açık olmazdı.");
+			AddPickBlocked(_ja, "「{0}」で選んだ回答は、そこではあなたの主人公には選べません。");
+			AddPickBlocked(_ko, "\"{0}\"에서 고른 답은 그 시점의 주인공이 선택할 수 없습니다.");
+			AddPickBlocked(_zh, "在“{0}”中选择的答案届时对你的主角不可用。");
 			AddNotRecorded(_en, "Played but answer not recorded (mod was not installed)", "The mod has no save from before this point, so it cannot be reached.");
 			AddNotRecorded(_ru, "Пройдено, но ответ не записан (мод не был установлен)", "У мода нет сохранения до этого места, поэтому сюда не попасть.");
 			AddNotRecorded(_de, "Gespielt, aber Antwort nicht aufgezeichnet (Mod war nicht installiert)", "Der Mod hat keinen Spielstand vor dieser Stelle, sie ist nicht erreichbar.");
@@ -113,6 +124,11 @@ namespace Doorstop
 		{
 			d[K.NotRecorded] = text;
 			d[K.NoSaveBefore] = noSave;
+		}
+
+		private static void AddPickBlocked(Dictionary<K, string> d, string text)
+		{
+			d[K.PickBlocked] = text;
 		}
 
 		private static void AddUpcomingWord(Dictionary<K, string> d, string upcoming, string possible)

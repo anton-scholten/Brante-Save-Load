@@ -74,6 +74,7 @@ set +e
     -r:"$MANAGED/UnityEngine.CoreModule.dll" \
     -r:"$MANAGED/UnityEngine.TextRenderingModule.dll" \
     -r:"$MANAGED/UnityEngine.UIModule.dll" \
+    -r:"$MANAGED/UnityEngine.AudioModule.dll" \
     -r:"$MANAGED/UnityEngine.UI.dll" \
     -r:"$MANAGED/Unity.TextMeshPro.dll" \
     -r:"$MANAGED/Assembly-CSharp.dll" \

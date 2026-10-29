@@ -476,7 +476,22 @@ takes, all verified over chapters 1-2 and into 3:
 - **Inside the mod, `Button` is ambiguous**: one of the game's namespaces
   defines its own `Button`, so `UnityEngine.UI.Button` must be spelled out or
   `FindObjectsOfTypeAll<Button>()` silently finds nothing.
-- Cutscenes and loading screens need nothing; a scene costs about 20 s.
+- Cutscenes and loading screens need nothing; a scene costs about 20 s at
+  normal speed. With `Time.timeScale = 10` (animations, page turns and timed
+  waits follow it) and the sound off, about 5 s - loading is disk-bound. At
+  that speed the answer panel appears before the scene is fully set up, and
+  answering at once makes the game's own `SceneController.GoToConsequence`
+  throw a `NullReferenceException`: wait ~0.25 s after the panel appears.
+- **Answer effects can be simulated with the game's own code**:
+  `ParametersManager.SetParameterValue(Parameter, int)` (clamping per stat,
+  some stats added or overwritten), `SetCharacterRelation(Character, int,
+  list)` (clamped to -5..5) and `SetParameterValue(Character, CharacterStatus,
+  list)` are pure - no events - and work on `ParametersManager.Parameters`
+  (a public `ModelParameters` field, the same object the saves store) or on the
+  list passed in. Swapping a deep copy into `Parameters` for the call, then
+  back, runs a "what if" without touching the game. Requirement checks
+  (`CompareParametersValue`, `CompareCharacterRelation`,
+  `CompareCharacterStatus`) take the same inputs.
 - **The game's `Chapter_N.dat` is a clean chapter start**: loading a copy under
   a new `SlotInfo.Id` (written as both `Autosave.dat` and `Chapter_1.dat` in
   `Saves/<id>/`, so `Recorder.RealRunId` finds it) gives a separate main save

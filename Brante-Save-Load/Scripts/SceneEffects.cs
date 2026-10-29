@@ -129,6 +129,226 @@ namespace Doorstop
 			return start < end && int.TryParse(name.Substring(start), out n) ? n : 0;
 		}
 
+		// ------------------------------------------------------------------
+		// The hero along a path: stats and characters as they would be at a
+		// scene, to tell which answers would be open there.
+		// ------------------------------------------------------------------
+
+		// A copy of the hero's stats and characters. Effects are applied and
+		// requirements checked with the game's own ParametersManager methods
+		// (pure: no events), the stats by briefly swapping this copy in.
+		public sealed class Hero
+		{
+			public ModelParameters Stats;
+			public List<CharacterModel> Characters;
+			public bool Live;        // the hero right now (objectives can be checked)
+
+			public Hero Clone()
+			{
+				Hero h = new Hero();
+				h.Stats = DeepCopy(Stats);
+				h.Characters = DeepCopy(Characters);
+				h.Live = false;
+				return h;
+			}
+
+			// The answer's stat, relation and status changes.
+			public void Apply(List<Effect> effects)
+			{
+				ParametersManager pm = ParametersManager.Instance;
+				if (pm == null)
+				{
+					return;
+				}
+				ModelParameters real = pm.Parameters;
+				try
+				{
+					pm.Parameters = Stats;
+					foreach (Effect e in effects)
+					{
+						try
+						{
+							if (e.Kind == 'P')
+							{
+								Parameter p = ParameterAsset(e.Name);
+								if (p != null)
+								{
+									pm.SetParameterValue(p, e.Value);
+								}
+							}
+							else if (e.Kind == 'R' || e.Kind == 'S')
+							{
+								Character c = CharacterAsset(e.Name);
+								if (c == null)
+								{
+									continue;
+								}
+								if (e.Kind == 'R')
+								{
+									pm.SetCharacterRelation(c, e.Value, Characters);
+								}
+								else
+								{
+									pm.SetParameterValue(c, (CharacterStatus)e.Value, Characters);
+								}
+							}
+						}
+						catch (Exception)
+						{
+							// a character missing from this hero: skip that change
+						}
+					}
+				}
+				finally
+				{
+					pm.Parameters = real;
+				}
+			}
+
+			// Whether the answer is open: every "and" requirement holds, and one
+			// of the "or" group if there is one. Unknown parts count as met.
+			public bool Allows(List<Effect> effects)
+			{
+				bool anyOr = false, orMet = false;
+				foreach (Effect r in effects)
+				{
+					if (!r.IsRequirement)
+					{
+						continue;
+					}
+					bool? met = Meets(r);
+					if (r.Or)
+					{
+						anyOr = true;
+						orMet |= met != false;
+					}
+					else if (met == false)
+					{
+						return false;
+					}
+				}
+				return !anyOr || orMet;
+			}
+
+			public bool? Meets(Effect r)
+			{
+				ParametersManager pm = ParametersManager.Instance;
+				if (pm == null)
+				{
+					return null;
+				}
+				try
+				{
+					switch (r.Kind)
+					{
+						case 'Q':
+						{
+							Parameter p = ParameterAsset(r.Name);
+							if (p == null)
+							{
+								return null;
+							}
+							ModelParameters real = pm.Parameters;
+							try
+							{
+								pm.Parameters = Stats;
+								return pm.CompareParametersValue(p.ParameterName, pm.GetParameterValue(p),
+									(Assets._Scripts.AMVCC.Views.Operations)r.Op, r.Value);
+							}
+							finally
+							{
+								pm.Parameters = real;
+							}
+						}
+						case 'W':
+						{
+							Character c = CharacterAsset(r.Name);
+							return c == null ? (bool?)null : pm.CompareCharacterRelation(c, r.Value,
+								(Assets._Scripts.AMVCC.Views.Operations)r.Op, Characters);
+						}
+						case 'T':
+						{
+							Character c = CharacterAsset(r.Name);
+							return c == null ? (bool?)null
+								: pm.CompareCharacterStatus(c, (CharacterStatus)r.Value, r.Op == 1, Characters);
+						}
+						default:
+						{
+							// objectives are unlocked by the story, not by answers:
+							// only the hero as he is now can tell
+							if (!Live)
+							{
+								return null;
+							}
+							Objective o = ObjectiveAsset(r.Name);
+							return o == null ? (bool?)null : (r.Op == 1 ? !o.Unlocked : o.Unlocked);
+						}
+					}
+				}
+				catch (Exception)
+				{
+					return null;
+				}
+			}
+		}
+
+		private static readonly Dictionary<string, Hero> _snapshotHeroes = new Dictionary<string, Hero>();
+
+		// The hero as a mod snapshot recorded him (cached; snapshot files never
+		// change), or null.
+		public static Hero FromSnapshot(string path)
+		{
+			if (string.IsNullOrEmpty(path))
+			{
+				return null;
+			}
+			Hero h;
+			if (!_snapshotHeroes.TryGetValue(path, out h))
+			{
+				try
+				{
+					SaveLoadHelper helper = Recorder.ReadHelper(path);
+					h = new Hero { Stats = helper.ModelParameters, Characters = helper.CharacterModel };
+				}
+				catch (Exception)
+				{
+					h = null;
+				}
+				_snapshotHeroes[path] = h;
+			}
+			return h != null && h.Stats != null && h.Characters != null ? h.Clone() : null;
+		}
+
+		// The hero right now, or null.
+		public static Hero Now()
+		{
+			ParametersManager pm = ParametersManager.Instance;
+			CharacterParametersSerializeHelper csh = CharacterParametersSerializeHelper.Initiate;
+			if (pm == null || csh == null || pm.Parameters == null || csh.Characters == null)
+			{
+				return null;
+			}
+			Hero h = new Hero { Stats = pm.Parameters, Characters = csh.Characters }.Clone();
+			h.Live = true;
+			return h;
+		}
+
+		private static T DeepCopy<T>(T value)
+		{
+			if (value == null)
+			{
+				return value;
+			}
+			System.Runtime.Serialization.Formatters.Binary.BinaryFormatter f =
+				new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+			using (MemoryStream ms = new MemoryStream())
+			{
+				f.Serialize(ms, value);
+				ms.Position = 0;
+				return (T)f.Deserialize(ms);
+			}
+		}
+
 		public static Objective ObjectiveAsset(string name)
 		{
 			if (_objectives == null)

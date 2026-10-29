@@ -55,7 +55,12 @@ never touches the game's saves.
   **Load scene** then takes you to the scene of that last pick along your path:
   the mod loads its newest save from before the first answer you changed and
   plays the picked answers itself, scene by scene, until the selected scene is
-  on screen, where it stops for you. The **undo** button puts every pick back
+  on screen, where it stops for you. The replay runs the game at ten times
+  speed with the sound off (a few seconds a scene). Answers your hero could
+  not take at that point are greyed out and cannot be picked: the tree works
+  out the hero along your path - exactly as saved where the mod has a save,
+  and from your first changed answer on by applying each picked answer's
+  effects with the game's own rules. The **undo** button puts every pick back
   to what you actually played. Played scenes from before the mod was installed
   say so at the bottom of their band. The tree fills nearly the whole screen,
   the mouse wheel scrolls it sideways, and its button sits at the top of the
@@ -150,10 +155,13 @@ update they can be regenerated with `tools/bolt_story.py` and
   if a later answer could still unlock it, and one the mod cannot check is
   marked "possible". The epilogue's fate pages have no answers, so the tree
   ends with the last choice of chapter 5.
-- Load scene replays the path in the game itself, so it takes as long as
-  clicking through those scenes (about 20 seconds each) and stops early at an
-  answer your hero cannot take there. It needs a mod save at or before the
-  first changed answer; scenes from before the mod was installed have none.
+- Load scene replays the path in the game itself, about 5 seconds a scene. It
+  needs a mod save at or before the first changed answer; scenes from before
+  the mod was installed have none.
+- Greying past a changed answer is an estimate: stat changes that happen
+  between scenes are not simulated, and objectives (unlocked by the story, not
+  by answers) are only checked for the scene on screen. If the replay meets an
+  answer the hero cannot take after all, it stops at that scene.
 - Steam Cloud is not enabled for the game itself, so the game's saves do not sync
   between machines (see below).
 
