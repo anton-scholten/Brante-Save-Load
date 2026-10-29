@@ -3,3 +3,4 @@
 # Only logs and temp files are ignored.
 Brante-Save-Load/Brante-Save-Load.log
 *.tmp
+__pycache__/
