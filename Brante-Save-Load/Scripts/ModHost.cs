@@ -293,6 +293,29 @@ namespace Doorstop
 									}
 								}
 							}
+							string statMarker = Path.Combine(Recorder.SnapshotDir, "dev-stat.txt");
+							if (File.Exists(statMarker))
+							{
+								string spec = "";
+								try { spec = File.ReadAllText(statMarker).Trim(); File.Delete(statMarker); }
+								catch (Exception) { }
+								int eq = spec.IndexOf('=');
+								ParametersManager pm = ParametersManager.Instance;
+								int value;
+								if (eq > 0 && pm != null && pm.Parameters != null
+									&& int.TryParse(spec.Substring(eq + 1), out value))
+								{
+									System.Reflection.FieldInfo f = pm.Parameters.GetType().GetField(
+										spec.Substring(0, eq),
+										System.Reflection.BindingFlags.Instance
+										| System.Reflection.BindingFlags.Public);
+									if (f != null)
+									{
+										f.SetValue(pm.Parameters, value);
+										ModLog.Info("DEV STAT: " + spec);
+									}
+								}
+							}
 							string loadPlanMarker = Path.Combine(Recorder.SnapshotDir, "dev-plan.txt");
 							if (File.Exists(loadPlanMarker))
 							{

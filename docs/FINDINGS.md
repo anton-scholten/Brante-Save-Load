@@ -964,15 +964,24 @@ collapsed, 8–10 rows shown.
 - **The Poets is condition-gated, not only key-parameter-gated.** Setting
   `TriggerBlock=false` in game (30 Oct 2026, `dev-keyparam.txt`) still did not
   put `02.N.03` in the plan: its gate is
-  `SceneConditionsCollector.GetConditionBySceneName("02.N.03")`, which checks
-  the hero's stats/relations/objectives and was false at `02.07.02` **before**
-  the answer. The answer may make it true. To include such a trigger, the tree
-  must (a) evaluate `SceneFlow.After` under the hero **after** the selected
-  current answer (temporarily swap the simulated `SceneEffects.Hero` into
-  `ParametersManager`/`CharacterParametersSerializeHelper`), and (b) rebuild
-  the upcoming columns when a current-scene answer is picked (the tree currently
-  builds them once per open, before the picks are applied). This is the next
-  concrete fast-forward improvement.
+  `SceneConditionsCollector.GetConditionBySceneName("02.N.03")`. Parsed from
+  the persistent scene (level 2, script id 514), that condition is a single
+  parameter test: `ParametersList` 11 (`Cunning`) `MoreEqual` 4 - i.e.
+  `Cunning >= 4`. The test snapshot had `Cunning: 3`, so the scene was correctly
+  absent; a run with `Cunning >= 4` should have it, and the per-branch order
+  places it before `02.08.01`.
+- **Conditions now use the hero after the current answer.** `WorkOutOpenAnswers`
+  stores `TreeCol.AfterHero`; `AddUpcoming` calls
+  `SceneFlow.After(..., hero)`, which briefly swaps the simulated stats/
+  characters into the live managers while evaluating conditions. A pick in the
+  current or an earlier played scene rebuilds the columns, so an answer that
+  makes a trigger's condition true adds it ahead. An upcoming-scene pick only
+  restyles (the upcoming order cannot change before that scene is reached).
+  `dev-stat.txt` (`Cunning=4`) exists to test such a state.
+- **Remaining limit:** objectives (`GetObjectiveStatus`) are still evaluated on
+  the live game while simulating, and conditions set by scene events that are
+  not stats/key params/relations/statuses cannot be predicted; the ordered
+  replay stops at the first real divergence.
 - The table's type cells show a short explanation on hover (the same paper
   pop-up as the tree): `HelpAutosave`, `HelpCheckpoint`, `HelpManual`,
   `HelpOriginal`, in all eleven languages. The Year and Turn columns were

@@ -462,16 +462,19 @@ save folders and only copies them.
   scene whose `Turn`/`Season` gate matches the live game (or a Turn-0 trigger);
   `After` sorts immediate scenes (flow order) before later time slots, then
   later chapters. Turn/season progression itself remains the game's.
-- [ ] **The Poets post-answer condition** (next): `02.N.03` is gated by
-  `SceneConditionsCollector.GetConditionBySceneName("02.N.03")`, which checks
-  the hero's stats/relations/objectives. Setting `TriggerBlock=false` in game
-  still did not put it in the plan because the condition was false before the
-  answer. To fix: evaluate `SceneFlow.After` under the simulated
-  `SceneEffects.Hero` **after** the selected current answer (swap it into
-  `ParametersManager`/`CharacterParametersSerializeHelper`), and rebuild the
-  upcoming columns when a current-scene answer is picked (the tree currently
-  builds them once per open, before picks are applied). Then the plan can
-  include `02.N.03` and select its answer.
+- [x] **Conditions after the current answer** (30 Oct 2026):
+  `WorkOutOpenAnswers` stores `TreeCol.AfterHero`; `AddUpcoming` evaluates
+  `SceneFlow.After(..., hero)` with that hero swapped into the managers; a pick
+  in a current/played scene rebuilds the columns. `02.N.03`'s condition was
+  parsed: `Cunning >= 4` (ParametersList 11, MoreEqual 4), so the old test
+  snapshot (Cunning 3) correctly omitted it. A state with Cunning >= 4 should
+  now offer The Poets before 02.08.01; `dev-stat.txt` (`Cunning=4`) tests it.
+- [ ] In-game: with `Cunning=4`, pick the answer that keeps it >= 4 and verify
+  `02.N.03` appears in the tree ahead of `02.08.01` and in the plan, and the
+  replay answers it; then the full `dev-loadpath` pass.
+- [ ] Objective-based conditions are still evaluated on the live game during
+  simulation; extract/simulate `GetObjectiveStatus` and scene-event flags if a
+  path still diverges on them.
 - [x] Loading any row goes through the same flow (pre-rewind checkpoint -> adopt
   the run slot -> load -> loading screen/dissolve).
 - [x] `Auto` -> `Choice` folder rename with a one-time migration

@@ -439,6 +439,7 @@ namespace Doorstop
 			public string PlayedChoice = "";   // that answer's name
 			public string Implied = "";        // ahead and unpicked: the answer the checks assume (first open)
 			public SceneEffects.Hero Hero;     // the hero at this scene along the path (null: unknown)
+			public SceneEffects.Hero AfterHero; // and after the answer taken/picked here
 			public HashSet<string> Blocked = new HashSet<string>();   // answers he could not take
 			public bool Upcoming;   // ahead of the current scene, from scene-flow.tsv
 			public bool Possible;   // upcoming, but its conditions are not decided yet
@@ -1149,7 +1150,7 @@ namespace Doorstop
 			_selScene = null;
 			_selChoice = null;
 			HidePopup();
-			RefreshKeepingScroll();
+			RefreshKeepingScroll(true);
 			ModLog.Info("ChoiceWindow: tree selections reset");
 		}
 
@@ -1180,15 +1181,19 @@ namespace Doorstop
 					break;
 				}
 			}
-			RefreshKeepingScroll();
+			TreeCol picked = _tree.Find(c => c.Scene == scene);
+			// A pick in a played/current scene can change which scenes are
+			// ahead (a condition may turn true); a pick in an upcoming scene
+			// only changes that column and the ones after it.
+			RefreshKeepingScroll(picked == null || !picked.Upcoming);
 		}
 
 		// Rebuilds the tree without moving the view.
-		private static void RefreshKeepingScroll()
+		private static void RefreshKeepingScroll(bool rebuild = false)
 		{
 			RectTransform content = _historyList as RectTransform;
 			Vector2 at = content != null ? content.anchoredPosition : Vector2.zero;
-			RefreshHistory(false);
+			RefreshHistory(rebuild);
 			Canvas.ForceUpdateCanvases();
 			if (content != null)
 			{
@@ -2353,6 +2358,11 @@ namespace Doorstop
 			}
 			_focusCol = pendingCol >= 0 ? pendingCol : cols.Count - 1;
 			ResolveTimeline(cols, _focusCol);
+			// The picks decide the branch of the scenes ahead; work out the
+			// hero after the current answer before building the upcoming
+			// columns (a scene condition can turn true only after it).
+			ApplyPicks(cols);
+			WorkOutOpenAnswers(cols);
 			if (all.Count > 0)
 			{
 				AddUpcoming(cols, all);
@@ -2546,10 +2556,24 @@ namespace Doorstop
 				}
 				carry = null;
 				string taken = chosen != null ? chosen.Name : col.Implied;
-				if (at != null && taken.Length > 0)
+				SceneEffects.Hero afterBase = at;
+				if (col.Current && col.HasSnapshot)
 				{
-					carry = at.Clone();
+					// The live state may already include the answer (the
+					// consequence is on screen); the snapshot is the state the
+					// scene opened with, before it.
+					SceneEffects.Hero snap = SceneEffects.FromSnapshot(col.SnapshotPath);
+					if (snap != null)
+					{
+						afterBase = snap;
+					}
+				}
+				col.AfterHero = afterBase;
+				if (afterBase != null && taken.Length > 0)
+				{
+					carry = afterBase.Clone();
 					carry.Apply(SceneEffects.For(col.Scene, taken));
+					col.AfterHero = carry;
 				}
 				string pick;
 				if (_overrides.TryGetValue(col.Scene, out pick) && pick != col.PlayedChoice)
@@ -2611,7 +2635,15 @@ namespace Doorstop
 					from = e.SceneName;
 				}
 			}
-			foreach (SceneFlow.Ahead a in SceneFlow.After(from, shown, true))
+			// The condition of a scene ahead is checked with the hero as it is
+			// after the answer on screen: an answer can make a trigger possible.
+			SceneEffects.Hero after = null;
+			TreeCol cur = cols.Find(c => c.Current);
+			if (cur != null)
+			{
+				after = cur.AfterHero;
+			}
+			foreach (SceneFlow.Ahead a in SceneFlow.After(from, shown, true, after))
 			{
 				TreeCol col = SceneCol(a.Row.Scene);
 				col.Upcoming = true;
@@ -4440,6 +4472,18 @@ namespace Doorstop
 			try
 			{
 				OpenTreeView();
+				_overrides.Clear();
+				// Pick the current scene's first open answer first: that can
+				// change the scenes ahead, which the tree rebuilds.
+				TreeCol cur = _tree.Find(c => c.Current);
+				if (cur != null)
+				{
+					string first = FirstOpen(cur);
+					if (first != null)
+					{
+						SelectChoice(cur.Scene, first);
+					}
+				}
 				int ti = _tree.FindIndex(c => c.Scene == target);
 				int ci = _tree.FindIndex(c => c.Current);
 				ModLog.Info("DEV PLAN: target " + target + " index " + ti + ", current " + ci);
@@ -4447,19 +4491,16 @@ namespace Doorstop
 				{
 					return;
 				}
-				_overrides.Clear();
-				for (int i = ci; i < ti; i++)
+				StringBuilder ahead = new StringBuilder();
+				for (int k = ci; k <= Math.Min(_tree.Count - 1, ci + 6); k++)
+				{
+					ahead.Append(_tree[k].Scene + (k == ti ? "* " : " "));
+				}
+				ModLog.Info("DEV PLAN: scenes from current: " + ahead.ToString().Trim());
+				for (int i = ci + 1; i < ti; i++)
 				{
 					TreeCol col = _tree[i];
-					string pick = null;
-					foreach (History.Choice c in col.Choices)
-					{
-						if (!col.Blocked.Contains(c.Name))
-						{
-							pick = c.Name;
-							break;
-						}
-					}
+					string pick = FirstOpen(col);
 					if (pick == null)
 					{
 						ModLog.Info("DEV PLAN: no open answer in " + col.Scene);
@@ -4483,6 +4524,18 @@ namespace Doorstop
 			{
 				ModLog.Error("DEV PLAN failed:\n" + e);
 			}
+		}
+
+		private static string FirstOpen(TreeCol col)
+		{
+			foreach (History.Choice c in col.Choices)
+			{
+				if (!col.Blocked.Contains(c.Name))
+				{
+					return c.Name;
+				}
+			}
+			return null;
 		}
 
 		private static IEnumerator DevBookDump()

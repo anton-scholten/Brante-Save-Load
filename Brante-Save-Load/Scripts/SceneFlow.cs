@@ -167,6 +167,42 @@ namespace Doorstop
 		// yet (Post, in chapter 4) shows only what every option has in common.
 		public static List<Ahead> After(string from, ICollection<string> shown, bool laterChapters)
 		{
+			return After(from, shown, laterChapters, null);
+		}
+
+		// As above, evaluating the scene conditions with `hero`'s stats and
+		// characters (the state after the answer on screen), by briefly
+		// swapping them into the game's managers. Objectives stay the live
+		// ones: answers do not change them.
+		public static List<Ahead> After(string from, ICollection<string> shown, bool laterChapters,
+			SceneEffects.Hero hero)
+		{
+			ParametersManager pm = ParametersManager.Instance;
+			CharacterParametersSerializeHelper csh = CharacterParametersSerializeHelper.Initiate;
+			if (hero == null || hero.Stats == null || pm == null || csh == null)
+			{
+				return AfterCore(from, shown, laterChapters);
+			}
+			ModelParameters stats = pm.Parameters;
+			List<CharacterModel> chars = csh.Characters;
+			try
+			{
+				pm.Parameters = hero.Stats;
+				if (hero.Characters != null)
+				{
+					csh.Characters = hero.Characters;
+				}
+				return AfterCore(from, shown, laterChapters);
+			}
+			finally
+			{
+				pm.Parameters = stats;
+				csh.Characters = chars;
+			}
+		}
+
+		private static List<Ahead> AfterCore(string from, ICollection<string> shown, bool laterChapters)
+		{
 			List<Ahead> result = new List<Ahead>();
 			Row start = Find(from);
 			if (start == null)
