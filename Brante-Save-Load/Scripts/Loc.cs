@@ -17,6 +17,7 @@ namespace Doorstop
 			ConfirmLoad, ConfirmDelete, ConfirmSave, EmptySaves,
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, Current, NothingYet,
+			KindAll, KindAutosave, KindCheckpoint, KindOriginal, ShowMore,
 			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath,
 			PickConflict, NothingToLoad,
 			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick, ReplayOffPath, ReplayDeath, ReplayStopped
@@ -25,16 +26,27 @@ namespace Doorstop
 		static Loc()
 		{
 			AddLoadSceneWord(_en, "Load scene");
+			AddSaveKinds(_en, "All", "Game autosave", "Before load", "Original save", "Show more");
 			AddLoadSceneWord(_ru, "Загрузить сцену");
+			AddSaveKinds(_ru, "Все", "Автосохранение игры", "Перед загрузкой", "Исходное сохранение", "Показать ещё");
 			AddLoadSceneWord(_de, "Szene laden");
+			AddSaveKinds(_de, "Alle", "Spiel-Autosave", "Vor dem Laden", "Originalspeicher", "Mehr anzeigen");
 			AddLoadSceneWord(_fr, "Charger la scène");
+			AddSaveKinds(_fr, "Tout", "Sauvegarde auto", "Avant chargement", "Sauvegarde d'origine", "Afficher plus");
 			AddLoadSceneWord(_es, "Cargar escena");
+			AddSaveKinds(_es, "Todo", "Autoguardado", "Antes de cargar", "Guardado original", "Mostrar más");
 			AddLoadSceneWord(_it, "Carica scena");
+			AddSaveKinds(_it, "Tutto", "Salvataggio auto", "Prima del caricamento", "Salvataggio originale", "Mostra altro");
 			AddLoadSceneWord(_pl, "Wczytaj scenę");
+			AddSaveKinds(_pl, "Wszystkie", "Autozapis gry", "Przed wczytaniem", "Oryginalny zapis", "Pokaż więcej");
 			AddLoadSceneWord(_tr, "Sahneyi yükle");
+			AddSaveKinds(_tr, "Tümü", "Oyun otomatik kaydı", "Yüklemeden önce", "Özgün kayıt", "Daha fazla");
 			AddLoadSceneWord(_ja, "シーンを読み込む");
+			AddSaveKinds(_ja, "すべて", "ゲームの自動保存", "読み込み前", "元のセーブ", "さらに表示");
 			AddLoadSceneWord(_ko, "장면 불러오기");
+			AddSaveKinds(_ko, "전체", "게임 자동 저장", "불러오기 전", "원본 저장", "더 보기");
 			AddLoadSceneWord(_zh, "读取场景");
+			AddSaveKinds(_zh, "全部", "游戏自动保存", "读取前", "原始存档", "显示更多");
 			AddRequirementWords(_en, "Requires", "One of", "not");
 			AddRequirementWords(_ru, "Требуется", "Одно из", "не");
 			AddRequirementWords(_de, "Erfordert", "Eines von", "nicht");
@@ -150,6 +162,16 @@ namespace Doorstop
 		private static void AddLoadSceneWord(Dictionary<K, string> d, string loadScene)
 		{
 			d[K.LoadScene] = loadScene;
+		}
+
+		private static void AddSaveKinds(Dictionary<K, string> d, string all, string autosave,
+			string checkpoint, string original, string showMore)
+		{
+			d[K.KindAll] = all;
+			d[K.KindAutosave] = autosave;
+			d[K.KindCheckpoint] = checkpoint;
+			d[K.KindOriginal] = original;
+			d[K.ShowMore] = showMore;
 		}
 
 		private static void AddRequirementWords(Dictionary<K, string> d, string requires, string oneOf, string not)

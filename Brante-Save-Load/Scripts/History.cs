@@ -419,7 +419,7 @@ namespace Doorstop
 		{
 			try
 			{
-				string dir = Recorder.RunDir(Recorder.CurrentRunId(), "Auto");
+				string dir = Recorder.ChoiceDir(Recorder.CurrentRunId());
 				if (!Directory.Exists(dir))
 				{
 					return new Dictionary<string, List<string>>();

@@ -23,7 +23,7 @@ namespace Doorstop
 		{
 			try
 			{
-				string path = Path.Combine(Recorder.RunDir(Recorder.CurrentRunId(), "Auto"),
+				string path = Path.Combine(Recorder.ChoiceDir(Recorder.CurrentRunId()),
 					"bolt-" + Recorder.SafeName(scene) + ".txt");
 				Directory.CreateDirectory(Path.GetDirectoryName(path));
 

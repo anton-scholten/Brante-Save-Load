@@ -778,3 +778,121 @@ which can be another path's; and a sidecar can hold several `chosen=` lines
 (the save loaded and answered more than once), all of which the tree tries
 when matching saves to the path.
 
+## Save ownership and the four stores (30 Oct 2026)
+
+The mod's save/load side was rebuilt around what the game itself does. These are
+the game facts it rests on; the code is `Recorder.cs` and the table in
+`ChoiceWindow.cs`.
+
+- **Only one game save exists per playthrough**, and the game owns it: one
+  rolling `Saves/<id>/Autosave.dat`, rewritten by every `SaveData`, plus
+  `Chapter_N.dat` at each chapter start. The mod therefore never creates,
+  renames or mints a save folder (`Recorder.MintRunId` is gone; a new game's
+  folder is made by `CreateSaveLoadSlot`). An earlier build did mint one for a
+  game without a main-save id, which left a second folder for the same timeline
+  (on this machine `Saves/Biggie_10/30/202611031PM` beside
+  `Saves/Biggie_10/23/2026103816AM`); that folder is now quarantined, see TODO
+  phase 8.
+- **`LoadGame(int slotId)` sets `_currentSaveSlotInfo`; `LoadGame(SaveLoadHelper)`
+  does not** (re-confirmed; first noted in "Phase 3 capture facts"). The two
+  fields decide where the game writes next:
+  - `SaveData` builds its path from `_currentSaveSlotInfo` (through
+    `GetSaveFolderPath`), so an autosave after a mod load would land in
+    `Saves/` itself;
+  - `Chapter_N.dat` is read by "Restart chapter" through `_currentSaveFile`
+    (see "The main-save ID inside a save is load-bearing").
+- **`LoadSaves()` and `DeleteSaveSlot` work on the id.** `LoadSaves` deserialises
+  every `Autosave.dat` it finds; `DeleteSaveSlot` resolves `Saves/<id>/`, so an
+  empty id makes it target `Saves/` itself. A save whose id was empty could
+  therefore be listed but not deleted, and its next autosave went to the root.
+  The folder name IS the id (`IdFromSavePath`), hence the repair below.
+- **`GetSaveFolderPath` is the single funnel** every save path goes through, so
+  one postfix covers `SaveData`, `SaveChapterState` and the delete/load lookups.
+- **`SaveLoadManager.Instance` is the object the game saves with**, even after
+  Unity destroys it (a Unity `== null` then calls it null while its managed
+  fields still work) — see "Two save managers, and saves with no id at all".
+  Run state and slot repair go through `Recorder.SaveManagers()`.
+- **The game's autosave is a resume point, not a choice point.** It is written
+  by `GameSetupState` -> `SaveGameEvent` with
+  `SceneStates.SceneState_GAME_SETUP` (enum value 2, also visible in the live
+  `testSave.txt`), from `SceneStateMachine`. A choice-point snapshot stores
+  `SceneState_SHOW_ANIMATION` with the scene pending, which is what makes
+  `AutomaticSceneLoad` re-open it. The two are different artifacts of the same
+  moment and are kept in separate folders.
+
+### The new Harmony hooks
+
+| hook | what it does |
+|---|---|
+| postfix `LoadSaves()` | fills empty ids on the deserialised helpers, matching each back to its file by hero + `SlotInfo.Date`, only when that pair names exactly one file |
+| postfix `LoadData(string)` | fills an empty id from the file's folder (`IdFromSavePath`) |
+| postfix `LoadGame(int)` | run state from the game's own Load/Continue (`_modTimeline=false`) |
+| postfix `CreateSaveLoadSlot` | run state for a new game |
+| prefix/postfix `LoadGame(string,int)` | pre-rewind checkpoint + run state (death -> restart chapter) |
+| prefix `SaveGame`/`SaveChapterState` | `EnsureSlotId`: fill a missing id only on a mod timeline |
+| postfix `SaveGame`/`SaveChapterState` | `MirrorGameAutosave`: copy the written `Autosave.dat` into `Runs/<run>/Autosaves/` |
+| postfix `GetSaveFolderPath` | redirect the bare `Saves/` root only (mod timeline) |
+
+Because the game's own load path never sets `_modTimeline`, a save the player
+loads from the game's menu keeps its own id and keeps saving into its own
+folder; only a save the mod loaded can need a repaired id.
+
+### Why no id minting
+
+The old fallback minted an id when the game had none. That split one timeline
+into two save folders (on this machine `Biggie_10/23/…` and
+`Biggie_10/30/…` for the same run), which then matched each other's id in
+`Recorder.RealRunId`, and left saves whose id was empty, which the game's own
+Load list showed but its delete could not target. The id now comes from the
+folder, and a run with genuinely no id keeps an empty one: `CurrentRunId()` may
+return `""`, which is a valid value (`_no_save` is a folder name for the mod's
+own store only, never a slot id). A loose `Saves/Autosave.dat` is the only case
+where the mod moves game files: `RepairLooseRoot` matches it to the run folder
+whose `ShowedScenesList` is the start of its own (same hero, shared prefix >= 5,
+exactly one best match), quarantines the files it replaces to
+`Backups/quarantine/<id>/`, and merges it in (with `Chapter_N.dat` and
+`testSave.txt`).
+
+### The stores under `Runs/<run>/`
+
+| folder | contents | retention |
+|---|---|---|
+| `Choice/` | choice-point snapshots, one per decision, content-hashed | never pruned; tree view only |
+| `Checkpoints/` | state before a rewind: every mod load, every game-menu load (a copy of the run's `Autosave.dat`, since the main menu has no live state), every death -> Restart chapter; sidecar `kind=checkpoint`, `reason=` | newest 100 |
+| `Autosaves/` | copy of the game's `Autosave.dat` after `SaveGame`/`SaveChapterState`; sidecar `kind=autosave`; skipped while `AutoPlay.Running` | newest 100 |
+| `Manual/` | "Save now" | never pruned |
+
+`Auto` was renamed to `Choice` (one-time `MigrateFolderNames`; readers fall back
+to `Auto` if the rename did not run). The rename matters: an `Autosaves/` entry
+and a `Choice/` entry can hold the same bytes, and confusing them would offer a
+resume point as if it were a decision.
+
+### The baseline
+
+At the first start of this version (`Brante-Save-Load/.baseline` absent) each
+existing game save folder is copied once to `Backups/<id>/` (loose root files to
+`Backups/_no_save/`), through `*.tmp-<pid>` with a `MANIFEST.txt` (name, size,
+SHA-1), `README.txt` and `.complete`, then moved into place. A `Backups/<id>/`
+made by an older version has no `.complete`; it is kept untouched and marked,
+never re-copied or pruned. `Recorder.EnsureBaseline(id)` runs before a load as
+the fallback. This is the only pre-mod timeline the mod keeps, which is why the
+gate that used to block the game's saves could go: the live save is the player's
+own, and the checkpoints keep every state a rewind replaces.
+
+### The table
+
+One table for the run: `Game autosave` (`Autosaves/`), `Before load`
+(`Checkpoints/`), `Manual` (`Manual/`) and `Original save`
+(`Backups/<id>/Autosave.dat`, read-only, no delete row). The live
+`Saves/<id>/Autosave.dat` is not listed — it is the game's, and the window only
+shows what can be loaded safely. Choice points are not listed at all; they
+belong to the tree view.
+
+The first header ("Save type") is a button that cycles the filter
+`All -> Game autosave -> Before load -> Manual -> Original -> All`, reset to
+`All` when the window opens; it is not a sort column, the other headers are.
+Identical states are not merged across categories (same bytes, different
+artifact). Rows are built in pages of 120 with a "Show more" row, so a run with
+hundreds of autosaves still opens quickly; loading any row goes through the same
+flow (pre-rewind checkpoint, adopt the run slot, load, loading screen/dissolve).
+

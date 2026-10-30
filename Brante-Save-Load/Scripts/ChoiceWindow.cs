@@ -366,7 +366,7 @@ namespace Doorstop
 
 		// Preferred widths in reference px; Choice takes whatever is left.
 		private static readonly float[] ColWidths =
-		{ 130f, 190f, 170f, 90f, 90f, 130f, 90f, 330f, 260f };   // the choice column takes the rest
+		{ 220f, 180f, 160f, 80f, 80f, 120f, 80f, 300f, 240f };   // the choice column takes the rest
 
 		private const float RowHeight = 44f;
 		private const float HeaderHeight = 36f;
@@ -721,6 +721,8 @@ namespace Doorstop
 			{
 				BuildCanvas();
 			}
+			// The type filter is per opening (no persisted setting).
+			_filter = SaveFilter.All;
 			int n = RefreshItems();
 			_lastItemCount = n;
 			if (_scrollRect != null)
@@ -1649,6 +1651,9 @@ namespace Doorstop
 				}
 				return true;
 			}, 60f, true);
+			// One autosave for the scene the replay reached (the per-scene
+			// mirror is suppressed while AutoPlay runs).
+			Recorder.MirrorGameAutosave();
 			string at = AutoPlay.Story();
 			if (at != plan.Target)
 			{
@@ -2898,7 +2903,15 @@ namespace Doorstop
 				img.color = Palette.Dark;
 				Button btn = cell.AddComponent<Button>();
 				btn.targetGraphic = img;
-				btn.onClick.AddListener(delegate { SetSort(col); });
+				if (col == Col.Type)
+				{
+					// The type column is the filter cycle, not a sort column.
+					btn.onClick.AddListener(CycleFilter);
+				}
+				else
+				{
+					btn.onClick.AddListener(delegate { SetSort(col); });
+				}
 				LayoutElement le = cell.AddComponent<LayoutElement>();
 				le.preferredWidth = ColWidths[i];
 				if (col == Col.Choice)
@@ -2967,9 +2980,15 @@ namespace Doorstop
 			}
 			for (int i = 0; i < _sortIcons.Length; i++)
 			{
-				bool active = (Col)i == _sortCol;
+				bool type = (Col)i == Col.Type;
+				bool active = !type && (Col)i == _sortCol;
 				_sortIcons[i].enabled = active;
 				_sortIcons[i].sprite = _sortAsc ? _triUp : _triDown;
+			}
+			if (_headerLabels.Length > (int)Col.Type && _headerLabels[(int)Col.Type] != null)
+			{
+				_headerLabels[(int)Col.Type].text = Loc.T(Loc.K.ColType) + ": "
+					+ FilterName(_filter);
 			}
 		}
 
@@ -3111,6 +3130,12 @@ namespace Doorstop
 		{
 			try
 			{
+				if (Recorder.IsBackupPath(datPath))
+				{
+					ModLog.Info("ChoiceWindow: not deleting the original backup " + datPath);
+					CancelConfirm();
+					return;
+				}
 				File.Delete(datPath);
 				string sidecar = Path.Combine(Path.GetDirectoryName(datPath),
 					Path.GetFileNameWithoutExtension(datPath) + ".meta.txt");
@@ -3215,7 +3240,7 @@ namespace Doorstop
 		// ------------------------------------------------------------------
 
 		// Reloads every save from disk, re-sorts and rebuilds the rows.
-		// Returns the number of saves.
+		// Returns the number of saves shown.
 		private static int RefreshItems()
 		{
 			if (_itemContainer == null)
@@ -3223,12 +3248,122 @@ namespace Doorstop
 				return 0;
 			}
 			string run = Recorder.CurrentRunId();
-			_entries = ReadEntries(Recorder.RunDir(run, "Auto"), "Auto");
-			_entries.AddRange(ReadEntries(Recorder.RunDir(run, "Manual"), "Manual"));
+			List<SaveEntry> all = new List<SaveEntry>();
+			all.AddRange(ReadEntries(Recorder.RunDir(run, Recorder.KindAutosaves),
+				Recorder.KindAutosaves));
+			all.AddRange(ReadEntries(Recorder.RunDir(run, Recorder.KindCheckpoints),
+				Recorder.KindCheckpoints));
+			all.AddRange(ReadEntries(Recorder.RunDir(run, Recorder.KindManual),
+				Recorder.KindManual));
+			SaveEntry original = ReadOriginal(run);
+			if (original != null)
+			{
+				all.Add(original);
+			}
+			_entries = ApplyFilter(all);
 			SortEntries();
+			_shown = PageSize;
 			UpdateHeader();
 			BuildRows();
 			return _entries.Count;
+		}
+
+		private enum SaveFilter { All, Autosaves, Checkpoints, Manual, Original }
+
+		private static SaveFilter _filter = SaveFilter.All;
+		private const int PageSize = 120;
+		private static int _shown = PageSize;
+
+		// Clicking the Type header cycles the filter: All, then one category
+		// at a time, and back to All.
+		private static void CycleFilter()
+		{
+			switch (_filter)
+			{
+				case SaveFilter.All: _filter = SaveFilter.Autosaves; break;
+				case SaveFilter.Autosaves: _filter = SaveFilter.Checkpoints; break;
+				case SaveFilter.Checkpoints: _filter = SaveFilter.Manual; break;
+				case SaveFilter.Manual: _filter = SaveFilter.Original; break;
+				default: _filter = SaveFilter.All; break;
+			}
+			if (_itemContainer == null)
+			{
+				return;
+			}
+			string run = Recorder.CurrentRunId();
+			List<SaveEntry> all = new List<SaveEntry>();
+			all.AddRange(ReadEntries(Recorder.RunDir(run, Recorder.KindAutosaves),
+				Recorder.KindAutosaves));
+			all.AddRange(ReadEntries(Recorder.RunDir(run, Recorder.KindCheckpoints),
+				Recorder.KindCheckpoints));
+			all.AddRange(ReadEntries(Recorder.RunDir(run, Recorder.KindManual),
+				Recorder.KindManual));
+			SaveEntry original = ReadOriginal(run);
+			if (original != null)
+			{
+				all.Add(original);
+			}
+			_entries = ApplyFilter(all);
+			SortEntries();
+			_shown = PageSize;
+			UpdateHeader();
+			BuildRows();
+			Canvas.ForceUpdateCanvases();
+			MeasureMarquees();
+		}
+
+		private static List<SaveEntry> ApplyFilter(List<SaveEntry> all)
+		{
+			if (_filter == SaveFilter.All)
+			{
+				return all;
+			}
+			string kind = FilterKind(_filter);
+			List<SaveEntry> list = new List<SaveEntry>();
+			foreach (SaveEntry e in all)
+			{
+				if (e.Kind == kind)
+				{
+					list.Add(e);
+				}
+			}
+			return list;
+		}
+
+		private static string FilterKind(SaveFilter f)
+		{
+			switch (f)
+			{
+				case SaveFilter.Autosaves: return Recorder.KindAutosaves;
+				case SaveFilter.Checkpoints: return Recorder.KindCheckpoints;
+				case SaveFilter.Manual: return Recorder.KindManual;
+				case SaveFilter.Original: return "Original";
+				default: return "";
+			}
+		}
+
+		private static string FilterName(SaveFilter f)
+		{
+			switch (f)
+			{
+				case SaveFilter.Autosaves: return Loc.T(Loc.K.KindAutosave);
+				case SaveFilter.Checkpoints: return Loc.T(Loc.K.KindCheckpoint);
+				case SaveFilter.Manual: return Loc.T(Loc.K.TypeManual);
+				case SaveFilter.Original: return Loc.T(Loc.K.KindOriginal);
+				default: return Loc.T(Loc.K.KindAll);
+			}
+		}
+
+		private static string KindLabel(string kind)
+		{
+			switch (kind)
+			{
+				case Recorder.KindAutosaves: return Loc.T(Loc.K.KindAutosave);
+				case Recorder.KindCheckpoints: return Loc.T(Loc.K.KindCheckpoint);
+				case Recorder.KindManual: return Loc.T(Loc.K.TypeManual);
+				case "Original": return Loc.T(Loc.K.KindOriginal);
+				default: return Loc.T(Loc.K.TypeAuto);
+			}
 		}
 
 		// Reads every save in one folder. The save file itself is the
@@ -3253,38 +3388,69 @@ namespace Doorstop
 			}
 			foreach (string f in files)
 			{
-				try
+				SaveEntry entry = ReadEntry(f, kind);
+				if (entry != null)
 				{
-					SaveLoadHelper h;
-					using (FileStream fs = File.OpenRead(f))
-					{
-						h = (SaveLoadHelper)new BinaryFormatter().Deserialize(fs);
-					}
-					SaveEntry entry = new SaveEntry();
-					entry.Dat = f;
-					entry.Kind = kind;
-					entry.Title = ReadTitle(f);
-					// The sidecar holds the real capture time; the file's own
-					// timestamp can be newer (e.g. after the run-folder move).
-					DateTime recorded = ReadRecorded(f);
-					entry.Saved = recorded != DateTime.MinValue ? recorded : File.GetLastWriteTime(f);
-					entry.Chapter = h.Chapter;
-					entry.ChapterKey = h.ChapterName ?? "";
-					entry.ChapterName = StageName(h.ChapterName);
-					entry.Hero = h.HeroName ?? "";
-					entry.Age = h.HeroAge;
-					entry.Year = h.Year;
-					entry.Season = h.Season;
-					entry.Turn = h.Turn;
-					entry.Scene = h.LastOpenScene ?? "";
 					list.Add(entry);
-				}
-				catch (Exception e)
-				{
-					ModLog.Error("ChoiceWindow: cannot read save " + f + ":\n" + e);
 				}
 			}
 			return list;
+		}
+
+		// The one-time original save of the run, from Backups/<id>/.
+		private static SaveEntry ReadOriginal(string run)
+		{
+			try
+			{
+				string dir = Path.Combine(Recorder.BackupsDir,
+					Recorder.SafeName(string.IsNullOrEmpty(run) ? Recorder.NoRun : run));
+				string dat = Path.Combine(dir, "Autosave.dat");
+				if (!File.Exists(dat))
+				{
+					return null;
+				}
+				return ReadEntry(dat, "Original");
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: cannot read the original backup:\n" + e);
+				return null;
+			}
+		}
+
+		private static SaveEntry ReadEntry(string f, string kind)
+		{
+			try
+			{
+				SaveLoadHelper h;
+				using (FileStream fs = File.OpenRead(f))
+				{
+					h = (SaveLoadHelper)new BinaryFormatter().Deserialize(fs);
+				}
+				SaveEntry entry = new SaveEntry();
+				entry.Dat = f;
+				entry.Kind = kind;
+				entry.Title = ReadTitle(f);
+				// The sidecar holds the real capture time; the file's own
+				// timestamp can be newer (e.g. after the run-folder move).
+				DateTime recorded = ReadRecorded(f);
+				entry.Saved = recorded != DateTime.MinValue ? recorded : File.GetLastWriteTime(f);
+				entry.Chapter = h.Chapter;
+				entry.ChapterKey = h.ChapterName ?? "";
+				entry.ChapterName = StageName(h.ChapterName);
+				entry.Hero = h.HeroName ?? "";
+				entry.Age = h.HeroAge;
+				entry.Year = h.Year;
+				entry.Season = h.Season;
+				entry.Turn = h.Turn;
+				entry.Scene = h.LastOpenScene ?? "";
+				return entry;
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: cannot read save " + f + ":\n" + e);
+				return null;
+			}
 		}
 
 		// "Chapter1.Childhood" -> "Childhood".
@@ -3456,18 +3622,43 @@ namespace Doorstop
 				le.preferredHeight = 60f;
 				return;
 			}
-			for (int i = 0; i < _entries.Count; i++)
+			int show = Math.Min(_shown, _entries.Count);
+			for (int i = 0; i < show; i++)
 			{
 				CreateRow(_entries[i], i);
+			}
+			if (show < _entries.Count)
+			{
+				GameObject more = CreateUiObject("More", _itemContainer);
+				LayoutElement mle = more.AddComponent<LayoutElement>();
+				mle.preferredHeight = RowHeight;
+				Image mimg = more.AddComponent<Image>();
+				mimg.color = Palette.Dark;
+				Button mbtn = more.AddComponent<Button>();
+				mbtn.targetGraphic = mimg;
+				mbtn.onClick.AddListener(delegate
+				{
+					_shown += PageSize;
+					BuildRows();
+					Canvas.ForceUpdateCanvases();
+					MeasureMarquees();
+				});
+				TextMeshProUGUI label = AddLabel(more.transform, "Label",
+					Loc.T(Loc.K.ShowMore) + " (" + (_entries.Count - show) + ")", 19f,
+					Palette.TextLight, true);
+				Stretch(label.rectTransform);
 			}
 		}
 
 		private static void CreateRow(SaveEntry e, int index)
 		{
-			bool manual = e.Kind == "Manual";
-			Color bg = manual
+			bool manual = e.Kind == Recorder.KindManual;
+			bool original = e.Kind == "Original";
+			Color bg = original
 				? (index % 2 == 0 ? Palette.Highlight : Palette.HighlightAlt)
-				: (index % 2 == 0 ? Palette.Card : Palette.CardAlt);
+				: manual
+					? (index % 2 == 0 ? Palette.Highlight : Palette.HighlightAlt)
+					: (index % 2 == 0 ? Palette.Card : Palette.CardAlt);
 			string p = e.Dat;
 			string t = e.Choice;
 			GameObject row = CreateUiObject("Row", _itemContainer);
@@ -3488,7 +3679,7 @@ namespace Doorstop
 
 			string[] values =
 			{
-				e.Kind == "Manual" ? Loc.T(Loc.K.TypeManual) : Loc.T(Loc.K.TypeAuto),
+				KindLabel(e.Kind),
 				e.Saved.ToString("yyyy-MM-dd HH:mm"),
 				// Shown by name (translated); the column still sorts on the
 				// chapter number.
@@ -3544,31 +3735,34 @@ namespace Doorstop
 
 			// Delete at the far right: a red cell with a drawn x. As a child
 			// of the row it sits above the row's own button, so a click
-			// reaches only this one.
-			string dp = e.Dat;
-			string dt = e.Choice;
-			GameObject del = CreateUiObject("Delete", row.transform);
-			LayoutElement dle = del.AddComponent<LayoutElement>();
-			dle.preferredWidth = DeleteWidth;
-			Image dimg = del.AddComponent<Image>();
-			dimg.color = Color.clear;
-			Button dbtn = del.AddComponent<Button>();
-			dbtn.targetGraphic = dimg;
-			dbtn.onClick.AddListener(delegate { Ask(Pending.Delete, dp, dt, row); });
-			// a bin, red under the pointer as the x's are
-			GameObject bin = CreateUiObject("Bin", del.transform);
-			RectTransform binRt = bin.GetComponent<RectTransform>();
-			binRt.anchorMin = binRt.anchorMax = new Vector2(0.5f, 0.5f);
-			binRt.sizeDelta = new Vector2(30f, 30f);
-			Image binImg = bin.AddComponent<Image>();
-			if (_binIcon == null)
+			// reaches only this one. The original backup is read-only.
+			if (!original)
 			{
-				_binIcon = MakeBinIcon();
+				string dp = e.Dat;
+				string dt = e.Choice;
+				GameObject del = CreateUiObject("Delete", row.transform);
+				LayoutElement dle = del.AddComponent<LayoutElement>();
+				dle.preferredWidth = DeleteWidth;
+				Image dimg = del.AddComponent<Image>();
+				dimg.color = Color.clear;
+				Button dbtn = del.AddComponent<Button>();
+				dbtn.targetGraphic = dimg;
+				dbtn.onClick.AddListener(delegate { Ask(Pending.Delete, dp, dt, row); });
+				// a bin, red under the pointer as the x's are
+				GameObject bin = CreateUiObject("Bin", del.transform);
+				RectTransform binRt = bin.GetComponent<RectTransform>();
+				binRt.anchorMin = binRt.anchorMax = new Vector2(0.5f, 0.5f);
+				binRt.sizeDelta = new Vector2(30f, 30f);
+				Image binImg = bin.AddComponent<Image>();
+				if (_binIcon == null)
+				{
+					_binIcon = MakeBinIcon();
+				}
+				binImg.sprite = _binIcon;
+				binImg.color = Palette.Ink;
+				binImg.raycastTarget = false;
+				del.AddComponent<CrossHover>().Bars = new[] { binImg };
 			}
-			binImg.sprite = _binIcon;
-			binImg.color = Palette.Ink;
-			binImg.raycastTarget = false;
-			del.AddComponent<CrossHover>().Bars = new[] { binImg };
 
 			if (_firstItemPath == null)
 			{
@@ -3677,23 +3871,39 @@ namespace Doorstop
 			// The blob has no ID (for stable dedup), so the run comes from
 			// the folder the file sits in; the game needs the REAL id (it
 			// contains slashes) to find its own save folder.
-			string runId = standIn ? liveRun : Recorder.RunIdFromPath(datPath);
+			string runId = standIn ? liveRun : Recorder.RunIdForSavePath(datPath);
 			if (string.IsNullOrEmpty(runId) && helper.SlotInfo != null)
 			{
 				runId = helper.SlotInfo.Id;
 			}
 			// A raw id keeps its slashes; a folder name from RunsDir is
-			// sanitised. Only ever adopt a raw one - otherwise the game would
-			// create a second save folder under a mangled name.
-			string realId = standIn ? liveReal : Recorder.RealRunId(runId);
-			if (string.IsNullOrEmpty(realId) && !standIn)
+			// sanitised. The save's own id (stored in the blob) wins over the
+			// folder it is filed in: a cross-run pre-rewind checkpoint is
+			// filed with the target run so that run's table can show it.
+			string blobId = helper.SlotInfo != null ? Recorder.RealOrEmpty(helper.SlotInfo.Id) : "";
+			string realId = "";
+			if (standIn)
 			{
-				realId = Recorder.LiveRealId();
+				realId = liveReal;
+			}
+			else if (!string.IsNullOrEmpty(blobId) && blobId.IndexOf('/') >= 0)
+			{
+				realId = Directory.Exists(Path.Combine(Recorder.SavesDir, blobId))
+					? blobId : Recorder.RealRunId(blobId);
 			}
 			if (string.IsNullOrEmpty(realId) && !standIn)
 			{
-				string blobId = helper.SlotInfo != null ? helper.SlotInfo.Id : "";
-				realId = blobId != null && blobId.IndexOf('/') >= 0 ? blobId : "";
+				realId = Recorder.RealRunId(runId);
+			}
+			if (string.IsNullOrEmpty(realId) && !standIn && !string.IsNullOrEmpty(blobId)
+				&& blobId.IndexOf('/') >= 0)
+			{
+				realId = blobId;
+			}
+			if (string.IsNullOrEmpty(realId) && !standIn && Recorder.IsBackupPath(datPath))
+			{
+				// The original backup belongs to the run being played.
+				realId = Recorder.CurrentRunId();
 			}
 			if (!string.IsNullOrEmpty(realId))
 			{
@@ -3703,15 +3913,14 @@ namespace Doorstop
 				}
 				helper.SlotInfo.Id = realId;
 			}
-			// Keep the pre-mod timeline instead of letting the game's saves
-			// overwrite it in place (see Recorder.BackupOriginalSave).
-			Recorder.BackupOriginalSave(realId);
+			// Keep the state the load is about to replace, and make sure the
+			// original save (and the target run's) has its one-time backup.
+			Recorder.BeforeModLoad(realId, helper.LastOpenScene);
 			if (File.Exists(Path.Combine(Recorder.SnapshotDir, "dev-ironman.txt")))
 			{
 				helper.IronManMode = true;
 				ModLog.Info("DEV IRONMAN: loading the save as an Iron Man game");
 			}
-			Recorder.PinRunId(runId);
 			Close();
 			try
 			{

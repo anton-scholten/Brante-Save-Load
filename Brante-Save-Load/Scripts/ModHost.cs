@@ -64,6 +64,13 @@ namespace Doorstop
 			// exceptions go into the mod's log, the only diagnostic channel.
 			Application.logMessageReceived += GameLog;
 			Recorder.MigrateDataDir();
+			Recorder.MigrateFolderNames();
+			// The player's own saves as they are now: copied once, before the
+			// mod touches anything.
+			Recorder.BaselineAll();
+			// Saves from older versions: recover ids, merge a loose root save.
+			Recorder.RepairIds();
+			Recorder.RepairLooseRoot();
 			Recorder.Arm();
 			Recorder.MigrateLegacy();
 			StartCoroutine(DevAutoload());
@@ -239,6 +246,37 @@ namespace Doorstop
 				if (opened.IsValid() && opened.isLoaded)
 				{
 					ModLog.Info("DEV AUTOLOAD: scene " + scene + " is open");
+					// Dev: load one mod save through the real table path
+					// (pre-rewind checkpoint, baseline, adopt, loading screen).
+					// "dev-load.txt" holds a file name under Runs/.
+					string loadMarker = Path.Combine(Recorder.SnapshotDir, "dev-load.txt");
+					if (File.Exists(loadMarker))
+					{
+						string want = "";
+						try { want = File.ReadAllText(loadMarker).Trim(); File.Delete(loadMarker); }
+						catch (Exception) { }
+						string found = null;
+						if (!string.IsNullOrEmpty(want) && Directory.Exists(Recorder.RunsDir))
+						{
+							foreach (string f in Directory.GetFiles(Recorder.RunsDir, want,
+								SearchOption.AllDirectories))
+							{
+								found = f;
+							}
+						}
+						ModLog.Info("DEV LOAD: " + (found ?? "not found: " + want));
+						if (found != null)
+						{
+							ChoiceWindow.LoadSnapshot(found);
+							for (int w = 0; w < 30; w++)
+							{
+								yield return new WaitForSeconds(1f);
+							}
+							ModLog.Info("DEV LOAD: now at '" + AutoPlay.Story() + "', main save '"
+								+ Recorder.CurrentRunId() + "'");
+						}
+						yield break;
+					}
 					// Phase 4 UI test: a second marker drives the choice-list
 					// window (open -> list -> simulated clicks -> load).
 					string uitest = Path.Combine(Recorder.SnapshotDir, "dev-uitest.txt");

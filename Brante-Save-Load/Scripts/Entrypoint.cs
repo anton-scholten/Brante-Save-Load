@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
+using _Scripts.Helpers;
 
 namespace Doorstop
 {
@@ -107,25 +109,69 @@ namespace Doorstop
 			{
 				return;
 			}
-			foreach (MethodInfo m in slm.GetMethods(
-				BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+			const BindingFlags all = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+			foreach (MethodInfo m in slm.GetMethods(all))
 			{
 				if ((m.Name == "SaveGame" && m.GetParameters().Length == 4)
 					|| (m.Name == "SaveChapterState" && m.GetParameters().Length == 0))
 				{
 					harmony.Patch(m,
-						prefix: new HarmonyMethod(typeof(Entrypoint), "SaveRepairPrefix"));
-					ModLog.Info("Patched " + slm.Name + "." + m.Name + " (slot repair prefix)");
+						prefix: new HarmonyMethod(typeof(Entrypoint), "SaveRepairPrefix"),
+						postfix: new HarmonyMethod(typeof(Entrypoint), "SaveMirrorPostfix"));
+					ModLog.Info("Patched " + slm.Name + "." + m.Name
+						+ " (slot repair prefix, autosave mirror postfix)");
 				}
 			}
 			// The single funnel every save path uses to find its folder.
-			MethodInfo folder = slm.GetMethod("GetSaveFolderPath",
-				BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			MethodInfo folder = slm.GetMethod("GetSaveFolderPath", all);
 			if (folder != null)
 			{
 				harmony.Patch(folder,
 					postfix: new HarmonyMethod(typeof(Entrypoint), "SaveFolderPostfix"));
 				ModLog.Info("Patched " + slm.Name + ".GetSaveFolderPath (folder repair postfix)");
+			}
+			// Saves written by older versions can have no SlotInfo.Id; the
+			// folder is the id. Fix it wherever the game reads a save, so its
+			// own Load/Continue and its next autosave use the right folder.
+			MethodInfo loadSaves = slm.GetMethod("LoadSaves", all);
+			if (loadSaves != null)
+			{
+				harmony.Patch(loadSaves,
+					postfix: new HarmonyMethod(typeof(Entrypoint), "SaveListPostfix"));
+				ModLog.Info("Patched " + slm.Name + ".LoadSaves (id recovery postfix)");
+			}
+			MethodInfo loadData = slm.GetMethod("LoadData", all, null, new Type[] { typeof(string) }, null);
+			if (loadData != null)
+			{
+				harmony.Patch(loadData,
+					postfix: new HarmonyMethod(typeof(Entrypoint), "LoadDataPostfix"));
+				ModLog.Info("Patched " + slm.Name + ".LoadData (id recovery postfix)");
+			}
+			// Know exactly when the game changes saves, instead of guessing.
+			foreach (MethodInfo m in slm.GetMethods(all))
+			{
+				if (m.Name == "LoadGame" && m.GetParameters().Length == 1
+					&& m.GetParameters()[0].ParameterType == typeof(int))
+				{
+					harmony.Patch(m,
+						prefix: new HarmonyMethod(typeof(Entrypoint), "GameLoadPrefix"),
+						postfix: new HarmonyMethod(typeof(Entrypoint), "GameLoadPostfix"));
+					ModLog.Info("Patched " + slm.Name + ".LoadGame(int) (pre-rewind checkpoint, run state)");
+				}
+				else if (m.Name == "LoadGame" && m.GetParameters().Length == 2
+					&& m.GetParameters()[0].ParameterType == typeof(string))
+				{
+					harmony.Patch(m,
+						prefix: new HarmonyMethod(typeof(Entrypoint), "ChapterLoadPrefix"),
+						postfix: new HarmonyMethod(typeof(Entrypoint), "ChapterLoadPostfix"));
+					ModLog.Info("Patched " + slm.Name + ".LoadGame(string,int) (chapter checkpoint, run state)");
+				}
+				else if (m.Name == "CreateSaveLoadSlot")
+				{
+					harmony.Patch(m,
+						postfix: new HarmonyMethod(typeof(Entrypoint), "NewGamePostfix"));
+					ModLog.Info("Patched " + slm.Name + ".CreateSaveLoadSlot (run state)");
+				}
 			}
 		}
 
@@ -143,6 +189,47 @@ namespace Doorstop
 		private static void SaveRepairPrefix(object __instance)
 		{
 			Recorder.EnsureSlotId(__instance);
+		}
+
+		// After the game has written Autosave.dat, keep a copy for the table.
+		private static void SaveMirrorPostfix()
+		{
+			Recorder.MirrorGameAutosave();
+		}
+
+		private static void SaveListPostfix(List<SaveLoadHelper> __result)
+		{
+			Recorder.RecoverListIds(__result);
+		}
+
+		private static void LoadDataPostfix(string __0, SaveLoadHelper __result)
+		{
+			Recorder.RecoverId(__result, __0);
+		}
+
+		private static void GameLoadPrefix(object __instance, int __0)
+		{
+			Recorder.BeforeGameMenuLoad(__instance, __0);
+		}
+
+		private static void GameLoadPostfix()
+		{
+			Recorder.MarkGameSave(false);
+		}
+
+		private static void ChapterLoadPrefix(int __1)
+		{
+			Recorder.BeforeChapterRestart(__1);
+		}
+
+		private static void ChapterLoadPostfix()
+		{
+			Recorder.MarkChapterLoad();
+		}
+
+		private static void NewGamePostfix(object __instance)
+		{
+			Recorder.MarkGameSave(true);
 		}
 
 		// Runs on the main thread, engine fully up, at the end of Awake() of

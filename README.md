@@ -11,12 +11,16 @@ It also features a "tree view" visual of your playthrough so you can see your mi
 
 ## What it does
 
-- **Load any past scene (when you had to make a choice).** The mod records the exact game state at every scene. Then you can click the save / load tab on top of the book (the medallion with a down and an up arrow, next to the chapter tab), and pick any entry from the full-screen list to return to it.
+- **Load any past scene (when you had to make a choice).** The mod records the exact game state at every scene, so you can go back to any choice you already reached: open its window from the tab at the top of the book (the medallion with linked boxes), then the tree view at the top of the window, and pick the choice.
 ![The save / load screen.](Screenshot_2.jpg)
 
-- **Its own snapshots, and a backup of the game's save.** The mod uses the same folder as normal saves for automatic saves. Before you use the mod for the first time it copies the game's own save folder to a backup folder `Brante-Save-Load/Backups/<save>/` (with a `README.txt` saying how to put it back). After that, the game saves work normally again, exactly as it would after loading an older save from its own menu so autosaves keep working, and a chapter restart after a death continues *your* timeline.
+- **A backup of your original save, and the game's saves keep working.** The first time you start the game with this version the mod copies your game save folder once to `Brante-Save-Load/Backups/<save>/` (with a `README.txt` saying how to put it back) and never touches that copy again. Your game saves then work normally: the game keeps its one rolling autosave in the same save folder, exactly as it would after loading an older save from its own menu, and a chapter restart after a death continues *your* timeline.
 
-- **You can save whenever you want.** This same window lists the automatic as well as your manual saves (made using the **"Save now"** button at the bottom). These saves are kept in `Brante-Save-Load/Runs/<main save ID>/`, separate from the game's saves to make sure it does not overwrite your original saves.
+- **You can save whenever you want.** Use the **"Save now"** button at the bottom of the window. These saves are kept in `Brante-Save-Load/Runs/<main save ID>/`, separate from the game's saves so they never overwrite them.
+
+- **Everything you can go back to, in one list.** The window lists the game's own autosaves (copied as the game writes them), a snapshot taken before every rewind, your manual saves, and the backup of your original save. Click the **"Save type"** header to cycle between them; the other headers sort. Past choice points are not in this list - they are what the tree view is for.
+
+- **Nothing is lost by a rewind.** Before the mod loads an older save (or the game loads one from its own menu, or you restart a chapter after a death) it keeps the state you had, so the rewind can be undone from the same list.
 
 - **In your language.** The mod is translated into all eleven languages the game ships (English, Russian, German, French, Spanish, Italian, Polish, Turkish, Japanese, Korean, Simplified Chinese).
 
@@ -78,6 +82,8 @@ Two extra flags:
   When Load scene meets one of the other scenes, it stops there so you can pick its choice and load again.
 - Greyed-out choices after a changed pick are a close estimate: changes the game makes between scenes aren't simulated.
 - Load scene takes about 5 to 10 seconds per scene to replay.
+- The list keeps the newest 100 autosaves and 100 pre-rewind snapshots per playthrough; older ones are dropped. Manual saves, choice points and the backup of your original save are never removed.
+- The list shows 120 rows at a time; the **"Show more"** row loads the rest.
 - Some stats (Love, Rule, Volition, Tolerance, Wrath, Control, Cruelty, Weight, Contention) have no description in the game itself.
 - The game's saves don't sync with Steam Cloud (the developer has it turned off). Copy the `Saves` folder by hand to move them between computers.
 
@@ -85,6 +91,7 @@ Two extra flags:
 
 The game keeps its whole state in one object and has a public method to restore it.
 The mod saves that object whenever a choice is on screen and loads it back later. It's exact, randomness included, since the dice have already been rolled by the time you see the choice.
+It also copies the game's own autosave as the game writes it, and keeps a snapshot of the live state before every rewind, so a rewind can itself be undone.
 The tree view uses three tables extracted from the game (`scene-flow.tsv`, `scene-texts.tsv`, `scene-effects.tsv`). After a game update, regenerate them with the scripts in `tools/` (see `docs/BRANCHES.md`).
 More details in [docs/FINDINGS.md](docs/FINDINGS.md), and [AGENTS.md](AGENTS.md) for working on the mod.
 

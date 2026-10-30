@@ -54,11 +54,40 @@ namespace Doorstop
 			}
 		}
 
-		// The main save the mod last loaded, used when the game's own
-		// bookkeeping has lost it (a snapshot load restores the state, but the
-		// game's SaveLoadManager can be recreated with an empty slot info).
-		private static string _pinnedRunId;
+		// The run the session is on, exactly as the game last changed saves
+		// (new game, its own Load/Continue, or one of the mod's loads). "" is
+		// a valid value: the game is playing a save with no main-save id.
+		// Nothing here guesses an id from a previous run.
+		private static string _runId;
+		private static bool _runKnown;
 		private static bool _idProblemLogged;
+
+		// True while the game is playing a save the mod loaded. Only then may
+		// the mod repair a missing slot id or redirect a save path; a save the
+		// player loaded through the game's own menu is always left alone.
+		private static bool _modTimeline;
+
+		// The folders under Runs/<run>/.
+		public const string KindChoice = "Choice";
+		public const string KindManual = "Manual";
+		public const string KindCheckpoints = "Checkpoints";
+		public const string KindAutosaves = "Autosaves";
+
+		// Retention (fixed, not a setting): the newest distinct game
+		// autosaves and pre-rewind checkpoints kept per run. Manual saves,
+		// choice points and the original backup are never pruned.
+		private const int KeepAutosaves = 100;
+		private const int KeepCheckpoints = 100;
+
+		public static string ModDir
+		{
+			get { return Path.Combine(Application.persistentDataPath, "Brante-Save-Load"); }
+		}
+
+		public static string SavesDir
+		{
+			get { return Path.Combine(Application.persistentDataPath, "Saves"); }
+		}
 
 		// The save managers whose slot matters: the one the game saves through
 		// (SaveLoadManager.Instance - set in Awake and never cleared, so it
@@ -94,18 +123,29 @@ namespace Doorstop
 		// creates, and the throw stops the scene from drawing - a blank book).
 		public const string NoRun = "_no_save";
 
-		// "" for the placeholder, else the id.
+		// "" for the placeholder, else the id with canonical forward slashes
+		// (the game builds its own ids from a date string; a backslash id
+		// would be a literal character on macOS/Linux builds).
 		public static string RealOrEmpty(string id)
 		{
-			return id == NoRun ? "" : id;
+			if (string.IsNullOrEmpty(id))
+			{
+				return "";
+			}
+			if (id == NoRun)
+			{
+				return "";
+			}
+			return id.IndexOf('\\') >= 0 ? id.Replace('\\', '/') : id;
 		}
 
 		// Dev: as if no run had been adopted or pinned (a game started from a
 		// save without a main-save id).
 		public static void DevForgetRun()
 		{
-			_adoptedId = null;
-			_pinnedRunId = null;
+			_runId = "";
+			_runKnown = false;
+			_modTimeline = false;
 			FieldInfo f = typeof(SaveLoadManager).GetField("_currentSaveSlotInfo",
 				BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 			FieldInfo cf = typeof(SaveLoadManager).GetField("_currentSaveFile",
@@ -121,42 +161,113 @@ namespace Doorstop
 			}
 		}
 
-		public static void PinRunId(string id)
+		// Set when the mod loads a save (Load scene included).
+		public static void BeginModLoad(string runId)
 		{
-			id = RealOrEmpty(id);
-			if (!string.IsNullOrEmpty(id))
+			_runId = RealOrEmpty(runId);
+			_runKnown = true;
+			_modTimeline = true;
+			ModLog.Info("Recorder: mod timeline, run '"
+				+ (_runId == "" ? "(none)" : _runId) + "'");
+		}
+
+		// Set when the game itself changes saves (its Load / Continue / a new
+		// game): any slot repair for the previous save no longer applies.
+		public static void MarkGameSave(bool newGame)
+		{
+			string live = LiveRealIdOf(GameSaveManager());
+			_runId = RealOrEmpty(live);
+			_runKnown = true;
+			_modTimeline = false;
+			_idProblemLogged = true;
+			ModLog.Info("Recorder: " + (newGame ? "new game" : "game save loaded")
+				+ ", run '" + (_runId == "" ? "(none)" : _runId) + "'");
+		}
+
+		public static bool ModTimeline
+		{
+			get { return _modTimeline; }
+		}
+
+		// A chapter restart (death -> "Restart chapter") loads Chapter_N.dat
+		// over the live state; it is still the current timeline.
+		public static void MarkChapterLoad()
+		{
+			string live = RealOrEmpty(LiveRealIdOf(GameSaveManager()));
+			_runId = live;
+			_runKnown = true;
+			ModLog.Info("Recorder: chapter state loaded, run '"
+				+ (live == "" ? "(none)" : live) + "'");
+		}
+
+		// Before the game's own Load/Continue: at the main menu there is no
+		// live state, so keep the run's Autosave.dat (the file the load
+		// replaces) as a pre-rewind checkpoint.
+		public static void BeforeGameMenuLoad(object slmObj, int slotId)
+		{
+			try
 			{
-				_pinnedRunId = id;
-				ModLog.Info("Recorder: main save pinned to " + id);
+				SaveLoadManager slm = slmObj as SaveLoadManager;
+				if (object.ReferenceEquals(slm, null))
+				{
+					return;
+				}
+				FieldInfo f = typeof(SaveLoadManager).GetField("_savedGames",
+					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+				List<SaveLoadHelper> list = f != null ? f.GetValue(slm) as List<SaveLoadHelper> : null;
+				if (list == null || slotId < 0 || slotId >= list.Count)
+				{
+					return;
+				}
+				SaveLoadHelper h = list[slotId];
+				string runId = h != null && h.SlotInfo != null ? RealOrEmpty(h.SlotInfo.Id) : "";
+				BeforeGameLoad(runId, h != null ? h.LastOpenScene : "an older save");
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: game-load checkpoint failed:\n" + e);
 			}
 		}
 
-		// The current main save's ID, or "" when the game has none yet.
+		public static void PinRunId(string id)
+		{
+			_runId = RealOrEmpty(id);
+			_runKnown = true;
+			ModLog.Info("Recorder: run pinned to '"
+				+ (_runId == "" ? "(none)" : _runId) + "'");
+		}
+
+		// The current main save's ID, or "" when the game has none.
 		public static string CurrentRunId()
 		{
 			string live = LiveRunId();
 			if (!string.IsNullOrEmpty(live))
 			{
-				_pinnedRunId = live;
-				return live;
+				_runId = live;
+				_runKnown = true;
+				return RealOrEmpty(live);
 			}
-			if (!string.IsNullOrEmpty(_pinnedRunId))
+			if (_runKnown)
 			{
-				return _pinnedRunId;
+				return RealOrEmpty(_runId);
 			}
 			if (!_idProblemLogged)
 			{
 				_idProblemLogged = true;
-				ModLog.Info("Recorder: no current main save ID (game has no save loaded yet)");
+				ModLog.Info("Recorder: no current main save ID yet");
 			}
 			return "";
 		}
 
 		private static string LiveRunId()
 		{
+			return LiveRealIdOf(GameSaveManager());
+		}
+
+		private static string LiveRealIdOf(SaveLoadManager slm)
+		{
 			try
 			{
-				SaveLoadManager slm = GameSaveManager();
 				if (object.ReferenceEquals(slm, null))
 				{
 					return "";
@@ -221,10 +332,11 @@ namespace Doorstop
 				}
 
 				List<string[]> legacy = new List<string[]>();
-				AddLegacy(legacy, SnapshotDir, "Auto");
-				AddLegacy(legacy, Path.Combine(Application.persistentDataPath, "Brante-Save-Load", "Slots"), "Manual");
-				AddLegacy(legacy, RunDir(null, "Auto"), "Auto");
-				AddLegacy(legacy, RunDir(null, "Manual"), "Manual");
+				AddLegacy(legacy, SnapshotDir, KindChoice);
+				AddLegacy(legacy, Path.Combine(Application.persistentDataPath, "Brante-Save-Load", "Slots"), KindManual);
+				AddLegacy(legacy, RunDir(null, KindChoice), KindChoice);
+				AddLegacy(legacy, RunDir(null, "Auto"), KindChoice);
+				AddLegacy(legacy, RunDir(null, KindManual), KindManual);
 				if (legacy.Count == 0)
 				{
 					return;
@@ -285,9 +397,9 @@ namespace Doorstop
 						ModLog.Error("Migration: " + path + " failed:\n" + e);
 					}
 				}
-				DeleteIfEmpty(RunDir(null, "Manual"));
-				DeleteIfEmpty(RunDir(null, "Auto"));
-				DeleteIfEmpty(Path.GetDirectoryName(RunDir(null, "Auto")));
+				DeleteIfEmpty(RunDir(null, KindManual));
+				DeleteIfEmpty(RunDir(null, KindChoice));
+				DeleteIfEmpty(Path.GetDirectoryName(RunDir(null, KindChoice)));
 				ModLog.Info("Migration: " + moved + " legacy save(s) moved into run folders, " + kept + " kept");
 			}
 			catch (Exception e)
@@ -378,6 +490,14 @@ namespace Doorstop
 					seen++;
 					try
 					{
+						// The folder name IS the id (Saves/<id>/Autosave.dat).
+						// Saves written by older mod builds can carry an empty
+						// SlotInfo.Id, so the path must be matched too.
+						string folderId = IdFromSavePath(f);
+						if (!string.IsNullOrEmpty(folderId) && Sanitize(folderId) == want)
+						{
+							return folderId;
+						}
 						SaveLoadHelper h = ReadHelper(f);
 						string id = h.SlotInfo != null ? h.SlotInfo.Id : null;
 						if (!string.IsNullOrEmpty(id) && Sanitize(id) == want)
@@ -418,7 +538,7 @@ namespace Doorstop
 				{
 					return "";
 				}
-				return dir.Substring(root.Length + 1);
+				return dir.Substring(root.Length + 1).Replace('\\', '/');
 			}
 			catch
 			{
@@ -429,21 +549,657 @@ namespace Doorstop
 		// The raw id of the save the game currently has loaded ("" if none).
 		public static string LiveRealId()
 		{
+			return LiveRealIdOf(GameSaveManager());
+		}
+
+		public static string BackupsDir
+		{
+			get { return Path.Combine(ModDir, "Backups"); }
+		}
+
+		// One-time baseline: at the first start of this version every existing
+		// game save folder is copied to Backups/<id>/ (immutable, never pruned,
+		// never re-copied). It is the player's timeline before the mod was
+		// used; later states are kept by the checkpoints and manual saves.
+		public static void BaselineAll()
+		{
 			try
 			{
-				SaveLoadManager slm = GameSaveManager();
-				if (object.ReferenceEquals(slm, null))
+				string marker = Path.Combine(ModDir, ".baseline");
+				if (File.Exists(marker))
 				{
-					return "";
+					return;
 				}
-				FieldInfo f = typeof(SaveLoadManager).GetField("_currentSaveFile",
-					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-				SaveLoadHelper cur = f != null ? f.GetValue(slm) as SaveLoadHelper : null;
-				if (cur == null || cur.SlotInfo == null)
+				Directory.CreateDirectory(BackupsDir);
+				int n = 0;
+				if (Directory.Exists(SavesDir))
 				{
-					return "";
+					foreach (string dir in Directory.GetDirectories(SavesDir, "*", SearchOption.AllDirectories))
+					{
+						bool hasAutosave = File.Exists(Path.Combine(dir, "Autosave.dat"));
+						bool hasChapter = Directory.GetFiles(dir, "Chapter_*.dat").Length > 0;
+						if (!hasAutosave && !hasChapter)
+						{
+							continue;
+						}
+						if (BaselineRun(IdFromSavePath(Path.Combine(dir, "Autosave.dat")), dir, false))
+						{
+							n++;
+						}
+					}
+					if (File.Exists(Path.Combine(SavesDir, "Autosave.dat"))
+						|| Directory.GetFiles(SavesDir, "Chapter_*.dat").Length > 0)
+					{
+						if (BaselineRun("", SavesDir, true))
+						{
+							n++;
+						}
+					}
 				}
-				return cur.SlotInfo.Id ?? "";
+				File.WriteAllText(marker, "baseline taken " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+					+ Environment.NewLine);
+				ModLog.Info("Baseline: " + n + " game save(s) copied to " + BackupsDir);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Baseline failed:\n" + e);
+			}
+		}
+
+		// Copies one game save folder to Backups/<id>/ once. True when a copy
+		// was made (false when it already existed or there was nothing to do).
+		public static bool EnsureBaseline(string id)
+		{
+			try
+			{
+				id = RealOrEmpty(id);
+				string src = id == "" ? SavesDir : Path.Combine(SavesDir, id);
+				return BaselineRun(id, src, id == "");
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Baseline of '" + id + "' failed:\n" + e);
+				return false;
+			}
+		}
+
+		private static bool BaselineRun(string id, string src, bool rootOnly)
+		{
+			if (!Directory.Exists(src))
+			{
+				return false;
+			}
+			string dest = Path.Combine(BackupsDir, Sanitize(id == "" ? NoRun : id));
+			if (File.Exists(Path.Combine(dest, ".complete")))
+			{
+				return false;
+			}
+			if (Directory.Exists(dest))
+			{
+				// A backup taken by an older version: keep it untouched and
+				// treat it as the baseline rather than replacing it.
+				File.WriteAllText(Path.Combine(dest, ".complete"),
+					"existing backup kept " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+					+ Environment.NewLine);
+				ModLog.Info("Baseline: kept the existing backup " + dest);
+				return false;
+			}
+			string tmp = dest + ".tmp-" + System.Diagnostics.Process.GetCurrentProcess().Id;
+			try
+			{
+				if (Directory.Exists(tmp))
+				{
+					Directory.Delete(tmp, true);
+				}
+				Directory.CreateDirectory(tmp);
+				int copied = 0;
+				StringBuilder manifest = new StringBuilder();
+				foreach (string f in Directory.GetFiles(src, "*",
+					rootOnly ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories))
+				{
+					if (string.Equals(Path.GetFileName(f), "steam_autocloud.vdf",
+						StringComparison.OrdinalIgnoreCase))
+					{
+						continue; // Steam's own marker, not game data
+					}
+					string rel = rootOnly ? Path.GetFileName(f) : f.Substring(src.Length).TrimStart(
+						Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+					string target = Path.Combine(tmp, rel);
+					Directory.CreateDirectory(Path.GetDirectoryName(target));
+					File.Copy(f, target, false);
+					manifest.AppendLine(rel + "\t" + new FileInfo(f).Length + "\t" + Sha1File(f));
+					copied++;
+				}
+				File.WriteAllText(Path.Combine(tmp, "MANIFEST.txt"), manifest.ToString());
+				File.WriteAllText(Path.Combine(tmp, "README.txt"), BackupReadme(id));
+				File.WriteAllText(Path.Combine(tmp, ".complete"),
+					DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + Environment.NewLine);
+				Directory.Move(tmp, dest);
+				ModLog.Info("Baseline: " + copied + " file(s) of '" + (id == "" ? "(no id)" : id)
+					+ "' copied to " + dest);
+				return true;
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Baseline of '" + id + "' failed:\n" + e);
+				try
+				{
+					if (Directory.Exists(tmp))
+					{
+						Directory.Delete(tmp, true);
+					}
+				}
+				catch
+				{
+				}
+				return false;
+			}
+		}
+
+		private static string BackupReadme(string id)
+		{
+			return "The game's own save \"" + (id == "" ? "(no main save id)" : id) + "\"\r\n"
+				+ "===============================================================\r\n\r\n"
+				+ "This folder is a copy of the game's own save as it was when the\r\n"
+				+ "Brante-Save-Load mod was first started. It is never changed by the mod.\r\n"
+				+ "The game keeps using its normal save folder for the live timeline;\r\n"
+				+ "this copy exists so the timeline from before the mod was used can\r\n"
+				+ "still be restored.\r\n\r\n"
+				+ "To restore it:\r\n"
+				+ "  1. Close the game.\r\n"
+				+ "  2. Open the game's save folder (on this machine: " + SavesDir + "):\r\n"
+				+ "     Windows: %USERPROFILE%\\AppData\\LocalLow\\SEVER\\The Life and Suffering of Sir Brante\\Saves\\\r\n"
+				+ "     Proton/Linux: inside the game's prefix, .../compatdata/1272160/pfx/drive_c/users/steamuser/AppData/LocalLow/SEVER/...\r\n"
+				+ "     macOS (native build): ~/Library/Application Support/SEVER/The Life and Suffering of Sir Brante/Saves/\r\n"
+				+ "  3. Copy the files in THIS folder back into the save folder with the same\r\n"
+				+ "     name (one level up from here), so that ...\\Saves\\" + id + "\\Autosave.dat exists.\r\n"
+				+ "  4. Start the game and continue / load from its own menu.\r\n\r\n"
+				+ "The mod's own saves are not affected by any of this: they live in\r\n"
+				+ "Brante-Save-Load\\Runs\\ and are only removed from the mod's window.\r\n";
+		}
+
+		// -- repair of saves written by older versions --------------------
+
+		// Saves written by older builds can carry an empty SlotInfo.Id even
+		// though they sit in Saves/<id>/. The folder is the id: write it back
+		// once, so the game's Load/Delete and its next autosave are correct.
+		public static void RepairIds()
+		{
+			try
+			{
+				if (!Directory.Exists(SavesDir))
+				{
+					return;
+				}
+				foreach (string f in Directory.GetFiles(SavesDir, "Autosave.dat", SearchOption.AllDirectories))
+				{
+					try
+					{
+						SaveLoadHelper h = ReadHelper(f);
+						string id = RealOrEmpty(IdFromSavePath(f));
+						if (string.IsNullOrEmpty(id))
+						{
+							continue;
+						}
+						if (h.SlotInfo == null)
+						{
+							h.SlotInfo = new SaveSlotInfo();
+						}
+						if (RealOrEmpty(h.SlotInfo.Id) == id)
+						{
+							continue;
+						}
+						h.SlotInfo.Id = id;
+						File.WriteAllBytes(f, Serialize(h));
+						ModLog.Info("Repair: " + f + " had no id - written back as " + id);
+					}
+					catch (Exception e)
+					{
+						ModLog.Error("Repair: " + f + " failed:\n" + e);
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("RepairIds failed:\n" + e);
+			}
+		}
+
+		// A save written loose in Saves/ (a game that lost its main-save id)
+		// is the same timeline as one of the run folders when the hero matches
+		// and one scene list is the start of the other. Move it into that
+		// folder instead of leaving a duplicate save entry behind.
+		public static void RepairLooseRoot()
+		{
+			try
+			{
+				string rootAuto = Path.Combine(SavesDir, "Autosave.dat");
+				if (!File.Exists(rootAuto))
+				{
+					return;
+				}
+				SaveLoadHelper h = ReadHelper(rootAuto);
+				string match = MatchRunFor(h);
+				if (string.IsNullOrEmpty(match))
+				{
+					ModLog.Info("Repair: Saves/Autosave.dat matches no run folder; left in place");
+					return;
+				}
+				string dest = Path.Combine(SavesDir, match);
+				Directory.CreateDirectory(dest);
+				string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+				string quarantine = Path.Combine(ModDir, "Backups", "quarantine", Sanitize(match));
+				Directory.CreateDirectory(quarantine);
+				string existing = Path.Combine(dest, "Autosave.dat");
+				if (File.Exists(existing))
+				{
+					File.Copy(existing, Path.Combine(quarantine, "Autosave-" + stamp + ".dat"), false);
+				}
+				if (h.SlotInfo == null)
+				{
+					h.SlotInfo = new SaveSlotInfo();
+				}
+				h.SlotInfo.Id = RealOrEmpty(match);
+				File.WriteAllBytes(rootAuto, Serialize(h));
+				File.Copy(rootAuto, existing, true);
+				File.Delete(rootAuto);
+				CopyRootFile("testSave.txt", dest, quarantine, stamp);
+				foreach (string f in Directory.GetFiles(SavesDir, "Chapter_*"))
+				{
+					CopyRootFile(Path.GetFileName(f), dest, quarantine, stamp);
+				}
+				ModLog.Info("Repair: the loose Saves/ files belonged to Saves/" + match + " - merged");
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("RepairLooseRoot failed:\n" + e);
+			}
+		}
+
+		private static void CopyRootFile(string name, string dest, string quarantine, string stamp)
+		{
+			try
+			{
+				string src = Path.Combine(SavesDir, name);
+				if (!File.Exists(src))
+				{
+					return;
+				}
+				string target = Path.Combine(dest, name);
+				if (File.Exists(target))
+				{
+					File.Copy(target, Path.Combine(quarantine, name + "-" + stamp), false);
+				}
+				File.Copy(src, target, true);
+				File.Delete(src);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Repair: moving " + name + " failed:\n" + e);
+			}
+		}
+
+		private static string MatchRunFor(SaveLoadHelper h)
+		{
+			if (h == null || !Directory.Exists(SavesDir))
+			{
+				return "";
+			}
+			string best = "";
+			int bestLen = -1;
+			foreach (string f in Directory.GetFiles(SavesDir, "Autosave.dat", SearchOption.AllDirectories))
+			{
+				string id = IdFromSavePath(f);
+				if (string.IsNullOrEmpty(id))
+				{
+					continue;
+				}
+				try
+				{
+					SaveLoadHelper o = ReadHelper(f);
+					if (!string.Equals(o.HeroName, h.HeroName, StringComparison.Ordinal))
+					{
+						continue;
+					}
+					int len = SharedPrefix(h.ShowedScenesList, o.ShowedScenesList);
+					if (len < 5)
+					{
+						continue;
+					}
+					bool prefix = len == Math.Min(Count(h.ShowedScenesList), Count(o.ShowedScenesList));
+					if (prefix && len > bestLen)
+					{
+						bestLen = len;
+						best = id;
+					}
+				}
+				catch
+				{
+					// unreadable save: skip
+				}
+			}
+			return best;
+		}
+
+		private static int Count(List<ShowedScenes> list)
+		{
+			return list == null ? 0 : list.Count;
+		}
+
+		// How many leading scenes two save histories share.
+		private static int SharedPrefix(List<ShowedScenes> a, List<ShowedScenes> b)
+		{
+			if (a == null || b == null)
+			{
+				return 0;
+			}
+			int n = Math.Min(a.Count, b.Count);
+			for (int i = 0; i < n; i++)
+			{
+				if (a[i] == null || b[i] == null || a[i].SceneName != b[i].SceneName)
+				{
+					return i;
+				}
+			}
+			return n;
+		}
+
+		// Renames the old Runs/<run>/Auto folder to Choice, so the tree's
+		// saves and the game autosaves are never mistaken for one another.
+		public static void MigrateFolderNames()
+		{
+			try
+			{
+				if (!Directory.Exists(RunsDir))
+				{
+					return;
+				}
+				int n = 0;
+				foreach (string run in Directory.GetDirectories(RunsDir))
+				{
+					string oldDir = Path.Combine(run, "Auto");
+					if (!Directory.Exists(oldDir))
+					{
+						continue;
+					}
+					string newDir = Path.Combine(run, KindChoice);
+					if (!Directory.Exists(newDir))
+					{
+						Directory.Move(oldDir, newDir);
+					}
+					else
+					{
+						foreach (string f in Directory.GetFiles(oldDir))
+						{
+							string target = Path.Combine(newDir, Path.GetFileName(f));
+							if (!File.Exists(target))
+							{
+								File.Move(f, target);
+							}
+							else
+							{
+								File.Delete(f);
+							}
+						}
+						try
+						{
+							if (Directory.GetFileSystemEntries(oldDir).Length == 0)
+							{
+								Directory.Delete(oldDir);
+							}
+						}
+						catch
+						{
+						}
+					}
+					n++;
+				}
+				if (n > 0)
+				{
+					ModLog.Info("Renamed Runs/<run>/Auto -> " + KindChoice + " (" + n + " run(s))");
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("MigrateFolderNames failed:\n" + e);
+			}
+		}
+
+		// -- pre-rewind checkpoints ---------------------------------------
+
+		// Before a mod load: keep the live state (and the original folders of
+		// both runs involved) so the load can always be undone.
+		public static void BeforeModLoad(string targetRunId, string targetTitle)
+		{
+			try
+			{
+				string live = CurrentRunId();
+				EnsureBaseline(live);
+				if (!string.Equals(RealOrEmpty(targetRunId), live, StringComparison.OrdinalIgnoreCase))
+				{
+					EnsureBaseline(targetRunId);
+				}
+				CheckpointLive("before loading " + (targetTitle ?? targetRunId), targetRunId);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: pre-rewind checkpoint of a mod load failed:\n" + e);
+			}
+		}
+
+		// Before a load from the game's own menu: at the main menu there is no
+		// live state, so the run's Autosave.dat - the file the load replaces -
+		// is the state to keep.
+		public static void BeforeGameLoad(string runId, string title)
+		{
+			try
+			{
+				runId = RealOrEmpty(runId);
+				EnsureBaseline(runId);
+				string file = runId == "" ? Path.Combine(SavesDir, "Autosave.dat")
+					: Path.Combine(SavesDir, runId, "Autosave.dat");
+				if (!File.Exists(file))
+				{
+					return;
+				}
+				byte[] bytes = File.ReadAllBytes(file);
+				SaveLoadHelper h = (SaveLoadHelper)Deserialize(bytes);
+				if (h == null)
+				{
+					return;
+				}
+				if (h.SlotInfo == null)
+				{
+					h.SlotInfo = new SaveSlotInfo();
+				}
+				if (string.IsNullOrEmpty(h.SlotInfo.Id))
+				{
+					h.SlotInfo.Id = runId;
+				}
+				// SlotInfo.Date is the game's save time, not state: clearing
+				// it makes two identical states dedupe (the sidecar keeps the
+				// recorded time).
+				h.SlotInfo.Date = "";
+				WriteCheckpoint(h, Serialize(h), "before loading " + (title ?? "an older save"), runId);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: pre-rewind checkpoint of a game load failed:\n" + e);
+			}
+		}
+
+		// Death -> "Restart chapter" loads Chapter_N.dat over the live state.
+		public static void BeforeChapterRestart(int chapter)
+		{
+			try
+			{
+				EnsureBaseline(CurrentRunId());
+				CheckpointLive("before restarting chapter " + chapter, null);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: pre-rewind checkpoint of a chapter restart failed:\n" + e);
+			}
+		}
+
+		private static void CheckpointLive(string reason, string alsoRun)
+		{
+			if (GameManager.Instance == null)
+			{
+				return;   // main menu: no live state to keep
+			}
+			SaveLoadHelper h = BuildHelper();
+			string live = CurrentRunId();
+			h.SlotInfo.Id = live;
+			byte[] blob = Serialize(h);
+			WriteCheckpoint(h, blob, reason, live);
+			// A load that switches runs: the checkpoint is also filed with the
+			// target run, so the table there shows it and can go back.
+			if (!string.IsNullOrEmpty(alsoRun)
+				&& !string.Equals(RealOrEmpty(alsoRun), live, StringComparison.OrdinalIgnoreCase))
+			{
+				WriteCheckpoint(h, blob, reason, alsoRun);
+			}
+		}
+
+		private static void WriteCheckpoint(SaveLoadHelper h, byte[] blob, string reason, string runId)
+		{
+			string dir = RunDir(runId, KindCheckpoints);
+			string scene = string.IsNullOrEmpty(h.LastOpenScene) ? "(unknown)" : h.LastOpenScene;
+			string hash = Sha1(blob).Substring(0, 10);
+			string name = Sanitize(scene) + "_t" + h.Turn + "_" + hash;
+			string dat = Path.Combine(dir, name + ".dat");
+			Directory.CreateDirectory(dir);
+			if (!File.Exists(dat))
+			{
+				File.WriteAllBytes(dat, blob);
+				WriteSidecar(dir, name, scene, h);
+				AppendSidecar(dir, name, "kind=checkpoint" + Environment.NewLine
+					+ "reason=" + (reason ?? "").Replace('\r', ' ').Replace('\n', ' ') + Environment.NewLine);
+				Prune(dir, KeepCheckpoints);
+			}
+			ModLog.Info("Checkpoint: " + reason + " -> " + name);
+		}
+
+		// -- game autosave mirror -----------------------------------------
+
+		// Copies the game's just-written Autosave.dat into the run's
+		// Autosaves/ folder. This is the game's own resume point (state
+		// GAME_SETUP), not a choice point; the two are kept apart.
+		public static void MirrorGameAutosave()
+		{
+			try
+			{
+				if (AutoPlay.Running)
+				{
+					return;   // a replay gets one checkpoint, not one per scene
+				}
+				string runId = CurrentRunId();
+				string file = runId == "" ? Path.Combine(SavesDir, "Autosave.dat")
+					: Path.Combine(SavesDir, runId, "Autosave.dat");
+				if (!File.Exists(file))
+				{
+					return;
+				}
+				byte[] bytes = File.ReadAllBytes(file);
+				SaveLoadHelper h = (SaveLoadHelper)Deserialize(bytes);
+				if (h == null)
+				{
+					return;
+				}
+				string scene = h.LastOpenScene ?? "(unknown)";
+				// SlotInfo.Date changes on every game save while the state
+				// does not: clear it before hashing/storing so identical
+				// states dedupe (the sidecar keeps the recorded time).
+				if (h.SlotInfo != null)
+				{
+					h.SlotInfo.Date = "";
+				}
+				byte[] state = Serialize(h);
+				string hash = Sha1(state).Substring(0, 10);
+				string dir = RunDir(runId, KindAutosaves);
+				string name = Sanitize(scene) + "_t" + h.Turn + "_" + hash;
+				string dat = Path.Combine(dir, name + ".dat");
+				if (File.Exists(dat))
+				{
+					return;
+				}
+				Directory.CreateDirectory(dir);
+				File.WriteAllBytes(dat, state);
+				WriteSidecar(dir, name, scene, h);
+				AppendSidecar(dir, name, "kind=autosave" + Environment.NewLine);
+				Prune(dir, KeepAutosaves);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: mirroring the game autosave failed:\n" + e);
+			}
+		}
+
+		private static void AppendSidecar(string dir, string baseName, string text)
+		{
+			try
+			{
+				File.AppendAllText(Path.Combine(dir, baseName + ".meta.txt"), text);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: sidecar append failed:\n" + e);
+			}
+		}
+
+		// Keeps the newest `keep` .dat files (and their sidecars) in a folder.
+		private static void Prune(string dir, int keep)
+		{
+			try
+			{
+				if (!Directory.Exists(dir))
+				{
+					return;
+				}
+				List<string> files = new List<string>(Directory.GetFiles(dir, "*.dat"));
+				if (files.Count <= keep)
+				{
+					return;
+				}
+				files.Sort(delegate (string a, string b)
+				{
+					return File.GetLastWriteTimeUtc(a).CompareTo(File.GetLastWriteTimeUtc(b));
+				});
+				for (int i = 0; i < files.Count - keep; i++)
+				{
+					File.Delete(files[i]);
+					string side = Path.Combine(Path.GetDirectoryName(files[i]),
+						Path.GetFileNameWithoutExtension(files[i]) + ".meta.txt");
+					if (File.Exists(side))
+					{
+						File.Delete(side);
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: pruning " + dir + " failed:\n" + e);
+			}
+		}
+
+		private static string Sha1File(string path)
+		{
+			try
+			{
+				using (FileStream fs = File.OpenRead(path))
+				{
+					using (SHA1 sha = SHA1.Create())
+					{
+						byte[] h = sha.ComputeHash(fs);
+						StringBuilder sb = new StringBuilder(h.Length * 2);
+						foreach (byte b in h)
+						{
+							sb.Append(b.ToString("x2"));
+						}
+						return sb.ToString();
+					}
+				}
 			}
 			catch
 			{
@@ -451,88 +1207,94 @@ namespace Doorstop
 			}
 		}
 
-		// Copies the game's own save folder aside, once, before the first
-		// rewind. From then on the game saves normally into its own folder
-		// (as it would after loading an older save from its own menu), so the
-		// pre-mod timeline is kept here instead of being silently replaced.
-		public static void BackupOriginalSave(string id)
-		{
-			try
-			{
-				if (string.IsNullOrEmpty(id))
-				{
-					return;
-				}
-				string src = Path.Combine(Application.persistentDataPath, "Saves", id);
-				if (!Directory.Exists(src))
-				{
-					return;
-				}
-				string dst = Path.Combine(Application.persistentDataPath, "Brante-Save-Load",
-					"Backups", Sanitize(id));
-				if (Directory.Exists(dst))
-				{
-					return;
-				}
-				Directory.CreateDirectory(dst);
-				int copied = 0;
-				foreach (string f in Directory.GetFiles(src, "*", SearchOption.AllDirectories))
-				{
-					if (string.Equals(Path.GetFileName(f), "steam_autocloud.vdf",
-						StringComparison.OrdinalIgnoreCase))
-					{
-						continue; // Steam's own marker, not game data
-					}
-					string rel = f.Substring(src.Length).TrimStart(
-						Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-					string target = Path.Combine(dst, rel);
-					Directory.CreateDirectory(Path.GetDirectoryName(target));
-					File.Copy(f, target, false);
-					copied++;
-				}
-				File.WriteAllText(Path.Combine(dst, "README.txt"), BackupReadme(id));
-				ModLog.Info("Backed up the game's own save (" + copied + " file(s)) to " + dst);
-			}
-			catch (Exception e)
-			{
-				ModLog.Error("Backup of the game's own save failed:\n" + e);
-			}
-		}
-
-		private static string BackupReadme(string id)
-		{
-			string saves = Path.Combine(Application.persistentDataPath, "Saves");
-			return "Saves from before the Brante-Save-Load mod rewound the game\r\n"
-				+ "===============================================================\r\n\r\n"
-				+ "This folder is a copy of the game's own save \"" + id + "\", taken by the\r\n"
-				+ "Brante-Save-Load mod right before it first loaded one of its own saves.\r\n"
-				+ "From that moment on the game saved normally again, so the timeline you\r\n"
-				+ "have in the game now is the rewound one; this is the only copy of the\r\n"
-				+ "timeline you had before using the mod.\r\n\r\n"
-				+ "To restore it:\r\n"
-				+ "  1. Close the game.\r\n"
-				+ "  2. Open the game's save folder (on this machine: " + saves + "):\r\n"
-				+ "     Windows: %USERPROFILE%\\AppData\\LocalLow\\SEVER\\The Life and Suffering of Sir Brante\\Saves\\\r\n"
-				+ "     Proton/Linux: inside the game's prefix, .../compatdata/1272160/pfx/drive_c/users/steamuser/AppData/LocalLow/SEVER/...\r\n"
-				+ "     macOS (native build): ~/Library/Application Support/SEVER/The Life and Suffering of Sir Brante/Saves/\r\n"
-				+ "     Delete (or rename) the folder named:\r\n"
-				+ "       " + id + "\r\n"
-				+ "  3. Copy the files in THIS folder back into a folder with that same name\r\n"
-				+ "     (one level up from here, so that ...\\Saves\\" + id + "\\Autosave.dat exists).\r\n"
-				+ "  4. Start the game and continue / load from its own menu.\r\n\r\n"
-				+ "The mod's own saves are not affected by any of this: they live in\r\n"
-				+ "Brante-Save-Load\\Runs\\ and are only removed from the mod's window.\r\n";
-		}
-
-		// The id the loaded save belongs to; used to repair the game's slot
-		// bookkeeping if it is empty when the game saves (which would drop
-		// files into Saves/ itself).
-		private static string _adoptedId;
 		private static bool _realIdLogged;
 		private static bool _repairLogged;
 
+		// The game's saves can carry an empty SlotInfo.Id (older mod builds,
+		// or a game that loaded one of them). The folder name IS the id; fill
+		// it in whenever the game reads a save, so its own Load/Continue and
+		// its next autosave go back to the right folder.
+		public static void RecoverId(SaveLoadHelper helper, string path)
+		{
+			try
+			{
+				if (helper == null || helper.SlotInfo == null
+					|| !string.IsNullOrEmpty(helper.SlotInfo.Id) || string.IsNullOrEmpty(path))
+				{
+					return;
+				}
+				string id = RealOrEmpty(IdFromSavePath(path));
+				if (string.IsNullOrEmpty(id))
+				{
+					return;   // a file directly in Saves/: genuinely no slot
+				}
+				helper.SlotInfo.Id = id;
+				ModLog.Info("Save repair: " + Path.GetFileName(path) + " in Saves/" + id
+					+ " had no id - taken from its folder");
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: id recovery failed for " + path + ":\n" + e);
+			}
+		}
+
+		// Postfix on SaveLoadManager.LoadSaves: the helpers come from files
+		// whose paths LoadSaves does not keep. Match them back by hero and
+		// save date (both written by every save).
+		public static void RecoverListIds(List<SaveLoadHelper> saves)
+		{
+			try
+			{
+				if (saves == null || saves.Count == 0 || !Directory.Exists(SavesDir))
+				{
+					return;
+				}
+				Dictionary<string, List<string>> byKey = new Dictionary<string, List<string>>();
+				foreach (string f in Directory.GetFiles(SavesDir, "Autosave.dat", SearchOption.AllDirectories))
+				{
+					try
+					{
+						SaveLoadHelper h = ReadHelper(f);
+						string key = (h.HeroName ?? "") + "\u0001"
+							+ (h.SlotInfo != null ? h.SlotInfo.Date : "");
+						List<string> list;
+						if (!byKey.TryGetValue(key, out list))
+						{
+							list = new List<string>();
+							byKey[key] = list;
+						}
+						list.Add(f);
+					}
+					catch
+					{
+						// unreadable save: skip
+					}
+				}
+				foreach (SaveLoadHelper h in saves)
+				{
+					if (h == null || h.SlotInfo == null || !string.IsNullOrEmpty(h.SlotInfo.Id))
+					{
+						continue;
+					}
+					string key = (h.HeroName ?? "") + "\u0001" + (h.SlotInfo.Date ?? "");
+					List<string> paths;
+					// Only an unambiguous match: two runs saved in the same
+					// hero/second would otherwise get each other's id.
+					if (byKey.TryGetValue(key, out paths) && paths.Count == 1)
+					{
+						RecoverId(h, paths[0]);
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: save-list id recovery failed:\n" + e);
+			}
+		}
+
 		// Called from a prefix on SaveLoadManager.SaveGame/SaveChapterState:
-		// only fills in a MISSING id, never changes a real one.
+		// fills in a MISSING id for a save the MOD loaded, never changes the
+		// game's own slot and never invents an id.
 		public static void EnsureSlotId(object slmObj)
 		{
 			try
@@ -544,52 +1306,20 @@ namespace Doorstop
 				{
 					return;
 				}
-				// The adopted id is the normal source; the live save is the
-				// fallback for a save that happens before the mod adopted one.
-				string id = _adoptedId;
+				if (!string.IsNullOrEmpty(RealOrEmpty(LiveRealIdOf(slm))))
+				{
+					return;   // the game knows its slot: leave it alone
+				}
+				if (!_modTimeline)
+				{
+					return;   // an id-less save the game itself is playing
+				}
+				string id = RealOrEmpty(_runId);
 				if (string.IsNullOrEmpty(id))
 				{
-					id = RealRunId(CurrentRunId());
+					return;   // id-less run
 				}
-				id = RealOrEmpty(id);
-				if (string.IsNullOrEmpty(id))
-				{
-					id = LiveRealId();
-					if (!string.IsNullOrEmpty(id))
-					{
-						return;   // the game has its own slot: nothing to repair
-					}
-					id = MintRunId();
-					if (string.IsNullOrEmpty(id))
-					{
-						return;
-					}
-				}
-				FieldInfo f = typeof(SaveLoadManager).GetField("_currentSaveSlotInfo",
-					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-				if (f == null)
-				{
-					return;
-				}
-				SaveSlotInfo slot = new SaveSlotInfo { Id = id };
-				f.SetValue(slm, slot);
-				// The chapter files are written through _currentSaveFile.
-				FieldInfo cf = typeof(SaveLoadManager).GetField("_currentSaveFile",
-					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-				SaveLoadHelper cur = cf != null ? cf.GetValue(slm) as SaveLoadHelper : null;
-				if (cur != null)
-				{
-					if (cur.SlotInfo == null)
-					{
-						cur.SlotInfo = new SaveSlotInfo();
-					}
-					cur.SlotInfo.Id = id;
-				}
-				if (!_repairLogged)
-				{
-					_repairLogged = true;
-					ModLog.Info("Save repair: the game's slot id was empty, set to " + id);
-				}
+				SetSlotId(slm, id);
 			}
 			catch (Exception e)
 			{
@@ -597,80 +1327,59 @@ namespace Doorstop
 			}
 		}
 
-		// A game with no main-save id at all (one started from a save without
-		// it) would save loose into Saves/ - where the game's Continue then
-		// finds it - and the mod would keep its saves in the placeholder
-		// folder. It gets an id as the game makes one for a new game (hero
-		// name + "_" + the date and time, slashes kept), and the placeholder
-		// folder's saves move into the new run's folder, so the tree keeps
-		// them. "" when there is no hero yet.
-		private static string MintRunId()
+		// Sets the slot the game saves through (and the loaded save's own id,
+		// used for Chapter_N.dat), keeping the slot's Date and object.
+		private static void SetSlotId(SaveLoadManager slm, string id)
 		{
-			ParametersManager pm = ParametersManager.Instance;
-			if (pm == null)
+			FieldInfo f = typeof(SaveLoadManager).GetField("_currentSaveSlotInfo",
+				BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+			if (f == null)
 			{
-				pm = UnityEngine.Object.FindObjectOfType<ParametersManager>();
+				return;
 			}
-			if (pm == null || string.IsNullOrEmpty(pm.HeroName))
+			SaveSlotInfo slot = f.GetValue(slm) as SaveSlotInfo;
+			if (slot == null)
 			{
-				return "";
+				slot = new SaveSlotInfo();
+				f.SetValue(slm, slot);
 			}
-			string stamp = string.Format("{0}", DateTime.Now).Replace(" ", string.Empty)
-				.Replace(":", string.Empty).Replace(".", string.Empty);
-			string id = pm.HeroName + "_" + stamp;
-			_adoptedId = id;
-			PinRunId(id);
-			try
+			slot.Id = id;
+			FieldInfo cf = typeof(SaveLoadManager).GetField("_currentSaveFile",
+				BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+			SaveLoadHelper cur = cf != null ? cf.GetValue(slm) as SaveLoadHelper : null;
+			if (cur != null)
 			{
-				string from = Path.Combine(RunsDir, NoRun);
-				string to = Path.Combine(RunsDir, Sanitize(id));
-				if (Directory.Exists(from) && !Directory.Exists(to))
+				if (cur.SlotInfo == null)
 				{
-					Directory.Move(from, to);
-					ModLog.Info("Recorder: the placeholder folder's saves moved to " + to);
+					cur.SlotInfo = new SaveSlotInfo();
 				}
+				cur.SlotInfo.Id = id;
 			}
-			catch (Exception e)
+			if (!_repairLogged)
 			{
-				ModLog.Info("Recorder: placeholder saves not moved: " + e.Message);
+				_repairLogged = true;
+				ModLog.Info("Save repair: the game's slot id was empty, set to " + id);
 			}
-			ModLog.Info("Recorder: the game had no main-save id - gave it '" + id + "' (as for a new game)");
-			return id;
 		}
 
-		// Last line of defence: SaveLoadManager.GetSaveFolderPath() returns
-		// the bare Saves/ folder when the slot id is empty, which would drop
-		// autosaves and chapter files next to the save folders. Corrected in
-		// place, only when it points at the root and a run is known.
+		// Last line of defence: GetSaveFolderPath() returns the bare Saves/
+		// folder when the slot id is empty. Only a save the MOD loaded may be
+		// redirected; the game's own saves are never touched.
 		public static void FixSaveFolder(ref string path)
 		{
 			try
 			{
-				if (string.IsNullOrEmpty(path))
+				if (string.IsNullOrEmpty(path) || !_modTimeline)
 				{
 					return;
 				}
-				string root = Path.Combine(Application.persistentDataPath, "Saves");
-				bool isRoot = string.Equals(path.TrimEnd('\\', '/'), root.TrimEnd('\\', '/'),
-					StringComparison.OrdinalIgnoreCase);
-				bool mangled = !isRoot && !Directory.Exists(path)
-					&& !string.IsNullOrEmpty(_adoptedId)
-					&& Sanitize(_adoptedId).Equals(
-						Path.GetFileName(path.TrimEnd('\\', '/')), StringComparison.OrdinalIgnoreCase);
-				if (!isRoot && !mangled)
+				string root = SavesDir;
+				if (!string.Equals(path.TrimEnd('\\', '/'), root.TrimEnd('\\', '/'),
+					StringComparison.OrdinalIgnoreCase))
 				{
 					return;
 				}
-				string id = _adoptedId;
-				if (string.IsNullOrEmpty(id))
-				{
-					id = RealRunId(CurrentRunId());
-				}
-				if (string.IsNullOrEmpty(id))
-				{
-					return;
-				}
-				id = RealOrEmpty(id);
+				string id = RealOrEmpty(_runId);
 				if (string.IsNullOrEmpty(id))
 				{
 					return;
@@ -682,8 +1391,7 @@ namespace Doorstop
 				if (!_repairLogged)
 				{
 					_repairLogged = true;
-					ModLog.Info("Save repair: save folder was the bare Saves/ or a mangled name, "
-						+ "redirected to " + path);
+					ModLog.Info("Save repair: save folder was the bare Saves/, redirected to " + path);
 				}
 			}
 			catch (Exception e)
@@ -694,7 +1402,8 @@ namespace Doorstop
 
 		// Points the game's slot bookkeeping at the save we just loaded, so
 		// its own autosaves and chapter files go to that save's folder (they
-		// would otherwise land in Saves/ itself).
+		// would otherwise land in Saves/ itself). An empty id is adopted too:
+		// keeping the previous run is how saves ended up in another run.
 		public static void AdoptAsCurrentSave(SaveLoadManager slm, SaveLoadHelper helper)
 		{
 			try
@@ -709,25 +1418,36 @@ namespace Doorstop
 					ModLog.Info("Recorder: no SaveLoadManager to adopt the save slot on");
 					return;
 				}
-				if (helper == null || helper.SlotInfo == null
-					|| string.IsNullOrEmpty(RealOrEmpty(helper.SlotInfo.Id)))
-				{
-					// Nothing trustworthy to adopt; keep the previous one so a
-					// known-good id is never replaced by an empty one.
-					ModLog.Info("Recorder: loaded save has no main-save id; keeping the previous one");
-					return;
-				}
+				SaveSlotInfo slot = helper != null && helper.SlotInfo != null
+					? helper.SlotInfo : new SaveSlotInfo();
+				string id = RealOrEmpty(slot.Id) ?? "";
+				slot.Id = id;
 				FieldInfo f = typeof(SaveLoadManager).GetField("_currentSaveSlotInfo",
 					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 				if (f != null)
 				{
 					foreach (SaveLoadManager m in managers)
 					{
-						f.SetValue(m, helper.SlotInfo);
+						f.SetValue(m, slot);
 					}
 				}
-				_adoptedId = helper.SlotInfo.Id;
-				ModLog.Info("Game saves continue into Saves/" + helper.SlotInfo.Id);
+				FieldInfo cf = typeof(SaveLoadManager).GetField("_currentSaveFile",
+					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+				foreach (SaveLoadManager m in managers)
+				{
+					SaveLoadHelper cur = cf != null ? cf.GetValue(m) as SaveLoadHelper : null;
+					if (cur != null)
+					{
+						if (cur.SlotInfo == null)
+						{
+							cur.SlotInfo = new SaveSlotInfo();
+						}
+						cur.SlotInfo.Id = slot.Id;
+					}
+				}
+				BeginModLoad(id);
+				ModLog.Info("Game saves continue into Saves/"
+					+ (string.IsNullOrEmpty(id) ? "(no main save id)" : id));
 			}
 			catch (Exception e)
 			{
@@ -735,8 +1455,53 @@ namespace Doorstop
 			}
 		}
 
+		public static bool IsBackupPath(string path)
+		{
+			try
+			{
+				string backups = Path.GetFullPath(BackupsDir).TrimEnd(Path.DirectorySeparatorChar);
+				string full = Path.GetFullPath(path);
+				return full.StartsWith(backups + Path.DirectorySeparatorChar,
+					StringComparison.OrdinalIgnoreCase);
+			}
+			catch
+			{
+				return false;
+			}
+		}
+
 		// The run folder a save file lives in, or "" if it is not under
 		// RunsDir (e.g. a file from the old layout).
+		public static string RunIdForSavePath(string datPath)
+		{
+			try
+			{
+				string runs = Path.GetFullPath(RunsDir).TrimEnd(Path.DirectorySeparatorChar);
+				string backups = Path.GetFullPath(BackupsDir).TrimEnd(Path.DirectorySeparatorChar);
+				string full = Path.GetFullPath(datPath);
+				if (full.StartsWith(backups + Path.DirectorySeparatorChar,
+					StringComparison.OrdinalIgnoreCase))
+				{
+					// Backups/<sanitized id>/Autosave.dat
+					string rest = full.Substring(backups.Length + 1);
+					int sep = rest.IndexOf(Path.DirectorySeparatorChar);
+					string folder = sep > 0 ? rest.Substring(0, sep) : rest;
+					return RealOrEmpty(folder == NoRun ? "" : folder);
+				}
+				if (full.StartsWith(runs + Path.DirectorySeparatorChar,
+					StringComparison.OrdinalIgnoreCase))
+				{
+					return RunIdFromPath(full);
+				}
+			}
+			catch
+			{
+			}
+			return "";
+		}
+
+		// <RunsDir>/<run>/... -> the run id ("" for the placeholder or when
+		// the file is not under RunsDir).
 		public static string RunIdFromPath(string datPath)
 		{
 			try
@@ -757,11 +1522,25 @@ namespace Doorstop
 			}
 		}
 
-		// <RunsDir>/<run>/<kind>, kind = "Auto" (choice points) or "Manual".
+		// <RunsDir>/<run>/<kind>; kinds are KindChoice, KindManual,
+		// KindCheckpoints and KindAutosaves.
 		public static string RunDir(string runId, string kind)
 		{
 			string run = string.IsNullOrEmpty(runId) ? NoRun : Sanitize(runId);
 			return Path.Combine(RunsDir, run, kind);
+		}
+
+		// The tree's choice-point folder. Reads the old "Auto" name too, in
+		// case MigrateFolderNames could not rename it.
+		public static string ChoiceDir(string runId)
+		{
+			string dir = RunDir(runId, KindChoice);
+			if (Directory.Exists(dir))
+			{
+				return dir;
+			}
+			string old = RunDir(runId, "Auto");
+			return Directory.Exists(old) ? old : dir;
 		}
 
 		// One-off rename of the mod's data folder after the mod was renamed
@@ -847,7 +1626,7 @@ namespace Doorstop
 			}
 			string hash = Sha1(blob).Substring(0, 10);
 			string baseName = Sanitize(scene) + "_t" + helper.Turn + "_" + hash;
-			string dir = RunDir(CurrentRunId(), "Auto");
+			string dir = RunDir(CurrentRunId(), KindChoice);
 			string dat = Path.Combine(dir, baseName + ".dat");
 			_shownScene = scene;
 			_shownSnapshot = dat;
@@ -915,7 +1694,7 @@ namespace Doorstop
 					return;
 				}
 				string scene = GameManager.Instance != null ? GameManager.Instance.OpenedSceneName : "";
-				string dir = RunDir(CurrentRunId(), "Auto");
+				string dir = RunDir(CurrentRunId(), KindChoice);
 				if (string.IsNullOrEmpty(scene) || !Directory.Exists(dir))
 				{
 					ModLog.Info("Recorder: click not recorded (scene '" + scene + "', folder "
@@ -991,7 +1770,7 @@ namespace Doorstop
 			}
 			byte[] blob = Serialize(helper);
 			string scene = string.IsNullOrEmpty(helper.LastOpenScene) ? "(unknown)" : helper.LastOpenScene;
-			string dir = RunDir(runId, "Manual");
+			string dir = RunDir(runId, KindManual);
 			Directory.CreateDirectory(dir);
 			string baseName = "save_" + DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
 			File.WriteAllBytes(Path.Combine(dir, baseName + ".dat"), blob);

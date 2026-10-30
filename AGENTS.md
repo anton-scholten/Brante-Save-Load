@@ -7,10 +7,11 @@ for people who just want to use it.
 
 A mod for [The Life and Suffering of Sir Brante](https://store.steampowered.com/app/1272160/)
 (Unity 2018.3, Windows build under Proton): load the game at **any choice you have
-already reached**, plus a save/load system of its own that does not touch the game's
-saves. A settings button opens the list of past choice points; clicking one returns
-the game to that exact choice screen. [docs/FINDINGS.md](docs/FINDINGS.md) explains
-how the game works and where every fact used by the mod came from.
+already reached**, plus a save/load system of its own whose saves live outside the
+game's own. A settings button opens the mod's window: the tree of past choice
+points, and the table of saves it can return to. Clicking an entry returns the
+game to that exact state. [docs/FINDINGS.md](docs/FINDINGS.md) explains how the
+game works and where every fact used by the mod came from.
 
 ## Layout
 
@@ -24,9 +25,11 @@ Brante-Save-Load/            the folder that gets installed into the game dir
   Scripts/*.cs               the source
     Entrypoint.cs            Doorstop entry: Harmony patches, host creation
     ModLog.cs                file logger (usable before Unity is up)
-    ModHost.cs               host component; probes, dev markers, save-slot adopt
-    Recorder.cs              snapshots, dedup, backup, traces, save repair
-    ChoiceWindow.cs          book tabs, save table, tree view, path picks + Load scene
+    ModHost.cs               host component; probes, dev markers, startup repairs
+    Recorder.cs              choice snapshots, checkpoints, autosave mirror, baseline,
+                             run tracking, id repair, traces
+    ChoiceWindow.cs          book tabs, save table (type filter, pages), tree view,
+                             path picks + Load scene
     AutoPlay.cs              plays scenes by itself (Load scene replay, debug runs)
     History.cs               the save's scene path + offered answers
     SceneTexts.cs            loader for scene-texts.tsv (titles + answers)
@@ -98,22 +101,84 @@ community event sheet (`data/events.json`).
 ## Rules that are not obvious
 
 - **The game's save system is BinaryFormatter** over a `[Serializable]` class
-  (`SaveLoadHelper`) that holds the entire game state. The mod never writes into
-  the game's `Saves/` folder itself, but it does let the *game* keep saving
-  there after a rewind (as it would after loading from its own menu) — after
-  copying that save folder to `Backups/<save>/` once. Never delete or rewrite
-  that backup; it is the only copy of the pre-mod timeline.
-- **A save's folder comes from `SlotInfo.Id`**, which contains slashes
-  (`Biggie_10/23/2026103816AM`), so it is a nested path. After a mod load the
-  game's slot bookkeeping can be empty, which would drop autosaves into `Saves/`
-  itself; `Recorder.EnsureSlotId` (prefix on the save calls) and
-  `Recorder.FixSaveFolder` (postfix on `GetSaveFolderPath`) repair that.
+  (`SaveLoadHelper`) that holds the entire game state. The mod never creates,
+  renames or mints game save folders (`Recorder.MintRunId` is gone): a new game's
+  folder comes from the game's own `CreateSaveLoadSlot`. The mod writes only
+  inside its own folder (`Brante-Save-Load/`) plus the one-time id repair below.
+- **One live game save per playthrough.** The game has exactly one rolling
+  `Autosave.dat` in one `Saves/<id>/` folder, plus a `Chapter_N.dat` at each
+  chapter start. Everything else is a copy the mod makes; the game's own save is
+  never duplicated, so its Continue, autosave and chapter restart keep following
+  the live timeline.
+- **A save's folder is its id.** `SlotInfo.Id` contains slashes
+  (`Biggie_10/23/2026103816AM`), so the folder is a nested path. Saves written by
+  older builds can have an empty `SlotInfo.Id`, even sitting in the right folder;
+  the id is filled from that folder wherever the game reads saves — Harmony
+  postfixes on `SaveLoadManager.LoadSaves()` (matched back by hero + save date,
+  only when unambiguous) and `SaveLoadManager.LoadData(string)` — and
+  `Recorder.RepairIds` writes the recovered id back into `Saves/**/Autosave.dat`
+  once at startup.
+- **A loose `Saves/Autosave.dat` is merged into its run.** A game that lost its
+  id saves in `Saves/` itself. `Recorder.RepairLooseRoot` matches it to the one
+  run folder whose scene list is the start of its own (same hero, shared prefix
+  >= 5, exactly one best match) and moves it plus `Chapter_N.dat` and
+  `testSave.txt` in, quarantining the files it replaces to
+  `Brante-Save-Load/Backups/quarantine/<id>/`.
+- **The current run is tracked, never guessed.** It is set only where the game
+  changes saves: postfix on `LoadGame(int)` (the game's own Load/Continue),
+  `CreateSaveLoadSlot` (new game), `LoadGame(string,int)` (death -> restart
+  chapter), and `Recorder.BeginModLoad` from the mod's own load path.
+  `CurrentRunId()` prefers the live slot; an empty id is a valid value and is
+  never replaced by a previous run's.
+- **Slot repair only runs on a mod timeline.** `Recorder.EnsureSlotId` (prefix on
+  `SaveGame`/`SaveChapterState`) fills a missing id only while the game plays a
+  save the *mod* loaded, and never changes a non-empty slot.
+  `Recorder.FixSaveFolder` (postfix on `GetSaveFolderPath`) only redirects the
+  bare `Saves/` root. A load from the game's own menu is left alone and saves
+  back into its own folder.
+- **One baseline, taken once.** At the first start of this version (marker
+  `Brante-Save-Load/.baseline` missing) every existing game save folder is copied
+  to `Brante-Save-Load/Backups/<id>/` (loose root files to `Backups/_no_save/`):
+  staged in `*.tmp-<pid>`, with `MANIFEST.txt`, `README.txt` and `.complete`,
+  then moved into place. It is never re-copied or pruned; a backup from an older
+  version (a folder without `.complete`) is kept untouched and only marked.
+  `Recorder.EnsureBaseline(id)` is the fallback before a load.
+- **Checkpoint before every rewind.** `Runs/<run>/Checkpoints/` gets the live
+  state before every mod load (a single save or a Load scene replay), before a
+  load from the game's own menu (a copy of the run's `Autosave.dat`, since the
+  main menu has no live state), and before a death -> Restart chapter. Sidecar
+  has `kind=checkpoint` and `reason=`. A load that switches runs also files the
+  checkpoint with the target run, so that run's table shows it; the save's own
+  `SlotInfo.Id` (the run it belongs to) wins over the folder it is filed in when
+  it is loaded.
+- **The four stores under `Runs/<run-id>/`:**
+  - `Choice/` — choice-point snapshots, one per decision, content-hashed, never
+    pruned. Only the tree view reads them; they are **not** in the save table.
+  - `Checkpoints/` — pre-rewind checkpoints, newest 100 per run.
+  - `Autosaves/` — a mirror of the game's own `Autosave.dat`, copied after
+    `SaveGame`/`SaveChapterState` (hash-deduped, newest 100, skipped while
+    `AutoPlay.Running` so a replay gets one checkpoint rather than one per
+    scene). These are the game's resume points (`SceneState_GAME_SETUP`), not
+    choice points.
+  - `Manual/` — "Save now", never pruned.
+  `Auto` was renamed to `Choice` by `Recorder.MigrateFolderNames`; readers fall
+  back to `Auto` if the rename was skipped. `trace.log` stays at
+  `Runs/<run>/trace.log`.
+- **Save table categories.** `Game autosave` (mirror), `Before load`
+  (checkpoints), `Manual`, and `Original save` (the baseline
+  `Backups/<id>/Autosave.dat`, read-only, no delete). The live
+  `Saves/<id>/Autosave.dat` is not listed, and identical states are not merged
+  across categories (they are different artifacts). The first header, "Save
+  type", is a filter button: it cycles `All -> Game autosave -> Before load ->
+  Manual -> Original -> All`, resets to All when the window opens, and does not
+  sort. Rows are built in pages of 120 with a "Show more" row.
 - **`SaveLoadManager.Instance` can be a destroyed object the game still saves
   with.** Never test it with Unity's `== null` and fall back to
   `FindObjectOfType`: use `Recorder.SaveManagers()` / `GameSaveManager()`.
-- **`_no_save` is a folder name only** (`Recorder.NoRun`, the mod's saves made
-  while the game had no main-save id). It must never reach the game as a save
-  slot id: the game's autosave would throw and the scene would stay blank.
+- **`_no_save` is a folder name only** (`Recorder.NoRun`: the mod's saves and
+  baseline copy for a game that had no main-save id). It must never reach the
+  game as a save slot id: the game's autosave would throw and the scene would
+  stay blank.
 - **`SaveLoadManager.LoadGame(SaveLoadHelper)` is public** — that is the mod's
   load path. It restores all singletons and resumes via `LastOpenScene`.
 - **Choice scenes are additive scenes containing `ParameterButtonChanger`
@@ -152,6 +217,7 @@ on use) and must be paired with `dev-autoload.txt`:
 | marker | what it does |
 |---|---|
 | `dev-autoload.txt` | replay the vanilla load sequence onto the newest autosave |
+| `dev-load.txt` | with `dev-autoload.txt`: after the autoloaded scene is open, load one mod save through the table path (checkpoint, baseline, adopt). Holds a file name under `Runs/` |
 | `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
 | `dev-book.txt` | the book tabs (tree view, then save table), the save table, then the tree view: wheel, pop-ups, stat pop-up, a conflicting pick, chapter rule, a pick + its load plan, undo |
 | `dev-loadpath.txt` | with `dev-book.txt`: Load scene end to end; `back N` replays from another answer N scenes back, `chapter` from the chapter's start save, `start` from chapter 1 with an early change, `ahead` into the next chapter, `death` through a death, `offpath` a stop off the path, `first` the story's first scenes from a stand-in start (another run's chapter 1 save), `new` the same from a start built from the game's defaults, `file <name>` load that mod save as the table does (`file <name> norun`: with no run active) |
@@ -174,8 +240,12 @@ work here (black/`BadMatch` on the X1 root).
 ## Open work
 
 - [docs/TODO.md](docs/TODO.md): what remains of the plan.
-- All phases are implemented and verified in-game: the save table, the history
-  tree over the whole playthrough (answers for every scene come from the game's
-  localisation), path picks with Load scene (replayed by `AutoPlay`), and the
-  debug runs that make test saves. Remaining: the achievements check, a full playthrough
-  pass (death -> restart chapter), and a design document.
+- Phases 0–7 are implemented and verified in-game: the tree over the whole
+  playthrough (answers for every scene come from the game's localisation), path
+  picks with Load scene (replayed by `AutoPlay`), and the debug runs that make
+  test saves.
+- The save/load rework (TODO phases 8–13: save ownership and repair, the
+  one-time baseline, pre-rewind checkpoints, the game-autosave mirror, the
+  unified table) is implemented and `./tools/build.sh` passes; **the in-game
+  pass is still pending**. Remaining after that: the achievements check, a full
+  playthrough pass (death -> restart chapter), and a design document.

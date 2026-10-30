@@ -1,6 +1,7 @@
 # TODO
 
-The plan, as approved, with status. Phases 0–4 are done; 5–7 are ahead.
+The plan, as approved, with status. Phases 0–7 are history; 8–13 are the save/load
+rework (implemented, the in-game pass still pending).
 
 ## Phase 0 — repo scaffold (done)
 
@@ -326,3 +327,129 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
 - [ ] Full in-game pass on a played run: chapter transition, death -> restart
   chapter, explore + load from the panel.
 - [ ] Design document (`docs/DESIGN.md`).
+
+## Phase 8 — save ownership and repair
+
+The game's save belongs to the game. The mod stops owning, minting or renaming
+save folders and only copies them.
+
+- [x] One live game save per run: `Recorder.MintRunId` removed; the mod never
+  creates, renames or mints a game save folder. A new game's folder comes from
+  the game's own `CreateSaveLoadSlot`.
+- [x] The folder is the id: postfixes on `SaveLoadManager.LoadSaves()` (helpers
+  matched back to files by hero + save date, only when unambiguous) and
+  `SaveLoadManager.LoadData(string)`, so every save the game reads has its
+  `SlotInfo.Id`.
+- [x] `Recorder.RepairIds`: one-time startup pass writing the recovered id back
+  into `Saves/**/Autosave.dat`.
+- [x] `Recorder.RepairLooseRoot`: a loose `Saves/Autosave.dat` (+`Chapter_N.dat`,
+  `testSave.txt`) merged into the one run folder whose scene list is the start
+  of its own (same hero, shared prefix >= 5, exactly one best match). Replaced
+  files are quarantined to `Brante-Save-Load/Backups/quarantine/<id>/`.
+- [x] Run tracking set only where the game changes saves: postfix on
+  `LoadGame(int)` (`_modTimeline=false`), `CreateSaveLoadSlot`,
+  `LoadGame(string,int)` (death -> restart chapter), and
+  `Recorder.BeginModLoad` from the mod's load path (`_modTimeline=true`).
+  `CurrentRunId()` prefers the live slot; an empty id is valid and never
+  replaced by a previous run's.
+- [x] `EnsureSlotId` (prefix on `SaveGame`/`SaveChapterState`) fills a missing id
+  only on a mod timeline and never changes a non-empty slot; `FixSaveFolder`
+  only redirects the bare `Saves/` root. The game's own load/continue/autosave
+  path is untouched.
+- [x] Manual repair on this machine (30 Oct 2026): the duplicate folder
+  `Saves/Biggie_10/30/202611031PM` (made by the old mint) moved to
+  `Brante-Save-Load/Backups/quarantine/20261030-minted-duplicate/`, its one
+  snapshot moved into `Runs/Biggie_10_23_2026103816AM/Choice/`. The loose root
+  save, `Chapter_3/4` and `testSave.txt` are merged by the startup repair on the
+  first launch. A pre-repair copy is at
+  `/tmp/opencode/brante-pre-repair-20261030-160111` (not in the repo).
+- [x] In-game (30 Oct 2026): startup log shows the rename, the baseline kept
+  the two existing backups, the loose root save was merged into
+  `Saves/Biggie_10/23/...` with its id written back, and `Saves/` has no root
+  files afterwards.
+- [ ] In-game: the game's own Continue/autosave and death -> restart chapter
+  after a rewind (the autosave destination was checked through the dev
+  autoload: it wrote `Autosave.dat` inside the run's folder).
+
+## Phase 9 — baseline
+
+- [x] One-time copy at the first start of this version (`.baseline` marker
+  missing): every game save folder -> `Brante-Save-Load/Backups/<id>/` (loose
+  root files -> `Backups/_no_save/`), staged in `*.tmp-<pid>` with
+  `MANIFEST.txt` (name, size, SHA-1), `README.txt` and `.complete`, then moved
+  into place.
+- [x] Never re-copied or pruned: a backup from an older version (no `.complete`)
+  is kept untouched and only marked. `Recorder.EnsureBaseline(id)` is the
+  fallback used before a load.
+- [x] The live save stays the game's: no mod copy is ever treated as the live
+  one, and the game keeps writing `Autosave.dat` where it always did.
+- [x] In-game (30 Oct 2026): baseline taken once at the first start (both
+  existing backups kept, root files copied to `Backups/_no_save`); the backup
+  hashes were unchanged after later loads and play.
+- [ ] In-game: present after a restart (the `.baseline` marker path) and
+  unchanged after a full playthrough.
+
+## Phase 10 — pre-rewind checkpoints
+
+- [x] `Runs/<run>/Checkpoints/`, sidecar `kind=checkpoint` + `reason=`, newest
+  100 per run (fixed constant).
+- [x] Taken before every mod load (single save or Load scene), before a load from
+  the game's own menu (a copy of the run's `Autosave.dat` - the main menu has no
+  live state), and before a death -> Restart chapter.
+- [x] In-game (30 Oct 2026): a checkpoint was written before a mod load
+  (`02.07.02_t6_6d10c25dfe`, reason "before loading 01.05.01"); a load that
+  switched runs filed it with both runs; loading the copy from the other run's
+  folder adopted the checkpoint's own run (blob id wins over the folder).
+- [ ] In-game: the game-menu load and death -> Restart chapter checkpoints, and
+  loading a checkpoint back to the state before the rewind.
+
+## Phase 11 — game autosave mirror
+
+- [x] Postfix on `SaveGame`/`SaveChapterState` copies the game's `Autosave.dat`
+  into `Runs/<run>/Autosaves/`: hash-deduped, `kind=autosave`, newest 100.
+- [x] Skipped while `AutoPlay.Running` (a replay gets one checkpoint, not one per
+  scene). These are the game's resume points (`SceneState_GAME_SETUP`), kept
+  apart from the choice points.
+- [x] In-game (30 Oct 2026): the mirror wrote `Autosaves/02.07.02_t6_*.dat`
+  after the dev autoload and after a mod load. `SlotInfo.Date` is cleared before
+  hashing/storing (it changes on every save while the state does not), so the
+  same state dedupes; the sidecar keeps the recorded time.
+- [ ] In-game: a Load scene replay adds no mirror entries (`AutoPlay.Running`).
+
+## Phase 12 — unified table
+
+- [x] Categories: `Game autosave` (`Autosaves/`), `Before load`
+  (`Checkpoints/`), `Manual` (`Manual/`), `Original save`
+  (`Backups/<id>/Autosave.dat`, read-only, no delete). The live
+  `Saves/<id>/Autosave.dat` is not listed, and identical states are not merged
+  across categories.
+- [x] "Save type" header is a filter button cycling `All -> Game autosave ->
+  Before load -> Manual -> Original -> All`; it resets to All when the window
+  opens and does not sort. The other headers still sort.
+- [x] Rows built in pages of 120 with a "Show more" row. Choice points stay in
+  the tree view only.
+- [x] Loading any row goes through the same flow (pre-rewind checkpoint -> adopt
+  the run slot -> load -> loading screen/dissolve).
+- [x] `Auto` -> `Choice` folder rename with a one-time migration
+  (`Recorder.MigrateFolderNames`); readers fall back to `Auto`.
+- [x] Loc keys `KindAll`, `KindAutosave`, `KindCheckpoint`, `KindOriginal`,
+  `ShowMore`, translated into all eleven languages.
+- [x] In-game (30 Oct 2026): the table opened with 11 rows (9 manual, 1 game
+  autosave, 1 original) and no choice points; the original row has no delete
+  cell (code) and loading a row of each kind goes through the shared flow.
+- [ ] In-game: click the type header through the whole cycle, the Show more
+  row, and the original row's load/delete behaviour.
+
+## Phase 13 — verification
+
+- [x] `./tools/build.sh` passes.
+- [x] In-game smoke pass (30 Oct 2026): startup repair/baseline/folder rename,
+  the table's categories without choice points, the autosave mirror, a
+  checkpoint before a mod load, the cross-run checkpoint and the blob-first
+  resolution.
+- [ ] In-game pass with `dev-book.txt` / `dev-loadpath.txt`: the type filter
+  cycle, pages, a death -> restart chapter, a Load scene replay (no per-scene
+  autosaves), a game-menu load, and a run whose saves had no id.
+- [ ] Playthrough pass (death -> restart chapter) and the achievements check, as
+  in Phase 7 above.
+- [ ] Refresh the README screenshots for the table's new first column.
