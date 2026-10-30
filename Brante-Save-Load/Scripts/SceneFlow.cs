@@ -6,6 +6,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using _Scripts.AMVCC.Models.Static;
+using _Scripts.AMVCC.Views.Windows.Destiny;
 using _Scripts.Helpers;
 using _Scripts.Managers;
 
@@ -170,21 +171,22 @@ namespace Doorstop
 			return After(from, shown, laterChapters, null);
 		}
 
-		// As above, evaluating the scene conditions with `hero`'s stats and
-		// characters (the state after the answer on screen), by briefly
-		// swapping them into the game's managers. Objectives stay the live
-		// ones: answers do not change them.
+		// As above, evaluating the scene conditions with `hero`'s stats,
+		// characters and unlocked objectives (the state after the answer on
+		// screen), by briefly swapping them into the game's managers.
 		public static List<Ahead> After(string from, ICollection<string> shown, bool laterChapters,
 			SceneEffects.Hero hero)
 		{
 			ParametersManager pm = ParametersManager.Instance;
 			CharacterParametersSerializeHelper csh = CharacterParametersSerializeHelper.Initiate;
+			KeyChapterParametersController kc = KeyChapterParametersController.Initiate;
 			if (hero == null || hero.Stats == null || pm == null || csh == null)
 			{
 				return AfterCore(from, shown, laterChapters);
 			}
 			ModelParameters stats = pm.Parameters;
 			List<CharacterModel> chars = csh.Characters;
+			bool[] unlocked = null;
 			try
 			{
 				pm.Parameters = hero.Stats;
@@ -192,12 +194,29 @@ namespace Doorstop
 				{
 					csh.Characters = hero.Characters;
 				}
+				if (hero.Objectives != null && kc != null && kc.AllGameObjectives != null)
+				{
+					unlocked = new bool[kc.AllGameObjectives.Count];
+					for (int i = 0; i < kc.AllGameObjectives.Count; i++)
+					{
+						Objective o = kc.AllGameObjectives[i];
+						unlocked[i] = o.Unlocked;
+						o.Unlocked = hero.Objectives.Contains(o.Name);
+					}
+				}
 				return AfterCore(from, shown, laterChapters);
 			}
 			finally
 			{
 				pm.Parameters = stats;
 				csh.Characters = chars;
+				if (unlocked != null)
+				{
+					for (int i = 0; i < kc.AllGameObjectives.Count && i < unlocked.Length; i++)
+					{
+						kc.AllGameObjectives[i].Unlocked = unlocked[i];
+					}
+				}
 			}
 		}
 

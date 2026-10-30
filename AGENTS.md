@@ -216,9 +216,9 @@ community event sheet (`data/events.json`).
   driven by the game; the tree only orders what can come next.
 - **Conditions are evaluated after the current answer.** `WorkOutOpenAnswers`
   stores each column's hero after its answer (`AfterHero`); `AddUpcoming` asks
-  `SceneFlow.After(..., hero)`, which briefly swaps that hero into
-  `ParametersManager`/`CharacterParametersSerializeHelper` while evaluating the
-  scene conditions. A current/played-scene pick rebuilds the columns
+  `SceneFlow.After(..., hero)`, which briefly swaps that hero's stats,
+  characters and unlocked objectives into the live managers while evaluating
+  the scene conditions. A current/played-scene pick rebuilds the columns
   (`RefreshKeepingScroll(true)`), so an answer that turns a trigger's condition
   true makes it appear ahead; an upcoming-scene pick only restyles.
 - **Key chapter parameters are extracted per scene/answer.** `scene-params.tsv`

@@ -480,9 +480,13 @@ save folders and only copies them.
   02.09.01` and 7 buttons, no `TextController` exception. `UniqueButtons`
   dedupes by `ButtonIndex`; `DedupeSidecars` repairs existing sidecars at
   startup.
-- [ ] Objective-based conditions are still evaluated on the live game during
-  simulation; extract/simulate `GetObjectiveStatus` and scene-event flags if a
-  path still diverges on them.
+- [x] Objective simulation (30 Oct 2026): `SceneFlow.After(..., hero)` also
+  swaps `KeyChapterParametersController.AllGameObjectives`' `Unlocked` flags
+  from `Hero.Objectives` (the start save's set) while evaluating conditions,
+  restoring them afterwards. A plan test with the snapshot objectives ran
+  without errors.
+- [ ] Scene-event objective changes after the start state are not simulated;
+  extract/simulate them if a path still diverges on a newly set objective.
 - [ ] Full `dev-loadpath` pass (`back`, `chapter`, `start`, `first`, `new`,
   `offpath`, death) after the unload/sidecar changes.
 - [x] Loading any row goes through the same flow (pre-rewind checkpoint -> adopt

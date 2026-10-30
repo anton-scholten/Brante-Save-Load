@@ -1000,10 +1000,11 @@ collapsed, 8–10 rows shown.
   exception. `Recorder.UniqueButtons` keeps one button per `ButtonIndex`, and
   `Recorder.DedupeSidecars` strips duplicate `[n]` lines from existing
   sidecars at startup.
-- **Remaining limit:** objectives (`GetObjectiveStatus`) are still evaluated on
-  the live game while simulating, and conditions set by scene events that are
-  not stats/key params/relations/statuses cannot be predicted; the ordered
-  replay stops at the first real divergence.
+- **Remaining limit:** objectives are simulated from the hero/start save
+  (`SceneFlow.After` swaps their `Unlocked` flags), but an objective set by a
+  **scene event** after that state is not; conditions depending on such a new
+  objective can still diverge, and the ordered replay stops at the first real
+  divergence.
 - The table's type cells show a short explanation on hover (the same paper
   pop-up as the tree): `HelpAutosave`, `HelpCheckpoint`, `HelpManual`,
   `HelpOriginal`, in all eleven languages. The Year and Turn columns were
