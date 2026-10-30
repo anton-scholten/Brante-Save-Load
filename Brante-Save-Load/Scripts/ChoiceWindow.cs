@@ -331,12 +331,11 @@ namespace Doorstop
 
 		// Preferred widths in reference px; Choice takes whatever is left.
 		private static readonly float[] ColWidths =
-		{ 130f, 170f, 150f, 115f, 80f, 100f, 80f, 120f, 200f };
+		{ 130f, 190f, 170f, 90f, 90f, 130f, 90f, 330f, 260f };   // the choice column takes the rest
 
 		private const float RowHeight = 44f;
 		private const float HeaderHeight = 36f;
 		private const float DeleteWidth = 64f;
-		private const float PanelWidth = 1360f;
 
 		private sealed class SaveEntry
 		{
@@ -381,7 +380,6 @@ namespace Doorstop
 		private static Sprite _dashH;
 		private static Sprite _dashV;
 		private static GameObject _saveNowBtn;
-		private static GameObject _historyBtn;
 		private static GameObject _historyPanel;
 		private static int _historyLoadable;
 		private static TextMeshProUGUI _historyInfo;
@@ -588,8 +586,27 @@ namespace Doorstop
 				{
 					return;
 				}
+				// one tab further along than the chapter, the same step as
+				// year -> chapter; the tree view's tab one more step on
+				float step = year != null ? ((RectTransform)chapter).anchoredPosition.x - ((RectTransform)year).anchoredPosition.x : 167f;
+				MakeBookTab(settings, hud, chapter, "HUD.SaveLoad", Loc.T(Loc.K.BookTab), step + 40f, OpenSaveLoad);
+				MakeBookTab(settings, hud, chapter, "HUD.TreeView", Loc.T(Loc.K.BookTreeTab), step * 2f + 55f, OpenTreeView);
+				ModLog.Info("ChoiceWindow: book tabs added next to the chapter tab");
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: book tab failed:\n" + e);
+			}
+		}
+
+		// One tab: the settings tab's button, the chapter medallion, wood
+		// behind it, `text` on it; `dx` to the right of the chapter tab.
+		private static void MakeBookTab(Button settings, Transform hud, Transform chapter, string name,
+			string text, float dx, UnityEngine.Events.UnityAction onClick)
+		{
+			{
 				GameObject tab = UnityEngine.Object.Instantiate(settings.gameObject, hud, false);
-				tab.name = "HUD.SaveLoad";
+				tab.name = name;
 				// the settings behaviours (open the settings, its notification dot,
 				// the hover animation) go; the hover sound stays
 				foreach (MonoBehaviour mb in tab.GetComponents<MonoBehaviour>())
@@ -609,13 +626,11 @@ namespace Doorstop
 				}
 				RectTransform crt = (RectTransform)chapter;
 				RectTransform rt = tab.GetComponent<RectTransform>();
-				// one tab further along, the same step as year -> chapter
-				float step = year != null ? crt.anchoredPosition.x - ((RectTransform)year).anchoredPosition.x : 167f;
 				rt.anchorMin = crt.anchorMin;
 				rt.anchorMax = crt.anchorMax;
 				rt.pivot = crt.pivot;
 				rt.sizeDelta = crt.sizeDelta;
-				rt.anchoredPosition = crt.anchoredPosition + new Vector2(step + 40f, 0f);
+				rt.anchoredPosition = crt.anchoredPosition + new Vector2(dx, 0f);
 				Image timg = tab.GetComponent<Image>();
 				timg.sprite = chapter.GetComponent<Image>().sprite;
 
@@ -672,7 +687,7 @@ namespace Doorstop
 				{
 					tx = label.AddComponent<TextMeshProUGUI>();
 				}
-				tx.text = Loc.T(Loc.K.BookTab);
+				tx.text = text;
 				tx.fontSize = 18f;
 				tx.lineSpacing = -14f;
 				tx.alignment = TextAlignmentOptions.Center;
@@ -692,12 +707,7 @@ namespace Doorstop
 				// a fresh event: the copy would still carry the settings tab's
 				// persistent onClick
 				b.onClick = new Button.ButtonClickedEvent();
-				b.onClick.AddListener(OpenTreeView);
-				ModLog.Info("ChoiceWindow: book tab added next to the chapter tab");
-			}
-			catch (Exception e)
-			{
-				ModLog.Error("ChoiceWindow: book tab failed:\n" + e);
+				b.onClick.AddListener(onClick);
 			}
 		}
 
@@ -755,7 +765,16 @@ namespace Doorstop
 		{
 			Open();
 			OpenHistory();
+			_treeOnly = true;
 		}
+
+		// The save table, from the book tab.
+		public static void OpenSaveLoad()
+		{
+			Open();
+		}
+
+		private static bool _treeOnly;   // opened from its book tab: closing it closes the window
 
 		// ------------------------------------------------------------------
 		// The save window
@@ -794,6 +813,7 @@ namespace Doorstop
 
 		public static void Close()
 		{
+			_treeOnly = false;
 			CancelConfirm();
 			CloseHistory();
 			if (_canvas != null)
@@ -835,14 +855,10 @@ namespace Doorstop
 			dimBtn.transition = Selectable.Transition.None;
 			dimBtn.onClick.AddListener(Close);
 
-			// Panel: fixed reference width, height from the screen.
+			// Panel: the whole screen, as the tree view and the game's pages.
 			GameObject panel = CreateUiObject("Panel", _canvas.transform);
 			RectTransform prt = panel.GetComponent<RectTransform>();
-			prt.anchorMin = new Vector2(0.5f, 0.03f);
-			prt.anchorMax = new Vector2(0.5f, 0.97f);
-			prt.pivot = new Vector2(0.5f, 0.5f);
-			prt.anchoredPosition = Vector2.zero;
-			prt.sizeDelta = new Vector2(PanelWidth, 0f);
+			Stretch(prt);
 			Image pimg = panel.AddComponent<Image>();
 			pimg.color = ColPanel;
 
@@ -854,7 +870,7 @@ namespace Doorstop
 			trt.anchorMin = new Vector2(0f, 1f);
 			trt.anchorMax = new Vector2(1f, 1f);
 			trt.pivot = new Vector2(0.5f, 1f);
-			trt.anchoredPosition = new Vector2(0f, -14f);
+			trt.anchoredPosition = new Vector2(0f, -20f);
 			trt.sizeDelta = new Vector2(-120f, 52f);
 
 			// Close [x].
@@ -863,7 +879,7 @@ namespace Doorstop
 			crt.anchorMin = new Vector2(1f, 1f);
 			crt.anchorMax = new Vector2(1f, 1f);
 			crt.pivot = new Vector2(1f, 1f);
-			crt.anchoredPosition = new Vector2(-14f, -14f);
+			crt.anchoredPosition = new Vector2(-24f, -20f);
 			crt.sizeDelta = new Vector2(46f, 46f);
 			Image cimg = closeBtn.AddComponent<Image>();
 			cimg.color = Color.clear;
@@ -922,38 +938,6 @@ namespace Doorstop
 				new Vector2(260f, 52f), ColLoadButton, Loc.T(Loc.K.SaveNow), 24f,
 				delegate { Ask(Pending.SaveNow, "", "", null); }).gameObject;
 
-			// History (bottom right): the scene path this playthrough took,
-			// as recorded by the game itself (Phase 6).
-			_historyBtn = CreateUiObject("HistoryBtn", panel.transform);
-			RectTransform hrt2 = _historyBtn.GetComponent<RectTransform>();
-			hrt2.anchorMin = new Vector2(0.5f, 1f);
-			hrt2.anchorMax = new Vector2(0.5f, 1f);
-			hrt2.pivot = new Vector2(0.5f, 1f);
-			hrt2.anchoredPosition = new Vector2(0f, -14f);
-			hrt2.sizeDelta = new Vector2(250f, 56f);
-			Image himg2 = _historyBtn.AddComponent<Image>();
-			himg2.color = ColButtonDark;
-			Button hbtn2 = _historyBtn.AddComponent<Button>();
-			hbtn2.targetGraphic = himg2;
-			hbtn2.onClick.AddListener(OpenHistory);
-			GameObject hicon = CreateUiObject("Icon", _historyBtn.transform);
-			RectTransform hirt = hicon.GetComponent<RectTransform>();
-			hirt.anchorMin = new Vector2(0f, 0.5f);
-			hirt.anchorMax = new Vector2(0f, 0.5f);
-			hirt.pivot = new Vector2(0f, 0.5f);
-			hirt.anchoredPosition = new Vector2(14f, 0f);
-			hirt.sizeDelta = new Vector2(64f, 38f);
-			Image hiImg = hicon.AddComponent<Image>();
-			hiImg.sprite = MakeTreeIcon();
-			hiImg.color = ColTextLight;
-			hiImg.preserveAspect = true;
-			hiImg.raycastTarget = false;
-			TextMeshProUGUI hlabel = AddLabel(_historyBtn.transform, "Label",
-				Loc.T(Loc.K.History), 23f, ColTextLight, true);
-			Stretch(hlabel.rectTransform);
-			hlabel.rectTransform.offsetMin = new Vector2(84f, 0f);
-			hlabel.alignment = TextAlignmentOptions.MidlineLeft;
-
 			// Both on the canvas itself: the tree is wider than the save window,
 			// and the confirm dialog must be able to sit on top of the tree.
 			BuildConfirm(_canvas.transform);
@@ -989,7 +973,6 @@ namespace Doorstop
 			_headerLabels = null;
 			_sortIcons = null;
 			_saveNowBtn = null;
-			_historyBtn = null;
 			_historyPanel = null;
 			_historyList = null;
 			_historyScroll = null;
@@ -1524,6 +1507,12 @@ namespace Doorstop
 
 		private static void CloseHistory()
 		{
+			if (_treeOnly)
+			{
+				_treeOnly = false;
+				Close();   // back to the game, not to the save table it was not opened from
+				return;
+			}
 			HidePopup();
 			StatPanel.HideTooltip();
 			if (_historyPanel != null)
@@ -2701,8 +2690,10 @@ namespace Doorstop
 				label.enableWordWrapping = false;
 				RectTransform lrt = label.rectTransform;
 				Stretch(lrt);
-				lrt.offsetMin = new Vector2(8f, 0f);
-				lrt.offsetMax = new Vector2(-22f, 0f); // room for the triangle
+				// room for the triangle on the right; centred titles get the
+				// same on the left, so they sit over the centred cells below
+				lrt.offsetMin = new Vector2(col == Col.Choice ? 8f : 22f, 0f);
+				lrt.offsetMax = new Vector2(-22f, 0f);
 				_headerLabels[i] = label;
 
 				// Filled triangle, full text height, centred vertically.
@@ -3646,14 +3637,22 @@ namespace Doorstop
 
 		private static IEnumerator DevBookDump()
 		{
-			// Dev: the book tab opens the tree view.
-			Button bookTab = AutoPlay.FindNamed("HUD.SaveLoad");
-			if (bookTab != null)
+			// Dev: the book tabs - the tree view's opens the tree, and its x
+			// goes back to the game; the save tab opens the save table.
+			Button treeTab = AutoPlay.FindNamed("HUD.TreeView");
+			Button saveTab = AutoPlay.FindNamed("HUD.SaveLoad");
+			if (treeTab != null && saveTab != null)
 			{
-				bookTab.onClick.Invoke();
+				treeTab.onClick.Invoke();
 				yield return new WaitForSeconds(3f);
-				ModLog.Info("ChoiceWindow: dev book tab click -> tree view "
-					+ (_historyList != null && _historyList.gameObject.activeInHierarchy ? "open" : "NOT open"));
+				bool treeOpen = _historyList != null && _historyList.gameObject.activeInHierarchy;
+				CloseHistory();
+				ModLog.Info("ChoiceWindow: dev tree tab -> tree view " + (treeOpen ? "open" : "NOT open")
+					+ ", after its x the window is " + (_canvas != null && _canvas.activeSelf ? "STILL open" : "closed"));
+				saveTab.onClick.Invoke();
+				yield return new WaitForSeconds(2f);
+				ModLog.Info("ChoiceWindow: dev save tab -> save table " + (_canvas != null && _canvas.activeSelf
+					&& (_historyPanel == null || !_historyPanel.activeSelf) ? "open" : "NOT open"));
 				Close();
 			}
 			UIManager ui = UIManager.Initiate;

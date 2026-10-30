@@ -19,7 +19,7 @@ namespace Doorstop
 			TypeAuto, TypeManual, Current, NothingYet,
 			LoadScene, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath, BookTab,
 			PickConflict, NothingToLoad,
-			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText
+			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, BookTreeTab
 		}
 
 		static Loc()
@@ -79,6 +79,17 @@ namespace Doorstop
 			AddNoStatText(_ja, "この能力値にはゲーム内の説明がありません。");
 			AddNoStatText(_ko, "게임에 이 능력치에 대한 설명이 없습니다.");
 			AddNoStatText(_zh, "游戏中没有这项属性的说明。");
+			AddBookTreeTab(_en, "tree\nview");
+			AddBookTreeTab(_ru, "дерево\nвыборов");
+			AddBookTreeTab(_de, "Baum-\nansicht");
+			AddBookTreeTab(_fr, "vue en\narbre");
+			AddBookTreeTab(_es, "vista\nárbol");
+			AddBookTreeTab(_it, "vista\nalbero");
+			AddBookTreeTab(_pl, "widok\ndrzewa");
+			AddBookTreeTab(_tr, "ağaç\ngörünümü");
+			AddBookTreeTab(_ja, "ツリー\n表示");
+			AddBookTreeTab(_ko, "트리\n보기");
+			AddBookTreeTab(_zh, "树状\n视图");
 			AddConflict(_en, "The answer in \"{0}\" on your path conflicts with your hero's stats at that moment: an earlier pick changed them. Pick another answer there.", "Nothing to load: choices selected correspond to the current scene.");
 			AddConflict(_ru, "Ответ в «{0}» на вашем пути противоречит характеристикам героя в тот момент: их изменил более ранний выбор. Выберите там другой ответ.", "Загружать нечего: выбранные ответы соответствуют текущей сцене.");
 			AddConflict(_de, "Die Antwort in „{0}“ auf deinem Weg passt nicht zu den Werten deines Helden in diesem Moment: eine frühere Wahl hat sie verändert. Wähle dort eine andere Antwort.", "Nichts zu laden: die gewählten Antworten entsprechen der aktuellen Szene.");
@@ -162,6 +173,11 @@ namespace Doorstop
 		private static void AddNoStatText(Dictionary<K, string> d, string text)
 		{
 			d[K.NoStatText] = text;
+		}
+
+		private static void AddBookTreeTab(Dictionary<K, string> d, string text)
+		{
+			d[K.BookTreeTab] = text;
 		}
 
 		private static void AddConflict(Dictionary<K, string> d, string conflict, string nothing)
