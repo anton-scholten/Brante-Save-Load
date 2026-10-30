@@ -60,6 +60,34 @@ namespace Doorstop
 		private static string _pinnedRunId;
 		private static bool _idProblemLogged;
 
+		// The save managers whose slot matters: the one the game saves through
+		// (SaveLoadManager.Instance - set in Awake and never cleared, so it
+		// can be an object Unity has destroyed, which a Unity "== null" calls
+		// null; its fields still work and the game still saves with it), then
+		// a live one if that is another object.
+		public static List<SaveLoadManager> SaveManagers()
+		{
+			List<SaveLoadManager> list = new List<SaveLoadManager>();
+			SaveLoadManager inst = SaveLoadManager.Instance;
+			if (!object.ReferenceEquals(inst, null))
+			{
+				list.Add(inst);
+			}
+			SaveLoadManager live = UnityEngine.Object.FindObjectOfType<SaveLoadManager>();
+			if (!object.ReferenceEquals(live, null) && !object.ReferenceEquals(live, inst))
+			{
+				list.Add(live);
+			}
+			return list;
+		}
+
+		// The one the game saves through, else a live one (null if none).
+		public static SaveLoadManager GameSaveManager()
+		{
+			List<SaveLoadManager> all = SaveManagers();
+			return all.Count > 0 ? all[0] : null;
+		}
+
 		// The folder for saves recorded while the game had no main-save id. A
 		// folder name only: it must never reach the game as a save slot id
 		// (the game would autosave into Saves/_no_save/, which nothing
@@ -70,6 +98,27 @@ namespace Doorstop
 		public static string RealOrEmpty(string id)
 		{
 			return id == NoRun ? "" : id;
+		}
+
+		// Dev: as if no run had been adopted or pinned (a game started from a
+		// save without a main-save id).
+		public static void DevForgetRun()
+		{
+			_adoptedId = null;
+			_pinnedRunId = null;
+			FieldInfo f = typeof(SaveLoadManager).GetField("_currentSaveSlotInfo",
+				BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+			FieldInfo cf = typeof(SaveLoadManager).GetField("_currentSaveFile",
+				BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+			foreach (SaveLoadManager m in SaveManagers())
+			{
+				f.SetValue(m, new SaveSlotInfo { Id = "", Date = "" });
+				SaveLoadHelper cur = cf.GetValue(m) as SaveLoadHelper;
+				if (cur != null && cur.SlotInfo != null)
+				{
+					cur.SlotInfo.Id = "";
+				}
+			}
 		}
 
 		public static void PinRunId(string id)
@@ -107,12 +156,8 @@ namespace Doorstop
 		{
 			try
 			{
-				SaveLoadManager slm = SaveLoadManager.Instance;
-				if (slm == null)
-				{
-					slm = UnityEngine.Object.FindObjectOfType<SaveLoadManager>();
-				}
-				if (slm == null)
+				SaveLoadManager slm = GameSaveManager();
+				if (object.ReferenceEquals(slm, null))
 				{
 					return "";
 				}
@@ -386,12 +431,8 @@ namespace Doorstop
 		{
 			try
 			{
-				SaveLoadManager slm = SaveLoadManager.Instance;
-				if (slm == null)
-				{
-					slm = UnityEngine.Object.FindObjectOfType<SaveLoadManager>();
-				}
-				if (slm == null)
+				SaveLoadManager slm = GameSaveManager();
+				if (object.ReferenceEquals(slm, null))
 				{
 					return "";
 				}
@@ -496,8 +537,10 @@ namespace Doorstop
 		{
 			try
 			{
+				// the object saving: possibly one Unity has destroyed, which
+				// still saves - so not Unity's "== null"
 				SaveLoadManager slm = slmObj as SaveLoadManager;
-				if (slm == null)
+				if (object.ReferenceEquals(slm, null))
 				{
 					return;
 				}
@@ -511,7 +554,16 @@ namespace Doorstop
 				id = RealOrEmpty(id);
 				if (string.IsNullOrEmpty(id))
 				{
-					return;
+					id = LiveRealId();
+					if (!string.IsNullOrEmpty(id))
+					{
+						return;   // the game has its own slot: nothing to repair
+					}
+					id = MintRunId();
+					if (string.IsNullOrEmpty(id))
+					{
+						return;
+					}
 				}
 				FieldInfo f = typeof(SaveLoadManager).GetField("_currentSaveSlotInfo",
 					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -543,6 +595,47 @@ namespace Doorstop
 			{
 				ModLog.Error("Recorder: save repair failed:\n" + e);
 			}
+		}
+
+		// A game with no main-save id at all (one started from a save without
+		// it) would save loose into Saves/ - where the game's Continue then
+		// finds it - and the mod would keep its saves in the placeholder
+		// folder. It gets an id as the game makes one for a new game (hero
+		// name + "_" + the date and time, slashes kept), and the placeholder
+		// folder's saves move into the new run's folder, so the tree keeps
+		// them. "" when there is no hero yet.
+		private static string MintRunId()
+		{
+			ParametersManager pm = ParametersManager.Instance;
+			if (pm == null)
+			{
+				pm = UnityEngine.Object.FindObjectOfType<ParametersManager>();
+			}
+			if (pm == null || string.IsNullOrEmpty(pm.HeroName))
+			{
+				return "";
+			}
+			string stamp = string.Format("{0}", DateTime.Now).Replace(" ", string.Empty)
+				.Replace(":", string.Empty).Replace(".", string.Empty);
+			string id = pm.HeroName + "_" + stamp;
+			_adoptedId = id;
+			PinRunId(id);
+			try
+			{
+				string from = Path.Combine(RunsDir, NoRun);
+				string to = Path.Combine(RunsDir, Sanitize(id));
+				if (Directory.Exists(from) && !Directory.Exists(to))
+				{
+					Directory.Move(from, to);
+					ModLog.Info("Recorder: the placeholder folder's saves moved to " + to);
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Info("Recorder: placeholder saves not moved: " + e.Message);
+			}
+			ModLog.Info("Recorder: the game had no main-save id - gave it '" + id + "' (as for a new game)");
+			return id;
 		}
 
 		// Last line of defence: SaveLoadManager.GetSaveFolderPath() returns
@@ -606,11 +699,12 @@ namespace Doorstop
 		{
 			try
 			{
-				if (slm == null)
+				List<SaveLoadManager> managers = SaveManagers();
+				if (!object.ReferenceEquals(slm, null) && !managers.Contains(slm))
 				{
-					slm = UnityEngine.Object.FindObjectOfType<SaveLoadManager>();
+					managers.Add(slm);
 				}
-				if (slm == null)
+				if (managers.Count == 0)
 				{
 					ModLog.Info("Recorder: no SaveLoadManager to adopt the save slot on");
 					return;
@@ -627,7 +721,10 @@ namespace Doorstop
 					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 				if (f != null)
 				{
-					f.SetValue(slm, helper.SlotInfo);
+					foreach (SaveLoadManager m in managers)
+					{
+						f.SetValue(m, helper.SlotInfo);
+					}
 				}
 				_adoptedId = helper.SlotInfo.Id;
 				ModLog.Info("Game saves continue into Saves/" + helper.SlotInfo.Id);
@@ -721,6 +818,12 @@ namespace Doorstop
 		// flipped later by SceneShowChecker.OnEnable). The not-yet-showed
 		// flag is exactly what makes the game's loader re-open this very
 		// scene instead of continuing past it.
+		// The snapshot of the scene on screen, recorded or found unchanged: a
+		// click there is noted in its sidecar. (The newest snapshot of the
+		// scene could be another path's, when this state was saved before.)
+		private static string _shownScene;
+		private static string _shownSnapshot;
+
 		public static void OnChoiceSceneShown()
 		{
 			try
@@ -746,6 +849,8 @@ namespace Doorstop
 			string baseName = Sanitize(scene) + "_t" + helper.Turn + "_" + hash;
 			string dir = RunDir(CurrentRunId(), "Auto");
 			string dat = Path.Combine(dir, baseName + ".dat");
+			_shownScene = scene;
+			_shownSnapshot = dat;
 			if (File.Exists(dat))
 			{
 				ModLog.Info("Choice point unchanged, skipped: " + baseName);
@@ -820,8 +925,17 @@ namespace Doorstop
 				string prefix = Sanitize(scene) + "_";
 				string newest = null;
 				DateTime newestTime = DateTime.MinValue;
+				if (scene == _shownScene && _shownSnapshot != null && File.Exists(_shownSnapshot))
+				{
+					newest = Path.ChangeExtension(_shownSnapshot, ".meta.txt");
+					newestTime = DateTime.MaxValue;
+				}
 				foreach (string f in Directory.GetFiles(dir, "*.meta.txt"))
 				{
+					if (newestTime == DateTime.MaxValue)
+					{
+						break;
+					}
 					if (!Path.GetFileName(f).StartsWith(prefix, StringComparison.Ordinal))
 					{
 						continue;

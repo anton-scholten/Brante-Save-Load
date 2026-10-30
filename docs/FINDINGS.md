@@ -753,3 +753,28 @@ not shown (`AutomaticSceneLoad` loads `LastOpenScene` in both cases), so it
 was not the blank book; the entry is added on record and on load anyway, to
 keep saves consistent with what the game holds a moment later.
 
+## Two save managers, and saves with no id at all (30 Oct 2026)
+
+`SaveLoadManager.Instance` is a plain static set in `Awake` and never
+cleared, and the game saves through it (`SaveGameEvent` ->
+`SaveLoadManager.Instance.SaveGame`). Once Unity destroys that object, a
+Unity `== null` test calls it null - but the game keeps saving with it (its
+managed fields still work). The mod used to fall back to
+`FindObjectOfType<SaveLoadManager>()` there: it read and repaired the slot of
+*another* object than the one the game saved with, so the slot repair on the
+save calls silently did nothing and a game without a main-save id saved
+loose into `Saves/`. Every access now goes through `Recorder.SaveManagers()`
+/ `GameSaveManager()` (reference checks; the slot is set on both objects).
+
+A game with no main-save id at all (one started from a save that had none)
+now gets one on its first save, made as the game makes one for a new game
+(`HeroName + "_" + DateTime.Now` without spaces, colons and dots); the mod's
+placeholder folder (`Runs/_no_save`) is renamed to the new run's, so its
+saves stay with the timeline.
+
+A click is noted in the sidecar of the snapshot of the scene on screen
+(recorded or found unchanged), not of the newest snapshot of that scene,
+which can be another path's; and a sidecar can hold several `chosen=` lines
+(the save loaded and answered more than once), all of which the tree tries
+when matching saves to the path.
+

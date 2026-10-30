@@ -108,6 +108,12 @@ community event sheet (`data/events.json`).
   game's slot bookkeeping can be empty, which would drop autosaves into `Saves/`
   itself; `Recorder.EnsureSlotId` (prefix on the save calls) and
   `Recorder.FixSaveFolder` (postfix on `GetSaveFolderPath`) repair that.
+- **`SaveLoadManager.Instance` can be a destroyed object the game still saves
+  with.** Never test it with Unity's `== null` and fall back to
+  `FindObjectOfType`: use `Recorder.SaveManagers()` / `GameSaveManager()`.
+- **`_no_save` is a folder name only** (`Recorder.NoRun`, the mod's saves made
+  while the game had no main-save id). It must never reach the game as a save
+  slot id: the game's autosave would throw and the scene would stay blank.
 - **`SaveLoadManager.LoadGame(SaveLoadHelper)` is public** — that is the mod's
   load path. It restores all singletons and resumes via `LastOpenScene`.
 - **Choice scenes are additive scenes containing `ParameterButtonChanger`
@@ -148,7 +154,7 @@ on use) and must be paired with `dev-autoload.txt`:
 | `dev-autoload.txt` | replay the vanilla load sequence onto the newest autosave |
 | `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
 | `dev-book.txt` | the book tabs (tree view, then save table), the save table, then the tree view: wheel, pop-ups, stat pop-up, a conflicting pick, chapter rule, a pick + its load plan, undo |
-| `dev-loadpath.txt` | with `dev-book.txt`: Load scene end to end; `back N` replays from another answer N scenes back, `chapter` from the chapter's start save, `start` from chapter 1 with an early change, `ahead` into the next chapter, `death` through a death, `offpath` a stop off the path, `first` the story's first scenes from a stand-in start (another run's chapter 1 save), `new` the same from a start built from the game's defaults, `file <name>` load that mod save as the table does |
+| `dev-loadpath.txt` | with `dev-book.txt`: Load scene end to end; `back N` replays from another answer N scenes back, `chapter` from the chapter's start save, `start` from chapter 1 with an early change, `ahead` into the next chapter, `death` through a death, `offpath` a stop off the path, `first` the story's first scenes from a stand-in start (another run's chapter 1 save), `new` the same from a start built from the game's defaults, `file <name>` load that mod save as the table does (`file <name> norun`: with no run active) |
 | `dev-history.txt` | log the save's scene path (`ShowedScenesList`) |
 | `dev-autoplay.txt` | empty: log the buttons the game puts up after an answer; `chapters 2 3`: start a debug run (own main save `Debug_<date>`, from the newest `Chapter_1.dat`), play the first open answer everywhere and make a mod save when each listed chapter starts |
 | `dev-scene-tree.txt` | dump the loaded scene's UI components |

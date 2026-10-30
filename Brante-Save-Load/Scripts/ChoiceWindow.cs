@@ -1292,8 +1292,8 @@ namespace Doorstop
 
 		public static bool DevFromChapterStart;
 		private static bool DevStandIn;
-		private static bool DevNoChapter1;   // dev-loadpath "new": as if no Chapter_1.dat existed anywhere   // dev-loadpath "first": the run's own chapter 1 save is ignored
-		private static string DevDropPick;   // dev-loadpath "offpath": this scene is taken out of the plan   // dev-loadpath "chapter": ignore the scenes' saves
+		private static bool DevNoChapter1;   // dev-loadpath "new": as if no Chapter_1.dat existed anywhere
+		private static string DevDropPick;   // dev-loadpath "offpath": this scene is taken out of the plan
 
 		// The game's own save of the chapter's start, when column `i` is the
 		// chapter's first scene, the file is there, and it is this timeline's:
@@ -2272,26 +2272,33 @@ namespace Doorstop
 					int bestD = int.MaxValue;
 					foreach (string path in paths)
 					{
-						SceneEffects.Hero h = SceneEffects.FromSnapshot(path);
-						if (h == null)
+						// every answer this save was given (it may have been
+						// loaded and answered more than once), else the one the
+						// next scene's save remembers
+						List<string> answers = col.Current ? new List<string> { "" } : History.ChosenAllIn(path);
+						answers.Reverse();   // newest first: a tie keeps the newer
+						if (answers.Count == 0)
 						{
-							continue;
+							answers.Add(nextAnswer);
 						}
-						string answer = col.Current ? "" : History.ChosenIn(path);
-						if (answer.Length == 0 && !col.Current)
+						foreach (string answer in answers)
 						{
-							answer = nextAnswer;
-						}
-						if (answer.Length > 0)
-						{
-							h.Apply(SceneEffects.For(col.Scene, answer));
-						}
-						int d = SceneEffects.Distance(h, next);
-						if (d < bestD)   // newest first: a tie keeps the newer
-						{
-							bestD = d;
-							best = path;
-							bestAnswer = answer;
+							SceneEffects.Hero h = SceneEffects.FromSnapshot(path);
+							if (h == null)
+							{
+								break;
+							}
+							if (answer.Length > 0)
+							{
+								h.Apply(SceneEffects.For(col.Scene, answer));
+							}
+							int d = SceneEffects.Distance(h, next);
+							if (d < bestD)
+							{
+								bestD = d;
+								best = path;
+								bestAnswer = answer;
+							}
 						}
 					}
 				}
@@ -4097,7 +4104,7 @@ namespace Doorstop
 				// does, and log what the game shows afterwards
 				if (lpArgs.StartsWith("file ", StringComparison.Ordinal))
 				{
-					string want = lpArgs.Substring(5).Trim();
+					string want = lpArgs.Substring(5).Replace(" norun", "").Trim();
 					string found = null;
 					foreach (string f in Directory.GetFiles(Recorder.RunsDir, want, SearchOption.AllDirectories))
 					{
@@ -4107,6 +4114,10 @@ namespace Doorstop
 					if (found != null)
 					{
 						Close();
+						if (lpArgs.EndsWith(" norun", StringComparison.Ordinal))
+						{
+							Recorder.DevForgetRun();
+						}
 						LoadSnapshot(found);
 						yield return new WaitForSeconds(14f);
 						GameManager g = GameManager.Instance;

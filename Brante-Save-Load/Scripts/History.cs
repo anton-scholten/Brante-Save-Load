@@ -352,6 +352,34 @@ namespace Doorstop
 			return string.IsNullOrEmpty(snapshotPath) ? "" : RecordedChoice(Path.ChangeExtension(snapshotPath, ".meta.txt"));
 		}
 
+		// Every answer recorded as clicked in a snapshot's scene, newest last
+		// (a save loaded more than once may have been answered differently).
+		public static List<string> ChosenAllIn(string snapshotPath)
+		{
+			List<string> all = new List<string>();
+			try
+			{
+				string sidecar = string.IsNullOrEmpty(snapshotPath) ? "" : Path.ChangeExtension(snapshotPath, ".meta.txt");
+				if (sidecar.Length > 0 && File.Exists(sidecar))
+				{
+					foreach (string raw in File.ReadAllLines(sidecar))
+					{
+						if (raw.StartsWith("chosen=", StringComparison.Ordinal))
+						{
+							string c = raw.Substring(7).Trim();
+							all.Remove(c);
+							all.Add(c);
+						}
+					}
+				}
+			}
+			catch
+			{
+				// unreadable sidecar: no answers
+			}
+			return all;
+		}
+
 		// The game's CurrentConsequence in a snapshot: the answer clicked in
 		// the choice scene before it ("" if unknown).
 		public static string ConsequenceOf(string snapshotPath)
