@@ -316,6 +316,13 @@ namespace Doorstop
 									}
 								}
 							}
+							string captureMarker = Path.Combine(Recorder.SnapshotDir, "dev-capture.txt");
+							if (File.Exists(captureMarker))
+							{
+								try { File.Delete(captureMarker); }
+								catch (Exception) { }
+								Recorder.DevCapture();
+							}
 							string loadPlanMarker = Path.Combine(Recorder.SnapshotDir, "dev-plan.txt");
 							if (File.Exists(loadPlanMarker))
 							{
@@ -324,7 +331,13 @@ namespace Doorstop
 								catch (Exception) { }
 								if (!string.IsNullOrEmpty(target))
 								{
-									ChoiceWindow.DevPlan(target);
+									bool replay = File.Exists(Path.Combine(Recorder.SnapshotDir, "dev-replay.txt"));
+									if (replay)
+									{
+										try { File.Delete(Path.Combine(Recorder.SnapshotDir, "dev-replay.txt")); }
+										catch (Exception) { }
+									}
+									ChoiceWindow.DevPlan(target, replay);
 								}
 							}
 						}

@@ -4467,7 +4467,7 @@ namespace Doorstop
 		// `target` by picking the first open answer everywhere, and log the
 		// plan and its pre-checks. No replay; used to check StartLooksOnPath
 		// and the ordered plan before a fast-forward.
-		public static void DevPlan(string target)
+		public static void DevPlan(string target, bool replay = false)
 		{
 			try
 			{
@@ -4519,6 +4519,11 @@ namespace Doorstop
 				ModLog.Info("DEV PLAN: start " + p.StartScene + " target " + p.Target
 					+ " speculative=" + p.Speculative + " order "
 					+ string.Join(" > ", p.Order.ToArray()));
+				if (replay && ModHost.Current != null)
+				{
+					ModLog.Info("DEV PLAN: replaying the plan");
+					ModHost.Current.StartCoroutine(ReplayTo(p));
+				}
 			}
 			catch (Exception e)
 			{

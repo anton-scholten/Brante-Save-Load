@@ -978,6 +978,16 @@ collapsed, 8–10 rows shown.
   makes a trigger's condition true adds it ahead. An upcoming-scene pick only
   restyles (the upcoming order cannot change before that scene is reached).
   `dev-stat.txt` (`Cunning=4`) exists to test such a state.
+- **The Poets path is fixed (30 Oct 2026).** With the condition parsed as
+  `Cunning >= 4`, a test snapshot was created with `Cunning = 4` (`dev-stat` +
+  `dev-capture`); the tree then showed `02.07.02 > 02.N.03 > 02.08.01 >
+  02.09.01`, and `dev-replay` drove the game through
+  `02.07.02 -> ButtonDescription1 -> 02.N.03 -> ButtonDescription1 ->
+  02.08.01 -> ButtonDescription1 -> 02.09.01` without stopping. The old run
+  stopped at `02.N.03` because the condition/branch order was missing, not
+  because the answer was unavailable. (`PointerSfxPlayer` NullReference
+  exceptions appeared while AutoPlay clicked an achievement popup; game-side,
+  the replay continued.)
 - **Remaining limit:** objectives (`GetObjectiveStatus`) are still evaluated on
   the live game while simulating, and conditions set by scene events that are
   not stats/key params/relations/statuses cannot be predicted; the ordered

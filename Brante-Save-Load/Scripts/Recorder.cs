@@ -1692,6 +1692,13 @@ namespace Doorstop
 			}
 		}
 
+		// Dev: capture the current scene now (after changing a stat), so a
+		// test plan starts from the modified state.
+		public static void DevCapture()
+		{
+			OnChoiceSceneShown();
+		}
+
 		private static void Capture()
 		{
 			SaveLoadHelper helper = BuildHelper();

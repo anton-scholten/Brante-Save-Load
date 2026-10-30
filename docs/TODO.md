@@ -469,12 +469,16 @@ save folders and only copies them.
   parsed: `Cunning >= 4` (ParametersList 11, MoreEqual 4), so the old test
   snapshot (Cunning 3) correctly omitted it. A state with Cunning >= 4 should
   now offer The Poets before 02.08.01; `dev-stat.txt` (`Cunning=4`) tests it.
-- [ ] In-game: with `Cunning=4`, pick the answer that keeps it >= 4 and verify
-  `02.N.03` appears in the tree ahead of `02.08.01` and in the plan, and the
-  replay answers it; then the full `dev-loadpath` pass.
+- [x] In-game (30 Oct 2026): with `Cunning=4` (dev-stat) and a fresh capture
+  (`dev-capture`), the plan was `02.07.02 > 02.N.03 > 02.08.01 > 02.09.01` and
+  `dev-replay` drove the game through The Poets to `02.09.01` without stopping.
+  The old stop was the missing condition/branch order, not an unavailable
+  answer.
 - [ ] Objective-based conditions are still evaluated on the live game during
   simulation; extract/simulate `GetObjectiveStatus` and scene-event flags if a
   path still diverges on them.
+- [ ] Full `dev-loadpath` pass (`back`, `chapter`, `start`, `first`, `new`,
+  `offpath`, death) and the double-scene-load guard.
 - [x] Loading any row goes through the same flow (pre-rewind checkpoint -> adopt
   the run slot -> load -> loading screen/dissolve).
 - [x] `Auto` -> `Choice` folder rename with a one-time migration
