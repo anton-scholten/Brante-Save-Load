@@ -1137,33 +1137,32 @@ namespace Doorstop
 			ModLog.Info("ChoiceWindow: tree selections reset");
 		}
 
-		// Clicking an answer selects it: the path follows it, the dashed mark
-		// moves to it, and "Load scene" will go there. Nothing loads yet.
-		// Clicking the answer picked there again takes the pick back; the scene
-		// to load becomes the furthest pick left (none: nothing selected).
+		// Clicking an answer picks it: the path follows it. Clicking the answer
+		// picked there again takes the pick back. The dashed mark - and the
+		// scene Load scene goes to - is always the furthest pick along the
+		// tree, since a scene can only be loaded with every answer before it
+		// given. Nothing loads yet.
 		private static void SelectChoice(string scene, string choice)
 		{
 			string had;
 			if (_overrides.TryGetValue(scene, out had) && had == choice)
 			{
 				_overrides.Remove(scene);
-				_selScene = null;
-				_selChoice = null;
-				for (int i = _tree.Count - 1; i >= 0; i--)
-				{
-					if (_overrides.TryGetValue(_tree[i].Scene, out had))
-					{
-						_selScene = _tree[i].Scene;
-						_selChoice = had;
-						break;
-					}
-				}
 			}
 			else
 			{
 				_overrides[scene] = choice;
-				_selScene = scene;
-				_selChoice = choice;
+			}
+			_selScene = null;
+			_selChoice = null;
+			for (int i = _tree.Count - 1; i >= 0; i--)
+			{
+				if (_overrides.TryGetValue(_tree[i].Scene, out had))
+				{
+					_selScene = _tree[i].Scene;
+					_selChoice = had;
+					break;
+				}
 			}
 			RefreshKeepingScroll();
 		}
@@ -3618,8 +3617,8 @@ namespace Doorstop
 							WorkOutOpenAnswers(cols);
 							if (cj.Blocked.Contains(later.Name))
 							{
-								_selScene = cols[i].Scene;
-								_selChoice = earlier.Name;
+								_selScene = cj.Scene;
+								_selChoice = later.Name;
 								RefreshHistory(false);
 								Canvas.ForceUpdateCanvases();
 								float span = ((RectTransform)_historyList).rect.width - _historyScroll.viewport.rect.width;
@@ -3730,6 +3729,11 @@ namespace Doorstop
 					SelectChoice(far.Scene, far.Choices[0].Name);
 					ModLog.Info("ChoiceWindow: dev gap pick: load interactable=" + _loadHereBtn.GetComponent<Button>().interactable
 						+ ", why '" + LoadBlockedReason() + "'");
+					TreeCol near = _tree[cur + 1];
+					SelectChoice(near.Scene, near.Choices[0].Name);
+					ModLog.Info("ChoiceWindow: dev nearer pick after a far one: selected "
+						+ (_selScene == far.Scene ? "still the far one" : "'" + _selScene + "' (WRONG)"));
+					SelectChoice(near.Scene, near.Choices[0].Name);
 					SelectChoice(far.Scene, far.Choices[0].Name);
 					ModLog.Info("ChoiceWindow: dev unpick: picks left " + _overrides.Count + ", selected '" + (_selScene ?? "") + "'");
 				}

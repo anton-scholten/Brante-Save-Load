@@ -1,9 +1,15 @@
 # Brante — Save / Load
 
+<img src="Thumbnail.png" alt="thumbnail" width="200" align="right">
+
 A mod for [The Life and Suffering of Sir Brante](https://store.steampowered.com/app/1272160/)
 that lets you **return to any choice you have already reached** — no more losing an
 ending to a dice roll chapters ago — and adds a **save/load system of its own** that
 never touches the game's saves.
+
+<br clear="right">
+
+![The game's book with the mod's two tabs on top of its left page, right of the year and chapter tabs: a medallion with a download and an upload arrow (save / load) and one with linked boxes (tree view).](Screenshot_1.jpg)
 
 ## What it does
 
@@ -13,6 +19,8 @@ never touches the game's saves.
   any entry from the full-screen list, confirm — and the game returns to that
   exact choice screen. Entries can also be removed from the
   list (that only deletes the mod's own save file).
+![The full-screen save table: one row per save with its type, date, chapter, age, year, season, turn, scene and choice name, a bin on each row and Save now at the bottom.](Screenshot_2.jpg)
+
 - **Its own snapshots, and a backup of the game's save.** Choice points are
   recorded into the mod's own folder as you reach them. Before the mod loads one
   of its saves for the first time it copies the game's own save folder to
@@ -41,6 +49,8 @@ never touches the game's saves.
 
 ## Tree view
 
+![The tree view: scenes as columns of answers, the played path in red, a picked answer with a red dashed outline, Current and Upcoming under their scenes, and the hero's stats below in the game's style, the tabs not open yet greyed out.](Screenshot_3.jpg)
+
 The tree view tab on top of the book's left page (the medallion with linked
 boxes, right of the save / load tab; both tabs light up and name themselves on
 hover, as the game's own tabs do) opens the whole story as a tree, left to
@@ -64,9 +74,10 @@ filled in red from the start of the story up to the scene you are on. The
   own icons, relations and fates with the character's portrait) and what it
   requires: all of the listed requirements, or one of a "one of" group, green
   when the hero meets it at that point, red when not.
-- **Click answers to build a path.** Each click picks that answer; the path
-  follows it and the last pick carries a red dashed outline. Click a picked
-  answer again to take the pick back. Answers your hero
+- **Click answers to build a path.** Each click picks that answer and the path
+  follows it. The furthest pick along the story carries a red dashed outline:
+  that is the scene Load scene goes to, whatever order you picked in. Click a
+  picked answer again to take the pick back. Answers your hero
   could not take at that point are greyed out and cannot be picked. The
   **reset path** arrow (top right, next to the ×) puts every pick back to
   what you played. Changing an answer re-checks everything after it at once:
@@ -85,8 +96,8 @@ filled in red from the start of the story up to the scene you are on. The
   hero's step highlighted. A tab the game has not opened yet at that
   chapter is greyed out, with the game's own "will unlock in chapter ..."
   under its title.
-- **Load scene** (top middle) takes you to the scene of your last pick along
-  your path. It is greyed out while that would load exactly the scene and
+- **Load scene** (top middle) takes you to the scene with the dashed outline,
+  your furthest pick. It is greyed out while that would load exactly the scene and
   answers you have now, while a pick conflicts, or while a scene before the
   selected one has no answer yet - every scene on the way needs one, picked
   or played; hover it to see why. The mod loads its save from just before the
@@ -266,4 +277,5 @@ installed game.
 
 GPL-3.0 (see LICENSE). Bundled: Unity Doorstop 4.6.0 (LGPL-2.1,
 vendor/doorstop/LICENSE), Lib.Harmony 2.3.3 (MIT, vendor/LICENSE-harmony.txt).
-The game is Sever/101XP's; nothing of theirs is redistributed here.
+The game is Sever/101XP's; none of its files are redistributed here. The
+thumbnail and screenshots show its art, to illustrate the mod.
