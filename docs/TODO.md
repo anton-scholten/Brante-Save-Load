@@ -526,9 +526,13 @@ save folders and only copies them.
   the table's categories without choice points, the autosave mirror, a
   checkpoint before a mod load, the cross-run checkpoint and the blob-first
   resolution.
-- [ ] In-game pass with `dev-book.txt` / `dev-loadpath.txt`: the type filter
-  cycle, pages, a death -> restart chapter, a Load scene replay (no per-scene
-  autosaves), a game-menu load, and a run whose saves had no id.
+- [x] Table UI (30 Oct 2026): `dev-table` cycled the filter
+  `All 18 -> Game autosave 7 -> Before load 8 -> Manual 2 -> Original 1 -> All`
+  and the type cell's pop-up opened (`type pop-up active True`).
+- [ ] Table: "Show more" paging and loading the Original row in game.
+- [x] Design document `docs/DESIGN.md` written (goals, save ownership, load
+  flow, run identity, story path model, table/HUD, verification model,
+  invariants, open questions).
 - [ ] Playthrough pass (death -> restart chapter) and the achievements check, as
   in Phase 7 above.
 - [ ] Refresh the README screenshots for the table's new first column.

@@ -349,6 +349,18 @@ namespace Doorstop
 		// name is the same on every row.
 		private enum Col { Type, Saved, Chapter, Age, Year, Season, Turn, Scene, Choice }
 
+		// A localised scene title, or the scene id when the game has no key for
+		// it (machinery/unnamed scenes otherwise showed an empty message).
+		private static string SceneLabel(string scene)
+		{
+			string title = Loc.SceneTitle(scene);
+			if (!string.IsNullOrEmpty(title))
+			{
+				return title;
+			}
+			return string.IsNullOrEmpty(scene) ? "?" : scene;
+		}
+
 		private static string ColName(Col c)
 		{
 			switch (c)
@@ -1799,11 +1811,12 @@ namespace Doorstop
 			{
 				string why = skipped != null
 					? string.Format(Loc.T(Loc.K.ReplaySkipped),
-						Loc.SceneTitle(at), Loc.SceneTitle(skipped))
-					: offPath != null ? string.Format(Loc.T(Loc.K.ReplayOffPath), Loc.SceneTitle(offPath))
-					: AutoPlay.LastStop == AutoPlay.Stop.Death ? string.Format(Loc.T(Loc.K.ReplayDeath), Loc.SceneTitle(at))
-					: AutoPlay.LastStop == AutoPlay.Stop.Blocked ? string.Format(Loc.T(Loc.K.PickBlocked), Loc.SceneTitle(at))
-					: string.Format(Loc.T(Loc.K.ReplayStopped), Loc.SceneTitle(at), plan.TargetTitle);
+						SceneLabel(at), SceneLabel(skipped))
+					: offPath != null ? string.Format(Loc.T(Loc.K.ReplayOffPath), SceneLabel(offPath))
+					: AutoPlay.LastStop == AutoPlay.Stop.Death ? string.Format(Loc.T(Loc.K.ReplayDeath), SceneLabel(at))
+					: AutoPlay.LastStop == AutoPlay.Stop.Blocked ? string.Format(Loc.T(Loc.K.PickBlocked), SceneLabel(at))
+					: string.Format(Loc.T(Loc.K.ReplayStopped), SceneLabel(at),
+						string.IsNullOrEmpty(plan.TargetTitle) ? SceneLabel(plan.Target) : plan.TargetTitle);
 				ModLog.Info("ChoiceWindow: load scene stopped at " + at + " - " + why
 					+ (skipped != null ? " (skipped " + skipped + ")" : ""));
 				// the tree, on the scene the replay stopped at, saying why
@@ -4543,6 +4556,41 @@ namespace Doorstop
 			RefreshHistory(false);
 			ModLog.Info("ChoiceWindow: dev conflict: none found (" + tries + " tries)");
 			return false;
+		}
+
+		// Dev (dev-table.txt): open the save table, cycle the type filter
+		// through every category, and show/hide the first type cell's pop-up.
+		public static void DevTable()
+		{
+			try
+			{
+				int n = Open();
+				ModLog.Info("DEV TABLE: opened " + n + " row(s), filter " + FilterName(_filter)
+					+ ", shown " + _entries.Count);
+				for (int i = 0; i < 5; i++)
+				{
+					CycleFilter();
+					ModLog.Info("DEV TABLE: filter " + FilterName(_filter)
+						+ ", rows " + _entries.Count + ", shown "
+						+ Math.Min(_shown, _entries.Count));
+				}
+				foreach (TreeHover h in _itemContainer.GetComponentsInChildren<TreeHover>(true))
+				{
+					if (h.gameObject.name == "KindHint")
+					{
+						h.OnHover(true);
+						ModLog.Info("DEV TABLE: type pop-up active "
+							+ (_tablePopup != null && _tablePopup.gameObject.activeSelf));
+						h.OnHover(false);
+						break;
+					}
+				}
+				Close();
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("DEV TABLE failed:\n" + e);
+			}
 		}
 
 		public static void DevBook()

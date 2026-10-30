@@ -248,6 +248,15 @@ namespace Doorstop
 				if (opened.IsValid() && opened.isLoaded)
 				{
 					ModLog.Info("DEV AUTOLOAD: scene " + scene + " is open");
+					string tableMarker = Path.Combine(Recorder.SnapshotDir, "dev-table.txt");
+					if (File.Exists(tableMarker))
+					{
+						try { File.Delete(tableMarker); }
+						catch (Exception) { }
+						yield return new WaitForSeconds(1f);
+						ChoiceWindow.DevTable();
+						yield break;
+					}
 					// Dev: load one mod save through the real table path
 					// (pre-rewind checkpoint, baseline, adopt, loading screen).
 					// "dev-load.txt" holds a file name under Runs/.
