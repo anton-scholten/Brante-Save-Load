@@ -7,7 +7,7 @@ It also features a "tree view" visual of your playthrough so you can see your mi
 
 <br clear="right">
 
-![The game's main UI (a book) with the mod's two tabs on top of its left page, right of the year and chapter tabs: a medallion with a download and upload arrows (illustrating saving and loading) and the other with linked boxes (illustrating the tree view).](Screenshot_1.jpg)
+![The game's main UI (a book) with the mod's two tabs on top of its left page, right of the year and chapter tabs: a medallion with a download and upload arrows (illustrating saving and loading) and the other with linked boxes (illustrating the tree view).](Screenshot_1_annotated.jpg)
 
 ## What it does
 
