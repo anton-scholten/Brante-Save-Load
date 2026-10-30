@@ -60,8 +60,21 @@ namespace Doorstop
 		private static string _pinnedRunId;
 		private static bool _idProblemLogged;
 
+		// The folder for saves recorded while the game had no main-save id. A
+		// folder name only: it must never reach the game as a save slot id
+		// (the game would autosave into Saves/_no_save/, which nothing
+		// creates, and the throw stops the scene from drawing - a blank book).
+		public const string NoRun = "_no_save";
+
+		// "" for the placeholder, else the id.
+		public static string RealOrEmpty(string id)
+		{
+			return id == NoRun ? "" : id;
+		}
+
 		public static void PinRunId(string id)
 		{
+			id = RealOrEmpty(id);
 			if (!string.IsNullOrEmpty(id))
 			{
 				_pinnedRunId = id;
@@ -262,6 +275,31 @@ namespace Doorstop
 			{
 				Directory.Delete(dir);
 			}
+		}
+
+		// The game adds the scene it opens to ShowedScenesList (not yet shown)
+		// only when the scene has finished loading (GameManager.
+		// OnLoadOperationComplete); a choice scene is recorded as it appears,
+		// which at ten times speed can be before that. A save whose
+		// LastOpenScene is missing from the list loads as an empty book, so
+		// the entry the game is about to add is added here. True if it was
+		// missing (also repairs saves recorded before this fix, on load).
+		public static bool EnsureSceneListed(SaveLoadHelper helper)
+		{
+			if (helper == null || string.IsNullOrEmpty(helper.LastOpenScene))
+			{
+				return false;
+			}
+			if (helper.ShowedScenesList == null)
+			{
+				helper.ShowedScenesList = new List<ShowedScenes>();
+			}
+			if (helper.ShowedScenesList.Exists(sc => sc != null && sc.SceneName == helper.LastOpenScene))
+			{
+				return false;
+			}
+			helper.ShowedScenesList.Add(new ShowedScenes { SceneName = helper.LastOpenScene, IsShowed = false });
+			return true;
 		}
 
 		public static SaveLoadHelper ReadHelper(string path)
@@ -470,6 +508,7 @@ namespace Doorstop
 				{
 					id = RealRunId(CurrentRunId());
 				}
+				id = RealOrEmpty(id);
 				if (string.IsNullOrEmpty(id))
 				{
 					return;
@@ -538,7 +577,15 @@ namespace Doorstop
 				{
 					return;
 				}
+				id = RealOrEmpty(id);
+				if (string.IsNullOrEmpty(id))
+				{
+					return;
+				}
 				path = Path.Combine(root, id);
+				// the game creates its folder before this postfix runs; a
+				// redirected one must exist too, or its save throws
+				Directory.CreateDirectory(path);
 				if (!_repairLogged)
 				{
 					_repairLogged = true;
@@ -569,7 +616,7 @@ namespace Doorstop
 					return;
 				}
 				if (helper == null || helper.SlotInfo == null
-					|| string.IsNullOrEmpty(helper.SlotInfo.Id))
+					|| string.IsNullOrEmpty(RealOrEmpty(helper.SlotInfo.Id)))
 				{
 					// Nothing trustworthy to adopt; keep the previous one so a
 					// known-good id is never replaced by an empty one.
@@ -605,7 +652,7 @@ namespace Doorstop
 				}
 				string rest = full.Substring(runs.Length + 1);
 				int sep = rest.IndexOf(Path.DirectorySeparatorChar);
-				return sep > 0 ? rest.Substring(0, sep) : "";
+				return sep > 0 ? RealOrEmpty(rest.Substring(0, sep)) : "";
 			}
 			catch
 			{
@@ -616,7 +663,7 @@ namespace Doorstop
 		// <RunsDir>/<run>/<kind>, kind = "Auto" (choice points) or "Manual".
 		public static string RunDir(string runId, string kind)
 		{
-			string run = string.IsNullOrEmpty(runId) ? "_no_save" : Sanitize(runId);
+			string run = string.IsNullOrEmpty(runId) ? NoRun : Sanitize(runId);
 			return Path.Combine(RunsDir, run, kind);
 		}
 
@@ -884,7 +931,8 @@ namespace Doorstop
 			helper.Chapter = gm.Chapter;
 			helper.StoryMode = gm.StoryMode;
 			helper.IronManMode = gm.IronManMode;
-			helper.ShowedScenesList = gm.ShowedScenesList;
+			helper.ShowedScenesList = new List<ShowedScenes>(gm.ShowedScenesList);
+			EnsureSceneListed(helper);
 			helper.SceneInSequence = gm.SceneInSequence;
 			string chapterName;
 			if (slm == null || !slm.ChapterName.TryGetValue(gm.Chapter, out chapterName))

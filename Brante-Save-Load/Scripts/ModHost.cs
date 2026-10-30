@@ -60,10 +60,30 @@ namespace Doorstop
 		{
 			Probe("Start", RunProbes);
 			ProbeGameManagers();
+			// The game writes no Unity log of its own here: its errors and
+			// exceptions go into the mod's log, the only diagnostic channel.
+			Application.logMessageReceived += GameLog;
 			Recorder.MigrateDataDir();
 			Recorder.Arm();
 			Recorder.MigrateLegacy();
 			StartCoroutine(DevAutoload());
+		}
+
+		private static string _lastGameLog;
+
+		private static void GameLog(string message, string stack, LogType type)
+		{
+			if (type != LogType.Error && type != LogType.Exception && type != LogType.Assert)
+			{
+				return;
+			}
+			string line = message + (string.IsNullOrEmpty(stack) ? "" : "\n" + stack.TrimEnd());
+			if (line == _lastGameLog)
+			{
+				return;   // the same error every frame: once is enough
+			}
+			_lastGameLog = line;
+			ModLog.Info("GAME " + type + ": " + line);
 		}
 
 		private void RunProbes()

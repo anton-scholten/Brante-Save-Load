@@ -729,3 +729,27 @@ afterwards) and copies the live history events instead of resetting them
 scene 3 with stats, relations, objectives and scene list equal to replays
 from a real `Chapter_1.dat`.
 
+## The blank book: a save slot id the game cannot write to (30 Oct 2026)
+
+Entering a scene, the game autosaves before it draws the page
+(`SceneStateMachine.GameSetupState` -> `SaveGameEvent` ->
+`SaveLoadManager.SaveData`). If that throws, the scene's setup stops there:
+the scene and its buttons are loaded, the book stays empty. It threw because
+the slot id was the mod's placeholder run folder name `_no_save` (for saves
+recorded while the game had no main-save id): `Saves/_no_save/` did not
+exist and `SaveData` writes with `File.OpenWrite`. The placeholder is now a
+folder name only (`Recorder.NoRun`), never pinned, adopted or written into
+a loaded save's `SlotInfo.Id`, and the save-folder repair creates the
+folder it redirects to.
+
+The game writes no Unity log here (no `Player.log`); the mod now copies the
+game's errors and exceptions into its own log (`GAME Exception: ...`).
+
+Also: the game adds the scene it opens to `ShowedScenesList` only when the
+scene has finished loading (`GameManager.OnLoadOperationComplete`), and a
+choice scene is recorded as it appears - at ten times speed sometimes before
+that. A scene missing from the list resumes the same way as one listed as
+not shown (`AutomaticSceneLoad` loads `LastOpenScene` in both cases), so it
+was not the blank book; the entry is added on record and on load anyway, to
+keep saves consistent with what the game holds a moment later.
+

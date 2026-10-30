@@ -3618,6 +3618,17 @@ namespace Doorstop
 				yield break;
 			}
 
+			// saves recorded while the game had no main-save id may carry the
+			// mod's placeholder folder name as their id: never the game's
+			if (helper.SlotInfo != null && helper.SlotInfo.Id == Recorder.NoRun)
+			{
+				helper.SlotInfo.Id = "";
+			}
+			if (Recorder.EnsureSceneListed(helper))
+			{
+				ModLog.Info("ChoiceWindow: " + helper.LastOpenScene + " was missing from the save's scene list (recorded"
+					+ " before its scene finished loading) - added, as the game would have");
+			}
 			ModLog.Info("ChoiceWindow: loading " + Path.GetFileName(datPath)
 				+ " (scene=" + helper.LastOpenScene
 				+ ", main save=" + (helper.SlotInfo != null ? helper.SlotInfo.Id : "")
@@ -4082,6 +4093,28 @@ namespace Doorstop
 				// more scenes - the replay must go through the death page.
 				// "first": the first open answer in the story's first two scenes,
 				// to the third - a replay from the very start of the story.
+				// "file <name>": load that mod save (any run) as the save table
+				// does, and log what the game shows afterwards
+				if (lpArgs.StartsWith("file ", StringComparison.Ordinal))
+				{
+					string want = lpArgs.Substring(5).Trim();
+					string found = null;
+					foreach (string f in Directory.GetFiles(Recorder.RunsDir, want, SearchOption.AllDirectories))
+					{
+						found = f;
+					}
+					ModLog.Info("ChoiceWindow: dev load-path file: " + (found ?? "not found: " + want));
+					if (found != null)
+					{
+						Close();
+						LoadSnapshot(found);
+						yield return new WaitForSeconds(14f);
+						GameManager g = GameManager.Instance;
+						ModLog.Info("ChoiceWindow: dev load-path file: now at " + AutoPlay.Story() + ", chapter "
+							+ (g != null ? g.Chapter.ToString() : "?") + ", answers up " + AutoPlay.AnswerReady());
+					}
+					yield break;
+				}
 				if ((lpArgs == "first" || lpArgs == "new") && _tree.Count > 3)
 				{
 					DevFromChapterStart = true;
