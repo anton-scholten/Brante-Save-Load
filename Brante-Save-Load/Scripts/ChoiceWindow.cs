@@ -4323,7 +4323,8 @@ namespace Doorstop
 			// the scene on screen before the transition; the game's own unload
 			// then removes the loading screen only.
 			string previousScene = PreviousStoryScene();
-			while (!string.IsNullOrEmpty(previousScene))
+			int unloadTries = 0;
+			while (!string.IsNullOrEmpty(previousScene) && unloadTries++ < 8)
 			{
 				Scene copy = FindLoadedScene(previousScene);
 				if (!copy.IsValid())
@@ -4333,7 +4334,11 @@ namespace Doorstop
 				ModLog.Info("ChoiceWindow: unloading the copy of " + previousScene
 					+ " already on screen before the transition");
 				AsyncOperation unloading = UnloadStoryScene(copy);
-				while (unloading != null && !unloading.isDone)
+				if (unloading == null)
+				{
+					break;
+				}
+				while (!unloading.isDone)
 				{
 					yield return null;
 				}
