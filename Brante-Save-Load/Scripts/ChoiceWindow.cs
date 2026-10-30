@@ -60,6 +60,63 @@ namespace Doorstop
 		}
 	}
 
+	// A book tab of ours, lit on hover as the game lights its own (its "_on"
+	// pictures are its "_off" ones brighter), with the game's tooltip saying
+	// what it opens: the tab's Notification opens that tooltip, and its text
+	// is put in once the game has filled in its own (it knows only its tabs).
+	public sealed class TabHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+	{
+		public Image Medallion;
+		public Image Icon;
+		public Color Ink;
+		public string Tip;
+		private bool _over;
+
+		public void Light(bool on)
+		{
+			float k = on ? 1f : 0.8f;
+			if (Medallion != null)
+			{
+				Medallion.color = new Color(k, k, k, 1f);
+			}
+			if (Icon != null)
+			{
+				Icon.color = on ? Color.white : new Color(Ink.r * 0.9f, Ink.g * 0.9f, Ink.b * 0.9f, Ink.a);
+			}
+		}
+
+		public void OnPointerEnter(PointerEventData eventData)
+		{
+			_over = true;
+			Light(true);
+		}
+
+		public void OnPointerExit(PointerEventData eventData)
+		{
+			_over = false;
+			Light(false);
+		}
+
+		private void OnDisable()
+		{
+			_over = false;
+		}
+
+		private void LateUpdate()
+		{
+			if (!_over)
+			{
+				return;
+			}
+			GameObject tip = RegisterGO.Find("Simple_tooltip");
+			TextMeshProUGUI text = tip != null && tip.activeInHierarchy ? tip.GetComponentInChildren<TextMeshProUGUI>() : null;
+			if (text != null && text.text != Tip)
+			{
+				text.text = Tip;
+			}
+		}
+	}
+
 	// The tree view fills the screen; when the window changes size while it is
 	// open, the tree and the stats are laid out again (once, the next frame).
 	public sealed class TreeResize : MonoBehaviour
@@ -464,21 +521,21 @@ namespace Doorstop
 				}
 				Transform hud = settings.transform.parent;
 				Transform chapter = hud.Find("HUD.Chapter");
-				Transform year = hud.Find("HUD.Main");
 				if (chapter == null || hud.Find("HUD.SaveLoad") != null)
 				{
 					return;
 				}
-				// one tab further along than the chapter, the same step as
-				// year -> chapter; the tree view's tab one more step on
-				float step = year != null ? ((RectTransform)chapter).anchoredPosition.x - ((RectTransform)year).anchoredPosition.x : 167f;
+				// both on the left page, right of the chapter tab, spaced as
+				// the year and chapter tabs are (their wood just apart)
 				if (_saveLoadIcon == null)
 				{
 					_saveLoadIcon = MakeSaveLoadIcon();
 					_treeTabIcon = MakeTreeTabIcon();
 				}
-				MakeBookTab(settings, hud, chapter, "HUD.SaveLoad", _saveLoadIcon, new Vector2(66f, 66f), step + 40f, OpenSaveLoad);
-				MakeBookTab(settings, hud, chapter, "HUD.TreeView", _treeTabIcon, new Vector2(74f, 59f), step * 2f + 55f, OpenTreeView);
+				MakeBookTab(settings, hud, chapter, "HUD.SaveLoad", _saveLoadIcon, new Vector2(56f, 56f), 150f,
+					Loc.T(Loc.K.Title), OpenSaveLoad);
+				MakeBookTab(settings, hud, chapter, "HUD.TreeView", _treeTabIcon, new Vector2(62f, 48f), 280f,
+					Loc.T(Loc.K.History), OpenTreeView);
 				ModLog.Info("ChoiceWindow: book tabs added next to the chapter tab");
 			}
 			catch (Exception e)
@@ -489,21 +546,22 @@ namespace Doorstop
 
 		private static Sprite _saveLoadIcon, _treeTabIcon;
 
-		// One tab: the settings tab's button, the chapter medallion, wood
-		// behind it, `icon` on it (`size` units, in the chapter word's
-		// colour); `dx` to the right of the chapter tab.
+		// One tab, the size and shape of the settings tab: its button and
+		// wood, a plain medallion, `icon` on it (`size` units, in the chapter
+		// word's colour), `dx` to the right of the chapter tab; on hover it
+		// lights up and the game's tooltip says `tip`.
 		private static void MakeBookTab(Button settings, Transform hud, Transform chapter, string name,
-			Sprite icon, Vector2 size, float dx, UnityEngine.Events.UnityAction onClick)
+			Sprite icon, Vector2 size, float dx, string tip, UnityEngine.Events.UnityAction onClick)
 		{
 			{
 				GameObject tab = UnityEngine.Object.Instantiate(settings.gameObject, hud, false);
 				tab.name = name;
-				// the settings behaviours (open the settings, its notification dot,
-				// the hover animation) go; the hover sound stays
+				// HudButtonBehavior would swap the gear sprites in on hover; it
+				// goes (TabHover lights the tab instead). Notification stays: it
+				// is what opens the game's tooltip. So does the hover sound.
 				foreach (MonoBehaviour mb in tab.GetComponents<MonoBehaviour>())
 				{
-					string n = mb.GetType().Name;
-					if (n == "HudButtonBehavior" || n == "Notification")
+					if (mb.GetType().Name == "HudButtonBehavior")
 					{
 						UnityEngine.Object.DestroyImmediate(mb);
 					}
@@ -516,12 +574,13 @@ namespace Doorstop
 					}
 				}
 				RectTransform crt = (RectTransform)chapter;
+				RectTransform srt = (RectTransform)settings.transform;
 				RectTransform rt = tab.GetComponent<RectTransform>();
 				rt.anchorMin = crt.anchorMin;
 				rt.anchorMax = crt.anchorMax;
-				rt.pivot = crt.pivot;
-				rt.sizeDelta = crt.sizeDelta;
-				rt.anchoredPosition = crt.anchoredPosition + new Vector2(dx, 0f);
+				rt.pivot = srt.pivot;
+				rt.sizeDelta = srt.sizeDelta;
+				rt.anchoredPosition = new Vector2(crt.anchoredPosition.x + dx, srt.anchoredPosition.y);
 				Image timg = tab.GetComponent<Image>();
 				timg.sprite = chapter.GetComponent<Image>().sprite;
 
@@ -529,14 +588,13 @@ namespace Doorstop
 				// background images, not the buttons: cut the patch under the
 				// settings medallion (its strip is centred there, and no rope
 				// crosses it) out of each layer, and lay the copies behind this
-				// tab, centred on it and stretched wider
-				RectTransform srt = (RectTransform)settings.transform;
+				// tab, as big as the settings tab's
 				Vector3[] sc = new Vector3[4];
 				srt.GetWorldCorners(sc);
 				Vector3[] tc = new Vector3[4];
 				rt.GetWorldCorners(tc);
 				Vector3 woodAt = new Vector3((tc[0].x + tc[2].x) * 0.5f, (sc[0].y + sc[2].y) * 0.5f, tc[0].z);
-				Vector2 woodSize = new Vector2(srt.rect.width * 1.4f, srt.rect.height);
+				Vector2 woodSize = srt.rect.size;
 				int at = tab.transform.GetSiblingIndex();
 				foreach (Image layer in hud.root.GetComponentsInChildren<Image>(true))
 				{
@@ -570,6 +628,26 @@ namespace Doorstop
 				mrt.anchorMin = mrt.anchorMax = new Vector2(0.5f, 0.5f);
 				mrt.sizeDelta = size;
 				mrt.anchoredPosition = Vector2.zero;
+				// the tooltip hangs below the tab, centred (the settings tab's
+				// opens to its left - here that is over our other tabs): pivot
+				// at the top centre, pushed down one tooltip height
+				Component note = tab.GetComponent("Notification");
+				if (note != null)
+				{
+					FieldInfo pos = note.GetType().GetField("TooltipPosition");
+					FieldInfo off = note.GetType().GetField("Offset");
+					if (pos != null && off != null)
+					{
+						pos.SetValue(note, Enum.Parse(pos.FieldType, "UpperCenter"));
+						off.SetValue(note, new Vector2(0f, 1.1f));
+					}
+				}
+				TabHover hover = tab.AddComponent<TabHover>();
+				hover.Medallion = timg;
+				hover.Icon = mimg;
+				hover.Ink = ink;
+				hover.Tip = tip;
+				hover.Light(false);
 
 				Button b = tab.GetComponent<Button>();
 				// the settings button swaps in its gear sprite on hover; a slight
@@ -1354,10 +1432,13 @@ namespace Doorstop
 			{
 				return;
 			}
-			int n = RefreshHistory(true);
+			// on screen first: texts are measured and fitted as they are built
+			// (stat names, the Load scene label), so nothing changes size
+			// later when a pick refreshes the values
 			_historyPanel.SetActive(true);
 			_historyPanel.transform.SetAsLastSibling();
-			UpdateLoadButton();   // its label can be measured now it is on screen
+			int n = RefreshHistory(true);
+			UpdateLoadButton();
 			Canvas.ForceUpdateCanvases();
 			ScrollHistoryToFocus();
 			int ahead = 0, possible = 0;
@@ -1771,9 +1852,12 @@ namespace Doorstop
 		private static float _contentHeight = -1f;
 
 		// After a change of window size: the tree's height and the stats again.
+		// Opening the window reports a "change" too; with the size as it was
+		// laid out, nothing is redone (that would rebuild every stat row).
 		public static void Relayout()
 		{
-			if (_contentHeight < 0f || _historyPanel == null || !_historyPanel.activeInHierarchy)
+			if (_contentHeight < 0f || _historyPanel == null || !_historyPanel.activeInHierarchy
+				|| _historyBox.rect.size == _laidOutFor)
 			{
 				return;
 			}
@@ -1785,9 +1869,15 @@ namespace Doorstop
 			ModLog.Info("ChoiceWindow: tree view laid out again for " + _historyBox.rect.size);
 		}
 
+		private static Vector2 _laidOutFor;   // the box size the tree and stats were laid out for
+
 		private static void LayoutTreeArea(float contentHeight)
 		{
 			_contentHeight = contentHeight;
+			if (_historyBox != null)
+			{
+				_laidOutFor = _historyBox.rect.size;
+			}
 			if (_historyScrollRt == null || _historyBox == null)
 			{
 				return;
@@ -3515,6 +3605,21 @@ namespace Doorstop
 			Button saveTab = AutoPlay.FindNamed("HUD.SaveLoad");
 			if (treeTab != null && saveTab != null)
 			{
+				// hover each tab as the pointer would: the game's tooltip opens,
+				// with our text in it, and the tab lights up
+				foreach (Button tabBtn in new[] { saveTab, treeTab })
+				{
+					PointerEventData hp = new PointerEventData(EventSystem.current);
+					ExecuteEvents.Execute(tabBtn.gameObject, hp, ExecuteEvents.pointerEnterHandler);
+					ModLog.Info("ChoiceWindow: dev hovering " + tabBtn.name);
+					yield return new WaitForSeconds(2.5f);
+					GameObject tipGo = RegisterGO.Find("Simple_tooltip");
+					TextMeshProUGUI tipText = tipGo != null ? tipGo.GetComponentInChildren<TextMeshProUGUI>() : null;
+					ModLog.Info("ChoiceWindow: dev hover " + tabBtn.name + ": tooltip "
+						+ (tipGo != null && tipGo.activeInHierarchy ? "'" + (tipText != null ? tipText.text : "") + "'" : "not shown"));
+					ExecuteEvents.Execute(tabBtn.gameObject, hp, ExecuteEvents.pointerExitHandler);
+					yield return new WaitForSeconds(0.5f);
+				}
 				treeTab.onClick.Invoke();
 				yield return new WaitForSeconds(3f);
 				bool treeOpen = _historyList != null && _historyList.gameObject.activeInHierarchy;
@@ -3866,17 +3971,17 @@ namespace Doorstop
 			}
 		}
 
-		// The save tab's icon: an upload arrow (save) at the top left and a
-		// download arrow (load) at the bottom right, split by a diagonal from
-		// the bottom left to the top right. The arrows follow Up.png and
+		// The save tab's icon: a download arrow at the top left and an upload
+		// arrow at the bottom right, split by a diagonal from the bottom left
+		// to the top right. The arrows follow Up.png and
 		// Down.png (drawn on a 1000-unit grid, here scaled into each corner).
 		private static Sprite MakeSaveLoadIcon()
 		{
 			const int n = 128;
 			Canvas32 c = new Canvas32(n, n);
 			// (the drawings keep a sixth of their square empty all round)
-			DrawTrayArrow(c, 0f, 0f, 72f, true);
-			DrawTrayArrow(c, 56f, 56f, 72f, false);
+			DrawTrayArrow(c, 0f, 0f, 72f, false);
+			DrawTrayArrow(c, 56f, 56f, 72f, true);
 			c.Line(14f, 114f, 114f, 14f, 6f);
 			return c.ToSprite();
 		}
@@ -3908,30 +4013,33 @@ namespace Doorstop
 			seg(198f, 800f, 802f, 800f);
 		}
 
-		// The tree tab's icon, after Flow.png: three answer boxes on the left,
-		// two on the right with the top ones level, joined as the tree view
-		// joins them - from the middle left box across to the right column's
-		// spine, up it to the top right box (the path, thick); the other right
-		// box hangs off the spine by a thin stub.
+		// The tree tab's icon, after Flow.png and drawn as the tree view draws
+		// a path: three answer boxes on the left, two on the right with the top
+		// ones level; each column has its spine on its left with a stub to
+		// every box, and the path runs from the middle left box across to the
+		// right spine, which leads up to the top right box. One stroke width
+		// throughout, every line ending flush where it meets another.
 		private static Sprite MakeTreeTabIcon()
 		{
-			Canvas32 c = new Canvas32(160, 128);
-			const float bw = 44f, bh = 26f, frame = 7f, gap = 37f, top = 14f;
-			const float leftX = 8f, rightX = 108f, spine = 88f;
+			Canvas32 c = new Canvas32(168, 128);
+			const float t = 6f;                     // every stroke
+			const float bw = 40f, bh = 26f, gap = 37f, top = 14f;
+			const float lSpine = 6f, lBox = 22f;    // left column: spine, boxes
+			const float rSpine = 96f, rBox = 112f;  // right column
+			float[] mid = { top + bh * 0.5f, top + gap + bh * 0.5f, top + 2f * gap + bh * 0.5f };
 			for (int r = 0; r < 3; r++)
 			{
-				c.Frame(leftX, top + r * gap, bw, bh, frame);
+				c.Frame(lBox, top + r * gap, bw, bh, t);
+				c.Rect(lSpine, mid[r] - t * 0.5f, lBox - lSpine, t);      // stub, spine to box
 			}
+			c.Rect(lSpine, mid[0] - t * 0.5f, t, mid[2] - mid[0] + t);   // left spine
 			for (int r = 0; r < 2; r++)
 			{
-				c.Frame(rightX, top + r * gap, bw, bh, frame);
+				c.Frame(rBox, top + r * gap, bw, bh, t);
+				c.Rect(rSpine, mid[r] - t * 0.5f, rBox - rSpine, t);
 			}
-			float row0 = top + bh * 0.5f, row1 = top + gap + bh * 0.5f;
-			const float path = 8f, stub = 4f;
-			c.Line(leftX + bw, row1, spine, row1, path);       // from the middle left box
-			c.Line(spine, row1 + path * 0.5f, spine, row0 - path * 0.5f, path);   // up the spine
-			c.Line(spine, row0, rightX, row0, path);           // into the top right box
-			c.Line(spine, row1, rightX, row1, stub);           // the box not taken
+			c.Rect(rSpine, mid[0] - t * 0.5f, t, mid[1] - mid[0] + t);   // right spine
+			c.Rect(lBox + bw, mid[1] - t * 0.5f, rSpine - (lBox + bw), t);   // the path across
 			return c.ToSprite();
 		}
 

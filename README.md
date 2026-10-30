@@ -42,7 +42,8 @@ never touches the game's saves.
 ## Tree view
 
 The tree view tab on top of the book's left page (the medallion with linked
-boxes, right of the save / load tab) opens the whole story as a tree, left to right, filling the whole screen like the game's own pages (the mouse
+boxes, right of the save / load tab; both light up and name themselves on
+hover, as the game's own tabs do) opens the whole story as a tree, left to right, filling the whole screen like the game's own pages (the mouse
 wheel scrolls it sideways). The scrollbar doubles as a progress bar: its track
 is filled in red from the start of the story up to the scene you are on. The
 × in the top right corner closes it.

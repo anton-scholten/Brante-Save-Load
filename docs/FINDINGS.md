@@ -643,3 +643,17 @@ recorded in it (or the next snapshot's `CurrentConsequence`), comes closest
 to the next scene's state. Between-scene changes shift every candidate
 alike, so the closest is the right one.
 
+## HUD tab hover: glow and tooltip (29 Oct 2026)
+
+A HUD tab's "glow" is `HudButtonBehavior` swapping `_normalButton` for
+`_highlightedButton` on hover (`icon_menu_off` -> `icon_menu_on`; every
+tab's `_on` picture is its `_off` one lit, emblem included - there is no
+plain glowing medallion). The tooltip comes from the `Notification`
+component (namespace `_Scripts.Helpers`): it broadcasts
+`SimpleNotificationEnter` with itself as sender, and the handler shows
+`RegisterGO.Find("Simple_tooltip")` with `GetTranslation(sender.name)` -
+only when the sender also has a `HudButtonBehavior`. Placement is
+`Notification.TooltipPosition` + `Offset`, turned into the tooltip's pivot
+(`Offset` in tooltip sizes) at the tab's position: `UpperCenter` with
+`Offset (0, 1.1)` hangs it centred below the tab.
+
