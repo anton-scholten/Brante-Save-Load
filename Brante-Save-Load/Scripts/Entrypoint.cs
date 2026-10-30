@@ -72,10 +72,6 @@ namespace Doorstop
 				// every choice scene has a SceneController; its Awake is the
 				// choice-point capture trigger (Phase 3)
 				new[] { "_Scripts.AMVCC.Controllers.SceneController, Assembly-CSharp", "Awake", "ChoiceScenePostfix" },
-				// the pause/settings menu toggling = our moment to (re)inject
-				// the "Save / Load" button (Phase 4/6); fires only when the
-				// engine is up, so the Unity API is safe here
-				new[] { "_Scripts.Managers.UIManager, Assembly-CSharp", "ShowPauseMenu", "PauseMenuPostfix" },
 				// a choice button was clicked: record which one (history tree)
 				new[] { "_Scripts.AMVCC.Views.ParameterButtonChanger, Assembly-CSharp", "Button_Click", "ChoiceClickPostfix" },
 			};
@@ -164,13 +160,6 @@ namespace Doorstop
 		private static void ChoiceScenePostfix()
 		{
 			Recorder.OnChoiceSceneShown();
-		}
-
-		// Harmony postfix on UIManager.ShowPauseMenu: the settings menu
-		// toggled - make sure the "Save / Load" button is in it.
-		private static void PauseMenuPostfix()
-		{
-			ChoiceWindow.EnsurePauseButton();
 		}
 
 		private static void TryCreateHost()

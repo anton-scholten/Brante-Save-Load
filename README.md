@@ -8,9 +8,9 @@ never touches the game's saves.
 ## What it does
 
 - **Load any past choice point.** Every time a choice appears on screen, the mod
-  records the exact game state. Click the **save / load / mod** tab on top of
-  the book (or press Esc and click **"Save / Load"** at the bottom of the
-  settings menu), pick any entry from the full-screen list, confirm — and the
+  records the exact game state. Click the save / load tab on top of the book
+  (the medallion with an up and a down arrow, next to the chapter tab), pick
+  any entry from the full-screen list, confirm — and the
   game returns to that exact choice screen. Entries can also be removed from the
   list (that only deletes the mod's own save file).
 - **Its own snapshots, and a backup of the game's save.** Choice points are
@@ -41,8 +41,8 @@ never touches the game's saves.
 
 ## Tree view
 
-The **tree view** tab on top of the book's left page, next to the year,
-chapter and save / load / mod tabs, opens the whole story as a tree, left to right, filling the whole screen like the game's own pages (the mouse
+The tree view tab on top of the book's left page (the medallion with linked
+boxes, right of the save / load tab) opens the whole story as a tree, left to right, filling the whole screen like the game's own pages (the mouse
 wheel scrolls it sideways). The scrollbar doubles as a progress bar: its track
 is filled in red from the start of the story up to the scene you are on. The
 × in the top right corner closes it.

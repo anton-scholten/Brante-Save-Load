@@ -17,9 +17,9 @@ namespace Doorstop
 			ConfirmLoad, ConfirmDelete, ConfirmSave, EmptySaves,
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, Current, NothingYet,
-			LoadScene, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath, BookTab,
+			LoadScene, Upcoming, Possible, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath,
 			PickConflict, NothingToLoad,
-			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, BookTreeTab
+			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText
 		}
 
 		static Loc()
@@ -46,17 +46,17 @@ namespace Doorstop
 			AddRequirementWords(_ja, "必要条件", "いずれか", "ではない");
 			AddRequirementWords(_ko, "필요 조건", "다음 중 하나", "아님");
 			AddRequirementWords(_zh, "需要", "其中之一", "非");
-			AddResetPath(_en, "Reset path", "save\nload\nmod");
-			AddResetPath(_ru, "Сбросить путь", "сохр.\nзагр.\nмод");
-			AddResetPath(_de, "Pfad zurücksetzen", "speich.\nladen\nmod");
-			AddResetPath(_fr, "Réinitialiser le chemin", "sauv.\ncharger\nmod");
-			AddResetPath(_es, "Restablecer el camino", "guardar\ncargar\nmod");
-			AddResetPath(_it, "Ripristina il percorso", "salva\ncarica\nmod");
-			AddResetPath(_pl, "Resetuj ścieżkę", "zapis\nwczyt.\nmod");
-			AddResetPath(_tr, "Yolu sıfırla", "kaydet\nyükle\nmod");
-			AddResetPath(_ja, "道筋をリセット", "セーブ\nロード\nMOD");
-			AddResetPath(_ko, "경로 초기화", "저장\n불러오기\n모드");
-			AddResetPath(_zh, "重置路径", "存档\n读档\n模组");
+			AddResetPath(_en, "Reset path");
+			AddResetPath(_ru, "Сбросить путь");
+			AddResetPath(_de, "Pfad zurücksetzen");
+			AddResetPath(_fr, "Réinitialiser le chemin");
+			AddResetPath(_es, "Restablecer el camino");
+			AddResetPath(_it, "Ripristina il percorso");
+			AddResetPath(_pl, "Resetuj ścieżkę");
+			AddResetPath(_tr, "Yolu sıfırla");
+			AddResetPath(_ja, "道筋をリセット");
+			AddResetPath(_ko, "경로 초기화");
+			AddResetPath(_zh, "重置路径");
 			AddPossibleOn(_en, "Possible depending on {0}", "stats", "relationships", "characters' fates", "story events", "and");
 			AddPossibleOn(_ru, "Возможно в зависимости от: {0}", "характеристик", "отношений", "судеб персонажей", "событий сюжета", "и");
 			AddPossibleOn(_de, "Möglich, je nach {0}", "Werten", "Beziehungen", "Schicksalen der Figuren", "Ereignissen der Geschichte", "und");
@@ -79,17 +79,6 @@ namespace Doorstop
 			AddNoStatText(_ja, "この能力値にはゲーム内の説明がありません。");
 			AddNoStatText(_ko, "게임에 이 능력치에 대한 설명이 없습니다.");
 			AddNoStatText(_zh, "游戏中没有这项属性的说明。");
-			AddBookTreeTab(_en, "tree\nview");
-			AddBookTreeTab(_ru, "дерево\nвыборов");
-			AddBookTreeTab(_de, "Baum-\nansicht");
-			AddBookTreeTab(_fr, "vue en\narbre");
-			AddBookTreeTab(_es, "vista\nárbol");
-			AddBookTreeTab(_it, "vista\nalbero");
-			AddBookTreeTab(_pl, "widok\ndrzewa");
-			AddBookTreeTab(_tr, "ağaç\ngörünümü");
-			AddBookTreeTab(_ja, "ツリー\n表示");
-			AddBookTreeTab(_ko, "트리\n보기");
-			AddBookTreeTab(_zh, "树状\n视图");
 			AddConflict(_en, "The answer in \"{0}\" on your path conflicts with your hero's stats at that moment: an earlier pick changed them. Pick another answer there.", "Nothing to load: choices selected correspond to the current scene.");
 			AddConflict(_ru, "Ответ в «{0}» на вашем пути противоречит характеристикам героя в тот момент: их изменил более ранний выбор. Выберите там другой ответ.", "Загружать нечего: выбранные ответы соответствуют текущей сцене.");
 			AddConflict(_de, "Die Antwort in „{0}“ auf deinem Weg passt nicht zu den Werten deines Helden in diesem Moment: eine frühere Wahl hat sie verändert. Wähle dort eine andere Antwort.", "Nichts zu laden: die gewählten Antworten entsprechen der aktuellen Szene.");
@@ -175,21 +164,15 @@ namespace Doorstop
 			d[K.NoStatText] = text;
 		}
 
-		private static void AddBookTreeTab(Dictionary<K, string> d, string text)
-		{
-			d[K.BookTreeTab] = text;
-		}
-
 		private static void AddConflict(Dictionary<K, string> d, string conflict, string nothing)
 		{
 			d[K.PickConflict] = conflict;
 			d[K.NothingToLoad] = nothing;
 		}
 
-		private static void AddResetPath(Dictionary<K, string> d, string text, string bookTab)
+		private static void AddResetPath(Dictionary<K, string> d, string text)
 		{
 			d[K.ResetPath] = text;
-			d[K.BookTab] = bookTab;
 		}
 
 		private static void AddUpcomingWord(Dictionary<K, string> d, string upcoming, string possible)

@@ -17,8 +17,7 @@ namespace Doorstop
 {
 	// The player-facing save list.
 	//
-	//  - a "Save / Load" button in the settings menu, a copy of the menu's own
-	//    rows so it looks and behaves like them; see AddPauseButton,
+	//  - opened from its tab on the book (see EnsureBookTab),
 	//  - one table with every save: automatic choice-point snapshots and
 	//    manual "Save now" saves, one row each. Click a header to sort by it
 	//    (click again to reverse). Manual rows have their own colour.
@@ -445,122 +444,6 @@ namespace Doorstop
 		private static string _firstItemTitle;
 
 		// ------------------------------------------------------------------
-		// Settings (pause) menu button
-		// ------------------------------------------------------------------
-
-		private static GameObject _pauseBtn;
-
-		// Called whenever the pause/settings menu is toggled. Adds the "Load any
-		// choice" button as a copy of the lowest existing menu button (same
-		// look, same font, same hover), with the menu lifted half a step so the
-		// new button sits at the bottom. Idempotent.
-		public static void EnsurePauseButton()
-		{
-			try
-			{
-				if (_pauseBtn != null)
-				{
-					return;
-				}
-				UIManager ui = UIManager.Initiate;
-				if (ui == null || ui.PauseWindow == null || !ui.PauseWindow.scene.IsValid())
-				{
-					return;
-				}
-				AddPauseButton(ui.PauseWindow);
-			}
-			catch (Exception e)
-			{
-				ModLog.Error("ChoiceWindow: settings button failed:\n" + e);
-			}
-		}
-
-		private static void AddPauseButton(GameObject pause)
-		{
-			// The window is usually still inactive when this runs the first
-			// time (the button must exist before the player ever opens it), so
-			// lay it out now and judge buttons by their own active flag.
-			RectTransform prt = pause.GetComponent<RectTransform>();
-			if (prt != null)
-			{
-				LayoutRebuilder.ForceRebuildLayoutImmediate(prt);
-			}
-
-			// The menu is the vertical list of button rows: the smallest
-			// layout whose children all carry a labelled button (Quit to main
-			// menu, Resume). Picking by geometry alone goes wrong while the
-			// window has never been laid out.
-			Transform menu = null;
-			int bestCount = int.MaxValue;
-			foreach (VerticalLayoutGroup v in pause.GetComponentsInChildren<VerticalLayoutGroup>(true))
-			{
-				Transform t = v.transform;
-				if (t == pause.transform || t.childCount < 2)
-				{
-					continue;
-				}
-				bool rows = true;
-				for (int i = 0; i < t.childCount && rows; i++)
-				{
-					Transform c = t.GetChild(i);
-					Button b = c.GetComponentInChildren<Button>(true);
-					RectTransform r = c as RectTransform;
-					rows = b != null && b.GetComponentInChildren<TMP_Text>(true) != null
-						&& r != null && r.rect.width >= 300f;
-				}
-				if (rows && t.childCount < bestCount)
-				{
-					bestCount = t.childCount;
-					menu = t;
-				}
-			}
-			if (menu == null)
-			{
-				ModLog.Error("ChoiceWindow: menu list not found - settings button not added");
-				return;
-			}
-			// The bottom row is the template (Resume).
-			Transform row = menu.GetChild(menu.childCount - 1);
-
-
-			GameObject clone = UnityEngine.Object.Instantiate(row.gameObject, menu);
-			clone.name = "BranteSaveLoad_LoadAnyRow";
-			clone.transform.SetSiblingIndex(row.GetSiblingIndex() + 1);
-			foreach (Behaviour bh in clone.GetComponentsInChildren<Behaviour>(true))
-			{
-				if (bh.GetType().Name.IndexOf("ocaliz", StringComparison.Ordinal) >= 0)
-				{
-					UnityEngine.Object.Destroy(bh);
-				}
-			}
-			Button cb = clone.GetComponentInChildren<Button>(true);
-			cb.onClick = new Button.ButtonClickedEvent();
-			cb.onClick.AddListener(delegate { Open(); });
-			foreach (TMP_Text t in clone.GetComponentsInChildren<TMP_Text>(true))
-			{
-				t.text = Loc.T(Loc.K.Title);
-			}
-			_pauseBtn = clone;
-
-			// Lift the whole settings sheet (its parchment and contents) so the
-			// new bottom row fits inside it. The container has no layout group of
-			// its own, so the move sticks.
-			Transform sheet = menu;
-			while (sheet.parent != null && sheet.parent != pause.transform)
-			{
-				sheet = sheet.parent;
-			}
-			RectTransform srt = sheet.GetComponent<RectTransform>();
-			srt.anchoredPosition = new Vector2(srt.anchoredPosition.x, srt.anchoredPosition.y + 80f);
-			// One row taller, top edge kept: the sheet is a fixed-size panel.
-			srt.sizeDelta = new Vector2(srt.sizeDelta.x, srt.sizeDelta.y + 110f);
-			srt.anchoredPosition = new Vector2(srt.anchoredPosition.x, srt.anchoredPosition.y - 55f);
-			Canvas.ForceUpdateCanvases();
-			ModLog.Info("ChoiceWindow: settings button added as a copy of row '" + row.name
-				+ "' (" + menu.childCount + " rows; sheet '" + sheet.name + "' lifted and extended)");
-		}
-
-		// ------------------------------------------------------------------
 		// The book tab: a way into the tree view from the game screen
 		// ------------------------------------------------------------------
 
@@ -589,8 +472,13 @@ namespace Doorstop
 				// one tab further along than the chapter, the same step as
 				// year -> chapter; the tree view's tab one more step on
 				float step = year != null ? ((RectTransform)chapter).anchoredPosition.x - ((RectTransform)year).anchoredPosition.x : 167f;
-				MakeBookTab(settings, hud, chapter, "HUD.SaveLoad", Loc.T(Loc.K.BookTab), step + 40f, OpenSaveLoad);
-				MakeBookTab(settings, hud, chapter, "HUD.TreeView", Loc.T(Loc.K.BookTreeTab), step * 2f + 55f, OpenTreeView);
+				if (_saveLoadIcon == null)
+				{
+					_saveLoadIcon = MakeSaveLoadIcon();
+					_treeTabIcon = MakeTreeTabIcon();
+				}
+				MakeBookTab(settings, hud, chapter, "HUD.SaveLoad", _saveLoadIcon, new Vector2(66f, 66f), step + 40f, OpenSaveLoad);
+				MakeBookTab(settings, hud, chapter, "HUD.TreeView", _treeTabIcon, new Vector2(74f, 59f), step * 2f + 55f, OpenTreeView);
 				ModLog.Info("ChoiceWindow: book tabs added next to the chapter tab");
 			}
 			catch (Exception e)
@@ -599,10 +487,13 @@ namespace Doorstop
 			}
 		}
 
+		private static Sprite _saveLoadIcon, _treeTabIcon;
+
 		// One tab: the settings tab's button, the chapter medallion, wood
-		// behind it, `text` on it; `dx` to the right of the chapter tab.
+		// behind it, `icon` on it (`size` units, in the chapter word's
+		// colour); `dx` to the right of the chapter tab.
 		private static void MakeBookTab(Button settings, Transform hud, Transform chapter, string name,
-			string text, float dx, UnityEngine.Events.UnityAction onClick)
+			Sprite icon, Vector2 size, float dx, UnityEngine.Events.UnityAction onClick)
 		{
 			{
 				GameObject tab = UnityEngine.Object.Instantiate(settings.gameObject, hud, false);
@@ -659,45 +550,26 @@ namespace Doorstop
 					}
 				}
 
-				TextMeshProUGUI word = null;
+				Color ink = new Color(0.86f, 0.83f, 0.76f);
 				foreach (TextMeshProUGUI t in chapter.GetComponentsInChildren<TextMeshProUGUI>(true))
 				{
 					if (t.name != "Value")
 					{
-						word = t;
+						ink = t.color;   // the chapter word's colour on the same medallion
 						break;
 					}
 				}
-				GameObject label = word != null
-					? UnityEngine.Object.Instantiate(word.gameObject, tab.transform, false)
-					: new GameObject("Text", typeof(RectTransform));
-				label.transform.SetParent(tab.transform, false);
-				// the chapter word is kept in its language by a localisation
-				// script, which would put "chapter" back
-				foreach (MonoBehaviour mb in label.GetComponents<MonoBehaviour>())
-				{
-					string n = mb.GetType().Name;
-					if (n == "TextMeshProLocalization" || n == "LayoutElement")
-					{
-						UnityEngine.Object.DestroyImmediate(mb);
-					}
-				}
-				TextMeshProUGUI tx = label.GetComponent<TextMeshProUGUI>();
-				if (tx == null)
-				{
-					tx = label.AddComponent<TextMeshProUGUI>();
-				}
-				tx.text = text;
-				tx.fontSize = 18f;
-				tx.lineSpacing = -14f;
-				tx.alignment = TextAlignmentOptions.Center;
-				tx.enableWordWrapping = false;
-				tx.overflowMode = TextOverflowModes.Overflow;
-				tx.raycastTarget = false;
-				RectTransform lrt = tx.rectTransform;
-				lrt.anchorMin = Vector2.zero;
-				lrt.anchorMax = Vector2.one;
-				lrt.offsetMin = lrt.offsetMax = Vector2.zero;
+				GameObject mark = new GameObject("Icon", typeof(RectTransform));
+				mark.transform.SetParent(tab.transform, false);
+				Image mimg = mark.AddComponent<Image>();
+				mimg.sprite = icon;
+				mimg.color = ink;
+				mimg.preserveAspect = true;
+				mimg.raycastTarget = false;
+				RectTransform mrt = mark.GetComponent<RectTransform>();
+				mrt.anchorMin = mrt.anchorMax = new Vector2(0.5f, 0.5f);
+				mrt.sizeDelta = size;
+				mrt.anchoredPosition = Vector2.zero;
 
 				Button b = tab.GetComponent<Button>();
 				// the settings button swaps in its gear sprite on hover; a slight
@@ -3655,20 +3527,7 @@ namespace Doorstop
 					&& (_historyPanel == null || !_historyPanel.activeSelf) ? "open" : "NOT open"));
 				Close();
 			}
-			UIManager ui = UIManager.Initiate;
-			if (ui != null)
-			{
-				ui.ShowPauseMenu();
-			}
 			yield return new WaitForSeconds(2f);
-			EnsurePauseButton();
-			if (ui != null && ui.PauseWindow != null)
-			{
-				DumpTree(ui.PauseWindow.transform, 0);
-			}
-			yield return null;
-			Canvas.ForceUpdateCanvases();
-			yield return new WaitForSeconds(12f);
 			Open();
 			// Dev: leave time for a screenshot of the saves table, then the
 			// history panel on top of it.
@@ -3927,32 +3786,6 @@ namespace Doorstop
 			}
 		}
 
-		private static void DumpTree(Transform t, int depth)
-		{
-			if (depth > 7)
-			{
-				return;
-			}
-			string comps = "";
-			foreach (Component c in t.GetComponents<Component>())
-			{
-				if (c is Transform)
-				{
-					continue;
-				}
-				comps += " " + c.GetType().Name;
-			}
-			TMP_Text tt = t.GetComponent<TMP_Text>();
-			RectTransform rt = t as RectTransform;
-			ModLog.Info("DEV TREE: " + new string('-', depth * 2) + t.name + (t.gameObject.activeSelf ? "" : " (off)")
-				+ (tt != null ? " text='" + tt.text + "'" : "")
-				+ (rt != null ? " pos=" + rt.anchoredPosition + " size=" + rt.rect.size : "")
-				+ " [" + comps.Trim() + "]");
-			for (int i = 0; i < t.childCount; i++)
-			{
-				DumpTree(t.GetChild(i), depth + 1);
-			}
-		}
 
 		// ------------------------------------------------------------------
 		// Small UI helpers
@@ -3987,6 +3820,33 @@ namespace Doorstop
 				}
 			}
 
+			// A straight stroke `t` wide from (x1, y1) to (x2, y2), square ends.
+			public void Line(float x1, float y1, float x2, float y2, float t)
+			{
+				float dx = x2 - x1, dy = y2 - y1;
+				float len2 = dx * dx + dy * dy;
+				int x0 = Mathf.FloorToInt(Mathf.Min(x1, x2) - t), xe = Mathf.CeilToInt(Mathf.Max(x1, x2) + t);
+				int y0 = Mathf.FloorToInt(Mathf.Min(y1, y2) - t), ye = Mathf.CeilToInt(Mathf.Max(y1, y2) + t);
+				for (int yy = y0; yy < ye; yy++)
+				{
+					for (int xx = x0; xx < xe; xx++)
+					{
+						float px = xx + 0.5f - x1, py = yy + 0.5f - y1;
+						float u = len2 > 0f ? (px * dx + py * dy) / len2 : 0f;
+						float half = t * 0.5f / Mathf.Max(1f, Mathf.Sqrt(len2));
+						if (u < -half || u > 1f + half)
+						{
+							continue;
+						}
+						float cx = px - u * dx, cy = py - u * dy;
+						if (cx * cx + cy * cy <= t * t * 0.25f)
+						{
+							Rect(xx, yy, 1, 1);
+						}
+					}
+				}
+			}
+
 			public void Frame(float x, float y, float w, float h, float t)
 			{
 				Rect(x, y, w, t);
@@ -4006,44 +3866,72 @@ namespace Doorstop
 			}
 		}
 
-		// The tree view's own icon: three scenes, answers as boxes, the picked
-		// ones filled, the path joining them (3 answers, the first picked; 4,
-		// the third picked; 3, none picked yet).
-		private static Sprite MakeTreeIcon()
+		// The save tab's icon: an upload arrow (save) at the top left and a
+		// download arrow (load) at the bottom right, split by a diagonal from
+		// the bottom left to the top right. The arrows follow Up.png and
+		// Down.png (drawn on a 1000-unit grid, here scaled into each corner).
+		private static Sprite MakeSaveLoadIcon()
 		{
-			Canvas32 c = new Canvas32(240, 144);
-			float[] colX = { 30f, 102f, 174f };
-			int[] counts = { 3, 4, 3 };
-			int[] picked = { 0, 2, -1 };
-			const float bw = 50f, bh = 18f, gap = 32f, line = 4f;
-			float[] lastY = new float[3];
-			for (int k = 0; k < 3; k++)
+			const int n = 128;
+			Canvas32 c = new Canvas32(n, n);
+			// (the drawings keep a sixth of their square empty all round)
+			DrawTrayArrow(c, 0f, 0f, 72f, true);
+			DrawTrayArrow(c, 56f, 56f, 72f, false);
+			c.Line(14f, 114f, 114f, 14f, 6f);
+			return c.ToSprite();
+		}
+
+		// One arrow over its tray, in the square at (ox, oy), `size` across.
+		private static void DrawTrayArrow(Canvas32 c, float ox, float oy, float size, bool up)
+		{
+			float k = size / 1000f;
+			const float t = 100f;   // the drawings' 62 units, thickened for the small size
+			System.Action<float, float, float, float> seg = delegate(float x1, float y1, float x2, float y2)
 			{
-				float top = (144f - ((counts[k] - 1) * gap + bh)) * 0.5f;
-				float spine = colX[k] - 12f;
-				c.Rect(spine - line * 0.5f, top + bh * 0.5f, line, (counts[k] - 1) * gap);
-				for (int r = 0; r < counts[k]; r++)
-				{
-					float y = top + r * gap;
-					c.Rect(spine, y + bh * 0.5f - line * 0.5f, 12f, line);
-					if (r == picked[k])
-					{
-						c.Rect(colX[k], y, bw, bh);
-						lastY[k] = y + bh * 0.5f;
-					}
-					else
-					{
-						c.Frame(colX[k], y, bw, bh, 4f);
-					}
-				}
-			}
-			// the path: from each picked box to the next scene's spine
-			for (int k = 0; k < 2; k++)
+				c.Line(ox + x1 * k, oy + y1 * k, ox + x2 * k, oy + y2 * k, t * k);
+			};
+			if (up)
 			{
-				float from = colX[k] + bw;
-				float to = colX[k + 1] - 12f;
-				c.Rect(from, lastY[k] - line * 0.75f, to - from, line * 1.5f);
+				seg(500f, 200f, 500f, 670f);
+				seg(320f, 380f, 500f, 200f);
+				seg(500f, 200f, 680f, 380f);
 			}
+			else
+			{
+				seg(500f, 170f, 500f, 640f);
+				seg(320f, 460f, 500f, 640f);
+				seg(500f, 640f, 680f, 460f);
+			}
+			// the tray: two posts and the floor
+			seg(198f, 620f, 198f, 800f);
+			seg(802f, 620f, 802f, 800f);
+			seg(198f, 800f, 802f, 800f);
+		}
+
+		// The tree tab's icon, after Flow.png: three answer boxes on the left,
+		// two on the right with the top ones level, joined as the tree view
+		// joins them - from the middle left box across to the right column's
+		// spine, up it to the top right box (the path, thick); the other right
+		// box hangs off the spine by a thin stub.
+		private static Sprite MakeTreeTabIcon()
+		{
+			Canvas32 c = new Canvas32(160, 128);
+			const float bw = 44f, bh = 26f, frame = 7f, gap = 37f, top = 14f;
+			const float leftX = 8f, rightX = 108f, spine = 88f;
+			for (int r = 0; r < 3; r++)
+			{
+				c.Frame(leftX, top + r * gap, bw, bh, frame);
+			}
+			for (int r = 0; r < 2; r++)
+			{
+				c.Frame(rightX, top + r * gap, bw, bh, frame);
+			}
+			float row0 = top + bh * 0.5f, row1 = top + gap + bh * 0.5f;
+			const float path = 8f, stub = 4f;
+			c.Line(leftX + bw, row1, spine, row1, path);       // from the middle left box
+			c.Line(spine, row1 + path * 0.5f, spine, row0 - path * 0.5f, path);   // up the spine
+			c.Line(spine, row0, rightX, row0, path);           // into the top right box
+			c.Line(spine, row1, rightX, row1, stub);           // the box not taken
 			return c.ToSprite();
 		}
 

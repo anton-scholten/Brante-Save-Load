@@ -62,10 +62,6 @@ namespace Doorstop
 			ProbeGameManagers();
 			Recorder.MigrateDataDir();
 			Recorder.Arm();
-			// Put the "Save / Load" button in the settings menu now, so it is
-			// there the first time the player opens it (the ShowPauseMenu
-			// postfix is the fallback if the UI is not up yet).
-			ChoiceWindow.EnsurePauseButton();
 			Recorder.MigrateLegacy();
 			StartCoroutine(DevAutoload());
 		}
