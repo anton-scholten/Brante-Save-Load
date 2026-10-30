@@ -177,6 +177,8 @@ kept for reference; `tools/build_graph.py` maps it onto the game's scenes.
   epilogue's fate pages have no answers, so the tree ends with the last choice
   of chapter 5.
 - Load scene replays the path in the game itself, about 5 to 10 seconds a scene.
+- A scene ahead without a pick counts as its first open answer - the one
+  Load scene gives there - so every scene after it is still checked.
 - Greying past a changed answer is an estimate: stat changes that happen
   between scenes are not simulated, and story objectives are taken from the
   mod's saves and carried forward unchanged past a changed answer. If the

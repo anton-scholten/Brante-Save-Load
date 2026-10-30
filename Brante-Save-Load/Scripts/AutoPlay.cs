@@ -387,7 +387,11 @@ namespace Doorstop
 		public static ParameterButtonChanger Pick(string wanted, string scene)
 		{
 			ParameterButtonChanger first = null;
-			foreach (ParameterButtonChanger b in VisibleChoices())
+			// in button order, so "first open" is the same answer the tree
+			// counts for a scene without a pick
+			List<ParameterButtonChanger> buttons = VisibleChoices();
+			buttons.Sort((a, b) => ButtonNumber(a.gameObject.name).CompareTo(ButtonNumber(b.gameObject.name)));
+			foreach (ParameterButtonChanger b in buttons)
 			{
 				bool open = b.GetButtonState();
 				if (!string.IsNullOrEmpty(wanted) && b.gameObject.name == wanted)
@@ -400,6 +404,17 @@ namespace Doorstop
 				}
 			}
 			return string.IsNullOrEmpty(wanted) ? first : null;
+		}
+
+		private static int ButtonNumber(string name)
+		{
+			int i = name.Length;
+			while (i > 0 && char.IsDigit(name[i - 1]))
+			{
+				i--;
+			}
+			int n;
+			return i < name.Length && int.TryParse(name.Substring(i), out n) ? n : int.MaxValue;
 		}
 
 		private static readonly System.Text.RegularExpressions.Regex ContinueWord =

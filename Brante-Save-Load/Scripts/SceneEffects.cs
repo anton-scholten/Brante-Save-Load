@@ -341,6 +341,40 @@ namespace Doorstop
 			}
 		}
 
+		private static readonly FieldInfo[] StatFields =
+			typeof(ModelParameters).GetFields(BindingFlags.Instance | BindingFlags.Public);
+
+		// How far apart two heroes are: stat by stat, relation by relation,
+		// and a changed fate counted heavier. Used to tell which of a scene's
+		// snapshots belongs to the path being shown.
+		public static int Distance(Hero a, Hero b)
+		{
+			if (a == null || b == null || a.Stats == null || b.Stats == null)
+			{
+				return int.MaxValue;
+			}
+			int d = 0;
+			foreach (FieldInfo f in StatFields)
+			{
+				if (f.FieldType == typeof(int))
+				{
+					d += Math.Abs((int)f.GetValue(a.Stats) - (int)f.GetValue(b.Stats));
+				}
+			}
+			if (a.Characters != null && b.Characters != null)
+			{
+				foreach (CharacterModel ca in a.Characters)
+				{
+					CharacterModel cb = ca == null ? null : b.Characters.Find(x => x != null && x.Character == ca.Character);
+					if (cb != null)
+					{
+						d += Math.Abs(ca.Relation - cb.Relation) + (ca.Status != cb.Status ? 5 : 0);
+					}
+				}
+			}
+			return d;
+		}
+
 		private static readonly Dictionary<string, Hero> _snapshotHeroes = new Dictionary<string, Hero>();
 
 		// The hero as a mod snapshot recorded him (cached; snapshot files never

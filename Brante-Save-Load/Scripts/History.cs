@@ -342,8 +342,38 @@ namespace Doorstop
 		// played before the mod was installed have no snapshot at all.
 		public static string SnapshotFor(string sceneName)
 		{
-			string path;
-			return SnapshotMap().TryGetValue(sceneName.Replace('/', '_'), out path) ? path : "";
+			List<string> paths;
+			return SnapshotMap().TryGetValue(sceneName.Replace('/', '_'), out paths) && paths.Count > 0 ? paths[0] : "";
+		}
+
+		// The answer recorded as clicked in a snapshot's scene ("" if none).
+		public static string ChosenIn(string snapshotPath)
+		{
+			return string.IsNullOrEmpty(snapshotPath) ? "" : RecordedChoice(Path.ChangeExtension(snapshotPath, ".meta.txt"));
+		}
+
+		// The game's CurrentConsequence in a snapshot: the answer clicked in
+		// the choice scene before it ("" if unknown).
+		public static string ConsequenceOf(string snapshotPath)
+		{
+			if (string.IsNullOrEmpty(snapshotPath))
+			{
+				return "";
+			}
+			Entry e = new Entry();
+			e.SnapshotPath = snapshotPath;
+			return ConsequenceIn(e);
+		}
+
+		// Every snapshot of a scene, newest first. A scene has several when it
+		// was reached on other paths too (a Load scene replay with other
+		// answers before it records its own), or when its state changed while
+		// it was on screen.
+		public static List<string> SnapshotsFor(string sceneName)
+		{
+			List<string> paths;
+			return SnapshotMap().TryGetValue(sceneName.Replace('/', '_'), out paths)
+				? new List<string>(paths) : new List<string>();
 		}
 
 		// Snapshot files are "<scene>_t<turn>_<hash>.dat"; the scene part is
@@ -353,25 +383,25 @@ namespace Doorstop
 			new System.Text.RegularExpressions.Regex(@"^(.+)_t\d+_[0-9a-f]+$");
 		private static string _mapDir;
 		private static DateTime _mapStamp;
-		private static Dictionary<string, string> _map = new Dictionary<string, string>();
+		private static Dictionary<string, List<string>> _map = new Dictionary<string, List<string>>();
 
-		// Scene -> newest snapshot of the current run, rebuilt only when the
-		// folder changes (a file added or removed).
-		private static Dictionary<string, string> SnapshotMap()
+		// Scene -> its snapshots in the current run, newest first; rebuilt only
+		// when the folder changes (a file added or removed).
+		private static Dictionary<string, List<string>> SnapshotMap()
 		{
 			try
 			{
 				string dir = Recorder.RunDir(Recorder.CurrentRunId(), "Auto");
 				if (!Directory.Exists(dir))
 				{
-					return new Dictionary<string, string>();
+					return new Dictionary<string, List<string>>();
 				}
 				DateTime stamp = Directory.GetLastWriteTimeUtc(dir);
 				if (dir == _mapDir && stamp == _mapStamp)
 				{
 					return _map;
 				}
-				Dictionary<string, string> map = new Dictionary<string, string>();
+				Dictionary<string, List<string>> map = new Dictionary<string, List<string>>();
 				Dictionary<string, DateTime> when = new Dictionary<string, DateTime>();
 				foreach (string f in Directory.GetFiles(dir, "*.dat"))
 				{
@@ -381,13 +411,18 @@ namespace Doorstop
 						continue;
 					}
 					string scene = m.Groups[1].Value;
-					DateTime t = File.GetLastWriteTimeUtc(f);
-					DateTime seen;
-					if (!when.TryGetValue(scene, out seen) || t > seen)
+					List<string> list;
+					if (!map.TryGetValue(scene, out list))
 					{
-						when[scene] = t;
-						map[scene] = f;
+						list = new List<string>();
+						map[scene] = list;
 					}
+					list.Add(f);
+					when[f] = File.GetLastWriteTimeUtc(f);
+				}
+				foreach (List<string> list in map.Values)
+				{
+					list.Sort((a, b) => when[b].CompareTo(when[a]));
 				}
 				_mapDir = dir;
 				_mapStamp = stamp;
@@ -396,7 +431,7 @@ namespace Doorstop
 			}
 			catch
 			{
-				return new Dictionary<string, string>();
+				return new Dictionary<string, List<string>>();
 			}
 		}
 

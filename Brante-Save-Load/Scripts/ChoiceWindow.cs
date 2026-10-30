@@ -402,6 +402,7 @@ namespace Doorstop
 			public bool Current;    // the scene on screen (the pending entry)
 			public bool Recorded;   // the answer played here is known
 			public string PlayedChoice = "";   // that answer's name
+			public string Implied = "";        // ahead and unpicked: the answer counted (first open)
 			public SceneEffects.Hero Hero;     // the hero at this scene along the path (null: unknown)
 			public HashSet<string> Blocked = new HashSet<string>();   // answers he could not take
 			public bool Upcoming;   // ahead of the current scene, from scene-flow.tsv
@@ -1320,6 +1321,10 @@ namespace Doorstop
 				{
 					pick = _tree[i].PlayedChoice;
 				}
+				if (string.IsNullOrEmpty(pick))
+				{
+					pick = _tree[i].Implied;   // the answer the tree counted for an unpicked scene
+				}
 				if (!string.IsNullOrEmpty(pick) && _tree[i].Blocked.Contains(pick))
 				{
 					why = string.Format(Loc.T(Loc.K.PickBlocked), _tree[i].Title);
@@ -1399,9 +1404,19 @@ namespace Doorstop
 			{
 				return false;
 			}
+			// an answer you picked counts wherever it is; a played one you
+			// kept, up to the furthest pick (past it, the path is not replayed)
 			int at = _tree.IndexOf(col);
-			int target = _tree.FindIndex(c => c.Scene == _selScene);
-			return at >= 0 && at <= target;
+			int furthest = _tree.FindIndex(c => c.Scene == _selScene);
+			for (int k = _tree.Count - 1; k > furthest; k--)
+			{
+				if (_overrides.ContainsKey(_tree[k].Scene))
+				{
+					furthest = k;
+					break;
+				}
+			}
+			return at >= 0 && (_overrides.ContainsKey(col.Scene) || at <= furthest);
 		}
 
 		// Why Load scene is greyed out (shown on hover), or null when it is not.
@@ -2017,6 +2032,7 @@ namespace Doorstop
 				cols[pendingCol].Current = true;
 			}
 			_focusCol = pendingCol >= 0 ? pendingCol : cols.Count - 1;
+			ResolveTimeline(cols, _focusCol);
 			if (all.Count > 0)
 			{
 				AddUpcoming(cols, all);
@@ -2031,6 +2047,97 @@ namespace Doorstop
 		// the picked answer's effects applied by the game's own rules. Stat
 		// changes between scenes and objectives (unlocked by the story) are not
 		// simulated, so past a changed pick this is a close estimate.
+		// A scene reached on other paths too has several snapshots (a Load
+		// scene replay with other answers before it records its own), and the
+		// newest need not be this path's: its stats - and its "chosen" answer -
+		// can be another timeline's. The live game is the one sure point, so
+		// this walks back from the scene on screen: for each scene before, the
+		// snapshot that, with the answer played there, leads to the state of
+		// the scene after it (already settled). That snapshot becomes the
+		// column's - the hero the tree starts from, and where Load scene
+		// starts - and its answer the one played.
+		private static void ResolveTimeline(List<TreeCol> cols, int last)
+		{
+			SceneEffects.Hero next = SceneEffects.Now();
+			GameManager gm = GameManager.Instance;
+			string nextAnswer = gm != null ? gm.CurrentConsequene ?? "" : "";
+			int older = 0, corrected = 0;
+			for (int i = last; i >= 0; i--)
+			{
+				TreeCol col = cols[i];
+				List<string> paths = History.SnapshotsFor(col.Scene);
+				if (paths.Count == 0)
+				{
+					next = null;   // a scene from before the mod: the chain breaks here
+					nextAnswer = "";
+					continue;
+				}
+				string best = paths[0];
+				string bestAnswer = "";
+				if (next != null && paths.Count > 1)
+				{
+					int bestD = int.MaxValue;
+					foreach (string path in paths)
+					{
+						SceneEffects.Hero h = SceneEffects.FromSnapshot(path);
+						if (h == null)
+						{
+							continue;
+						}
+						string answer = col.Current ? "" : History.ChosenIn(path);
+						if (answer.Length == 0 && !col.Current)
+						{
+							answer = nextAnswer;
+						}
+						if (answer.Length > 0)
+						{
+							h.Apply(SceneEffects.For(col.Scene, answer));
+						}
+						int d = SceneEffects.Distance(h, next);
+						if (d < bestD)   // newest first: a tie keeps the newer
+						{
+							bestD = d;
+							best = path;
+							bestAnswer = answer;
+						}
+					}
+				}
+				else if (!col.Current)
+				{
+					bestAnswer = History.ChosenIn(best);
+					if (bestAnswer.Length == 0)
+					{
+						bestAnswer = nextAnswer;
+					}
+				}
+				if (best != paths[0])
+				{
+					older++;
+				}
+				col.SnapshotPath = best;
+				if (!col.Current && bestAnswer.Length > 0 && col.Choices.Exists(c => c.Name == bestAnswer))
+				{
+					if (col.PlayedChoice != bestAnswer)
+					{
+						corrected++;
+					}
+					col.PlayedChoice = bestAnswer;
+					col.Recorded = true;
+					foreach (History.Choice c in col.Choices)
+					{
+						c.Chosen = c.Name == bestAnswer;
+					}
+				}
+				next = SceneEffects.FromSnapshot(best);
+				nextAnswer = History.ConsequenceOf(best);
+			}
+			if (older > 0 || corrected > 0)
+			{
+				ModLog.Info("ChoiceWindow: this path uses " + older + " snapshot(s) older than the scene's newest, "
+					+ corrected + " played answer(s) taken from them");
+			}
+		}
+
 		private static void WorkOutOpenAnswers(List<TreeCol> cols)
 		{
 			SceneEffects.Hero carry = null;
@@ -2068,11 +2175,27 @@ namespace Doorstop
 						chosen = c;
 					}
 				}
+				// A scene ahead (or the one on screen) with no pick counts as
+				// its first open answer - what Load scene will give there - so
+				// the hero after it, and every check further on, is still known.
+				col.Implied = "";
+				if (chosen == null && at != null && (col.Upcoming || col.Current))
+				{
+					foreach (int k in VisibleChoices(col))
+					{
+						if (!col.Blocked.Contains(col.Choices[k].Name))
+						{
+							col.Implied = col.Choices[k].Name;
+							break;
+						}
+					}
+				}
 				carry = null;
-				if (at != null && chosen != null)
+				string taken = chosen != null ? chosen.Name : col.Implied;
+				if (at != null && taken.Length > 0)
 				{
 					carry = at.Clone();
-					carry.Apply(SceneEffects.For(col.Scene, chosen.Name));
+					carry.Apply(SceneEffects.For(col.Scene, taken));
 				}
 				string pick;
 				if (_overrides.TryGetValue(col.Scene, out pick) && pick != col.PlayedChoice)

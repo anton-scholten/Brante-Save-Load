@@ -630,3 +630,16 @@ characters' fates (`GetCharacterStatus`, 199), scenes already shown
   any language (Love, Rule, Volition, Tolerance, GWrath, Control, Cruelty,
   Weight, Сontention); Heir has a description but no segment words.
 
+## One scene, several snapshots (29 Oct 2026)
+
+A scene reached on more than one path - a Load scene replay with other
+answers before it, a reload - leaves a snapshot per path in the run's
+folder, and the newest is not necessarily the current path's. Taking it
+blindly gave a scene another timeline's stats (an answer shown as open that
+the game then refused) and could start a replay from the wrong timeline.
+The live game is the only sure point: walking back from the scene on
+screen, each earlier scene's snapshot is the one that, with the answer
+recorded in it (or the next snapshot's `CurrentConsequence`), comes closest
+to the next scene's state. Between-scene changes shift every candidate
+alike, so the closest is the right one.
+

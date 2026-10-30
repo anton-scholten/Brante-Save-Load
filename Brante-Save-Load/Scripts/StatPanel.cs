@@ -28,6 +28,35 @@ namespace Doorstop
 			public TextMeshProUGUI Descr;
 			public Slider Slider;
 			public Tab Tab;
+			public TextMeshProUGUI Name;
+			public float NameSize, ValueSize;   // before any fitting
+		}
+
+		private static float _fitLimit;   // the row's drawn width, for FitText
+
+		// A long name with its value ("TOLERANCE OF FAITHS 4") is wider than the
+		// row's text column, and the value would land in the next column:
+		// both are shrunk to fit. Measured from the laid-out text, so the
+		// row must be on screen.
+		private static void FitText(Row row, float limit)
+		{
+			if (row.Name == null || row.Value == null || !row.Name.isActiveAndEnabled)
+			{
+				return;
+			}
+			row.Name.fontSize = row.NameSize;
+			row.Value.fontSize = row.ValueSize;
+			row.Name.ForceMeshUpdate();
+			row.Value.ForceMeshUpdate();
+			// the text column starts right of the icon (95 of the row's units)
+			float avail = limit - 95f - 8f;
+			float w = row.Name.textBounds.size.x + row.Value.textBounds.size.x + 10f;
+			if (w > avail && w > 1f)
+			{
+				float f = avail / w;
+				row.Name.fontSize *= f;
+				row.Value.fontSize *= f;
+			}
 		}
 
 		// One of the game's stat tabs (its book tab, its window's stats) and
@@ -176,8 +205,8 @@ namespace Doorstop
 			// The row's box is taller than what it shows (icon and text fill
 			// 70 of its 103 units, 10 down from the top): rows are stacked
 			// by their content, so they can be drawn larger.
-			float contentTop = 0f, contentBottom = natural.y;
-			ContentSpan(template, ref contentTop, ref contentBottom);
+			float contentTop = 0f, contentBottom = natural.y, contentLeft = 0f, contentRight = natural.x;
+			ContentSpan(template, ref contentTop, ref contentBottom, ref contentLeft, ref contentRight);
 			_hoverInset = new Vector2(contentTop, natural.y - contentBottom);
 			float pitch = contentBottom - contentTop + 6f;
 
@@ -210,6 +239,9 @@ namespace Doorstop
 				total += Mathf.CeilToInt(t.Stats.Count / (float)rowsFit);
 			}
 			float subW = width / Mathf.Max(1, total);
+			// spare height goes under the titles, so a locked tab's note has
+			// room before its first stat
+			float gap = Mathf.Clamp(usable - rowsFit * pitch * scale, 0f, 20f);
 
 			float x = 0f;
 			foreach (Tab tab in _tabs)
@@ -245,10 +277,15 @@ namespace Doorstop
 					rrt.localScale = new Vector3(scale, scale, 1f);
 					int sub = j / rowsFit;
 					int r = j % rowsFit;
-					rrt.anchoredPosition = new Vector2(x + sub * subW + (subW - natural.x * scale) * 0.5f,
-						-(header + r * pitch * scale - contentTop * scale));
-					AddHover(row, rrt);
+					// centred on what it draws (icon to slider end), so a rule
+					// between tabs is as far from a slider as from an icon
+					rrt.anchoredPosition = new Vector2(
+						x + sub * subW + (subW - (contentRight - contentLeft) * scale) * 0.5f - contentLeft * scale,
+						-(header + gap + r * pitch * scale - contentTop * scale));
 					rrt.gameObject.SetActive(true);
+					_fitLimit = contentRight;
+					FitText(row, _fitLimit);
+					AddHover(row, rrt);
 					_rows.Add(row);
 				}
 				x += subs * subW;
@@ -259,10 +296,11 @@ namespace Doorstop
 		// every graphic that shows (all its parents switched on), the slider
 		// included, which hangs below its layout group (left as they are when
 		// nothing is found).
-		private static void ContentSpan(GameObject template, ref float top, ref float bottom)
+		private static void ContentSpan(GameObject template, ref float top, ref float bottom,
+			ref float left, ref float right)
 		{
 			RectTransform root = template.GetComponent<RectTransform>();
-			float t = float.MaxValue, b = float.MinValue;
+			float t = float.MaxValue, b = float.MinValue, l = float.MaxValue, r = float.MinValue;
 			foreach (Graphic g in template.GetComponentsInChildren<Graphic>(true))
 			{
 				if (g.gameObject == template || !Shows(g.transform, root.transform)
@@ -276,13 +314,22 @@ namespace Doorstop
 				float y1 = root.rect.yMax - root.InverseTransformPoint(c[0]).y;
 				t = Mathf.Min(t, y0);
 				b = Mathf.Max(b, y1);
+				if (!(g is TextMeshProUGUI))   // a text's box is wider than its words
+				{
+					l = Mathf.Min(l, root.InverseTransformPoint(c[0]).x - root.rect.xMin);
+					r = Mathf.Max(r, root.InverseTransformPoint(c[2]).x - root.rect.xMin);
+				}
 			}
 			if (t < b && b - t > 10f)
 			{
 				top = Mathf.Max(0f, t);
 				bottom = Mathf.Min(root.rect.height, b);
 			}
-			ModLog.Info("StatPanel: row content " + top.ToString("0") + ".." + bottom.ToString("0") + " of " + root.rect.height.ToString("0"));
+			if (l < r && r - l > 10f)
+			{
+				left = Mathf.Max(0f, l);
+				right = Mathf.Min(root.rect.width, r);
+			}
 		}
 
 		private static bool Shows(Transform t, Transform root)
@@ -357,15 +404,36 @@ namespace Doorstop
 			{
 				if (t != null)
 				{
-					t.enableAutoSizing = false;
-					t.fontSize *= 1.15f;
+					float size = t.enableAutoSizing ? t.fontSizeMax : t.fontSize;
 					t.enableWordWrapping = false;   // a long level name stays on its line
+					t.enableAutoSizing = t == pc.Descr;   // the level word shrinks to its box
+					t.fontSize = size * 1.15f;
+					t.fontSizeMax = size * 1.15f;
+					t.fontSizeMin = size * 0.6f;
 				}
 			}
 			Row row = new Row();
 			row.Param = p;
+			row.Name = pc.Name;
+			if (pc.Descr != null)
+			{
+				// the level word's box ends where the slider does, not 30
+				// units past it: it shrinks to that, and stays off the rule
+				// beside it
+				RectTransform drt = pc.Descr.rectTransform;
+				float w = 250f;
+				drt.sizeDelta = new Vector2(w, drt.sizeDelta.y);
+				LayoutElement le = pc.Descr.GetComponent<LayoutElement>();
+				if (le != null)
+				{
+					le.preferredWidth = w;
+					le.minWidth = -1f;
+				}
+			}
 			row.Value = pc.TextValue;
 			row.Descr = pc.Descr;
+			row.NameSize = pc.Name != null ? pc.Name.fontSize : 0f;
+			row.ValueSize = pc.TextValue != null ? pc.TextValue.fontSize : 0f;
 			row.Slider = slider != null ? slider.GetComponent<Slider>() : null;
 			if (row.Slider != null)
 			{
@@ -467,6 +535,7 @@ namespace Doorstop
 				{
 					row.Descr.text = Segment(row.Param, value);
 				}
+				FitText(row, _fitLimit);
 			}
 		}
 
