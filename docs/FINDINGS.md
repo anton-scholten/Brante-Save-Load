@@ -700,3 +700,16 @@ only when the sender also has a `HudButtonBehavior`. Placement is
   start of the live game's. As the hero at a chapter played before the mod it
   also lets the tree check answers there.
 
+## Replaying from the very start (30 Oct 2026)
+
+A run without a main-save id (the game wrote its saves loose in `Saves/`)
+keeps no `Chapter_1.dat` of its own, so nothing marked where its story
+began. The story's start is the same in every run - a new game, only the
+hero's name (and Iron Man) differ - so any `Chapter_1.dat` whose scene list
+opens like the live game's stands in. It is loaded with the live hero's
+name and mode and the live main-save id, never its own run's: otherwise the
+game would keep saving into the other run's folder. After a mod load the
+live slot id can be blank and the saves inside a run's folder can carry a
+blank id too; the pinned run id taken from the save's folder
+(`Debug_10\28\...`) is then the id with its slashes.
+

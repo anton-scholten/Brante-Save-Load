@@ -1291,6 +1291,7 @@ namespace Doorstop
 		private static LoadPlan _pendingPlan;
 
 		public static bool DevFromChapterStart;
+		private static bool DevStandIn;   // dev-loadpath "first": the run's own chapter 1 save is ignored
 		private static string DevDropPick;   // dev-loadpath "offpath": this scene is taken out of the plan   // dev-loadpath "chapter": ignore the scenes' saves
 
 		// The game's own save of the chapter's start, when column `i` is the
@@ -1305,15 +1306,61 @@ namespace Doorstop
 			{
 				return null;
 			}
+			string saves = Path.Combine(Application.persistentDataPath, "Saves");
 			string id = Recorder.CurrentRunId();
-			if (string.IsNullOrEmpty(id))
+			string path = Path.Combine(saves, Path.Combine(id ?? "", "Chapter_" + chapter + ".dat"));
+			if (File.Exists(path) && OnThisTimeline(path) && !DevStandIn)
 			{
+				return path;
+			}
+			// The story's very start is the same for every run - a new game,
+			// only the hero's name differs - so a run without its own chapter 1
+			// save (one with no main-save id keeps none) starts from another
+			// run's, loaded as this run (see StandInStart).
+			return chapter == 1 && i == 0 ? StandInStart() : null;
+		}
+
+		// The newest Chapter_1.dat of any run that opens the story as this one
+		// does, or null. Loaded with the live run's name, mode and main-save id
+		// (LoadFlow, _standIn), so the game keeps saving where it saves now.
+		private static string StandInStart()
+		{
+			try
+			{
+				string best = null;
+				DateTime newest = DateTime.MinValue;
+				foreach (string f in Directory.GetFiles(Path.Combine(Application.persistentDataPath, "Saves"),
+					"Chapter_1.dat", SearchOption.AllDirectories))
+				{
+					DateTime t = File.GetLastWriteTimeUtc(f);
+					if (DevStandIn && Path.GetFullPath(f).StartsWith(Path.GetFullPath(Path.GetDirectoryName(
+						Path.Combine(Path.Combine(Application.persistentDataPath, "Saves"),
+						Path.Combine(Recorder.CurrentRunId() ?? "", "x")))), StringComparison.OrdinalIgnoreCase))
+					{
+						continue;   // dev: as if this run kept no chapter 1 save
+					}
+					if (t > newest && OnThisTimeline(f))
+					{
+						newest = t;
+						best = f;
+					}
+				}
+				if (best != null)
+				{
+					_standIns.Add(Path.GetFullPath(best));
+				}
+				return best;
+			}
+			catch (Exception e)
+			{
+				ModLog.Info("ChoiceWindow: no stand-in start: " + e.Message);
 				return null;
 			}
-			string path = Path.Combine(Path.Combine(Application.persistentDataPath, "Saves"),
-				Path.Combine(id, "Chapter_" + chapter + ".dat"));
-			return File.Exists(path) && OnThisTimeline(path) ? path : null;
 		}
+
+		// Chapter 1 saves handed out as stand-ins: LoadFlow loads them as the
+		// live run, never as the run they belong to.
+		private static readonly HashSet<string> _standIns = new HashSet<string>();
 
 		private static readonly Dictionary<string, KeyValuePair<DateTime, bool>> _timelineChecks =
 			new Dictionary<string, KeyValuePair<DateTime, bool>>();
@@ -3491,10 +3538,44 @@ namespace Doorstop
 				+ " (scene=" + helper.LastOpenScene
 				+ ", main save=" + (helper.SlotInfo != null ? helper.SlotInfo.Id : "")
 				+ ", ironman=" + helper.IronManMode + ")");
+			// A stand-in start (another run's chapter 1 save) becomes this run:
+			// its hero's name and mode, and the live main-save id - else the
+			// game would save on into the other run's folder.
+			bool standIn = _standIns.Contains(Path.GetFullPath(datPath));
+			string liveRun = Recorder.CurrentRunId();
+			string liveReal = Recorder.LiveRealId();
+			if (string.IsNullOrEmpty(liveReal))
+			{
+				liveReal = Recorder.RealRunId(liveRun);   // the live slot can be blank after a mod load
+			}
+			if (string.IsNullOrEmpty(liveReal) && !string.IsNullOrEmpty(liveRun)
+				&& Directory.Exists(Path.Combine(Path.Combine(Application.persistentDataPath, "Saves"), liveRun)))
+			{
+				liveReal = liveRun.Replace('\\', '/');   // pinned from a save's own folder: the id, slashes and all
+			}
+			if (standIn)
+			{
+				ParametersManager pm = ParametersManager.Instance;
+				if (pm != null && !string.IsNullOrEmpty(pm.HeroName))
+				{
+					helper.HeroName = pm.HeroName;
+				}
+				if (GameManager.Instance != null)
+				{
+					helper.IronManMode = GameManager.Instance.IronManMode;
+				}
+				if (helper.SlotInfo == null)
+				{
+					helper.SlotInfo = new SaveSlotInfo();
+				}
+				helper.SlotInfo.Id = liveReal ?? "";
+				ModLog.Info("ChoiceWindow: starting from the story's start (" + datPath + ") as this run, hero '"
+					+ helper.HeroName + "', main save '" + helper.SlotInfo.Id + "'");
+			}
 			// The blob has no ID (for stable dedup), so the run comes from
 			// the folder the file sits in; the game needs the REAL id (it
 			// contains slashes) to find its own save folder.
-			string runId = Recorder.RunIdFromPath(datPath);
+			string runId = standIn ? liveRun : Recorder.RunIdFromPath(datPath);
 			if (string.IsNullOrEmpty(runId) && helper.SlotInfo != null)
 			{
 				runId = helper.SlotInfo.Id;
@@ -3502,12 +3583,12 @@ namespace Doorstop
 			// A raw id keeps its slashes; a folder name from RunsDir is
 			// sanitised. Only ever adopt a raw one - otherwise the game would
 			// create a second save folder under a mangled name.
-			string realId = Recorder.RealRunId(runId);
-			if (string.IsNullOrEmpty(realId))
+			string realId = standIn ? liveReal : Recorder.RealRunId(runId);
+			if (string.IsNullOrEmpty(realId) && !standIn)
 			{
 				realId = Recorder.LiveRealId();
 			}
-			if (string.IsNullOrEmpty(realId))
+			if (string.IsNullOrEmpty(realId) && !standIn)
 			{
 				string blobId = helper.SlotInfo != null ? helper.SlotInfo.Id : "";
 				realId = blobId != null && blobId.IndexOf('/') >= 0 ? blobId : "";
@@ -3915,6 +3996,43 @@ namespace Doorstop
 				// "death": in the latest played scene with an answer that adds a
 				// death, that answer, then played (or first open) answers for two
 				// more scenes - the replay must go through the death page.
+				// "first": the first open answer in the story's first two scenes,
+				// to the third - a replay from the very start of the story.
+				if (lpArgs == "first" && _tree.Count > 3)
+				{
+					DevFromChapterStart = true;
+					DevStandIn = true;
+					_overrides.Clear();
+					for (int k = 0; k <= 2; k++)
+					{
+						TreeCol col = _tree[k];
+						SelectChoice(col.Scene, col.Choices.Find(c => !col.Blocked.Contains(c.Name)).Name);
+					}
+					string fWhy;
+					LoadPlan fp = PlanLoad(out fWhy);
+					ModLog.Info("ChoiceWindow: dev load-path first: to " + _tree[2].Scene + ", plan "
+						+ (fp != null ? fp.StartPath + " with " + fp.Picks.Count + " answer(s)" : "none: " + fWhy)
+						+ ", Load scene " + (_loadHereBtn.GetComponent<Button>().interactable ? "enabled" : "greyed: " + LoadBlockedReason()));
+					if (fp != null)
+					{
+						LoadSelected();
+						yield return new WaitForSeconds(1f);
+						RunPending();
+						yield return new WaitForSeconds(5f);
+						float until7 = Time.realtimeSinceStartup + 400f;
+						while (AutoPlay.Running && Time.realtimeSinceStartup < until7)
+						{
+							yield return new WaitForSeconds(1f);
+						}
+						yield return new WaitForSeconds(2f);
+						ModLog.Info("ChoiceWindow: dev load-path: now at " + AutoPlay.Story()
+							+ (AutoPlay.Story() == _tree[2].Scene ? " (the selected scene)" : " (NOT the selected scene)")
+							+ ", main save now '" + Recorder.CurrentRunId() + "', hero '" + (ParametersManager.Instance != null ? ParametersManager.Instance.HeroName : "") + "'");
+					}
+					DevFromChapterStart = false;
+					DevStandIn = false;
+					yield break;
+				}
 				if (lpArgs == "offpath" && ci + 2 < _tree.Count)
 				{
 					_overrides.Clear();
