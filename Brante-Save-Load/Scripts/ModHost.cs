@@ -247,20 +247,6 @@ namespace Doorstop
 				if (opened.IsValid() && opened.isLoaded)
 				{
 					ModLog.Info("DEV AUTOLOAD: scene " + scene + " is open");
-					// Dev: build and log a path plan to a target scene.
-					string planMarker = Path.Combine(Recorder.SnapshotDir, "dev-plan.txt");
-					if (File.Exists(planMarker))
-					{
-						string target = "";
-						try { target = File.ReadAllText(planMarker).Trim(); File.Delete(planMarker); }
-						catch (Exception) { }
-						if (!string.IsNullOrEmpty(target))
-						{
-							yield return new WaitForSeconds(1f);
-							ChoiceWindow.DevPlan(target);
-						}
-						yield break;
-					}
 					// Dev: load one mod save through the real table path
 					// (pre-rewind checkpoint, baseline, adopt, loading screen).
 					// "dev-load.txt" holds a file name under Runs/.

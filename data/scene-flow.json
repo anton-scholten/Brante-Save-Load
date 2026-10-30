@@ -1921,7 +1921,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 35,
+   "order": 59,
    "scene": "051.000.040_Arrive_Rebel",
    "turn": "1",
    "season": "1",
@@ -1937,7 +1937,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 36,
+   "order": 84,
    "scene": "054.100.020_Pickets",
    "turn": "8",
    "season": "",
@@ -1963,7 +1963,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 37,
+   "order": 85,
    "scene": "054.100.010_MartialLaw",
    "turn": "0",
    "season": "",
@@ -1989,7 +1989,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 38,
+   "order": 86,
    "scene": "054.100.030_Rotshild",
    "turn": "4",
    "season": "",
@@ -2015,7 +2015,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 39,
+   "order": 87,
    "scene": "054.100.040_AbuseOfAuthority",
    "turn": "8",
    "season": "",
@@ -2041,7 +2041,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 40,
+   "order": 88,
    "scene": "054.100.080_Snakes",
    "turn": "8",
    "season": "",
@@ -2067,7 +2067,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 41,
+   "order": 89,
    "scene": "054.100.070_Dismissal",
    "turn": "8",
    "season": "",
@@ -2093,7 +2093,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 42,
+   "order": 90,
    "scene": "054.100.090_Milanid",
    "turn": "8",
    "season": "",
@@ -2119,7 +2119,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 43,
+   "order": 91,
    "scene": "054.100.100_Present",
    "turn": "8",
    "season": "2",
@@ -2145,7 +2145,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 44,
+   "order": 92,
    "scene": "054.010.010_FirstDayWork",
    "turn": "1",
    "season": "1",
@@ -2169,7 +2169,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 45,
+   "order": 93,
    "scene": "054.010.020_Case1",
    "turn": "1",
    "season": "2",
@@ -2193,7 +2193,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 46,
+   "order": 94,
    "scene": "054.020.010_El_Born",
    "turn": "2",
    "season": "1",
@@ -2217,7 +2217,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 47,
+   "order": 95,
    "scene": "054.020.020_Case2",
    "turn": "2",
    "season": "2",
@@ -2241,7 +2241,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 48,
+   "order": 96,
    "scene": "054.030.010_Call",
    "turn": "3",
    "season": "1",
@@ -2265,7 +2265,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 49,
+   "order": 97,
    "scene": "054.030.020_Passion",
    "turn": "3",
    "season": "1",
@@ -2289,7 +2289,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 50,
+   "order": 98,
    "scene": "054.030.030_Case3",
    "turn": "3",
    "season": "2",
@@ -2313,7 +2313,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 51,
+   "order": 99,
    "scene": "054.040.010_FriendInTrouble",
    "turn": "4",
    "season": "1",
@@ -2337,7 +2337,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 52,
+   "order": 100,
    "scene": "054.040.020_HelpFriend",
    "turn": "4",
    "season": "1",
@@ -2361,7 +2361,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 53,
+   "order": 101,
    "scene": "054.040.030_Reckoning",
    "turn": "6",
    "season": "2",
@@ -2387,7 +2387,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 54,
+   "order": 102,
    "scene": "054.040.040_OctaviaDate",
    "turn": "4",
    "season": "2",
@@ -2413,7 +2413,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 55,
+   "order": 103,
    "scene": "054.050.010_HuntForEvidence",
    "turn": "5",
    "season": "1",
@@ -2437,7 +2437,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 56,
+   "order": 104,
    "scene": "054.050.020_SmallVictory",
    "turn": "5",
    "season": "2",
@@ -2461,7 +2461,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 57,
+   "order": 105,
    "scene": "054.060.010_ThreatsAndPromises",
    "turn": "6",
    "season": "1",
@@ -2485,7 +2485,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 58,
+   "order": 106,
    "scene": "054.060.020_Case5",
    "turn": "6",
    "season": "1",
@@ -2509,7 +2509,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 59,
+   "order": 107,
    "scene": "054.060.030_Witness",
    "turn": "6",
    "season": "2",
@@ -2535,7 +2535,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 60,
+   "order": 108,
    "scene": "054.060.040_RebelSentence",
    "turn": "6",
    "season": "2",
@@ -2559,7 +2559,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 61,
+   "order": 109,
    "scene": "054.070.010_Case6",
    "turn": "7",
    "season": "1",
@@ -2583,7 +2583,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 62,
+   "order": 110,
    "scene": "054.070.020_AlAtari",
    "turn": "7",
    "season": "2",
@@ -2607,7 +2607,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 63,
+   "order": 111,
    "scene": "054.080.010_Final1",
    "turn": "8",
    "season": "1",
@@ -2648,7 +2648,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 64,
+   "order": 112,
    "scene": "PeaceFinishScreen_Prefect",
    "turn": "9",
    "season": "",
@@ -4691,7 +4691,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 65,
+   "order": 113,
    "scene": "PeaceFinishScreen_Inquisitor",
    "turn": "9",
    "season": "",
@@ -6734,7 +6734,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 66,
+   "order": 114,
    "scene": "PeaceFinishScreen_Rebel",
    "turn": "9",
    "season": "",
@@ -8777,7 +8777,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 67,
+   "order": 115,
    "scene": "054.080.120_Final3",
    "turn": "8",
    "season": "",
@@ -8803,7 +8803,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 68,
+   "order": 116,
    "scene": "054.080.140_Final_JudgeFall",
    "turn": "8",
    "season": "",
@@ -8829,7 +8829,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 69,
+   "order": 117,
    "scene": "054.080.030_Aftermath",
    "turn": "8",
    "season": "1",
@@ -8855,7 +8855,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 70,
+   "order": 118,
    "scene": "054.080.040_Arrest",
    "turn": "8",
    "season": "1",
@@ -8881,7 +8881,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 71,
+   "order": 123,
    "scene": "054.080.070_FinalPreparations",
    "turn": "8",
    "season": "2",
@@ -8967,7 +8967,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 72,
+   "order": 124,
    "scene": "054.080.090_Court",
    "turn": "8",
    "season": "2",
@@ -9053,7 +9053,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 73,
+   "order": 125,
    "scene": "054.080.100_Final5",
    "turn": "8",
    "season": "2",
@@ -9154,7 +9154,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 74,
+   "order": 129,
    "scene": "054.080.130_Final6",
    "turn": "8",
    "season": "2",
@@ -9255,7 +9255,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 75,
+   "order": 133,
    "scene": "054.080.110_Final4",
    "turn": "8",
    "season": "2",
@@ -9356,7 +9356,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 76,
+   "order": 174,
    "scene": "054.080.050_Duty",
    "turn": "8",
    "season": "1",
@@ -9382,7 +9382,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 77,
+   "order": 175,
    "scene": "054.080.060_Trap",
    "turn": "8",
    "season": "1",
@@ -9408,7 +9408,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 78,
+   "order": 176,
    "scene": "054.080.020_Final2",
    "turn": "8",
    "season": "1",
@@ -9437,7 +9437,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 79,
+   "order": 214,
    "scene": "054.080.080_Miserable",
    "turn": "8",
    "season": "1",
@@ -9463,7 +9463,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 80,
+   "order": 215,
    "scene": "054.040.050_OctaviaDate",
    "turn": "4",
    "season": "2",
@@ -9489,7 +9489,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 81,
+   "order": 216,
    "scene": "052.010.005_Cassii",
    "turn": "1",
    "season": "1",
@@ -9546,7 +9546,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 82,
+   "order": 217,
    "scene": "052.010.020_Case2",
    "turn": "2",
    "season": "1",
@@ -9603,7 +9603,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 83,
+   "order": 218,
    "scene": "052.020.010_Case3",
    "turn": "2",
    "season": "2",
@@ -9660,7 +9660,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 84,
+   "order": 219,
    "scene": "052.010.010_Case1",
    "turn": "2",
    "season": "3",
@@ -9717,7 +9717,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 85,
+   "order": 220,
    "scene": "052.N3.010_Trigger3",
    "turn": "6",
    "season": "",
@@ -9776,7 +9776,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 86,
+   "order": 221,
    "scene": "052.N9.010_Trigger9",
    "turn": "4",
    "season": "",
@@ -9835,7 +9835,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 87,
+   "order": 222,
    "scene": "052.030.010_Case4",
    "turn": "3",
    "season": "1",
@@ -9892,7 +9892,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 88,
+   "order": 223,
    "scene": "052.040.010_Case5",
    "turn": "4",
    "season": "1",
@@ -9949,7 +9949,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 89,
+   "order": 224,
    "scene": "052.050.020_Case7",
    "turn": "5",
    "season": "1",
@@ -10006,7 +10006,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 90,
+   "order": 225,
    "scene": "052.050.010_Case6",
    "turn": "5",
    "season": "1",
@@ -10063,7 +10063,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 91,
+   "order": 226,
    "scene": "052.050.025_Confession",
    "turn": "5",
    "season": "2",
@@ -10120,7 +10120,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 92,
+   "order": 227,
    "scene": "052.050.026_PatriarchPreaching",
    "turn": "6",
    "season": "1",
@@ -10177,7 +10177,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 93,
+   "order": 228,
    "scene": "052.050.030_Case8",
    "turn": "7",
    "season": "1",
@@ -10234,7 +10234,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 94,
+   "order": 229,
    "scene": "052.060.010_Case9",
    "turn": "7",
    "season": "1",
@@ -10291,7 +10291,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 95,
+   "order": 230,
    "scene": "052.N5.010_Trigger5",
    "turn": "8",
    "season": "",
@@ -10350,7 +10350,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 96,
+   "order": 231,
    "scene": "052.N11.010_Trigger11",
    "turn": "8",
    "season": "",
@@ -10409,7 +10409,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 97,
+   "order": 232,
    "scene": "052.060.020_Case10",
    "turn": "7",
    "season": "1",
@@ -10468,7 +10468,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 98,
+   "order": 233,
    "scene": "052.060.030_Reported",
    "turn": "7",
    "season": "3",
@@ -10525,7 +10525,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 99,
+   "order": 234,
    "scene": "052.N6.010_Trigger6",
    "turn": "8",
    "season": "",
@@ -10584,7 +10584,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 100,
+   "order": 235,
    "scene": "052.N12.010_Trigger12",
    "turn": "8",
    "season": "",
@@ -10805,7 +10805,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 101,
+   "order": 236,
    "scene": "052.210.010_Final1",
    "turn": "8",
    "season": "",
@@ -11026,7 +11026,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 102,
+   "order": 240,
    "scene": "052.210.020_Final2",
    "turn": "8",
    "season": "",
@@ -11247,7 +11247,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 103,
+   "order": 241,
    "scene": "052.070.010_Case11",
    "turn": "8",
    "season": "",
@@ -11468,7 +11468,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 104,
+   "order": 242,
    "scene": "052.210.030_Final3",
    "turn": "8",
    "season": "",
@@ -11725,7 +11725,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 105,
+   "order": 246,
    "scene": "052.210.040_Final4",
    "turn": "8",
    "season": "",
@@ -11982,7 +11982,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 106,
+   "order": 250,
    "scene": "052.210.050_Final5",
    "turn": "8",
    "season": "",
@@ -12239,7 +12239,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 107,
+   "order": 257,
    "scene": "052.210.060_Final6",
    "turn": "8",
    "season": "",
@@ -12307,7 +12307,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 108,
+   "order": 258,
    "scene": "052.210.065_Final7",
    "turn": "8",
    "season": "",
@@ -12375,7 +12375,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 109,
+   "order": 328,
    "scene": "052.N13.010_Heretic",
    "turn": "8",
    "season": "",
@@ -12434,7 +12434,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 110,
+   "order": 329,
    "scene": "052.N1.010_Trigger1",
    "turn": "7",
    "season": "",
@@ -12478,7 +12478,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 111,
+   "order": 330,
    "scene": "052.N2.010_Trigger2",
    "turn": "7",
    "season": "",
@@ -12522,7 +12522,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 112,
+   "order": 331,
    "scene": "052.N4.010_Trigger4",
    "turn": "7",
    "season": "",
@@ -12566,7 +12566,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 113,
+   "order": 332,
    "scene": "052.N7.010_Trigger7",
    "turn": "7",
    "season": "",
@@ -12610,7 +12610,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 114,
+   "order": 333,
    "scene": "052.N8.010_Trigger8",
    "turn": "3",
    "season": "",
@@ -12654,7 +12654,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 115,
+   "order": 334,
    "scene": "052.N10.010_Trigger10",
    "turn": "7",
    "season": "",
@@ -12698,7 +12698,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 116,
+   "order": 567,
    "scene": "053.100.140_ProfitableYear",
    "turn": "7",
    "season": "",
@@ -12724,7 +12724,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 117,
+   "order": 568,
    "scene": "053.100.080_Tortures",
    "turn": "7",
    "season": "",
@@ -12750,7 +12750,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 118,
+   "order": 569,
    "scene": "053.100.070_Catastrophe2",
    "turn": "7",
    "season": "",
@@ -12776,7 +12776,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 119,
+   "order": 570,
    "scene": "053.100.100_Lynch",
    "turn": "7",
    "season": "",
@@ -12802,7 +12802,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 120,
+   "order": 571,
    "scene": "053.100.020_Arrest",
    "turn": "7",
    "season": "",
@@ -12828,7 +12828,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 121,
+   "order": 572,
    "scene": "053.100.010_Catastrophe1",
    "turn": "7",
    "season": "",
@@ -12854,7 +12854,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 122,
+   "order": 573,
    "scene": "053.100.040_Pogrom",
    "turn": "7",
    "season": "",
@@ -12880,7 +12880,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 123,
+   "order": 574,
    "scene": "053.010.010_FirstSteps",
    "turn": "1",
    "season": "1",
@@ -12904,7 +12904,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 124,
+   "order": 575,
    "scene": "053.010.020_Call",
    "turn": "1",
    "season": "2",
@@ -12928,7 +12928,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 125,
+   "order": 576,
    "scene": "053.010.030_Case1",
    "turn": "1",
    "season": "2",
@@ -12952,7 +12952,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 126,
+   "order": 577,
    "scene": "053.020.010_Rotshild",
    "turn": "2",
    "season": "1",
@@ -12976,7 +12976,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 127,
+   "order": 578,
    "scene": "053.050.010_Powder",
    "turn": "2",
    "season": "2",
@@ -13000,7 +13000,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 128,
+   "order": 579,
    "scene": "053.050.011_YouthMistakes",
    "turn": "2",
    "season": "3",
@@ -13024,7 +13024,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 129,
+   "order": 580,
    "scene": "053.100.030_OfferSofya",
    "turn": "3",
    "season": "",
@@ -13050,7 +13050,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 130,
+   "order": 581,
    "scene": "053.100.090_Chancellor",
    "turn": "3",
    "season": "",
@@ -13076,7 +13076,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 131,
+   "order": 582,
    "scene": "053.050.012_VisitingTheBurgomaster",
    "turn": "3",
    "season": "1",
@@ -13100,7 +13100,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 132,
+   "order": 583,
    "scene": "053.030.010_Case2",
    "turn": "3",
    "season": "2",
@@ -13124,7 +13124,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 133,
+   "order": 584,
    "scene": "053.040.010_Case3",
    "turn": "4",
    "season": "1",
@@ -13148,7 +13148,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 134,
+   "order": 585,
    "scene": "053.050.020_SmallVictory",
    "turn": "5",
    "season": "1",
@@ -13172,7 +13172,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 135,
+   "order": 586,
    "scene": "053.050.021_DoriyOtton",
    "turn": "5",
    "season": "2",
@@ -13196,7 +13196,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 136,
+   "order": 587,
    "scene": "053.050.030_SecondDate",
    "turn": "6",
    "season": "1",
@@ -13220,7 +13220,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 137,
+   "order": 588,
    "scene": "053.060.010_EnteringTroops",
    "turn": "6",
    "season": "1",
@@ -13244,7 +13244,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 138,
+   "order": 589,
    "scene": "053.060.020_IronPhilippe",
    "turn": "6",
    "season": "2",
@@ -13268,7 +13268,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 139,
+   "order": 590,
    "scene": "053.100.050_Aftermath",
    "turn": "8",
    "season": "1",
@@ -13294,7 +13294,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 140,
+   "order": 591,
    "scene": "053.100.060_ArrestSofya",
    "turn": "8",
    "season": "1",
@@ -13320,7 +13320,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 141,
+   "order": 592,
    "scene": "053.100.110_Aftermath2",
    "turn": "8",
    "season": "1",
@@ -13346,7 +13346,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 142,
+   "order": 593,
    "scene": "053.100.120_Disclosure",
    "turn": "8",
    "season": "1",
@@ -13372,7 +13372,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 143,
+   "order": 594,
    "scene": "053.090.060_Final6",
    "turn": "8",
    "season": "2",
@@ -13401,7 +13401,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 144,
+   "order": 598,
    "scene": "053.060.030_DangerousCargo",
    "turn": "7",
    "season": "1",
@@ -13455,7 +13455,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 145,
+   "order": 599,
    "scene": "053.100.130_Suspicions",
    "turn": "6",
    "season": "",
@@ -13511,7 +13511,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 146,
+   "order": 600,
    "scene": "053.070.010_Bridges",
    "turn": "8",
    "season": "2",
@@ -13565,7 +13565,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 147,
+   "order": 601,
    "scene": "053.090.010_Final1",
    "turn": "8",
    "season": "2",
@@ -13628,7 +13628,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 148,
+   "order": 605,
    "scene": "053.080.010_SecretMeet",
    "turn": "8",
    "season": "2",
@@ -13691,7 +13691,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 149,
+   "order": 606,
    "scene": "053.090.030_Final3",
    "turn": "8",
    "season": "2",
@@ -13763,7 +13763,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 150,
+   "order": 610,
    "scene": "053.090.050_Final5",
    "turn": "8",
    "season": "2",
@@ -13835,7 +13835,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 151,
+   "order": 614,
    "scene": "053.090.040_Final4",
    "turn": "8",
    "season": "2",
@@ -13907,7 +13907,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 152,
+   "order": 621,
    "scene": "053.090.020_Final2",
    "turn": "8",
    "season": "2",
@@ -13970,7 +13970,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 153,
+   "order": 1896,
    "scene": "PeaceChapterStart_Inquisitor",
    "turn": "1",
    "season": "",
@@ -13985,7 +13985,7 @@
   {
    "chapter": 4,
    "macro": "PeaceChapter",
-   "order": 154,
+   "order": 1903,
    "scene": "PeaceChapterStart_Rebel",
    "turn": "1",
    "season": "",
@@ -15775,7 +15775,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 13,
+   "order": 15,
    "scene": "FourthDeath_7",
    "turn": "",
    "season": "",
@@ -15883,7 +15883,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 14,
+   "order": 29,
    "scene": "070.090.010_TheOutcomeOfTheUprising1",
    "turn": "0",
    "season": "",
@@ -15913,7 +15913,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 15,
+   "order": 30,
    "scene": "Final_Provinces",
    "turn": "",
    "season": "",
@@ -15943,7 +15943,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 16,
+   "order": 31,
    "scene": "070.150.010_FateOfFelippe1",
    "turn": "1",
    "season": "",
@@ -15973,7 +15973,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 17,
+   "order": 32,
    "scene": "070.160.010_FateOfOtton1",
    "turn": "1",
    "season": "",
@@ -16003,7 +16003,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 18,
+   "order": 33,
    "scene": "070.170.010_FateOfUlrich1",
    "turn": "1",
    "season": "",
@@ -16033,7 +16033,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 19,
+   "order": 34,
    "scene": "070.180.010_FateOfElBorn1",
    "turn": "1",
    "season": "",
@@ -16063,7 +16063,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 20,
+   "order": 35,
    "scene": "070.190.010_FateOfLennart1",
    "turn": "1",
    "season": "",
@@ -16093,7 +16093,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 21,
+   "order": 36,
    "scene": "070.200.010_FateOfTommas1",
    "turn": "1",
    "season": "",
@@ -16123,7 +16123,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 22,
+   "order": 37,
    "scene": "070.220.010_FateOfOktavia1",
    "turn": "1",
    "season": "",
@@ -16157,7 +16157,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 23,
+   "order": 38,
    "scene": "070.230.010_FateOfSofia1",
    "turn": "1",
    "season": "",
@@ -16251,7 +16251,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 24,
+   "order": 39,
    "scene": "070.240.010_FateOfTheFamily1",
    "turn": "1",
    "season": "",
@@ -16345,7 +16345,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 25,
+   "order": 40,
    "scene": "070.010.010_RobertFate1",
    "turn": "1",
    "season": "",
@@ -16439,7 +16439,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 26,
+   "order": 41,
    "scene": "070.020.010_LidiaFate1",
    "turn": "1",
    "season": "",
@@ -16533,7 +16533,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 27,
+   "order": 42,
    "scene": "070.030.010_StefanFate1",
    "turn": "1",
    "season": "",
@@ -16627,7 +16627,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 28,
+   "order": 43,
    "scene": "070.040.010_GloriaFate1",
    "turn": "1",
    "season": "",
@@ -16721,7 +16721,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 29,
+   "order": 44,
    "scene": "070.050.010_NatanFate1",
    "turn": "1",
    "season": "",
@@ -16815,7 +16815,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 30,
+   "order": 45,
    "scene": "070.060.010_GregorFate1",
    "turn": "1",
    "season": "",
@@ -16909,7 +16909,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 31,
+   "order": 57,
    "scene": "070.070.020_YourFate2",
    "turn": "1",
    "season": "",
@@ -17003,7 +17003,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 32,
+   "order": 58,
    "scene": "070.070.030_YourFate3",
    "turn": "1",
    "season": "",
@@ -17097,7 +17097,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 33,
+   "order": 59,
    "scene": "070.070.040_YourFate4",
    "turn": "1",
    "season": "",
@@ -17191,7 +17191,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 34,
+   "order": 60,
    "scene": "070.070.050_YourFate5",
    "turn": "1",
    "season": "",
@@ -17285,7 +17285,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 35,
+   "order": 61,
    "scene": "070.070.060_YourFate6",
    "turn": "1",
    "season": "",
@@ -17379,7 +17379,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 36,
+   "order": 62,
    "scene": "070.070.070_YourFate7",
    "turn": "1",
    "season": "",
@@ -17473,7 +17473,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 37,
+   "order": 63,
    "scene": "070.070.080_YourFate8",
    "turn": "1",
    "season": "",
@@ -17567,7 +17567,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 38,
+   "order": 64,
    "scene": "070.070.090_YourFate9",
    "turn": "1",
    "season": "",
@@ -17661,7 +17661,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 39,
+   "order": 65,
    "scene": "070.070.100_YourFate10",
    "turn": "1",
    "season": "",
@@ -17755,7 +17755,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 40,
+   "order": 66,
    "scene": "070.070.110_YourFate11",
    "turn": "1",
    "season": "",
@@ -17849,7 +17849,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 41,
+   "order": 67,
    "scene": "070.070.120_YourFate12",
    "turn": "1",
    "season": "",
@@ -17943,7 +17943,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 42,
+   "order": 68,
    "scene": "070.070.130_YourFate13",
    "turn": "1",
    "season": "",
@@ -18037,7 +18037,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 43,
+   "order": 69,
    "scene": "070.070.140_YourFate14",
    "turn": "1",
    "season": "",
@@ -18131,7 +18131,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 44,
+   "order": 70,
    "scene": "070.070.150_YourFate15",
    "turn": "1",
    "season": "",
@@ -18225,7 +18225,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 45,
+   "order": 71,
    "scene": "070.070.160_YourFate16",
    "turn": "1",
    "season": "",
@@ -18319,7 +18319,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 46,
+   "order": 72,
    "scene": "070.070.170_YourFate17",
    "turn": "1",
    "season": "",
@@ -18413,7 +18413,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 47,
+   "order": 73,
    "scene": "070.070.180_YourFate18",
    "turn": "1",
    "season": "",
@@ -18507,7 +18507,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 48,
+   "order": 74,
    "scene": "070.060.020_GregorFate2",
    "turn": "1",
    "season": "",
@@ -18601,7 +18601,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 49,
+   "order": 75,
    "scene": "070.060.030_GregorFate3",
    "turn": "1",
    "season": "",
@@ -18695,7 +18695,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 50,
+   "order": 76,
    "scene": "070.060.040_GregorFate4",
    "turn": "1",
    "season": "",
@@ -18789,7 +18789,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 51,
+   "order": 77,
    "scene": "070.060.050_GregorFate5",
    "turn": "1",
    "season": "",
@@ -18883,7 +18883,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 52,
+   "order": 78,
    "scene": "070.060.060_GregorFate6",
    "turn": "1",
    "season": "",
@@ -18977,7 +18977,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 53,
+   "order": 79,
    "scene": "070.060.070_GregorFate7",
    "turn": "1",
    "season": "",
@@ -19071,7 +19071,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 54,
+   "order": 80,
    "scene": "070.050.020_NatanFate2",
    "turn": "1",
    "season": "",
@@ -19165,7 +19165,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 55,
+   "order": 81,
    "scene": "070.050.030_NatanFate3",
    "turn": "1",
    "season": "",
@@ -19259,7 +19259,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 56,
+   "order": 82,
    "scene": "070.050.040_NatanFate4",
    "turn": "1",
    "season": "",
@@ -19353,7 +19353,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 57,
+   "order": 83,
    "scene": "070.050.050_NatanFate5",
    "turn": "1",
    "season": "",
@@ -19447,7 +19447,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 58,
+   "order": 84,
    "scene": "070.050.060_NatanFate6",
    "turn": "1",
    "season": "",
@@ -19541,7 +19541,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 59,
+   "order": 85,
    "scene": "070.050.070_NatanFate7",
    "turn": "1",
    "season": "",
@@ -19635,7 +19635,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 60,
+   "order": 86,
    "scene": "070.050.080_NatanFate8",
    "turn": "1",
    "season": "",
@@ -19729,7 +19729,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 61,
+   "order": 87,
    "scene": "070.050.090_NatanFate9",
    "turn": "1",
    "season": "",
@@ -19823,7 +19823,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 62,
+   "order": 88,
    "scene": "070.040.020_GloriaFate2",
    "turn": "1",
    "season": "",
@@ -19917,7 +19917,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 63,
+   "order": 89,
    "scene": "070.040.030_GloriaFate3",
    "turn": "1",
    "season": "",
@@ -20011,7 +20011,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 64,
+   "order": 90,
    "scene": "070.040.040_GloriaFate4",
    "turn": "1",
    "season": "",
@@ -20105,7 +20105,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 65,
+   "order": 91,
    "scene": "070.040.050_GloriaFate5",
    "turn": "1",
    "season": "",
@@ -20199,7 +20199,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 66,
+   "order": 92,
    "scene": "070.040.060_GloriaFate6",
    "turn": "1",
    "season": "",
@@ -20293,7 +20293,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 67,
+   "order": 93,
    "scene": "070.040.070_GloriaFate7",
    "turn": "1",
    "season": "",
@@ -20387,7 +20387,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 68,
+   "order": 94,
    "scene": "070.040.080_GloriaFate8",
    "turn": "1",
    "season": "",
@@ -20481,7 +20481,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 69,
+   "order": 95,
    "scene": "070.040.090_GloriaFate9",
    "turn": "1",
    "season": "",
@@ -20575,7 +20575,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 70,
+   "order": 96,
    "scene": "070.040.100_GloriaFate10",
    "turn": "1",
    "season": "",
@@ -20669,7 +20669,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 71,
+   "order": 97,
    "scene": "070.040.110_GloriaFate11",
    "turn": "1",
    "season": "",
@@ -20763,7 +20763,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 72,
+   "order": 98,
    "scene": "070.040.120_GloriaFate12",
    "turn": "1",
    "season": "",
@@ -20857,7 +20857,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 73,
+   "order": 99,
    "scene": "070.040.130_GloriaFate13",
    "turn": "1",
    "season": "",
@@ -20951,7 +20951,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 74,
+   "order": 100,
    "scene": "070.040.140_GloriaFate14",
    "turn": "1",
    "season": "",
@@ -21045,7 +21045,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 75,
+   "order": 101,
    "scene": "070.040.150_GloriaFate15",
    "turn": "1",
    "season": "",
@@ -21139,7 +21139,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 76,
+   "order": 102,
    "scene": "070.040.160_GloriaFate16",
    "turn": "1",
    "season": "",
@@ -21233,7 +21233,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 77,
+   "order": 103,
    "scene": "070.030.020_StefanFate2",
    "turn": "1",
    "season": "",
@@ -21327,7 +21327,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 78,
+   "order": 104,
    "scene": "070.030.030_StefanFate3",
    "turn": "1",
    "season": "",
@@ -21421,7 +21421,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 79,
+   "order": 105,
    "scene": "070.030.040_StefanFate4",
    "turn": "1",
    "season": "",
@@ -21515,7 +21515,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 80,
+   "order": 106,
    "scene": "070.030.050_StefanFate5",
    "turn": "1",
    "season": "",
@@ -21609,7 +21609,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 81,
+   "order": 107,
    "scene": "070.030.060_StefanFate6",
    "turn": "1",
    "season": "",
@@ -21703,7 +21703,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 82,
+   "order": 108,
    "scene": "070.030.070_StefanFate7",
    "turn": "1",
    "season": "",
@@ -21797,7 +21797,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 83,
+   "order": 109,
    "scene": "070.030.080_StefanFate8",
    "turn": "1",
    "season": "",
@@ -21891,7 +21891,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 84,
+   "order": 110,
    "scene": "070.030.090_StefanFate9",
    "turn": "1",
    "season": "",
@@ -21985,7 +21985,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 85,
+   "order": 111,
    "scene": "070.030.100_StefanFate10",
    "turn": "1",
    "season": "",
@@ -22079,7 +22079,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 86,
+   "order": 112,
    "scene": "070.030.110_StefanFate11",
    "turn": "1",
    "season": "",
@@ -22173,7 +22173,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 87,
+   "order": 113,
    "scene": "070.030.120_StefanFate12",
    "turn": "1",
    "season": "",
@@ -22267,7 +22267,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 88,
+   "order": 114,
    "scene": "070.030.130_StefanFate13",
    "turn": "1",
    "season": "",
@@ -22361,7 +22361,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 89,
+   "order": 115,
    "scene": "070.030.140_StefanFate14",
    "turn": "1",
    "season": "",
@@ -22455,7 +22455,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 90,
+   "order": 116,
    "scene": "070.030.150_StefanFate15",
    "turn": "1",
    "season": "",
@@ -22549,7 +22549,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 91,
+   "order": 117,
    "scene": "070.020.020_LidiaFate2",
    "turn": "1",
    "season": "",
@@ -22643,7 +22643,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 92,
+   "order": 118,
    "scene": "070.020.030_LidiaFate3",
    "turn": "1",
    "season": "",
@@ -22737,7 +22737,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 93,
+   "order": 119,
    "scene": "070.020.040_LidiaFate4",
    "turn": "1",
    "season": "",
@@ -22831,7 +22831,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 94,
+   "order": 120,
    "scene": "070.020.050_LidiaFate5",
    "turn": "1",
    "season": "",
@@ -22925,7 +22925,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 95,
+   "order": 121,
    "scene": "070.020.060_LidiaFate6",
    "turn": "1",
    "season": "",
@@ -23019,7 +23019,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 96,
+   "order": 122,
    "scene": "070.020.070_LidiaFate7",
    "turn": "1",
    "season": "",
@@ -23113,7 +23113,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 97,
+   "order": 123,
    "scene": "070.020.080_LidiaFate8",
    "turn": "1",
    "season": "",
@@ -23207,7 +23207,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 98,
+   "order": 124,
    "scene": "070.020.090_LidiaFate9",
    "turn": "1",
    "season": "",
@@ -23301,7 +23301,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 99,
+   "order": 125,
    "scene": "070.020.100_LidiaFate10",
    "turn": "1",
    "season": "",
@@ -23395,7 +23395,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 100,
+   "order": 126,
    "scene": "070.010.020_RobertFate2",
    "turn": "1",
    "season": "",
@@ -23489,7 +23489,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 101,
+   "order": 127,
    "scene": "070.010.030_RobertFate3",
    "turn": "1",
    "season": "",
@@ -23583,7 +23583,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 102,
+   "order": 128,
    "scene": "070.010.040_RobertFate4",
    "turn": "1",
    "season": "",
@@ -23677,7 +23677,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 103,
+   "order": 129,
    "scene": "070.010.050_RobertFate5",
    "turn": "1",
    "season": "",
@@ -23771,7 +23771,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 104,
+   "order": 130,
    "scene": "070.010.060_RobertFate6",
    "turn": "1",
    "season": "",
@@ -23865,7 +23865,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 105,
+   "order": 131,
    "scene": "070.010.070_RobertFate7",
    "turn": "1",
    "season": "",
@@ -23959,7 +23959,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 106,
+   "order": 132,
    "scene": "070.010.080_RobertFate8",
    "turn": "1",
    "season": "",
@@ -24053,7 +24053,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 107,
+   "order": 133,
    "scene": "070.010.090_RobertFate9",
    "turn": "1",
    "season": "",
@@ -24147,7 +24147,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 108,
+   "order": 134,
    "scene": "070.010.100_RobertFate10",
    "turn": "1",
    "season": "",
@@ -24241,7 +24241,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 109,
+   "order": 135,
    "scene": "070.010.110_RobertFate11",
    "turn": "1",
    "season": "",
@@ -24335,7 +24335,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 110,
+   "order": 136,
    "scene": "070.010.120_RobertFate12",
    "turn": "1",
    "season": "",
@@ -24429,7 +24429,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 111,
+   "order": 137,
    "scene": "070.010.130_RobertFate13",
    "turn": "1",
    "season": "",
@@ -24523,7 +24523,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 112,
+   "order": 138,
    "scene": "070.010.140_RobertFate14",
    "turn": "1",
    "season": "",
@@ -24617,7 +24617,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 113,
+   "order": 139,
    "scene": "070.010.150_RobertFate15",
    "turn": "1",
    "season": "",
@@ -24711,7 +24711,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 114,
+   "order": 140,
    "scene": "070.240.020_FateOfTheFamily2",
    "turn": "1",
    "season": "",
@@ -24805,7 +24805,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 115,
+   "order": 141,
    "scene": "070.240.030_FateOfTheFamily3",
    "turn": "1",
    "season": "",
@@ -24899,7 +24899,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 116,
+   "order": 142,
    "scene": "070.240.040_FateOfTheFamily4",
    "turn": "1",
    "season": "",
@@ -24993,7 +24993,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 117,
+   "order": 143,
    "scene": "070.240.050_FateOfTheFamily5",
    "turn": "1",
    "season": "",
@@ -25087,7 +25087,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 118,
+   "order": 144,
    "scene": "070.240.060_FateOfTheFamily6",
    "turn": "1",
    "season": "",
@@ -25181,7 +25181,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 119,
+   "order": 145,
    "scene": "070.240.070_FateOfTheFamily7",
    "turn": "1",
    "season": "",
@@ -25275,7 +25275,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 120,
+   "order": 146,
    "scene": "070.240.080_FateOfTheFamily8",
    "turn": "1",
    "season": "",
@@ -25369,7 +25369,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 121,
+   "order": 147,
    "scene": "070.240.090_FateOfTheFamily9",
    "turn": "1",
    "season": "",
@@ -25463,7 +25463,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 122,
+   "order": 148,
    "scene": "070.240.100_FateOfTheFamily10",
    "turn": "1",
    "season": "",
@@ -25557,7 +25557,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 123,
+   "order": 149,
    "scene": "070.240.110_FateOfTheFamily11",
    "turn": "1",
    "season": "",
@@ -25651,7 +25651,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 124,
+   "order": 150,
    "scene": "070.240.120_FateOfTheFamily12",
    "turn": "1",
    "season": "",
@@ -25745,7 +25745,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 125,
+   "order": 151,
    "scene": "070.240.130_FateOfTheFamily13",
    "turn": "1",
    "season": "",
@@ -25839,7 +25839,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 126,
+   "order": 152,
    "scene": "070.240.140_FateOfTheFamily14",
    "turn": "1",
    "season": "",
@@ -25933,7 +25933,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 127,
+   "order": 153,
    "scene": "070.240.150_FateOfTheFamily15",
    "turn": "1",
    "season": "",
@@ -26027,7 +26027,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 128,
+   "order": 154,
    "scene": "070.240.160_FateOfTheFamily16",
    "turn": "1",
    "season": "",
@@ -26121,7 +26121,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 129,
+   "order": 155,
    "scene": "070.240.170_FateOfTheFamily17",
    "turn": "1",
    "season": "",
@@ -26215,7 +26215,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 130,
+   "order": 156,
    "scene": "070.240.180_FateOfTheFamily18",
    "turn": "1",
    "season": "",
@@ -26309,7 +26309,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 131,
+   "order": 157,
    "scene": "070.240.190_FateOfTheFamily19",
    "turn": "1",
    "season": "",
@@ -26403,7 +26403,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 132,
+   "order": 158,
    "scene": "070.230.020_FateOfSofia2",
    "turn": "1",
    "season": "",
@@ -26497,7 +26497,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 133,
+   "order": 159,
    "scene": "070.230.030_FateOfSofia3",
    "turn": "1",
    "season": "",
@@ -26591,7 +26591,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 134,
+   "order": 160,
    "scene": "070.230.040_FateOfSofia4",
    "turn": "1",
    "season": "",
@@ -26685,7 +26685,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 135,
+   "order": 161,
    "scene": "070.230.050_FateOfSofia5",
    "turn": "1",
    "season": "",
@@ -26779,7 +26779,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 136,
+   "order": 162,
    "scene": "070.230.060_FateOfSofia6",
    "turn": "1",
    "season": "",
@@ -26873,7 +26873,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 137,
+   "order": 163,
    "scene": "070.230.070_FateOfSofia7",
    "turn": "1",
    "season": "",
@@ -26967,7 +26967,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 138,
+   "order": 164,
    "scene": "070.230.080_FateOfSofia8",
    "turn": "1",
    "season": "",
@@ -27061,7 +27061,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 139,
+   "order": 165,
    "scene": "070.230.090_FateOfSofia9",
    "turn": "1",
    "season": "",
@@ -27155,7 +27155,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 140,
+   "order": 166,
    "scene": "070.230.100_FateOfSofia10",
    "turn": "1",
    "season": "",
@@ -27249,7 +27249,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 141,
+   "order": 167,
    "scene": "070.220.020_FateOfOktavia2",
    "turn": "1",
    "season": "",
@@ -27283,7 +27283,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 142,
+   "order": 168,
    "scene": "070.220.030_FateOfOktavia3",
    "turn": "1",
    "season": "",
@@ -27317,7 +27317,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 143,
+   "order": 169,
    "scene": "070.220.040_FateOfOktavia4",
    "turn": "1",
    "season": "",
@@ -27351,7 +27351,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 144,
+   "order": 170,
    "scene": "070.220.050_FateOfOktavia5",
    "turn": "1",
    "season": "",
@@ -27385,7 +27385,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 145,
+   "order": 171,
    "scene": "070.210.010_FateOfJeanne1",
    "turn": "1",
    "season": "",
@@ -27419,7 +27419,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 146,
+   "order": 301,
    "scene": "070.210.020_FateOfJeanne2",
    "turn": "1",
    "season": "",
@@ -27453,7 +27453,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 147,
+   "order": 302,
    "scene": "070.210.030_FateOfJeanne3",
    "turn": "1",
    "season": "",
@@ -27487,7 +27487,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 148,
+   "order": 303,
    "scene": "070.210.040_FateOfJeanne4",
    "turn": "1",
    "season": "",
@@ -27521,7 +27521,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 149,
+   "order": 304,
    "scene": "070.210.050_FateOfJeanne5",
    "turn": "1",
    "season": "",
@@ -27555,7 +27555,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 150,
+   "order": 305,
    "scene": "070.210.060_FateOfJeanne6",
    "turn": "1",
    "season": "",
@@ -27589,7 +27589,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 151,
+   "order": 306,
    "scene": "070.210.070_FateOfJeanne7",
    "turn": "1",
    "season": "",
@@ -27623,7 +27623,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 152,
+   "order": 307,
    "scene": "070.210.080_FateOfJeanne8",
    "turn": "1",
    "season": "",
@@ -27657,7 +27657,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 153,
+   "order": 308,
    "scene": "070.210.090_FateOfJeanne9",
    "turn": "1",
    "season": "",
@@ -27691,7 +27691,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 154,
+   "order": 309,
    "scene": "070.210.100_FateOfJeanne10",
    "turn": "1",
    "season": "",
@@ -27725,7 +27725,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 155,
+   "order": 568,
    "scene": "070.200.020_FateOfTommas2",
    "turn": "1",
    "season": "",
@@ -27755,7 +27755,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 156,
+   "order": 569,
    "scene": "070.200.030_FateOfTommas3",
    "turn": "1",
    "season": "",
@@ -27785,7 +27785,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 157,
+   "order": 570,
    "scene": "070.200.040_FateOfTommas4",
    "turn": "1",
    "season": "",
@@ -27815,7 +27815,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 158,
+   "order": 571,
    "scene": "070.200.050_FateOfTommas5",
    "turn": "1",
    "season": "",
@@ -27845,7 +27845,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 159,
+   "order": 572,
    "scene": "070.200.060_FateOfTommas6",
    "turn": "1",
    "season": "",
@@ -27875,7 +27875,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 160,
+   "order": 573,
    "scene": "070.190.020_FateOfLennart2",
    "turn": "1",
    "season": "",
@@ -27905,7 +27905,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 161,
+   "order": 574,
    "scene": "070.190.030_FateOfLennart3",
    "turn": "1",
    "season": "",
@@ -27935,7 +27935,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 162,
+   "order": 575,
    "scene": "070.190.040_FateOfLennart4",
    "turn": "1",
    "season": "",
@@ -27965,7 +27965,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 163,
+   "order": 576,
    "scene": "070.190.050_FateOfLennart5",
    "turn": "1",
    "season": "",
@@ -27995,7 +27995,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 164,
+   "order": 577,
    "scene": "070.190.060_FateOfLennart6",
    "turn": "1",
    "season": "",
@@ -28025,7 +28025,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 165,
+   "order": 578,
    "scene": "070.180.020_FateOfElBorn2",
    "turn": "1",
    "season": "",
@@ -28055,7 +28055,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 166,
+   "order": 579,
    "scene": "070.180.030_FateOfElBorn3",
    "turn": "1",
    "season": "",
@@ -28085,7 +28085,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 167,
+   "order": 580,
    "scene": "070.180.040_FateOfElBorn4",
    "turn": "1",
    "season": "",
@@ -28115,7 +28115,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 168,
+   "order": 581,
    "scene": "070.180.050_FateOfElBorn5",
    "turn": "1",
    "season": "",
@@ -28145,7 +28145,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 169,
+   "order": 582,
    "scene": "070.180.060_FateOfElBorn6",
    "turn": "1",
    "season": "",
@@ -28175,7 +28175,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 170,
+   "order": 583,
    "scene": "070.180.070_FateOfElBorn7",
    "turn": "1",
    "season": "",
@@ -28205,7 +28205,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 171,
+   "order": 584,
    "scene": "070.170.020_FateOfUlrich2",
    "turn": "1",
    "season": "",
@@ -28235,7 +28235,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 172,
+   "order": 585,
    "scene": "070.170.030_FateOfUlrich3",
    "turn": "1",
    "season": "",
@@ -28265,7 +28265,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 173,
+   "order": 586,
    "scene": "070.170.040_FateOfUlrich4",
    "turn": "1",
    "season": "",
@@ -28295,7 +28295,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 174,
+   "order": 587,
    "scene": "070.170.050_FateOfUlrich5",
    "turn": "1",
    "season": "",
@@ -28325,7 +28325,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 175,
+   "order": 588,
    "scene": "070.160.020_FateOfOtton2",
    "turn": "1",
    "season": "",
@@ -28355,7 +28355,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 176,
+   "order": 589,
    "scene": "070.160.030_FateOfOtton3",
    "turn": "1",
    "season": "",
@@ -28385,7 +28385,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 177,
+   "order": 590,
    "scene": "070.160.040_FateOfOtton4",
    "turn": "1",
    "season": "",
@@ -28415,7 +28415,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 178,
+   "order": 591,
    "scene": "070.160.050_FateOfOtton5",
    "turn": "1",
    "season": "",
@@ -28445,7 +28445,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 179,
+   "order": 592,
    "scene": "070.150.020_FateOfFelippe2",
    "turn": "1",
    "season": "",
@@ -28475,7 +28475,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 180,
+   "order": 593,
    "scene": "070.150.030_FateOfFelippe3",
    "turn": "1",
    "season": "",
@@ -28505,7 +28505,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 181,
+   "order": 594,
    "scene": "070.150.040_FateOfFelippe4",
    "turn": "1",
    "season": "",
@@ -28535,7 +28535,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 182,
+   "order": 595,
    "scene": "070.090.020_TheOutcomeOfTheUprising2",
    "turn": "0",
    "season": "",
@@ -28565,7 +28565,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 183,
+   "order": 596,
    "scene": "070.090.040_TheOutcomeOfTheUprising4",
    "turn": "0",
    "season": "",
@@ -28595,7 +28595,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 184,
+   "order": 597,
    "scene": "070.090.050_TheOutcomeOfTheUprising5",
    "turn": "0",
    "season": "",
@@ -28625,7 +28625,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 185,
+   "order": 598,
    "scene": "070.090.060_TheOutcomeOfTheUprising6",
    "turn": "0",
    "season": "",
@@ -28655,7 +28655,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 186,
+   "order": 599,
    "scene": "070.090.070_TheOutcomeOfTheUprising7",
    "turn": "0",
    "season": "",
@@ -28685,7 +28685,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 187,
+   "order": 600,
    "scene": "070.090.080_TheOutcomeOfTheUprising8",
    "turn": "0",
    "season": "",
@@ -28715,7 +28715,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 188,
+   "order": 601,
    "scene": "070.090.090_TheOutcomeOfTheUprising9",
    "turn": "0",
    "season": "",
@@ -28745,7 +28745,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 189,
+   "order": 2347,
    "scene": "Cutscene_8_Razgrom_Legiona",
    "turn": "1",
    "season": "",
@@ -28760,7 +28760,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 190,
+   "order": 2348,
    "scene": "Cutscene_9_Gorod_Uderjan",
    "turn": "1",
    "season": "",
@@ -28775,7 +28775,7 @@
   {
    "chapter": 6,
    "macro": "GameFinals",
-   "order": 191,
+   "order": 2349,
    "scene": "Cutscene_10_Reznya",
    "turn": "1",
    "season": "",

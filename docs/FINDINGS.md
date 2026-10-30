@@ -891,8 +891,50 @@ belong to the tree view.
 The first header ("Save type") is a button that cycles the filter
 `All -> Game autosave -> Before load -> Manual -> Original -> All`, reset to
 `All` when the window opens; it is not a sort column, the other headers are.
-Identical states are not merged across categories (same bytes, different
-artifact). Rows are built in pages of 120 with a "Show more" row, so a run with
+Rows are built in pages of 120 with a "Show more" row, so a run with
 hundreds of autosaves still opens quickly; loading any row goes through the same
 flow (pre-rewind checkpoint, adopt the run slot, load, loading screen/dissolve).
+Rows are collapsed by **game state**, not by file: `Recorder.StateSignature`
+hashes the save with `SlotInfo.Id`/`Date` cleared, so pressing "Save now" twice
+or the game saving the same scene again is one row. The newest row is shown; the
+other files are its copies and are deleted with it. `Recorder.DedupeStores`
+prunes duplicate `Autosaves`/`Checkpoints` files at startup; manual files are
+never deleted automatically. Observed in game (30 Oct 2026): 7 duplicate rows
+collapsed, 8–10 rows shown.
+
+## The chapter flow restarts at the top, and per-branch order (30 Oct 2026)
+
+- After every scene the game re-enters the chapter macro at its entry and loads
+  the first scene gate whose time/label/condition tests pass and whose scene was
+  not shown yet. "The next scene" is therefore not "the next row after the
+  current one": a triggered scene positioned earlier in the flow can appear
+  after a later scene. The failing `02.07.02 -> 02.09.01` plan showed this:
+  `02.N.03` ("The Poets") came next, although `02.08.01` is later in the old
+  linear order.
+- The chapter macro has switch branches (`TriggerBlock` in chapter 2). The old
+  `scene-flow.tsv` had one row per scene and kept the first occurrence's order,
+  mixing the two branches: under `TriggerBlock=false` the false-branch rows
+  (`02.N.03` order 19, `02.07.02` 27, `02.08.01` 28, `02.09.01` 29) were
+  collapsed against the true-branch `02.08.01` order 10, so `02.N.03` sorted
+  after `02.08.01` instead of before it.
+- `tools/bolt_story.py` now writes **one TSV row per flow occurrence** (scene +
+  switch label set; 2059 rows, 263 scenes, ~1.3 MB) and keeps each occurrence's
+  discovery order. `SceneFlow.Compare` orders by that flow position, and
+  `SceneFlow.After` considers **every unshown scene of the chapter** (not only
+  rows after the current scene), filtered by the live switch labels and
+  conditions, then later chapters. The JSON (`data/scene-flow.json`) stays one
+  entry per scene for reading. In game (30 Oct 2026): the tree loaded the 2059
+  rows and built in 514 ms; a plan from `02.07.02` to `02.09.01` logged
+  `02.07.02 > 02.08.01 > 02.09.01` under the live `TriggerBlock=true` branch
+  (the `02.N.03` path belongs to the `false` branch, so it is correctly not
+  offered there).
+- Remaining limit: the switch labels and conditions are evaluated against the
+  **state before the answer** (the tree's `scene-effects.tsv` simulates stats,
+  relations and statuses only). A key parameter or objective set by the scene
+  events (e.g. `TriggerBlock` after the `02.07.02` answer) can still change the
+  branch after the answer; the replay's ordered check stops at the first
+  divergence and names it. Extracting the Bolt `SetMember`/objective units per
+  scene would be the next step for exact pre-answer prediction.
+- A replay stop or a failed pre-check is shown in the tree's hint line in
+  `Palette.Red`, the same red as the delete marks.
 

@@ -20,7 +20,7 @@ Brante-Save-Load/            the folder that gets installed into the game dir
   Brante-Save-Load.dll       built by tools/build.sh; the Doorstop entry assembly
   0Harmony.dll               vendored Harmony (copied by the build from vendor/)
   scene-texts.tsv            every scene's title and answers (from the game; see data/)
-  scene-flow.tsv             every chapter's scene order + conditions (from the game)
+  scene-flow.tsv             every chapter's scene gates: flow row(s) per scene + conditions (from the game)
   scene-effects.tsv          every answer's stat/relation/status changes (from the game)
   Scripts/*.cs               the source
     Entrypoint.cs            Doorstop entry: Harmony patches, host creation
@@ -186,7 +186,17 @@ community event sheet (`data/events.json`).
   walks that order: a scene not on it, or a scene that skips an earlier one,
   stops the run and opens the tree with the scene named. A path through scenes
   still ahead is logged as speculative. `dev-plan.txt` logs a plan without
-  replaying it.
+  replaying it. A stop or a failed pre-check is shown in the tree's hint line in
+  `Palette.Red` (the delete-mark red).
+- **The chapter flow restarts at the top after every scene.** `scene-flow.tsv`
+  has one row per flow occurrence (a scene can sit at different positions under
+  different switch labels, e.g. `TriggerBlock`), and `SceneFlow.After` returns
+  every unshown scene of the chapter in flow order that passes the live labels
+  and conditions - not only scenes after the current one. A triggered scene
+  whose flow position is earlier than the scene on screen (e.g. `02.N.03` after
+  `02.07.02`) is therefore offered as the next scene, as the game does; the
+  per-branch order keeps the true/false branches apart. The TSV is regenerated
+  by `tools/bolt_story.py`.
 - **`SaveLoadManager.Instance` can be a destroyed object the game still saves
   with.** Never test it with Unity's `== null` and fall back to
   `FindObjectOfType`: use `Recorder.SaveManagers()` / `GameSaveManager()`.

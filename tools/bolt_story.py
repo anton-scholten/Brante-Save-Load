@@ -23,7 +23,8 @@ as readable text.
 
   python3 tools/bolt_story.py      # -> data/scene-flow.json + scene-flow.tsv
 
-TSV shipped with the mod (one line per scene of chapters 1-5, flow order):
+TSV shipped with the mod (flow order; one row per scene and switch label set,
+because a scene can sit at different positions under different switches):
     <chapter>\\t<order>\\t<scene>\\t<turn>\\t<season>\\t<labels>\\t<conditions>
 labels: alternatives joined by `|`, each a `;`-joined set of `Param=Value`
 switch labels (key chapter parameters; PeaceTree left out); conditions: the
@@ -479,11 +480,10 @@ def main():
                 continue
             index[k] = len(rows)
             rows.append(r)
-        firsts = {}
-        for r in rows:
-            firsts.setdefault(r["scene"], len(firsts))
-        for r in rows:
-            r["order"] = firsts[r["scene"]]
+        # The TSV keeps one row per flow occurrence (scene + switch label
+        # set): under a switch a scene can sit at different flow positions,
+        # and the mod filters rows by the live label set. The JSON below
+        # stays one entry per scene for readability.
         print("  %-17s chapter %d: %3d scene gate(s), %3d distinct scene(s)"
               % (name, number, len(rows), len({r["scene"] for r in rows})))
         flow.extend(rows)
@@ -514,8 +514,6 @@ def main():
         m["conditions"] = [c for c in (cond, gate) if c]
     scenes = list(merged.values())
 
-    for r in flow:
-        r.pop("dnf", None)
     doc = {"schema": 2,
            "source": "Bolt chapter macros, walked in flow order (tools/bolt_story.py)",
            "scenes": scenes}
@@ -523,20 +521,22 @@ def main():
     path.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
 
     lines = []
-    for m in scenes:
-        if m["chapter"] > 5:
+    seen = set()
+    for r in flow:
+        if r["chapter"] > 5:
             continue      # epilogue pages: no answers, never a tree column
-        alts = []
-        for labels in m["labels"]:
-            alt = ";".join(esc(l) for l in labels
-                           if not l.startswith("PeaceTree=") and not l.endswith("=(other)"))
-            if alt not in alts:
-                alts.append(alt)
-        if "" in alts:
-            alts = [""]                      # reachable without any label
+        key = (r["chapter"], r["scene"], tuple(r["labels"]))
+        if key in seen:
+            continue
+        seen.add(key)
+        alts = ";".join(esc(l) for l in r["labels"]
+                        if not l.startswith("PeaceTree=") and not l.endswith("=(other)"))
+        cond = render(simplify(r["dnf"]))
+        gate = r["gate"] if re.search(r"[A-Za-z]\w*\.\w+", r["gate"]) else ""
+        conditions = [c for c in (cond, gate) if c]
         lines.append("%d\t%d\t%s\t%s\t%s\t%s\t%s\n" % (
-            m["chapter"], m["order"], m["scene"], m["turn"], m["season"],
-            "|".join(alts), " && ".join(m["conditions"]).replace("\t", " ").replace("\n", " ")))
+            r["chapter"], r["order"], r["scene"], r["turn"], r["season"],
+            alts, " && ".join(conditions).replace("\t", " ").replace("\n", " ")))
     tsv = "".join(lines)
     for target in (ROOT / "data" / "scene-flow.tsv", ROOT / "Brante-Save-Load" / "scene-flow.tsv"):
         target.write_text(tsv, encoding="utf-8")

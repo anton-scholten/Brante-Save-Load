@@ -99,8 +99,8 @@ namespace Doorstop
 						_byScene[r.Scene] = r;
 					}
 				}
-				ModLog.Info("SceneFlow: " + _rows.Count + " scene(s) loaded from "
-					+ Path.GetFileName(path));
+				ModLog.Info("SceneFlow: " + _byScene.Count + " scene(s), " + _rows.Count
+					+ " flow row(s) loaded from " + Path.GetFileName(path));
 			}
 			catch (Exception e)
 			{
@@ -148,9 +148,14 @@ namespace Doorstop
 			return r != null ? r.Chapter : 0;
 		}
 
-		// The scenes that can come after `from`, in the order the game would
-		// reach them: the rest of its chapter and, with `laterChapters`, every
-		// chapter after it. `shown` (may be null) are left out.
+		// The scenes that can come next, in the order the game would try them:
+		// every scene of the current chapter that has not been shown yet, in
+		// chapter flow order, and with `laterChapters` every scene of the
+		// chapters after it. The game re-enters the chapter flow at the top
+		// after every scene, so a triggered scene whose flow position is
+		// before the scene on screen is still a candidate; filtering by
+		// "after the current scene" would lose those. `shown` (may be null)
+		// are left out.
 		//
 		// In the current chapter the run's key parameters and the conditions
 		// are checked against the live game. Later chapters are too far ahead
@@ -169,17 +174,28 @@ namespace Doorstop
 			List<Row> later = new List<Row>();
 			foreach (Row r in _rows)
 			{
-				bool ahead = r.Chapter == start.Chapter ? r != start && Compare(r, start) > 0
-					: laterChapters && r.Chapter > start.Chapter;
-				if (ahead && (shown == null || !shown.Contains(r.Scene)))
+				if (r.Chapter == start.Chapter)
 				{
-					later.Add(r);
+					if (r.Scene == from && shown == null)
+					{
+						continue;   // no history to exclude it: not a next scene
+					}
 				}
+				else if (!(laterChapters && r.Chapter > start.Chapter))
+				{
+					continue;
+				}
+				if (shown != null && shown.Contains(r.Scene))
+				{
+					continue;
+				}
+				later.Add(r);
 			}
 			later.Sort(delegate(Row a, Row b)
 			{
 				return a.Chapter != b.Chapter ? a.Chapter.CompareTo(b.Chapter) : Compare(a, b);
 			});
+			HashSet<string> seenScene = new HashSet<string>();
 			foreach (Row r in later)
 			{
 				bool future = r.Chapter != start.Chapter;
@@ -191,6 +207,12 @@ namespace Doorstop
 					? (string.IsNullOrEmpty(r.Condition) ? Tri.True : Tri.Unknown)
 					: Evaluate(r, ctx);
 				if (cond == Tri.False)
+				{
+					continue;
+				}
+				// The TSV has one row per flow occurrence (a scene can be
+				// reached under several switch label sets); show it once.
+				if (!seenScene.Add(r.Scene))
 				{
 					continue;
 				}
@@ -250,9 +272,14 @@ namespace Doorstop
 				+ t + ", false " + f + ", undecided " + u + ", failed " + bad);
 		}
 
-		// Time slot first, then flow order.
+		// Flow position first: the chapter macro's order is the order the game
+		// tries the scene gates, and a trigger scene may carry no time slot.
 		private static int Compare(Row a, Row b)
 		{
+			if (a.Order != b.Order)
+			{
+				return a.Order.CompareTo(b.Order);
+			}
 			if (a.Turn != b.Turn)
 			{
 				return a.Turn.CompareTo(b.Turn);
@@ -261,7 +288,7 @@ namespace Doorstop
 			{
 				return a.Season.CompareTo(b.Season);
 			}
-			return a.Order.CompareTo(b.Order);
+			return 0;
 		}
 
 		// Any alternative whose switches all agree with the key chapter

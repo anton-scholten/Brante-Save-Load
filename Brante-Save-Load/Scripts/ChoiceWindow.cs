@@ -1707,7 +1707,7 @@ namespace Doorstop
 			LoadPlan plan = PlanLoad(out why);
 			if (plan == null)
 			{
-				SetHistoryInfo(why);
+				SetHistoryInfo(why, true);
 				return;
 			}
 			HidePopup();
@@ -1786,7 +1786,7 @@ namespace Doorstop
 					+ (skipped != null ? " (skipped " + skipped + ")" : ""));
 				// the tree, on the scene the replay stopped at, saying why
 				OpenTreeView();
-				SetHistoryInfo(why);
+				SetHistoryInfo(why, true);
 			}
 		}
 
@@ -2962,11 +2962,14 @@ namespace Doorstop
 			_historyScroll.horizontalNormalizedPosition = Mathf.Clamp01(left / (content - view));
 		}
 
-		private static void SetHistoryInfo(string text)
+		private static void SetHistoryInfo(string text, bool error = false)
 		{
 			if (_historyInfo != null)
 			{
 				_historyInfo.text = string.IsNullOrEmpty(text) ? "" : text;
+				// A failed pre-check / replay stop is an error: the same red
+				// as the delete marks. Normal hints stay dark.
+				_historyInfo.color = error ? Palette.Red : Palette.Dark;
 			}
 		}
 
