@@ -713,3 +713,19 @@ live slot id can be blank and the saves inside a run's folder can carry a
 blank id too; the pinned run id taken from the save's folder
 (`Debug_10\28\...`) is then the id with its slashes.
 
+When no `Chapter_1.dat` exists anywhere, the start is built: a new
+`SaveLoadHelper` through `SaveLoadManager.ResetToDefault` (stats from
+`ParametersDefault`, relations from `RelationsDefault`, story parameters
+from `KeyChapterParametersDefault`, objectives off), which is what
+`CreateSaveLoadSlot` does for a new game. Compared field by field with a
+real `Chapter_1.dat`, only these differ, and are set by hand: `Chapter` 1,
+`ChapterName` "Chapter1.Childhood", `LastOpenScene` "ChildhoodChapterStart",
+`SceneState` PREGAME, `CurrentConsequence` "ButtonDescription1", and
+`ShowedScenesList` = Disclaimer, Cutscene_1, Intro, LoadingScreen_Child,
+ChildhoodPicture (shown) + ChildhoodChapterStart (not yet). Two side effects
+of `ResetToDefault` mid-game: it switches off the live objectives (put back
+afterwards) and copies the live history events instead of resetting them
+(all are locked at chapter 1's start). A replay from the built start reached
+scene 3 with stats, relations, objectives and scene list equal to replays
+from a real `Chapter_1.dat`.
+

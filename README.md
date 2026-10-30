@@ -73,7 +73,7 @@ Two extra flags:
 
 ## Known limitations
 
-- Load scene needs a starting point before your first changed choice: a mod save, the start of that chapter, or the very start of the story. For scenes played before the mod was installed, you need to pick every choice from that starting point.
+- Load scene needs a starting point before your first changed choice: a mod save, the start of that chapter, or the very start of the story (built from the game's own new-game defaults if no chapter 1 save exists at all). For scenes played before the mod was installed, you need to pick every choice from that starting point.
 - Future chapters only show the scenes shared by every path, since which path you get (your Lot, your post) isn't decided yet.
   When Load scene meets one of the other scenes, it stops there so you can pick its choice and load again.
 - Greyed-out choices after a changed pick are a close estimate: changes the game makes between scenes aren't simulated.

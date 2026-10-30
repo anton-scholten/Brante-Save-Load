@@ -1291,7 +1291,8 @@ namespace Doorstop
 		private static LoadPlan _pendingPlan;
 
 		public static bool DevFromChapterStart;
-		private static bool DevStandIn;   // dev-loadpath "first": the run's own chapter 1 save is ignored
+		private static bool DevStandIn;
+		private static bool DevNoChapter1;   // dev-loadpath "new": as if no Chapter_1.dat existed anywhere   // dev-loadpath "first": the run's own chapter 1 save is ignored
 		private static string DevDropPick;   // dev-loadpath "offpath": this scene is taken out of the plan   // dev-loadpath "chapter": ignore the scenes' saves
 
 		// The game's own save of the chapter's start, when column `i` is the
@@ -1332,6 +1333,10 @@ namespace Doorstop
 				foreach (string f in Directory.GetFiles(Path.Combine(Application.persistentDataPath, "Saves"),
 					"Chapter_1.dat", SearchOption.AllDirectories))
 				{
+					if (DevNoChapter1)
+					{
+						break;
+					}
 					DateTime t = File.GetLastWriteTimeUtc(f);
 					if (DevStandIn && Path.GetFullPath(f).StartsWith(Path.GetFullPath(Path.GetDirectoryName(
 						Path.Combine(Path.Combine(Application.persistentDataPath, "Saves"),
@@ -1348,14 +1353,82 @@ namespace Doorstop
 				if (best != null)
 				{
 					_standIns.Add(Path.GetFullPath(best));
+					return best;
 				}
-				return best;
+				return NewGameStart;
 			}
 			catch (Exception e)
 			{
 				ModLog.Info("ChoiceWindow: no stand-in start: " + e.Message);
 				return null;
 			}
+		}
+
+		// No chapter 1 save anywhere: the start is built from the game's own
+		// defaults instead (NewGameHelper). Stands for that in a load plan.
+		private const string NewGameStart = "new-game-start";   // path-safe: it goes through Path calls
+
+		// The state a chapter 1 save holds, built the way the game builds a
+		// new game (SaveLoadManager.ResetToDefault: stats, relations, story
+		// parameters and objectives from its default assets) plus what the
+		// opening adds before chapter 1 is saved - compared field by field
+		// with a real Chapter_1.dat: chapter 1, resuming at
+		// ChildhoodChapterStart, the opening scenes shown, no history events.
+		// The name, modes and save slot are the live run's.
+		private static SaveLoadHelper NewGameHelper()
+		{
+			// (Instance can be a destroyed object, which ?? does not treat as null)
+			SaveLoadManager slm = SaveLoadManager.Instance;
+			if (slm == null)
+			{
+				slm = UnityEngine.Object.FindObjectOfType<SaveLoadManager>();
+			}
+			if (slm == null || GameManager.Instance == null)
+			{
+				return null;
+			}
+			// ResetToDefault also switches off the live game's objectives;
+			// they are put back, as this only builds a save
+			List<KeyValuePair<_Scripts.AMVCC.Views.Windows.Destiny.Objective, bool>> live = new List<KeyValuePair<_Scripts.AMVCC.Views.Windows.Destiny.Objective, bool>>();
+			foreach (_Scripts.AMVCC.Views.Windows.Destiny.Objective o in Resources.FindObjectsOfTypeAll<_Scripts.AMVCC.Views.Windows.Destiny.Objective>())
+			{
+				live.Add(new KeyValuePair<_Scripts.AMVCC.Views.Windows.Destiny.Objective, bool>(o, o.Unlocked));
+			}
+			SaveLoadHelper h = new SaveLoadHelper();
+			try
+			{
+				slm.ResetToDefault(h);
+			}
+			finally
+			{
+				foreach (KeyValuePair<_Scripts.AMVCC.Views.Windows.Destiny.Objective, bool> kv in live)
+				{
+					kv.Key.Unlocked = kv.Value;
+				}
+			}
+			// its history events are copied from the live game, not reset
+			foreach (GameEventStatus ev in h.AllGameEvents.GameEventsList)
+			{
+				ev.Unlocked = false;
+				ev.UnlockDate = string.Empty;
+				ev.UnlockYear = 0;
+			}
+			h.Chapter = 1;
+			h.ChapterName = "Chapter1.Childhood";
+			h.LastOpenScene = "ChildhoodChapterStart";
+			h.CurrentConsequence = "ButtonDescription1";
+			h.SceneState = Assets._Scripts.AMVCC.Core.SceneStateMachine.SceneStates.SceneState_PREGAME;
+			foreach (string opening in new[] { "Disclaimer", "Cutscene_1", "Intro", "LoadingScreen_Child", "ChildhoodPicture" })
+			{
+				h.ShowedScenesList.Add(new ShowedScenes { SceneName = opening, IsShowed = true });
+			}
+			h.ShowedScenesList.Add(new ShowedScenes { SceneName = "ChildhoodChapterStart", IsShowed = false });
+			ParametersManager pm = ParametersManager.Instance;
+			h.HeroName = pm != null ? pm.HeroName : "";
+			h.StoryMode = GameManager.Instance.StoryMode;
+			h.IronManMode = GameManager.Instance.IronManMode;
+			h.SlotInfo = new SaveSlotInfo { Id = "", Date = DateTime.Now.ToString() };
+			return h;
 		}
 
 		// Chapter 1 saves handed out as stand-ins: LoadFlow loads them as the
@@ -3523,9 +3596,20 @@ namespace Doorstop
 			SaveLoadHelper helper = null;
 			try
 			{
-				using (FileStream fs = File.OpenRead(datPath))
+				if (datPath == NewGameStart)
 				{
-					helper = (SaveLoadHelper)new BinaryFormatter().Deserialize(fs);
+					helper = NewGameHelper();
+					if (helper == null)
+					{
+						throw new InvalidOperationException("the game is not up to build a new game");
+					}
+				}
+				else
+				{
+					using (FileStream fs = File.OpenRead(datPath))
+					{
+						helper = (SaveLoadHelper)new BinaryFormatter().Deserialize(fs);
+					}
 				}
 			}
 			catch (Exception e)
@@ -3541,7 +3625,7 @@ namespace Doorstop
 			// A stand-in start (another run's chapter 1 save) becomes this run:
 			// its hero's name and mode, and the live main-save id - else the
 			// game would save on into the other run's folder.
-			bool standIn = _standIns.Contains(Path.GetFullPath(datPath));
+			bool standIn = datPath == NewGameStart || _standIns.Contains(Path.GetFullPath(datPath));
 			string liveRun = Recorder.CurrentRunId();
 			string liveReal = Recorder.LiveRealId();
 			if (string.IsNullOrEmpty(liveReal))
@@ -3998,10 +4082,11 @@ namespace Doorstop
 				// more scenes - the replay must go through the death page.
 				// "first": the first open answer in the story's first two scenes,
 				// to the third - a replay from the very start of the story.
-				if (lpArgs == "first" && _tree.Count > 3)
+				if ((lpArgs == "first" || lpArgs == "new") && _tree.Count > 3)
 				{
 					DevFromChapterStart = true;
 					DevStandIn = true;
+					DevNoChapter1 = lpArgs == "new";
 					_overrides.Clear();
 					for (int k = 0; k <= 2; k++)
 					{
@@ -4010,7 +4095,7 @@ namespace Doorstop
 					}
 					string fWhy;
 					LoadPlan fp = PlanLoad(out fWhy);
-					ModLog.Info("ChoiceWindow: dev load-path first: to " + _tree[2].Scene + ", plan "
+					ModLog.Info("ChoiceWindow: dev load-path " + lpArgs + ": to " + _tree[2].Scene + ", plan "
 						+ (fp != null ? fp.StartPath + " with " + fp.Picks.Count + " answer(s)" : "none: " + fWhy)
 						+ ", Load scene " + (_loadHereBtn.GetComponent<Button>().interactable ? "enabled" : "greyed: " + LoadBlockedReason()));
 					if (fp != null)
@@ -4028,9 +4113,33 @@ namespace Doorstop
 						ModLog.Info("ChoiceWindow: dev load-path: now at " + AutoPlay.Story()
 							+ (AutoPlay.Story() == _tree[2].Scene ? " (the selected scene)" : " (NOT the selected scene)")
 							+ ", main save now '" + Recorder.CurrentRunId() + "', hero '" + (ParametersManager.Instance != null ? ParametersManager.Instance.HeroName : "") + "'");
+						// the state reached, against the scene's other saves (same answers, other starts)
+						List<string> same = History.SnapshotsFor(_tree[2].Scene);
+						if (same.Count > 1)
+						{
+							SceneEffects.Hero mine = SceneEffects.FromSnapshot(same[0]);
+							SaveLoadHelper mineH = Recorder.ReadHelper(same[0]);
+							for (int k = 1; k < same.Count; k++)
+							{
+								SaveLoadHelper other = Recorder.ReadHelper(same[k]);
+								string shown = "", shownO = "";
+								foreach (ShowedScenes sc in mineH.ShowedScenesList) shown += sc.SceneName + (sc.IsShowed ? "+" : "-") + ",";
+								foreach (ShowedScenes sc in other.ShowedScenesList) shownO += sc.SceneName + (sc.IsShowed ? "+" : "-") + ",";
+								int objs = 0;
+								for (int o = 0; o < mineH.AllGameObjectives.Objectives.Count && o < other.AllGameObjectives.Objectives.Count; o++)
+								{
+									if (mineH.AllGameObjectives.Objectives[o].Status != other.AllGameObjectives.Objectives[o].Status) objs++;
+								}
+								ModLog.Info("ChoiceWindow: dev compare with " + Path.GetFileName(same[k]) + ": stat/relation distance "
+									+ SceneEffects.Distance(mine, SceneEffects.FromSnapshot(same[k])) + ", objectives differing " + objs
+									+ ", scene list " + (shown == shownO ? "same" : "DIFFERENT\n  " + shown + "\n  " + shownO)
+									+ ", consequence '" + mineH.CurrentConsequence + "'/'" + other.CurrentConsequence + "'");
+							}
+						}
 					}
 					DevFromChapterStart = false;
 					DevStandIn = false;
+					DevNoChapter1 = false;
 					yield break;
 				}
 				if (lpArgs == "offpath" && ci + 2 < _tree.Count)
