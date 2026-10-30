@@ -65,6 +65,7 @@ namespace Doorstop
 			Application.logMessageReceived += GameLog;
 			Recorder.MigrateDataDir();
 			Recorder.MigrateFolderNames();
+			Recorder.DedupeStores();
 			// The player's own saves as they are now: copied once, before the
 			// mod touches anything.
 			Recorder.BaselineAll();
@@ -246,6 +247,20 @@ namespace Doorstop
 				if (opened.IsValid() && opened.isLoaded)
 				{
 					ModLog.Info("DEV AUTOLOAD: scene " + scene + " is open");
+					// Dev: build and log a path plan to a target scene.
+					string planMarker = Path.Combine(Recorder.SnapshotDir, "dev-plan.txt");
+					if (File.Exists(planMarker))
+					{
+						string target = "";
+						try { target = File.ReadAllText(planMarker).Trim(); File.Delete(planMarker); }
+						catch (Exception) { }
+						if (!string.IsNullOrEmpty(target))
+						{
+							yield return new WaitForSeconds(1f);
+							ChoiceWindow.DevPlan(target);
+						}
+						yield break;
+					}
 					// Dev: load one mod save through the real table path
 					// (pre-rewind checkpoint, baseline, adopt, loading screen).
 					// "dev-load.txt" holds a file name under Runs/.
@@ -274,6 +289,17 @@ namespace Doorstop
 							}
 							ModLog.Info("DEV LOAD: now at '" + AutoPlay.Story() + "', main save '"
 								+ Recorder.CurrentRunId() + "'");
+							string loadPlanMarker = Path.Combine(Recorder.SnapshotDir, "dev-plan.txt");
+							if (File.Exists(loadPlanMarker))
+							{
+								string target = "";
+								try { target = File.ReadAllText(loadPlanMarker).Trim(); File.Delete(loadPlanMarker); }
+								catch (Exception) { }
+								if (!string.IsNullOrEmpty(target))
+								{
+									ChoiceWindow.DevPlan(target);
+								}
+							}
 						}
 						yield break;
 					}

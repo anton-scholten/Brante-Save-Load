@@ -172,6 +172,21 @@ community event sheet (`data/events.json`).
   type", is a filter button: it cycles `All -> Game autosave -> Before load ->
   Manual -> Original -> All`, resets to All when the window opens, and does not
   sort. Rows are built in pages of 120 with a "Show more" row.
+- **Table rows are de-duplicated by state.** `Recorder.StateSignature` hashes
+  the save with `SlotInfo.Id`/`Date` cleared, so two writes of the same state
+  (the same scene saved twice, "Save now" pressed twice, a checkpoint filed in
+  two runs) are one row; the newest is shown, older files are its copies, and
+  deleting the row deletes every copy. Automatic stores are also pruned of
+  duplicates at startup (`Recorder.DedupeStores`); manual files are never
+  deleted automatically.
+- **Load scene validates the picked path.** `PlanLoad` builds the choice-scene
+  order from the start to the target, requires every answer to be one of the
+  scene's choices and open, and checks that the start save is this path's
+  (`StartLooksOnPath`: same `LastOpenScene` and a scene-list prefix). The replay
+  walks that order: a scene not on it, or a scene that skips an earlier one,
+  stops the run and opens the tree with the scene named. A path through scenes
+  still ahead is logged as speculative. `dev-plan.txt` logs a plan without
+  replaying it.
 - **`SaveLoadManager.Instance` can be a destroyed object the game still saves
   with.** Never test it with Unity's `== null` and fall back to
   `FindObjectOfType`: use `Recorder.SaveManagers()` / `GameSaveManager()`.
@@ -218,6 +233,7 @@ on use) and must be paired with `dev-autoload.txt`:
 |---|---|
 | `dev-autoload.txt` | replay the vanilla load sequence onto the newest autosave |
 | `dev-load.txt` | with `dev-autoload.txt`: after the autoloaded scene is open, load one mod save through the table path (checkpoint, baseline, adopt). Holds a file name under `Runs/` |
+| `dev-plan.txt` | with `dev-autoload.txt`: build a path from the scene on screen to the named scene (first open answer everywhere), log the plan and its pre-checks; with `dev-load.txt` too, plan from the loaded scene. Does not replay |
 | `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
 | `dev-book.txt` | the book tabs (tree view, then save table), the save table, then the tree view: wheel, pop-ups, stat pop-up, a conflicting pick, chapter rule, a pick + its load plan, undo |
 | `dev-loadpath.txt` | with `dev-book.txt`: Load scene end to end; `back N` replays from another answer N scenes back, `chapter` from the chapter's start save, `start` from chapter 1 with an early change, `ahead` into the next chapter, `death` through a death, `offpath` a stop off the path, `first` the story's first scenes from a stand-in start (another run's chapter 1 save), `new` the same from a start built from the game's defaults, `file <name>` load that mod save as the table does (`file <name> norun`: with no run active) |

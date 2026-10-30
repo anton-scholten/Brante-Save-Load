@@ -20,33 +20,67 @@ namespace Doorstop
 			KindAll, KindAutosave, KindCheckpoint, KindOriginal, ShowMore,
 			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath,
 			PickConflict, NothingToLoad,
-			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick, ReplayOffPath, ReplayDeath, ReplayStopped
+			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick, ReplayOffPath, ReplayDeath, ReplayStopped,
+			ReplaySkipped, StartNotOnPath
 		}
 
 		static Loc()
 		{
 			AddLoadSceneWord(_en, "Load scene");
 			AddSaveKinds(_en, "All", "Game autosave", "Before load", "Original save", "Show more");
+			AddPathChecks(_en,
+				"Load scene stopped at \"{0}\": the story skipped \"{1}\" from your path, so its answer could not be used.",
+				"The save that would start this path belongs to another timeline. Pick an earlier scene, or load a save of this path.");
 			AddLoadSceneWord(_ru, "Загрузить сцену");
 			AddSaveKinds(_ru, "Все", "Автосохранение игры", "Перед загрузкой", "Исходное сохранение", "Показать ещё");
+			AddPathChecks(_ru,
+				"Загрузка остановилась на «{0}»: история пропустила «{1}» с вашего пути, и его ответ не использован.",
+				"Сохранение, с которого начинался бы этот путь, относится к другой линии. Выберите более раннюю сцену или загрузите сохранение этого пути.");
 			AddLoadSceneWord(_de, "Szene laden");
 			AddSaveKinds(_de, "Alle", "Spiel-Autosave", "Vor dem Laden", "Originalspeicher", "Mehr anzeigen");
+			AddPathChecks(_de,
+				"Laden hielt bei „{0}“: die Geschichte übersprang „{1}“ auf deinem Pfad, seine Antwort konnte nicht genutzt werden.",
+				"Der Spielstand, von dem dieser Pfad starten würde, gehört zu einer anderen Zeitlinie. Wähle eine frühere Szene oder lade einen Spielstand dieses Pfads.");
 			AddLoadSceneWord(_fr, "Charger la scène");
 			AddSaveKinds(_fr, "Tout", "Sauvegarde auto", "Avant chargement", "Sauvegarde d'origine", "Afficher plus");
+			AddPathChecks(_fr,
+				"Le chargement s'est arrêté à « {0} » : l'histoire a sauté « {1} » de votre chemin, sa réponse n'a pas pu être utilisée.",
+				"La sauvegarde d'où partirait ce chemin appartient à une autre chronologie. Choisissez une scène plus tôt ou chargez une sauvegarde de ce chemin.");
 			AddLoadSceneWord(_es, "Cargar escena");
 			AddSaveKinds(_es, "Todo", "Autoguardado", "Antes de cargar", "Guardado original", "Mostrar más");
+			AddPathChecks(_es,
+				"La carga se detuvo en «{0}»: la historia saltó «{1}» de tu camino, así que su respuesta no se pudo usar.",
+				"La partida desde la que empezaría este camino es de otra línea temporal. Elige una escena anterior o carga una partida de este camino.");
 			AddLoadSceneWord(_it, "Carica scena");
 			AddSaveKinds(_it, "Tutto", "Salvataggio auto", "Prima del caricamento", "Salvataggio originale", "Mostra altro");
+			AddPathChecks(_it,
+				"Il caricamento si è fermato a «{0}»: la storia ha saltato «{1}» dal tuo percorso, quindi la sua risposta non è stata usata.",
+				"Il salvataggio da cui partirebbe questo percorso appartiene a un'altra linea temporale. Scegli una scena precedente o carica un salvataggio di questo percorso.");
 			AddLoadSceneWord(_pl, "Wczytaj scenę");
 			AddSaveKinds(_pl, "Wszystkie", "Autozapis gry", "Przed wczytaniem", "Oryginalny zapis", "Pokaż więcej");
+			AddPathChecks(_pl,
+				"Wczytywanie zatrzymało się na „{0}”: historia pominęła „{1}” na twojej ścieżce, więc jego odpowiedź nie została użyta.",
+				"Zapis, od którego zaczęłaby się ta ścieżka, należy do innej linii czasu. Wybierz wcześniejszą scenę albo wczytaj zapis tej ścieżki.");
 			AddLoadSceneWord(_tr, "Sahneyi yükle");
 			AddSaveKinds(_tr, "Tümü", "Oyun otomatik kaydı", "Yüklemeden önce", "Özgün kayıt", "Daha fazla");
+			AddPathChecks(_tr,
+				"Yükleme \"{0}\" sahnesinde durdu: hikâye yolundaki \"{1}\" sahnesini atladı, bu yüzden cevabı kullanılamadı.",
+				"Bu yolun başlayacağı kayıt başka bir zaman çizgisine ait. Daha önceki bir sahneyi seç ya da bu yolun bir kaydını yükle.");
 			AddLoadSceneWord(_ja, "シーンを読み込む");
 			AddSaveKinds(_ja, "すべて", "ゲームの自動保存", "読み込み前", "元のセーブ", "さらに表示");
+			AddPathChecks(_ja,
+				"「{0}」で読み込みが止まりました：物語が道筋の「{1}」を飛ばしたため、その回答は使われませんでした。",
+				"この道筋の開始に使うセーブは別の時間軸のものです。もっと前のシーンを選ぶか、この道筋のセーブを読み込んでください。");
 			AddLoadSceneWord(_ko, "장면 불러오기");
 			AddSaveKinds(_ko, "전체", "게임 자동 저장", "불러오기 전", "원본 저장", "더 보기");
+			AddPathChecks(_ko,
+				"\"{0}\"에서 불러오기가 멈췄습니다: 이야기가 경로의 \"{1}\"을(를) 건너뛰어 그 답이 사용되지 않았습니다.",
+				"이 경로를 시작할 저장은 다른 시간대의 것입니다. 더 이전 장면을 고르거나 이 경로의 저장을 불러오세요.");
 			AddLoadSceneWord(_zh, "读取场景");
 			AddSaveKinds(_zh, "全部", "游戏自动保存", "读取前", "原始存档", "显示更多");
+			AddPathChecks(_zh,
+				"读取在“{0}”停止：剧情跳过了路径上的“{1}”，因此未能使用该回答。",
+				"用于开始这条路径的存档属于另一条时间线。请选择更早的场景，或读取这条路径的存档。");
 			AddRequirementWords(_en, "Requires", "One of", "not");
 			AddRequirementWords(_ru, "Требуется", "Одно из", "не");
 			AddRequirementWords(_de, "Erfordert", "Eines von", "nicht");
@@ -172,6 +206,12 @@ namespace Doorstop
 			d[K.KindCheckpoint] = checkpoint;
 			d[K.KindOriginal] = original;
 			d[K.ShowMore] = showMore;
+		}
+
+		private static void AddPathChecks(Dictionary<K, string> d, string skipped, string badStart)
+		{
+			d[K.ReplaySkipped] = skipped;
+			d[K.StartNotOnPath] = badStart;
 		}
 
 		private static void AddRequirementWords(Dictionary<K, string> d, string requires, string oneOf, string not)

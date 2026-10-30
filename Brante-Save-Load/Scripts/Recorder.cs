@@ -904,6 +904,83 @@ namespace Doorstop
 			return n;
 		}
 
+		// Collapses copies of the same state in the automatic stores: two
+		// mirror writes of one state (the game saved the same scene twice) and
+		// checkpoints written before loading the same state. Manual saves are
+		// never deleted here (the table hides identical rows instead).
+		public static void DedupeStores()
+		{
+			try
+			{
+				if (!Directory.Exists(RunsDir))
+				{
+					return;
+				}
+				foreach (string run in Directory.GetDirectories(RunsDir))
+				{
+					PruneDuplicateCopies(Path.Combine(run, KindAutosaves));
+					PruneDuplicateCopies(Path.Combine(run, KindCheckpoints));
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: deduplicating the stores failed:\n" + e);
+			}
+		}
+
+		private static void PruneDuplicateCopies(string dir)
+		{
+			if (!Directory.Exists(dir))
+			{
+				return;
+			}
+			string[] files;
+			try
+			{
+				files = Directory.GetFiles(dir, "*.dat");
+			}
+			catch
+			{
+				return;
+			}
+			Array.Sort(files, delegate(string a, string b)
+			{
+				return File.GetLastWriteTimeUtc(b).CompareTo(File.GetLastWriteTimeUtc(a));
+			});
+			HashSet<string> seen = new HashSet<string>();
+			int removed = 0;
+			foreach (string f in files)
+			{
+				try
+				{
+					SaveLoadHelper h = ReadHelper(f);
+					string sig = StateSignature(h);
+					if (string.IsNullOrEmpty(sig))
+					{
+						continue;
+					}
+					if (!seen.Add(sig))
+					{
+						File.Delete(f);
+						string side = SidecarOf(f);
+						if (File.Exists(side))
+						{
+							File.Delete(side);
+						}
+						removed++;
+					}
+				}
+				catch (Exception e)
+				{
+					ModLog.Error("Recorder: duplicate check of " + f + " failed:\n" + e);
+				}
+			}
+			if (removed > 0)
+			{
+				ModLog.Info("Recorder: removed " + removed + " duplicate save(s) from " + dir);
+			}
+		}
+
 		// Renames the old Runs/<run>/Auto folder to Choice, so the tree's
 		// saves and the game autosaves are never mistaken for one another.
 		public static void MigrateFolderNames()
@@ -1887,6 +1964,44 @@ namespace Doorstop
 			{
 				new BinaryFormatter().Serialize(ms, helper);
 				return ms.ToArray();
+			}
+		}
+
+		// A hash of the game state in a save, ignoring the save metadata that
+		// changes on every write (SlotInfo.Date and Id). Two saves of the same
+		// state therefore hash the same, which the table uses to show one row
+		// instead of a row per press.
+		public static string StateSignature(SaveLoadHelper helper)
+		{
+			if (helper == null)
+			{
+				return "";
+			}
+			SaveSlotInfo slot = helper.SlotInfo;
+			string id = null;
+			string date = null;
+			if (slot != null)
+			{
+				id = slot.Id;
+				date = slot.Date;
+				slot.Id = "";
+				slot.Date = "";
+			}
+			try
+			{
+				return Sha1(Serialize(helper));
+			}
+			catch
+			{
+				return "";
+			}
+			finally
+			{
+				if (slot != null)
+				{
+					slot.Id = id;
+					slot.Date = date;
+				}
 			}
 		}
 

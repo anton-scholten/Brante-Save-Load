@@ -429,6 +429,17 @@ save folders and only copies them.
   opens and does not sort. The other headers still sort.
 - [x] Rows built in pages of 120 with a "Show more" row. Choice points stay in
   the tree view only.
+- [x] Rows collapse saves of the same game state (`Recorder.StateSignature`
+  ignores `SlotInfo.Id`/`Date`): the newest is shown, older files become its
+  copies, and deleting the row deletes all of them. `Recorder.DedupeStores`
+  prunes duplicate `Autosaves`/`Checkpoints` files at startup; manual saves are
+  never deleted automatically.
+- [x] Load scene validates the picked path before replaying: answers must be
+  the scene's own and open, the start save must be on this path (same
+  `LastOpenScene` and scene-list prefix), and the replay walks the planned
+  order - a scene not on it, or a skip of an earlier one, stops the run and
+  opens the tree with the scene named (`ReplaySkipped`). Paths through scenes
+  still ahead are logged as speculative; `dev-plan.txt` logs a plan only.
 - [x] Loading any row goes through the same flow (pre-rewind checkpoint -> adopt
   the run slot -> load -> loading screen/dissolve).
 - [x] `Auto` -> `Choice` folder rename with a one-time migration
@@ -440,6 +451,10 @@ save folders and only copies them.
   cell (code) and loading a row of each kind goes through the shared flow.
 - [ ] In-game: click the type header through the whole cycle, the Show more
   row, and the original row's load/delete behaviour.
+- [ ] Load scene pass: a played path (all answers already played) reaches its
+  target; a changed answer that the story does not follow stops with the
+  skipped/unplanned scene named, and the tree opens there; a path through
+  still-ahead scenes logs as speculative.
 
 ## Phase 13 — verification
 

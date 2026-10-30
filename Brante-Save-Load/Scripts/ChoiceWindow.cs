@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -376,6 +377,8 @@ namespace Doorstop
 		{
 			public string Dat;
 			public string Kind;
+			public string Hash;
+			public List<string> Copies = new List<string>();
 			public string Title;
 			public DateTime Saved;
 			public int Chapter;
@@ -473,6 +476,7 @@ namespace Doorstop
 		private static Pending _pendingAction;
 		private static string _pendingPath;
 		private static string _pendingTitle;
+		private static List<string> _pendingCopies;
 		private static GameObject _markObj;
 		private static int _lastItemCount;
 		private static string _firstItemPath;
@@ -1193,6 +1197,14 @@ namespace Doorstop
 			public string Target;
 			public string TargetTitle;
 			public Dictionary<string, string> Picks = new Dictionary<string, string>();
+			// The choice scenes from the start to the target, in order. The
+			// replay checks every scene it reaches against this: a scene that
+			// is skipped means the story took another way, and its picked
+			// answer could not be used.
+			public List<string> Order = new List<string>();
+			// An intermediate scene is still ahead (a conditional scene): the
+			// path is a guess beyond the played part.
+			public bool Speculative;
 		}
 
 		private static LoadPlan PlanLoad(out string why)
@@ -1285,9 +1297,101 @@ namespace Doorstop
 					why = string.Format(Loc.T(Loc.K.PickBlocked), _tree[i].Title);
 					return null;
 				}
+				bool knownChoice = false;
+				foreach (History.Choice c in _tree[i].Choices)
+				{
+					if (c.Name == pick)
+					{
+						knownChoice = true;
+						break;
+					}
+				}
+				if (!knownChoice)
+				{
+					why = string.Format(Loc.T(Loc.K.PickBlocked), _tree[i].Title);
+					return null;
+				}
 				plan.Picks[_tree[i].Scene] = pick;
 			}
+			for (int i = start; i <= target; i++)
+			{
+				plan.Order.Add(_tree[i].Scene);
+			}
+			for (int i = start + 1; i < target; i++)
+			{
+				if (_tree[i].Upcoming)
+				{
+					plan.Speculative = true;
+				}
+			}
+			// The start snapshot must be this path's, or the replay would
+			// begin in another timeline and a selected scene would never come.
+			if (!StartLooksOnPath(startPath, start))
+			{
+				why = Loc.T(Loc.K.StartNotOnPath);
+				return null;
+			}
+			ModLog.Info("ChoiceWindow: plan " + plan.StartScene + " -> " + plan.Target
+				+ (plan.Speculative ? " (through scenes still ahead)" : "")
+				+ ", order " + string.Join(" > ", plan.Order.ToArray()));
+			StringBuilder planPicks = new StringBuilder();
+			foreach (string scene in plan.Order)
+			{
+				string pick;
+				if (plan.Picks.TryGetValue(scene, out pick))
+				{
+					planPicks.Append(scene + "=" + pick + " ");
+				}
+			}
+			ModLog.Info("ChoiceWindow: plan answers " + planPicks.ToString().Trim());
 			return plan;
+		}
+
+		// Whether a start save is on the tree's path up to `start`: its
+		// LastOpenScene is that scene and its own scene list contains every
+		// choice scene before it in order. A chapter-start file is checked by
+		// ChapterStartSave's timeline test instead.
+		private static bool StartLooksOnPath(string startPath, int start)
+		{
+			try
+			{
+				if (startPath == null)
+				{
+					return false;
+				}
+				// A start built from the game's defaults, or another run's
+				// chapter 1 save used as a stand-in, is not this path's save.
+				if (startPath == NewGameStart || _standIns.Contains(Path.GetFullPath(startPath)))
+				{
+					return true;
+				}
+				if (Path.GetFileName(startPath).StartsWith("Chapter_", StringComparison.OrdinalIgnoreCase))
+				{
+					return true;
+				}
+				SaveLoadHelper h = Recorder.ReadHelper(startPath);
+				if (h == null || h.LastOpenScene != _tree[start].Scene)
+				{
+					return false;
+				}
+				int k = 0;
+				if (h.ShowedScenesList != null)
+				{
+					foreach (ShowedScenes s in h.ShowedScenesList)
+					{
+						if (s != null && k <= start && s.SceneName == _tree[k].Scene)
+						{
+							k++;
+						}
+					}
+				}
+				return k >= start;   // the start scene itself may be the pending one
+			}
+			catch (Exception e)
+			{
+				ModLog.Info("ChoiceWindow: start-save check failed: " + e.Message);
+				return false;
+			}
 		}
 
 		private static LoadPlan _pendingPlan;
@@ -1626,29 +1730,43 @@ namespace Doorstop
 			if (DevDropPick != null)
 			{
 				plan.Picks.Remove(DevDropPick);   // dev: a scene left off the path
+				plan.Order.Remove(DevDropPick);
 				DevDropPick = null;
 			}
 			string offPath = null;
+			string skipped = null;
+			int next = 0;
 			yield return AutoPlay.Run(delegate(string scene)
 			{
 				string pick;
 				return plan.Picks.TryGetValue(scene, out pick) ? pick : null;
 			}, delegate(string scene)
 			{
+				int at = plan.Order.IndexOf(scene);
+				if (at < 0)
+				{
+					// The story went to a scene not on the picked path.
+					offPath = scene;
+					return false;
+				}
+				if (at > next)
+				{
+					// One or more selected scenes were skipped: their answers
+					// never got a chance to be used. Stop rather than carry on
+					// and pretend the path was followed.
+					skipped = plan.Order[next];
+					offPath = scene;
+					return false;
+				}
+				if (at < next)
+				{
+					return true;   // a repeat of a scene already handled
+				}
 				if (scene == plan.Target)
 				{
 					return false;
 				}
-				// A choice scene not on the picked path: the story went another
-				// way (changed answers, a "possible" scene, the selected scene
-				// not coming at all). Its answer is the player's to give, so
-				// stop there. A scene the tree has no texts for could not have
-				// been picked: that one gets its first open answer.
-				if (!plan.Picks.ContainsKey(scene) && SceneTexts.Buttons(scene).Count > 0)
-				{
-					offPath = scene;
-					return false;
-				}
+				next = at + 1;
 				return true;
 			}, 60f, true);
 			// One autosave for the scene the replay reached (the per-scene
@@ -1657,11 +1775,15 @@ namespace Doorstop
 			string at = AutoPlay.Story();
 			if (at != plan.Target)
 			{
-				string why = offPath != null ? string.Format(Loc.T(Loc.K.ReplayOffPath), Loc.SceneTitle(offPath))
+				string why = skipped != null
+					? string.Format(Loc.T(Loc.K.ReplaySkipped),
+						Loc.SceneTitle(at), Loc.SceneTitle(skipped))
+					: offPath != null ? string.Format(Loc.T(Loc.K.ReplayOffPath), Loc.SceneTitle(offPath))
 					: AutoPlay.LastStop == AutoPlay.Stop.Death ? string.Format(Loc.T(Loc.K.ReplayDeath), Loc.SceneTitle(at))
 					: AutoPlay.LastStop == AutoPlay.Stop.Blocked ? string.Format(Loc.T(Loc.K.PickBlocked), Loc.SceneTitle(at))
 					: string.Format(Loc.T(Loc.K.ReplayStopped), Loc.SceneTitle(at), plan.TargetTitle);
-				ModLog.Info("ChoiceWindow: load scene stopped at " + at + " - " + why);
+				ModLog.Info("ChoiceWindow: load scene stopped at " + at + " - " + why
+					+ (skipped != null ? " (skipped " + skipped + ")" : ""));
 				// the tree, on the scene the replay stopped at, saying why
 				OpenTreeView();
 				SetHistoryInfo(why);
@@ -3039,12 +3161,14 @@ namespace Doorstop
 		// Opens the confirm dialog for one action. path/title describe the
 		// save; row is the table row it came from (marked while the dialog
 		// is open), or null.
-		private static void Ask(Pending action, string path, string title, GameObject row)
+		private static void Ask(Pending action, string path, string title, GameObject row,
+			List<string> copies = null)
 		{
 			ClearMark();
 			_pendingAction = action;
 			_pendingPath = path;
 			_pendingTitle = title;
+			_pendingCopies = copies;
 			string body;
 			string label;
 			switch (action)
@@ -3133,26 +3257,49 @@ namespace Doorstop
 				if (Recorder.IsBackupPath(datPath))
 				{
 					ModLog.Info("ChoiceWindow: not deleting the original backup " + datPath);
+					_pendingCopies = null;
 					CancelConfirm();
 					return;
 				}
-				File.Delete(datPath);
-				string sidecar = Path.Combine(Path.GetDirectoryName(datPath),
-					Path.GetFileNameWithoutExtension(datPath) + ".meta.txt");
-				if (File.Exists(sidecar))
+				DeleteFile(datPath);
+				// Rows collapse saves of the same state; delete every file
+				// behind the row, not just the one shown.
+				if (_pendingCopies != null)
 				{
-					File.Delete(sidecar);
+					foreach (string copy in _pendingCopies)
+					{
+						if (!string.Equals(copy, datPath, StringComparison.OrdinalIgnoreCase))
+						{
+							DeleteFile(copy);
+						}
+					}
 				}
-				ModLog.Info("ChoiceWindow: removed " + Path.GetFileName(datPath));
 			}
 			catch (Exception e)
 			{
 				ModLog.Error("ChoiceWindow: deleting " + datPath + " failed:\n" + e);
 			}
+			_pendingCopies = null;
 			CancelConfirm();
 			_lastItemCount = RefreshItems();
 			Canvas.ForceUpdateCanvases();
 			ModLog.Info("ChoiceWindow: " + _lastItemCount + " save(s) remain");
+		}
+
+		private static void DeleteFile(string datPath)
+		{
+			if (Recorder.IsBackupPath(datPath))
+			{
+				return;
+			}
+			File.Delete(datPath);
+			string sidecar = Path.Combine(Path.GetDirectoryName(datPath),
+				Path.GetFileNameWithoutExtension(datPath) + ".meta.txt");
+			if (File.Exists(sidecar))
+			{
+				File.Delete(sidecar);
+			}
+			ModLog.Info("ChoiceWindow: removed " + Path.GetFileName(datPath));
 		}
 
 		private static void CancelConfirm()
@@ -3247,6 +3394,19 @@ namespace Doorstop
 			{
 				return 0;
 			}
+			_entries = ApplyFilter(LoadAllEntries());
+			SortEntries();
+			_shown = PageSize;
+			UpdateHeader();
+			BuildRows();
+			return _entries.Count;
+		}
+
+		// Every save of the current run, with saves of the same game state
+		// collapsed to one row (a "Save now" pressed twice, the game saving
+		// the same scene again, the same checkpoint in two folders).
+		private static List<SaveEntry> LoadAllEntries()
+		{
 			string run = Recorder.CurrentRunId();
 			List<SaveEntry> all = new List<SaveEntry>();
 			all.AddRange(ReadEntries(Recorder.RunDir(run, Recorder.KindAutosaves),
@@ -3260,12 +3420,51 @@ namespace Doorstop
 			{
 				all.Add(original);
 			}
-			_entries = ApplyFilter(all);
-			SortEntries();
-			_shown = PageSize;
-			UpdateHeader();
-			BuildRows();
-			return _entries.Count;
+			return Dedupe(all);
+		}
+
+		private static List<SaveEntry> Dedupe(List<SaveEntry> all)
+		{
+			List<SaveEntry> keep = new List<SaveEntry>();
+			Dictionary<string, SaveEntry> byState = new Dictionary<string, SaveEntry>();
+			int hidden = 0;
+			foreach (SaveEntry e in all)
+			{
+				if (string.IsNullOrEmpty(e.Hash))
+				{
+					keep.Add(e);
+					continue;
+				}
+				string key = e.Kind + "\u0001" + e.Hash;
+				SaveEntry first;
+				if (!byState.TryGetValue(key, out first))
+				{
+					byState[key] = e;
+					keep.Add(e);
+					continue;
+				}
+				// Keep the newest row; the other file(s) become its copies, so
+				// deleting the row removes every file of that state.
+				if (e.Saved > first.Saved)
+				{
+					first.Copies.Add(first.Dat);
+					first.Copies.AddRange(e.Copies);
+					first.Dat = e.Dat;
+					first.Saved = e.Saved;
+					first.Title = e.Title;
+				}
+				else
+				{
+					first.Copies.Add(e.Dat);
+					first.Copies.AddRange(e.Copies);
+				}
+				hidden++;
+			}
+			if (hidden > 0)
+			{
+				ModLog.Info("ChoiceWindow: " + hidden + " duplicate save row(s) collapsed");
+			}
+			return keep;
 		}
 
 		private enum SaveFilter { All, Autosaves, Checkpoints, Manual, Original }
@@ -3290,20 +3489,7 @@ namespace Doorstop
 			{
 				return;
 			}
-			string run = Recorder.CurrentRunId();
-			List<SaveEntry> all = new List<SaveEntry>();
-			all.AddRange(ReadEntries(Recorder.RunDir(run, Recorder.KindAutosaves),
-				Recorder.KindAutosaves));
-			all.AddRange(ReadEntries(Recorder.RunDir(run, Recorder.KindCheckpoints),
-				Recorder.KindCheckpoints));
-			all.AddRange(ReadEntries(Recorder.RunDir(run, Recorder.KindManual),
-				Recorder.KindManual));
-			SaveEntry original = ReadOriginal(run);
-			if (original != null)
-			{
-				all.Add(original);
-			}
-			_entries = ApplyFilter(all);
+			_entries = ApplyFilter(LoadAllEntries());
 			SortEntries();
 			_shown = PageSize;
 			UpdateHeader();
@@ -3430,6 +3616,7 @@ namespace Doorstop
 				SaveEntry entry = new SaveEntry();
 				entry.Dat = f;
 				entry.Kind = kind;
+				entry.Hash = Recorder.StateSignature(h);
 				entry.Title = ReadTitle(f);
 				// The sidecar holds the real capture time; the file's own
 				// timestamp can be newer (e.g. after the run-folder move).
@@ -3747,7 +3934,7 @@ namespace Doorstop
 				dimg.color = Color.clear;
 				Button dbtn = del.AddComponent<Button>();
 				dbtn.targetGraphic = dimg;
-				dbtn.onClick.AddListener(delegate { Ask(Pending.Delete, dp, dt, row); });
+				dbtn.onClick.AddListener(delegate { Ask(Pending.Delete, dp, dt, row, e.Copies); });
 				// a bin, red under the pointer as the x's are
 				GameObject bin = CreateUiObject("Bin", del.transform);
 				RectTransform binRt = bin.GetComponent<RectTransform>();
@@ -4118,6 +4305,60 @@ namespace Doorstop
 			if (ModHost.Current != null)
 			{
 				ModHost.Current.StartCoroutine(DevBookDump());
+			}
+		}
+
+		// Dev (dev-plan.txt): build a path from the scene on screen to
+		// `target` by picking the first open answer everywhere, and log the
+		// plan and its pre-checks. No replay; used to check StartLooksOnPath
+		// and the ordered plan before a fast-forward.
+		public static void DevPlan(string target)
+		{
+			try
+			{
+				OpenTreeView();
+				int ti = _tree.FindIndex(c => c.Scene == target);
+				int ci = _tree.FindIndex(c => c.Current);
+				ModLog.Info("DEV PLAN: target " + target + " index " + ti + ", current " + ci);
+				if (ci < 0 || ti < 0 || ti <= ci)
+				{
+					return;
+				}
+				_overrides.Clear();
+				for (int i = ci; i < ti; i++)
+				{
+					TreeCol col = _tree[i];
+					string pick = null;
+					foreach (History.Choice c in col.Choices)
+					{
+						if (!col.Blocked.Contains(c.Name))
+						{
+							pick = c.Name;
+							break;
+						}
+					}
+					if (pick == null)
+					{
+						ModLog.Info("DEV PLAN: no open answer in " + col.Scene);
+						return;
+					}
+					SelectChoice(col.Scene, pick);
+				}
+				_selScene = target;
+				string why;
+				LoadPlan p = PlanLoad(out why);
+				if (p == null)
+				{
+					ModLog.Info("DEV PLAN: no plan: " + why);
+					return;
+				}
+				ModLog.Info("DEV PLAN: start " + p.StartScene + " target " + p.Target
+					+ " speculative=" + p.Speculative + " order "
+					+ string.Join(" > ", p.Order.ToArray()));
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("DEV PLAN failed:\n" + e);
 			}
 		}
 
