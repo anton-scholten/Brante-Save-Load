@@ -678,3 +678,25 @@ only when the sender also has a `HudButtonBehavior`. Placement is
   to the current timeline, so a replay can start there when the mod has no
   save of an earlier scene.
 
+## Deaths and off-path scenes in a replay (29 Oct 2026)
+
+- Every death comes from an answer: 44 answers raise the `Death` stat
+  (`scene-effects.tsv`, +1 a death, +4 the last). The answer's consequence
+  text has a page with `IsDeathTrigger`, which opens the death window
+  (`FirstDeath_1(Clone)` etc.): pages, then two `DeathChoiceButtonBehaviour`
+  choices - `RestartChapter` true (load `Chapter_N.dat`) or false (go on with
+  the death counted) - then a consequence with a `ContinueButton`. The stat is
+  already raised when the window opens (`GoToConsequence` sets it before the
+  text), so "deaths now > deaths when the answer was given" tells a death the
+  answer caused. The replay takes the go-on choice for those and stops at any
+  other, and at the fourth.
+- A replay can meet a choice scene that is not on the picked path (changed
+  answers send the story another way, a "possible" scene comes or a listed
+  one does not). It stops there rather than guess, and opens the tree on that
+  scene with the reason; a scene the tree has no texts for gets its first
+  open answer, since it could not have been picked.
+- `Chapter_N.dat` is overwritten whenever chapter N begins, also on another
+  timeline after a rewind. It is only used when its `ShowedScenesList` is the
+  start of the live game's. As the hero at a chapter played before the mod it
+  also lets the tree check answers there.
+

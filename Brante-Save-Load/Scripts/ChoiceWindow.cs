@@ -1246,7 +1246,7 @@ namespace Doorstop
 				}
 				else
 				{
-					string chapterSave = ChapterStartSave(i);
+					string chapterSave = ChapterStartSave(_tree, i);
 					if (chapterSave != null)
 					{
 						start = i;
@@ -1290,14 +1290,18 @@ namespace Doorstop
 
 		private static LoadPlan _pendingPlan;
 
-		public static bool DevFromChapterStart;   // dev-loadpath "chapter": ignore the scenes' saves
+		public static bool DevFromChapterStart;
+		private static string DevDropPick;   // dev-loadpath "offpath": this scene is taken out of the plan   // dev-loadpath "chapter": ignore the scenes' saves
 
 		// The game's own save of the chapter's start, when column `i` is the
-		// chapter's first scene and the file is there; else null.
-		private static string ChapterStartSave(int i)
+		// chapter's first scene, the file is there, and it is this timeline's:
+		// the game keeps one per chapter and overwrites it whenever a chapter
+		// begins, so after a rewind it can be from another path - its scene
+		// list must be the start of the live game's. Else null.
+		private static string ChapterStartSave(List<TreeCol> cols, int i)
 		{
-			int chapter = SceneFlow.ChapterOf(_tree[i].Scene);
-			if (chapter <= 0 || (i > 0 && SceneFlow.ChapterOf(_tree[i - 1].Scene) == chapter))
+			int chapter = SceneFlow.ChapterOf(cols[i].Scene);
+			if (chapter <= 0 || (i > 0 && SceneFlow.ChapterOf(cols[i - 1].Scene) == chapter))
 			{
 				return null;
 			}
@@ -1308,7 +1312,42 @@ namespace Doorstop
 			}
 			string path = Path.Combine(Path.Combine(Application.persistentDataPath, "Saves"),
 				Path.Combine(id, "Chapter_" + chapter + ".dat"));
-			return File.Exists(path) ? path : null;
+			return File.Exists(path) && OnThisTimeline(path) ? path : null;
+		}
+
+		private static readonly Dictionary<string, KeyValuePair<DateTime, bool>> _timelineChecks =
+			new Dictionary<string, KeyValuePair<DateTime, bool>>();
+
+		private static bool OnThisTimeline(string path)
+		{
+			try
+			{
+				DateTime t = File.GetLastWriteTimeUtc(path);
+				KeyValuePair<DateTime, bool> known;
+				if (_timelineChecks.TryGetValue(path, out known) && known.Key == t)
+				{
+					return known.Value;
+				}
+				SaveLoadHelper h = Recorder.ReadHelper(path);
+				List<ShowedScenes> live = GameManager.Instance != null ? GameManager.Instance.ShowedScenesList : null;
+				List<ShowedScenes> then = h != null ? h.ShowedScenesList : null;
+				bool ok = live != null && then != null && then.Count <= live.Count;
+				for (int k = 0; ok && k < then.Count; k++)
+				{
+					ok = then[k] != null && live[k] != null && then[k].SceneName == live[k].SceneName;
+				}
+				_timelineChecks[path] = new KeyValuePair<DateTime, bool>(t, ok);
+				if (!ok)
+				{
+					ModLog.Info("ChoiceWindow: " + path + " is from another timeline - not used");
+				}
+				return ok;
+			}
+			catch (Exception e)
+			{
+				ModLog.Info("ChoiceWindow: cannot check " + path + ": " + e.Message);
+				return false;
+			}
 		}
 
 		// Load scene is greyed out while it would bring back exactly what is on
@@ -1462,11 +1501,46 @@ namespace Doorstop
 				yield break;
 			}
 			yield return AutoPlay.WaitForLoad();
+			if (DevDropPick != null)
+			{
+				plan.Picks.Remove(DevDropPick);   // dev: a scene left off the path
+				DevDropPick = null;
+			}
+			string offPath = null;
 			yield return AutoPlay.Run(delegate(string scene)
 			{
 				string pick;
 				return plan.Picks.TryGetValue(scene, out pick) ? pick : null;
-			}, delegate(string scene) { return scene != plan.Target; }, 60f, true);
+			}, delegate(string scene)
+			{
+				if (scene == plan.Target)
+				{
+					return false;
+				}
+				// A choice scene not on the picked path: the story went another
+				// way (changed answers, a "possible" scene, the selected scene
+				// not coming at all). Its answer is the player's to give, so
+				// stop there. A scene the tree has no texts for could not have
+				// been picked: that one gets its first open answer.
+				if (!plan.Picks.ContainsKey(scene) && SceneTexts.Buttons(scene).Count > 0)
+				{
+					offPath = scene;
+					return false;
+				}
+				return true;
+			}, 60f, true);
+			string at = AutoPlay.Story();
+			if (at != plan.Target)
+			{
+				string why = offPath != null ? string.Format(Loc.T(Loc.K.ReplayOffPath), Loc.SceneTitle(offPath))
+					: AutoPlay.LastStop == AutoPlay.Stop.Death ? string.Format(Loc.T(Loc.K.ReplayDeath), Loc.SceneTitle(at))
+					: AutoPlay.LastStop == AutoPlay.Stop.Blocked ? string.Format(Loc.T(Loc.K.PickBlocked), Loc.SceneTitle(at))
+					: string.Format(Loc.T(Loc.K.ReplayStopped), Loc.SceneTitle(at), plan.TargetTitle);
+				ModLog.Info("ChoiceWindow: load scene stopped at " + at + " - " + why);
+				// the tree, on the scene the replay stopped at, saying why
+				OpenTreeView();
+				SetHistoryInfo(why);
+			}
 		}
 
 		private static void OpenHistory()
@@ -2159,6 +2233,16 @@ namespace Doorstop
 				if (at == null)
 				{
 					at = carry;
+				}
+				if (at == null && !col.Upcoming)
+				{
+					// a chapter played before the mod: its start save is the
+					// hero as the chapter began - close, and better than nothing
+					string chapterSave = ChapterStartSave(cols, cols.IndexOf(col));
+					if (chapterSave != null)
+					{
+						at = SceneEffects.FromSnapshot(chapterSave);
+					}
 				}
 				col.Hero = at;
 				col.Blocked.Clear();
@@ -3739,7 +3823,7 @@ namespace Doorstop
 				}
 				for (int i = 0; i < _tree.Count; i++)
 				{
-					string cs = _tree[i].Upcoming ? null : ChapterStartSave(i);
+					string cs = _tree[i].Upcoming ? null : ChapterStartSave(_tree, i);
 					if (cs != null)
 					{
 						ModLog.Info("ChoiceWindow: dev chapter start save for " + _tree[i].Scene + ": " + cs);
@@ -3823,6 +3907,190 @@ namespace Doorstop
 				catch (Exception) { }
 				TreeCol cur = _tree.Find(c => c.Current);
 				int ci = cur != null ? _tree.IndexOf(cur) : -1;
+				// "start": no mod saves; another answer in the story's first
+				// scene, every played answer after it, to two scenes before the
+				// one on screen - a replay from the game's chapter 1 save.
+				// "ahead": the first open answer from the scene on screen to the
+				// first scene of the next chapter.
+				// "death": in the latest played scene with an answer that adds a
+				// death, that answer, then played (or first open) answers for two
+				// more scenes - the replay must go through the death page.
+				if (lpArgs == "offpath" && ci + 2 < _tree.Count)
+				{
+					_overrides.Clear();
+					for (int k = ci; k <= ci + 2; k++)
+					{
+						TreeCol col = _tree[k];
+						SelectChoice(col.Scene, col.Choices.Find(c => !col.Blocked.Contains(c.Name)).Name);
+					}
+					DevDropPick = _tree[ci + 1].Scene;
+					LoadSelected();
+					yield return new WaitForSeconds(1f);
+					RunPending();
+					yield return new WaitForSeconds(5f);
+					float until6 = Time.realtimeSinceStartup + 300f;
+					while (AutoPlay.Running && Time.realtimeSinceStartup < until6)
+					{
+						yield return new WaitForSeconds(1f);
+					}
+					yield return new WaitForSeconds(3f);
+					ModLog.Info("ChoiceWindow: dev load-path offpath: now at " + AutoPlay.Story() + ", tree "
+						+ (_historyPanel != null && _historyPanel.activeInHierarchy ? "open" : "closed")
+						+ ", info '" + (_historyInfo != null ? _historyInfo.text : "") + "'");
+					yield break;
+				}
+				if (lpArgs == "death")
+				{
+					_overrides.Clear();
+					int dk = -1;
+					string dAnswer = null;
+					for (int k = ci - 1; k >= 0 && dk < 0; k--)
+					{
+						foreach (History.Choice c in _tree[k].Choices)
+						{
+							if (!_tree[k].Blocked.Contains(c.Name) && _tree[k].HasSnapshot
+								&& SceneEffects.For(_tree[k].Scene, c.Name).Exists(f => f.Kind == 'P' && f.Name == "Death" && f.Value > 0 && !f.IsRequirement))
+							{
+								dk = k;
+								dAnswer = c.Name;
+								break;
+							}
+						}
+					}
+					if (dk >= 0 && dk + 2 < _tree.Count)
+					{
+						SelectChoice(_tree[dk].Scene, dAnswer);
+						for (int k = dk + 1; k <= dk + 2; k++)
+						{
+							TreeCol col = _tree[k];
+							string pick = !string.IsNullOrEmpty(col.PlayedChoice) && !col.Blocked.Contains(col.PlayedChoice) ? col.PlayedChoice
+								: col.Choices.Find(c => !col.Blocked.Contains(c.Name)).Name;
+							SelectChoice(col.Scene, pick);
+						}
+						TreeCol dGoal = _tree[dk + 2];
+						string dWhy;
+						LoadPlan dp = PlanLoad(out dWhy);
+						ModLog.Info("ChoiceWindow: dev load-path death: " + _tree[dk].Scene + " -> " + dAnswer + ", to " + dGoal.Scene
+							+ ", plan " + (dp != null ? dp.Picks.Count + " answer(s)" : "none: " + dWhy));
+						if (dp != null)
+						{
+							LoadSelected();
+							yield return new WaitForSeconds(1f);
+							RunPending();
+							yield return new WaitForSeconds(5f);
+							float until5 = Time.realtimeSinceStartup + 600f;
+							while (AutoPlay.Running && Time.realtimeSinceStartup < until5)
+							{
+								yield return new WaitForSeconds(1f);
+							}
+							yield return new WaitForSeconds(2f);
+							ModLog.Info("ChoiceWindow: dev load-path: now at " + AutoPlay.Story()
+								+ (AutoPlay.Story() == dGoal.Scene ? " (the selected scene)" : " (NOT the selected scene)"));
+						}
+					}
+					else
+					{
+						ModLog.Info("ChoiceWindow: dev load-path death: no played scene with a death answer");
+					}
+					yield break;
+				}
+				if (lpArgs == "start" || lpArgs == "ahead")
+				{
+					DevFromChapterStart = lpArgs == "start";
+					_overrides.Clear();
+					TreeCol goal = null;
+					if (lpArgs == "start" && ci >= 3)
+					{
+						goal = _tree[ci - 2];
+						for (int k = 0; k < _tree.IndexOf(goal); k++)
+						{
+							if (!string.IsNullOrEmpty(_tree[k].PlayedChoice))
+							{
+								_overrides[_tree[k].Scene] = _tree[k].PlayedChoice;
+							}
+						}
+						SelectChoice(goal.Scene, goal.Choices.Find(c => !goal.Blocked.Contains(c.Name)).Name);
+						// the earliest chapter 1 change that leaves the path open
+						bool found = false;
+						for (int k = 0; k < _tree.Count && !found && SceneFlow.ChapterOf(_tree[k].Scene) == 1; k++)
+						{
+							string played = _tree[k].PlayedChoice;
+							foreach (History.Choice c in _tree[k].Choices)
+							{
+								if (c.Name == played || _tree[k].Blocked.Contains(c.Name))
+								{
+									continue;
+								}
+								_overrides[_tree[k].Scene] = c.Name;
+								RefreshHistory(false);
+								string w;
+								if (FirstConflict() == null && PlanLoad(out w) != null)
+								{
+									found = true;
+									ModLog.Info("ChoiceWindow: dev load-path start: changing " + _tree[k].Scene + " to " + c.Name);
+									break;
+								}
+							}
+							if (!found)
+							{
+								_overrides[_tree[k].Scene] = played;
+								RefreshHistory(false);
+							}
+						}
+					}
+					else if (lpArgs == "ahead")
+					{
+						int ch = SceneFlow.ChapterOf(cur.Scene);
+						int first = _tree.FindIndex(ci, c => SceneFlow.ChapterOf(c.Scene) > ch);
+						if (first > 0)
+						{
+							goal = _tree[first];
+							for (int k = ci; k <= first; k++)
+							{
+								TreeCol col = _tree[k];
+								History.Choice open = null;
+								foreach (int v in VisibleChoices(col))
+								{
+									if (!col.Blocked.Contains(col.Choices[v].Name))
+									{
+										open = col.Choices[v];
+										break;
+									}
+								}
+								if (open != null && !_overrides.ContainsKey(col.Scene))
+								{
+									SelectChoice(col.Scene, open.Name);
+								}
+							}
+						}
+					}
+					string planWhy = "";
+					LoadPlan sp = goal != null ? PlanLoad(out planWhy) : null;
+					if (goal == null)
+					{
+						planWhy = "no goal";
+					}
+					ModLog.Info("ChoiceWindow: dev load-path " + lpArgs + ": to " + (goal != null ? goal.Scene : "-") + ", plan "
+						+ (sp != null ? sp.StartPath + " with " + sp.Picks.Count + " answer(s)" : "none: " + planWhy)
+						+ ", first answer '" + (_overrides.ContainsKey(_tree[0].Scene) ? _overrides[_tree[0].Scene] : "") + "' (played '" + _tree[0].PlayedChoice + "')");
+					if (sp != null)
+					{
+						LoadSelected();
+						yield return new WaitForSeconds(1f);
+						RunPending();
+						yield return new WaitForSeconds(5f);
+						float until4 = Time.realtimeSinceStartup + 900f;
+						while (AutoPlay.Running && Time.realtimeSinceStartup < until4)
+						{
+							yield return new WaitForSeconds(1f);
+						}
+						yield return new WaitForSeconds(2f);
+						ModLog.Info("ChoiceWindow: dev load-path: now at " + AutoPlay.Story()
+							+ (AutoPlay.Story() == goal.Scene ? " (the selected scene)" : " (NOT the selected scene)"));
+					}
+					DevFromChapterStart = false;
+					yield break;
+				}
 				// "chapter": from the start of the chapter on screen (its game
 				// save), every played answer again, to the scene on screen with
 				// another answer there selected

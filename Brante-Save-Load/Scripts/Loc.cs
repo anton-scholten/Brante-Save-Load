@@ -19,7 +19,7 @@ namespace Doorstop
 			TypeAuto, TypeManual, Current, NothingYet,
 			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath,
 			PickConflict, NothingToLoad,
-			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick
+			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick, ReplayOffPath, ReplayDeath, ReplayStopped
 		}
 
 		static Loc()
@@ -90,6 +90,17 @@ namespace Doorstop
 			AddMissingPick(_ja, "読み込むシーンより前のすべてのシーンで回答を選んでください：「{0}」はまだ未選択です。");
 			AddMissingPick(_ko, "불러올 장면 이전의 모든 장면에서 답을 고르세요: \"{0}\"에는 아직 없습니다.");
 			AddMissingPick(_zh, "请在要读取的场景之前的每个场景中选择答案：“{0}”尚未选择。");
+			AddReplayStops(_en, "Load scene stopped at \"{0}\": the story went another way and this scene is not on your path. Pick its answer here and load again.", "Load scene stopped at a death in \"{0}\" that no answer on your path explains, or the hero's last one. The choice is yours.", "Load scene stopped at \"{0}\" before reaching \"{1}\".");
+			AddReplayStops(_ru, "Загрузка остановилась на «{0}»: история пошла иначе, и этой сцены нет на вашем пути. Выберите здесь ответ и загрузите снова.", "Загрузка остановилась на смерти в «{0}», которую не объясняет ни один ответ на пути, или на последней смерти героя. Выбор за вами.", "Загрузка остановилась на «{0}», не дойдя до «{1}».");
+			AddReplayStops(_de, "Laden hielt bei „{0}“: die Geschichte nahm einen anderen Weg, diese Szene liegt nicht auf deinem Pfad. Wähle hier ihre Antwort und lade erneut.", "Laden hielt bei einem Tod in „{0}“, den keine Antwort auf deinem Pfad erklärt, oder beim letzten Tod des Helden. Die Wahl liegt bei dir.", "Laden hielt bei „{0}“, bevor „{1}“ erreicht war.");
+			AddReplayStops(_fr, "Le chargement s'est arrêté à « {0} » : l'histoire a pris un autre chemin et cette scène n'est pas sur le vôtre. Choisissez sa réponse ici et rechargez.", "Le chargement s'est arrêté sur une mort dans « {0} » qu'aucune réponse de votre chemin n'explique, ou sur la dernière du héros. Le choix vous revient.", "Le chargement s'est arrêté à « {0} » avant d'atteindre « {1} ».");
+			AddReplayStops(_es, "La carga se detuvo en «{0}»: la historia tomó otro camino y esta escena no está en el tuyo. Elige aquí su respuesta y carga de nuevo.", "La carga se detuvo en una muerte en «{0}» que ninguna respuesta de tu camino explica, o en la última del héroe. La elección es tuya.", "La carga se detuvo en «{0}» antes de llegar a «{1}».");
+			AddReplayStops(_it, "Il caricamento si è fermato a «{0}»: la storia ha preso un'altra strada e questa scena non è sul tuo percorso. Scegli qui la sua risposta e carica di nuovo.", "Il caricamento si è fermato a una morte in «{0}» che nessuna risposta del percorso spiega, o all'ultima dell'eroe. La scelta è tua.", "Il caricamento si è fermato a «{0}» prima di raggiungere «{1}».");
+			AddReplayStops(_pl, "Wczytywanie zatrzymało się na „{0}”: historia potoczyła się inaczej i tej sceny nie ma na twojej ścieżce. Wybierz tu odpowiedź i wczytaj ponownie.", "Wczytywanie zatrzymało się na śmierci w „{0}”, której nie wyjaśnia żadna odpowiedź na ścieżce, albo na ostatniej śmierci bohatera. Wybór należy do ciebie.", "Wczytywanie zatrzymało się na „{0}”, zanim dotarło do „{1}”.");
+			AddReplayStops(_tr, "Yükleme \"{0}\" sahnesinde durdu: hikâye başka bir yöne gitti ve bu sahne yolunda değil. Cevabını burada seç ve yeniden yükle.", "Yükleme \"{0}\" sahnesinde, yolundaki hiçbir cevabın açıklamadığı bir ölümde ya da kahramanın son ölümünde durdu. Seçim senin.", "Yükleme \"{1}\" sahnesine varmadan \"{0}\" sahnesinde durdu.");
+			AddReplayStops(_ja, "「{0}」で読み込みが止まりました：物語が別の道に進み、このシーンは道筋上にありません。ここで回答を選び、もう一度読み込んでください。", "「{0}」で、道筋上のどの回答にも当てはまらない死、または主人公の最後の死があり、読み込みが止まりました。選択はあなた次第です。", "「{1}」に着く前に「{0}」で読み込みが止まりました。");
+			AddReplayStops(_ko, "\"{0}\"에서 불러오기가 멈췄습니다: 이야기가 다른 길로 갔고 이 장면은 경로에 없습니다. 여기서 답을 고르고 다시 불러오세요.", "\"{0}\"에서 경로의 어떤 답으로도 설명되지 않는 죽음, 또는 주인공의 마지막 죽음으로 불러오기가 멈췄습니다. 선택은 당신의 몫입니다.", "\"{1}\"에 닿기 전에 \"{0}\"에서 불러오기가 멈췄습니다.");
+			AddReplayStops(_zh, "读取在“{0}”停止：剧情走向了另一条路，这个场景不在你的路径上。请在这里选择答案后再次读取。", "读取在“{0}”的一次死亡处停止：路径上没有答案能解释这次死亡，或这是主角的最后一次死亡。由你来选择。", "读取在到达“{1}”之前于“{0}”停止。");
 			AddConflict(_en, "The answer in \"{0}\" on your path conflicts with your hero's stats at that moment: an earlier pick changed them. Pick another answer there.", "Nothing to load: choices selected correspond to the current scene.");
 			AddConflict(_ru, "Ответ в «{0}» на вашем пути противоречит характеристикам героя в тот момент: их изменил более ранний выбор. Выберите там другой ответ.", "Загружать нечего: выбранные ответы соответствуют текущей сцене.");
 			AddConflict(_de, "Die Antwort in „{0}“ auf deinem Weg passt nicht zu den Werten deines Helden in diesem Moment: eine frühere Wahl hat sie verändert. Wähle dort eine andere Antwort.", "Nichts zu laden: die gewählten Antworten entsprechen der aktuellen Szene.");
@@ -178,6 +189,13 @@ namespace Doorstop
 		private static void AddMissingPick(Dictionary<K, string> d, string text)
 		{
 			d[K.MissingPick] = text;
+		}
+
+		private static void AddReplayStops(Dictionary<K, string> d, string offPath, string death, string stopped)
+		{
+			d[K.ReplayOffPath] = offPath;
+			d[K.ReplayDeath] = death;
+			d[K.ReplayStopped] = stopped;
 		}
 
 		private static void AddConflict(Dictionary<K, string> d, string conflict, string nothing)

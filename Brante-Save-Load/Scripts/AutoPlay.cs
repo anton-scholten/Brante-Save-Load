@@ -78,6 +78,8 @@ namespace Doorstop
 		public static IEnumerator Run(Picker pick, Func<string, bool> onScene, float stuckAfter, bool fast)
 		{
 			Running = true;
+			LastStop = Stop.None;
+			_deathsAtAnswer = Deaths();
 			_pressedAt.Clear();
 			_unlocked.Clear();
 			// Fast: the game's clock runs FastScale times faster (animations,
@@ -111,13 +113,29 @@ namespace Doorstop
 				string scene = Story();
 				bool moved = false;
 				string stopWhy = null;
-				// A death is the player's call (restart the chapter, or go on
-				// with one death spent), and the tree cannot foresee one: stop
-				// with the game's death page up.
+				// A death comes from an answer (the Deaths stat it raises is in
+				// its effects, so the tree counts it): one the path's answer
+				// brought is accepted - the run goes on, as the player chose that
+				// answer - by the game's own "go on" choice, never "restart the
+				// chapter". A death no answer explains, or the fourth (the end
+				// of the story), stops the run there.
 				if (DeathOnScreen())
 				{
-					ModLog.Info("AUTOPLAY: a death at " + scene + " - stopping, the choice is the player's");
-					break;
+					int deaths = Deaths();
+					if (deaths <= _deathsAtAnswer || deaths >= 4)
+					{
+						LastStop = Stop.Death;
+						ModLog.Info("AUTOPLAY: " + (deaths >= 4 ? "the hero's last death" : "a death no answer explains")
+							+ " at " + scene + " - stopping");
+						break;
+					}
+					if (AcceptDeath())
+					{
+						ModLog.Info("AUTOPLAY: death " + deaths + " at " + scene + " (from the answer given) - going on");
+						lastMove = Time.realtimeSinceStartup;
+						yield return new WaitForSecondsRealtime(0.3f);
+						continue;
+					}
 				}
 				// One step, guarded: an exception inside a coroutine would end
 				// it without a word (seen right after a scene opened twice).
@@ -222,11 +240,13 @@ namespace Doorstop
 					ParameterButtonChanger b = Pick(wanted, scene);
 					if (b == null)
 					{
+						LastStop = Stop.Blocked;
 						stopWhy = "no open answer" + (wanted != null ? " '" + wanted + "'" : "")
 							+ " in " + scene + " - stopping";
 						return false;
 					}
 					ModLog.Info("AUTOPLAY: " + scene + " -> " + b.gameObject.name);
+					_deathsAtAnswer = Deaths();
 					b.Button_Click();
 					answered = scene;
 					moved = true;
@@ -401,6 +421,45 @@ namespace Doorstop
 					ModLog.Info("AUTOPLAY: " + mb.GetType().Name + ".SetButtonInteractable failed: " + e.Message);
 				}
 			}
+		}
+
+		public enum Stop { None, Blocked, Death }
+
+		// Why the last run stopped early, when it is one of these.
+		public static Stop LastStop { get; private set; }
+
+		private static int _deathsAtAnswer;
+
+		// The hero's deaths so far (the game's Deaths stat, 4 = the last).
+		private static int Deaths()
+		{
+			SceneEffects.Hero h = SceneEffects.Now();
+			return h != null ? h.Value(SceneEffects.ParameterAsset("Death")) : 0;
+		}
+
+		// On the death page: once its choices are up, the one that goes on
+		// (not "restart the chapter"); its consequence's continue button is
+		// then pressed like any other. False while there is nothing to choose.
+		private static bool AcceptDeath()
+		{
+			foreach (_Scripts.AMVCC.Views.Windows.Death.DeathWindowBehaviour w in
+				Resources.FindObjectsOfTypeAll<_Scripts.AMVCC.Views.Windows.Death.DeathWindowBehaviour>())
+			{
+				if (w == null || !w.gameObject.activeInHierarchy || w.SelectedButton != null)
+				{
+					continue;
+				}
+				foreach (_Scripts.AMVCC.Views.Windows.Death.DeathChoiceButtonBehaviour c in
+					w.GetComponentsInChildren<_Scripts.AMVCC.Views.Windows.Death.DeathChoiceButtonBehaviour>(false))
+				{
+					if (!c.RestartChapter && c.gameObject.activeInHierarchy)
+					{
+						c.OnButton_Click();
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 
 		// The game's death page (restart the chapter or go on) is up.
