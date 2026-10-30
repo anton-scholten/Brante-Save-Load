@@ -367,7 +367,7 @@ namespace Doorstop
 
 		// Preferred widths in reference px; Choice takes whatever is left.
 		private static readonly float[] ColWidths =
-		{ 220f, 180f, 160f, 80f, 80f, 120f, 80f, 300f, 240f };   // the choice column takes the rest
+		{ 220f, 180f, 160f, 80f, 110f, 120f, 100f, 300f, 240f };   // the choice column takes the rest
 
 		private const float RowHeight = 44f;
 		private const float HeaderHeight = 36f;
@@ -458,6 +458,11 @@ namespace Doorstop
 		private static RectTransform _popup;
 		private static TextMeshProUGUI _popupText;
 		private static TextMeshProUGUI _popupNote;
+		// A separate pop-up for the save table: the tree's pop-up lives in
+		// the history panel, which is hidden while the table is open.
+		private static RectTransform _tablePopup;
+		private static TextMeshProUGUI _tablePopupText;
+		private static RectTransform _tableBox;
 		private static Transform _popupEffects;
 		private static ScrollRect _historyScroll;
 		private static Dictionary<string, string> _overrides =
@@ -746,6 +751,7 @@ namespace Doorstop
 		public static void Close()
 		{
 			_treeOnly = false;
+			HideTablePopup();
 			CancelConfirm();
 			CloseHistory();
 			if (_canvas != null)
@@ -864,6 +870,7 @@ namespace Doorstop
 			_itemContainer = content.transform;
 
 			BuildScrollbar(scroll.transform);
+			BuildTablePopup(panel.transform);
 
 			// Save now (bottom centre).
 			AddButton(panel.transform, "SaveNow", new Vector2(0.5f, 0f), new Vector2(0f, 20f),
@@ -916,6 +923,9 @@ namespace Doorstop
 			_popupText = null;
 			_popupNote = null;
 			_popupEffects = null;
+			_tablePopup = null;
+			_tablePopupText = null;
+			_tableBox = null;
 			_undoBtn = null;
 			_loadHereBtn = null;
 			_selScene = null;
@@ -1330,6 +1340,13 @@ namespace Doorstop
 			{
 				why = Loc.T(Loc.K.StartNotOnPath);
 				return null;
+			}
+			string branchBad;
+			if (!SceneParams.Simulate(plan.Order, plan.Picks, startPath, out branchBad))
+			{
+				plan.Speculative = true;
+				ModLog.Info("ChoiceWindow: plan simulation: the picked answers change a key parameter,"
+					+ " so '" + branchBad + "' leaves the branch; the replay will stop there");
 			}
 			ModLog.Info("ChoiceWindow: plan " + plan.StartScene + " -> " + plan.Target
 				+ (plan.Speculative ? " (through scenes still ahead)" : "")
@@ -2649,6 +2666,85 @@ namespace Doorstop
 
 		private const float PopupWidth = 470f;
 
+		// The save table's hover pop-up, in the same paper/outline style as
+		// the tree's. The tree pop-up is a child of the history panel, which
+		// is not visible while the table is, so the table gets its own.
+		private static void BuildTablePopup(Transform panel)
+		{
+			_tableBox = panel as RectTransform;
+			GameObject go = CreateUiObject("TablePopup", panel);
+			_tablePopup = go.GetComponent<RectTransform>();
+			_tablePopup.anchorMin = new Vector2(0f, 1f);
+			_tablePopup.anchorMax = new Vector2(0f, 1f);
+			_tablePopup.pivot = new Vector2(0f, 1f);
+			_tablePopup.sizeDelta = new Vector2(380f, 60f);
+			Image bg = go.AddComponent<Image>();
+			bg.color = Palette.PaperLight;
+			bg.raycastTarget = false;
+			Outline outline = go.AddComponent<Outline>();
+			outline.effectColor = Palette.Dark;
+			outline.effectDistance = new Vector2(2f, -2f);
+			VerticalLayoutGroup v = go.AddComponent<VerticalLayoutGroup>();
+			v.padding = new RectOffset(14, 14, 10, 12);
+			v.childControlWidth = true;
+			v.childControlHeight = true;
+			v.childForceExpandWidth = true;
+			v.childForceExpandHeight = false;
+			ContentSizeFitter fit = go.AddComponent<ContentSizeFitter>();
+			fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+			_tablePopupText = AddLabel(go.transform, "Text", "", 18f, Palette.Ink, false);
+			_tablePopupText.enableWordWrapping = true;
+			_tablePopupText.overflowMode = TextOverflowModes.Overflow;
+			_tablePopupText.alignment = TextAlignmentOptions.TopLeft;
+			go.SetActive(false);
+		}
+
+		private static void ShowTablePopup(RectTransform node, string text)
+		{
+			if (_tablePopup == null || _tableBox == null)
+			{
+				return;
+			}
+			_tablePopupText.text = text;
+			_tablePopup.gameObject.SetActive(true);
+			_tablePopup.sizeDelta = new Vector2(380f, _tablePopup.sizeDelta.y);
+			LayoutRebuilder.ForceRebuildLayoutImmediate(_tablePopup);
+			Vector3[] c = new Vector3[4];
+			node.GetWorldCorners(c);
+			Vector2 bottomLeft = _tableBox.InverseTransformPoint(c[0]);
+			Vector2 bottomRight = _tableBox.InverseTransformPoint(c[3]);
+			Rect box = _tableBox.rect;
+			float w = _tablePopup.rect.width;
+			float h = _tablePopup.rect.height;
+			float x = Mathf.Clamp((bottomLeft.x + bottomRight.x - w) * 0.5f,
+				box.xMin + 10f, box.xMax - 10f - w);
+			float y = bottomLeft.y - 8f;
+			y = Mathf.Clamp(y, box.yMin + 10f + h, box.yMax - 10f);
+			_tablePopup.anchoredPosition = new Vector2(x - box.xMin, y - box.yMax);
+			_tablePopup.SetAsLastSibling();
+		}
+
+		private static void HideTablePopup()
+		{
+			if (_tablePopup != null)
+			{
+				_tablePopup.gameObject.SetActive(false);
+			}
+		}
+
+		// What each save type means, shown when hovering its cell.
+		private static string KindHelp(string kind)
+		{
+			switch (kind)
+			{
+				case Recorder.KindAutosaves: return Loc.T(Loc.K.HelpAutosave);
+				case Recorder.KindCheckpoints: return Loc.T(Loc.K.HelpCheckpoint);
+				case Recorder.KindManual: return Loc.T(Loc.K.HelpManual);
+				case "Original": return Loc.T(Loc.K.HelpOriginal);
+				default: return "";
+			}
+		}
+
 		// The hover pop-up: an answer's full text, what the tree knows about it,
 		// and what it changes - stats with the game's own stat icons, relations
 		// and fates with the character's portrait. Never a raycast target, so it
@@ -3794,6 +3890,7 @@ namespace Doorstop
 
 		private static void BuildRows()
 		{
+			HideTablePopup();
 			ClearMark();
 			for (int i = _itemContainer.childCount - 1; i >= 0; i--)
 			{
@@ -3920,6 +4017,29 @@ namespace Doorstop
 				{
 					LayoutElement le = cell.gameObject.AddComponent<LayoutElement>();
 					le.preferredWidth = ColWidths[i];
+				}
+				if (col == Col.Type)
+				{
+					// Hovering the type cell explains what kind of save it is.
+					GameObject hit = CreateUiObject("KindHint", cell.transform);
+					Stretch(hit.GetComponent<RectTransform>());
+					Image himg = hit.AddComponent<Image>();
+					himg.color = Color.clear;
+					himg.raycastTarget = true;
+					TreeHover th = hit.AddComponent<TreeHover>();
+					string kind = e.Kind;
+					RectTransform crt2 = cell.rectTransform;
+					th.OnHover = delegate(bool on)
+					{
+						if (on)
+						{
+							ShowTablePopup(crt2, KindHelp(kind));
+						}
+						else
+						{
+							HideTablePopup();
+						}
+					};
 				}
 			}
 

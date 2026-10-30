@@ -21,7 +21,8 @@ namespace Doorstop
 			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath,
 			PickConflict, NothingToLoad,
 			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick, ReplayOffPath, ReplayDeath, ReplayStopped,
-			ReplaySkipped, StartNotOnPath
+			ReplaySkipped, StartNotOnPath,
+			HelpAutosave, HelpCheckpoint, HelpManual, HelpOriginal
 		}
 
 		static Loc()
@@ -31,56 +32,111 @@ namespace Doorstop
 			AddPathChecks(_en,
 				"Load scene stopped at \"{0}\": the story skipped \"{1}\" from your path, so its answer could not be used.",
 				"The save that would start this path belongs to another timeline. Pick an earlier scene, or load a save of this path.");
+			AddKindHelp(_en,
+				"The game's own autosave, copied as the game writes it. Load it to continue from where the game last saved.",
+				"A snapshot taken automatically before a load or a chapter restart. Use it to undo that rewind.",
+				"A save you made with Save now.",
+				"The one-time copy of your game save from before the mod was first used. It is read-only.");
 			AddLoadSceneWord(_ru, "Загрузить сцену");
 			AddSaveKinds(_ru, "Все", "Автосохранение игры", "Перед загрузкой", "Исходное сохранение", "Показать ещё");
 			AddPathChecks(_ru,
 				"Загрузка остановилась на «{0}»: история пропустила «{1}» с вашего пути, и его ответ не использован.",
 				"Сохранение, с которого начинался бы этот путь, относится к другой линии. Выберите более раннюю сцену или загрузите сохранение этого пути.");
+			AddKindHelp(_ru,
+				"Автосохранение самой игры, скопированное при записи. Загрузите, чтобы продолжить с последнего сохранения игры.",
+				"Снимок, сделанный автоматически перед загрузкой или перезапуском главы. Вернёт состояние до этого отката.",
+				"Сохранение, сделанное вами кнопкой «Сохранить».",
+				"Одноразовая копия сохранения игры до первого использования мода. Только для чтения.");
 			AddLoadSceneWord(_de, "Szene laden");
 			AddSaveKinds(_de, "Alle", "Spiel-Autosave", "Vor dem Laden", "Originalspeicher", "Mehr anzeigen");
 			AddPathChecks(_de,
 				"Laden hielt bei „{0}“: die Geschichte übersprang „{1}“ auf deinem Pfad, seine Antwort konnte nicht genutzt werden.",
 				"Der Spielstand, von dem dieser Pfad starten würde, gehört zu einer anderen Zeitlinie. Wähle eine frühere Szene oder lade einen Spielstand dieses Pfads.");
+			AddKindHelp(_de,
+				"Der Autosave des Spiels, kopiert beim Speichern. Laden, um dort weiterzumachen, wo das Spiel zuletzt gespeichert hat.",
+				"Ein automatischer Schnappschuss vor dem Laden oder einem Kapitelneustart. Macht die Rückspulung rückgängig.",
+				"Ein Spielstand, den du mit „Jetzt speichern“ angelegt hast.",
+				"Die einmalige Kopie deines Spielstands von vor der ersten Nutzung des Mods. Schreibgeschützt.");
 			AddLoadSceneWord(_fr, "Charger la scène");
 			AddSaveKinds(_fr, "Tout", "Sauvegarde auto", "Avant chargement", "Sauvegarde d'origine", "Afficher plus");
 			AddPathChecks(_fr,
 				"Le chargement s'est arrêté à « {0} » : l'histoire a sauté « {1} » de votre chemin, sa réponse n'a pas pu être utilisée.",
 				"La sauvegarde d'où partirait ce chemin appartient à une autre chronologie. Choisissez une scène plus tôt ou chargez une sauvegarde de ce chemin.");
+			AddKindHelp(_fr,
+				"La sauvegarde automatique du jeu, copiée à chaque écriture. Chargez-la pour reprendre où le jeu s'est arrêté.",
+				"Un instantané pris automatiquement avant un chargement ou un redémarrage de chapitre. Annule ce retour en arrière.",
+				"Une sauvegarde faite avec « Enregistrer ».",
+				"La copie unique de votre sauvegarde d'origine, prise avant la première utilisation du mod. En lecture seule.");
 			AddLoadSceneWord(_es, "Cargar escena");
 			AddSaveKinds(_es, "Todo", "Autoguardado", "Antes de cargar", "Guardado original", "Mostrar más");
 			AddPathChecks(_es,
 				"La carga se detuvo en «{0}»: la historia saltó «{1}» de tu camino, así que su respuesta no se pudo usar.",
 				"La partida desde la que empezaría este camino es de otra línea temporal. Elige una escena anterior o carga una partida de este camino.");
+			AddKindHelp(_es,
+				"El autoguardado del juego, copiado tal como lo escribe. Cárgalo para seguir donde el juego guardó por última vez.",
+				"Una instantánea tomada automáticamente antes de cargar o reiniciar un capítulo. Deshace ese retroceso.",
+				"Una partida guardada con «Guardar ahora».",
+				"La copia única de tu partida original, hecha antes de usar el mod por primera vez. Solo lectura.");
 			AddLoadSceneWord(_it, "Carica scena");
 			AddSaveKinds(_it, "Tutto", "Salvataggio auto", "Prima del caricamento", "Salvataggio originale", "Mostra altro");
 			AddPathChecks(_it,
 				"Il caricamento si è fermato a «{0}»: la storia ha saltato «{1}» dal tuo percorso, quindi la sua risposta non è stata usata.",
 				"Il salvataggio da cui partirebbe questo percorso appartiene a un'altra linea temporale. Scegli una scena precedente o carica un salvataggio di questo percorso.");
+			AddKindHelp(_it,
+				"Il salvataggio automatico del gioco, copiato quando scrive. Caricalo per riprendere dall'ultimo salvataggio del gioco.",
+				"Un'istantanea presa automaticamente prima di un caricamento o di un riavvio di capitolo. Annulla quel ritorno indietro.",
+				"Un salvataggio fatto con «Salva ora».",
+				"La copia unica del tuo salvataggio originale, fatta prima del primo uso della mod. Sola lettura.");
 			AddLoadSceneWord(_pl, "Wczytaj scenę");
 			AddSaveKinds(_pl, "Wszystkie", "Autozapis gry", "Przed wczytaniem", "Oryginalny zapis", "Pokaż więcej");
 			AddPathChecks(_pl,
 				"Wczytywanie zatrzymało się na „{0}”: historia pominęła „{1}” na twojej ścieżce, więc jego odpowiedź nie została użyta.",
 				"Zapis, od którego zaczęłaby się ta ścieżka, należy do innej linii czasu. Wybierz wcześniejszą scenę albo wczytaj zapis tej ścieżki.");
+			AddKindHelp(_pl,
+				"Autozapis gry, kopiowany przy każdym zapisie. Wczytaj, aby kontynuować od ostatniego zapisu gry.",
+				"Migawka wykonana automatycznie przed wczytaniem lub restartem rozdziału. Cofa to cofnięcie.",
+				"Zapis wykonany przyciskiem „Zapisz teraz”.",
+				"Jednorazowa kopia twojego zapisu sprzed pierwszego użycia moda. Tylko do odczytu.");
 			AddLoadSceneWord(_tr, "Sahneyi yükle");
 			AddSaveKinds(_tr, "Tümü", "Oyun otomatik kaydı", "Yüklemeden önce", "Özgün kayıt", "Daha fazla");
 			AddPathChecks(_tr,
 				"Yükleme \"{0}\" sahnesinde durdu: hikâye yolundaki \"{1}\" sahnesini atladı, bu yüzden cevabı kullanılamadı.",
 				"Bu yolun başlayacağı kayıt başka bir zaman çizgisine ait. Daha önceki bir sahneyi seç ya da bu yolun bir kaydını yükle.");
+			AddKindHelp(_tr,
+				"Oyunun kendi otomatik kaydı, yazıldıkça kopyalanır. Oyunun son kaydettiği yerden devam etmek için yükle.",
+				"Bir yükleme veya bölüm yeniden başlatmadan önce otomatik alınan anlık görüntü. O geri sarmayı geri alır.",
+				"«Şimdi kaydet» ile yaptığın kayıt.",
+				"Modun ilk kullanımından önceki oyun kaydının tek seferlik kopyası. Salt okunur.");
 			AddLoadSceneWord(_ja, "シーンを読み込む");
 			AddSaveKinds(_ja, "すべて", "ゲームの自動保存", "読み込み前", "元のセーブ", "さらに表示");
 			AddPathChecks(_ja,
 				"「{0}」で読み込みが止まりました：物語が道筋の「{1}」を飛ばしたため、その回答は使われませんでした。",
 				"この道筋の開始に使うセーブは別の時間軸のものです。もっと前のシーンを選ぶか、この道筋のセーブを読み込んでください。");
+			AddKindHelp(_ja,
+				"ゲーム自身の自動保存を書き込み時にコピーしたもの。ゲームが最後に保存した場所から続けるには読み込んでください。",
+				"読み込みや章の再開始の前に自動で取るスナップショット。その巻き戻しを取り消せます。",
+				"「今すぐ保存」で作ったセーブ。",
+				"モッドを初めて使う前のゲームのセーブの一度きりのコピー。読み取り専用。");
 			AddLoadSceneWord(_ko, "장면 불러오기");
 			AddSaveKinds(_ko, "전체", "게임 자동 저장", "불러오기 전", "원본 저장", "더 보기");
 			AddPathChecks(_ko,
 				"\"{0}\"에서 불러오기가 멈췄습니다: 이야기가 경로의 \"{1}\"을(를) 건너뛰어 그 답이 사용되지 않았습니다.",
 				"이 경로를 시작할 저장은 다른 시간대의 것입니다. 더 이전 장면을 고르거나 이 경로의 저장을 불러오세요.");
+			AddKindHelp(_ko,
+				"게임이 저장할 때 복사한 게임 자체의 자동 저장입니다. 게임이 마지막으로 저장한 곳에서 계속하려면 불러오세요.",
+				"불러오기나 챕터 다시 시작 전에 자동으로 만든 스냅샷입니다. 그 되돌리기를 취소합니다.",
+				"«지금 저장»으로 만든 저장입니다.",
+				"모드를 처음 쓰기 전 게임 저장의 한 번뿐인 복사본입니다. 읽기 전용.");
 			AddLoadSceneWord(_zh, "读取场景");
 			AddSaveKinds(_zh, "全部", "游戏自动保存", "读取前", "原始存档", "显示更多");
 			AddPathChecks(_zh,
 				"读取在“{0}”停止：剧情跳过了路径上的“{1}”，因此未能使用该回答。",
 				"用于开始这条路径的存档属于另一条时间线。请选择更早的场景，或读取这条路径的存档。");
+			AddKindHelp(_zh,
+				"游戏自身写入的自动保存副本。读取它可从游戏上次保存处继续。",
+				"在读取或重开章节前自动拍摄的快照。可撤销那次回退。",
+				"用“立即保存”创建的存档。",
+				"首次使用模组前游戏存档的一次性副本，只读。");
 			AddRequirementWords(_en, "Requires", "One of", "not");
 			AddRequirementWords(_ru, "Требуется", "Одно из", "не");
 			AddRequirementWords(_de, "Erfordert", "Eines von", "nicht");
@@ -212,6 +268,15 @@ namespace Doorstop
 		{
 			d[K.ReplaySkipped] = skipped;
 			d[K.StartNotOnPath] = badStart;
+		}
+
+		private static void AddKindHelp(Dictionary<K, string> d, string autosave, string checkpoint,
+			string manual, string original)
+		{
+			d[K.HelpAutosave] = autosave;
+			d[K.HelpCheckpoint] = checkpoint;
+			d[K.HelpManual] = manual;
+			d[K.HelpOriginal] = original;
 		}
 
 		private static void AddRequirementWords(Dictionary<K, string> d, string requires, string oneOf, string not)

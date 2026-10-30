@@ -938,3 +938,31 @@ collapsed, 8–10 rows shown.
 - A replay stop or a failed pre-check is shown in the tree's hint line in
   `Palette.Red`, the same red as the delete marks.
 
+## Key chapter parameters a scene/answer changes (30 Oct 2026)
+
+- `KeyChapterParametersController` holds story-wide switches (`Post`,
+  `TriggerBlock`, `PeaceTree`, ...) and the chapter flow switches on them. Two
+  scene components change them:
+  - `KeyChapterParametersOnEnableChanger` (`Parameter` inline `Name`/`Value`)
+    sets one when its object is enabled in the scene (the extractor writes
+    button 0);
+  - `KeyChapterParametersChanger` sets one when a Button is pressed; the answer
+    button index is read from the `ParameterButtonChanger` on the same
+    GameObject (a changer on another button gets -1).
+- `tools/scene_params.py` scans every story level (script ids from
+  `globalgamemanagers.assets`) and writes `scene-params.tsv`: 223 changes over
+  83 scenes. `TriggerBlock` is set by `02.10.01`/`02.10.02_Funeral_Ded` and
+  `052.060.010_Case9`/`052.060.020_Case10`, not by `02.07.02`; the Poets branch
+  is decided by the key parameter state the run is in, which is why the
+  per-branch flow order (above) is what makes `02.N.03` appear in the right
+  place.
+- `SceneParams` loads the TSV; `PlanLoad` starts from the start save's
+  `ChapterParameters`, applies the picked answers and the scenes they open, and
+  marks the plan **speculative** when the next scene no longer fits its switch
+  labels. The ordered replay still stops at the first real divergence, since
+  objectives/conditions can also change at runtime.
+- The table's type cells show a short explanation on hover (the same paper
+  pop-up as the tree): `HelpAutosave`, `HelpCheckpoint`, `HelpManual`,
+  `HelpOriginal`, in all eleven languages. The Year and Turn columns were
+  widened to 110/100 reference px.
+

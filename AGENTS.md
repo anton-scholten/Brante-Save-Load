@@ -22,6 +22,7 @@ Brante-Save-Load/            the folder that gets installed into the game dir
   scene-texts.tsv            every scene's title and answers (from the game; see data/)
   scene-flow.tsv             every chapter's scene gates: flow row(s) per scene + conditions (from the game)
   scene-effects.tsv          every answer's stat/relation/status changes (from the game)
+  scene-params.tsv           key chapter parameter changes by scenes/answers (from the game)
   Scripts/*.cs               the source
     Entrypoint.cs            Doorstop entry: Harmony patches, host creation
     ModLog.cs                file logger (usable before Unity is up)
@@ -52,6 +53,7 @@ tools/bolt_extract.py        dump every Bolt graph as JSON (no UnityPy needed)
 tools/bolt_graph.py          Walk Bolt graphs (macro resolution, LoadScene)
 tools/bolt_story.py          every chapter's scene flow + conditions -> shipped TSV
 tools/scene_effects.py       answer effects from the scene files -> shipped TSV
+tools/scene_params.py        key chapter parameter changes from scenes/answers -> shipped TSV
 tools/build_graph.py         merge traces + snapshots + event sheet
 data/                        extracted game data (see docs/BRANCHES.md)
 docs/                        FINDINGS (game internals), BRANCHES (choice data), TODO
@@ -84,16 +86,18 @@ and `--uninstall` removes exactly what was installed.
 
 ## Game data files (regenerate, don't hand-edit)
 
-`Brante-Save-Load/scene-texts.tsv`, `scene-flow.tsv` and `scene-effects.tsv` are extracted from the
+`Brante-Save-Load/scene-texts.tsv`, `scene-flow.tsv`, `scene-effects.tsv` and
+`scene-params.tsv` are extracted from the
 installed game and shipped with the mod. Regenerate them after a game update with
 
 ```sh
 python3 tools/bolt_story.py       # scene-flow.tsv (needs UnityPy); run first
 python3 tools/localization.py     # scene-texts.tsv (+ data/localization.csv)
 python3 tools/scene_effects.py    # scene-effects.tsv (needs UnityPy)
+python3 tools/scene_params.py     # scene-params.tsv (needs UnityPy)
 ```
 
-`tools/bolt_*.py`, `tools/scene_effects.py` and `tools/localization.py` need the
+`tools/bolt_*.py`, `tools/scene_effects.py`, `tools/scene_params.py` and `tools/localization.py` need the
 game installed; all but `localization.py` and `bolt_extract.py` need UnityPy (`pip install unitypy`, or PYTHONPATH pointing at it).
 `tools/build_graph.py` is optional tooling that merges the mod's traces with the
 community event sheet (`data/events.json`).
@@ -197,6 +201,17 @@ community event sheet (`data/events.json`).
   `02.07.02`) is therefore offered as the next scene, as the game does; the
   per-branch order keeps the true/false branches apart. The TSV is regenerated
   by `tools/bolt_story.py`.
+- **Key chapter parameters are extracted per scene/answer.** `scene-params.tsv`
+  (from `tools/scene_params.py`) records the `KeyChapterParametersOnEnableChanger`
+  (button 0) and `KeyChapterParametersChanger` (answer button index) values.
+  `SceneParams` loads them; `PlanLoad` simulates the start save's parameters
+  through the picked answers and scenes and logs when an answer moves a later
+  scene out of its branch (`plan.Speculative`). The ordered replay is still the
+  final check.
+- **Save type help.** Each table type cell has an invisible hover target; its
+  `TreeHover` shows the same paper/outline pop-up as the tree, with the short
+  explanation from `Loc.K.HelpAutosave/HelpCheckpoint/HelpManual/HelpOriginal`.
+  The year and turn columns are wide enough for their headers and values.
 - **`SaveLoadManager.Instance` can be a destroyed object the game still saves
   with.** Never test it with Unity's `== null` and fall back to
   `FindObjectOfType`: use `Recorder.SaveManagers()` / `GameSaveManager()`.

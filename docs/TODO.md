@@ -464,6 +464,20 @@ save folders and only copies them.
   (`Recorder.MigrateFolderNames`); readers fall back to `Auto`.
 - [x] Loc keys `KindAll`, `KindAutosave`, `KindCheckpoint`, `KindOriginal`,
   `ShowMore`, translated into all eleven languages.
+- [x] Table polish (30 Oct 2026): the Year and Turn columns are wide enough for
+  their headers and values; the type cell has an invisible hover target that
+  shows the same paper/outline pop-up as the tree, explaining the type
+  (`HelpAutosave/HelpCheckpoint/HelpManual/HelpOriginal`, eleven languages).
+- [x] Key chapter parameter extraction (30 Oct 2026): `tools/scene_params.py`
+  reads `KeyChapterParametersOnEnableChanger` (scene open) and
+  `KeyChapterParametersChanger` (answer button, matched through the
+  `ParameterButtonChanger` on the same GameObject) into `scene-params.tsv`
+  (223 changes, 83 scenes). `SceneParams` loads it; `PlanLoad` simulates the
+  start save's parameters through the picked answers/scenes and marks the plan
+  speculative when a later scene leaves its branch; the ordered replay remains
+  the final check. `TriggerBlock` is set by 02.10.01/02.10.02 and
+  052.060.010/052.060.020, not by 02.07.02 - the Poets branch is decided by the
+  state the run is in, not by an answer in that scene.
 - [x] In-game (30 Oct 2026): the table opened with 11 rows (9 manual, 1 game
   autosave, 1 original) and no choice points; the original row has no delete
   cell (code) and loading a row of each kind goes through the shared flow.

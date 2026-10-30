@@ -224,6 +224,50 @@ namespace Doorstop
 			return result;
 		}
 
+		// Whether `scene` can be reached with these key chapter parameters: its
+		// switch label alternatives include one every label of which matches the
+		// values (a parameter not in `values` is unknown and does not veto).
+		public static bool SceneFits(string scene, IDictionary<string, string> values)
+		{
+			Load();
+			if (_rows == null || values == null)
+			{
+				return true;
+			}
+			bool found = false;
+			foreach (Row r in _rows)
+			{
+				if (r.Scene != scene)
+				{
+					continue;
+				}
+				found = true;
+				if (r.Labels.Count == 0)
+				{
+					return true;
+				}
+				foreach (List<KeyValuePair<string, string>> set in r.Labels)
+				{
+					bool ok = true;
+					foreach (KeyValuePair<string, string> lab in set)
+					{
+						string v;
+						if (values.TryGetValue(lab.Key, out v) && !string.IsNullOrEmpty(v)
+							&& !string.Equals(v, lab.Value, StringComparison.OrdinalIgnoreCase))
+						{
+							ok = false;
+							break;
+						}
+					}
+					if (ok)
+					{
+						return true;
+					}
+				}
+			}
+			return !found;
+		}
+
 		// The first scene after `scene`, or "" when none is known.
 		public static string Next(string scene)
 		{
