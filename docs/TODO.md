@@ -361,8 +361,9 @@ save folders and only copies them.
   `Brante-Save-Load/Backups/quarantine/20261030-minted-duplicate/`, its one
   snapshot moved into `Runs/Biggie_10_23_2026103816AM/Choice/`. The loose root
   save, `Chapter_3/4` and `testSave.txt` are merged by the startup repair on the
-  first launch. A pre-repair copy is at
-  `/tmp/opencode/brante-pre-repair-20261030-160111` (not in the repo).
+  first launch. A full pre-repair copy is in
+  `Brante-Save-Load/Backups/quarantine/20261030-pre-repair/` (also in
+  `/tmp/opencode/brante-pre-repair-20261030-160111`; not in the repo).
 - [x] In-game (30 Oct 2026): startup log shows the rename, the baseline kept
   the two existing backups, the loose root save was merged into
   `Saves/Biggie_10/23/...` with its id written back, and `Saves/` has no root
