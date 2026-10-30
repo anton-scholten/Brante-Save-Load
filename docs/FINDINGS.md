@@ -961,6 +961,18 @@ collapsed, 8–10 rows shown.
   marks the plan **speculative** when the next scene no longer fits its switch
   labels. The ordered replay still stops at the first real divergence, since
   objectives/conditions can also change at runtime.
+- **The Poets is condition-gated, not only key-parameter-gated.** Setting
+  `TriggerBlock=false` in game (30 Oct 2026, `dev-keyparam.txt`) still did not
+  put `02.N.03` in the plan: its gate is
+  `SceneConditionsCollector.GetConditionBySceneName("02.N.03")`, which checks
+  the hero's stats/relations/objectives and was false at `02.07.02` **before**
+  the answer. The answer may make it true. To include such a trigger, the tree
+  must (a) evaluate `SceneFlow.After` under the hero **after** the selected
+  current answer (temporarily swap the simulated `SceneEffects.Hero` into
+  `ParametersManager`/`CharacterParametersSerializeHelper`), and (b) rebuild
+  the upcoming columns when a current-scene answer is picked (the tree currently
+  builds them once per open, before the picks are applied). This is the next
+  concrete fast-forward improvement.
 - The table's type cells show a short explanation on hover (the same paper
   pop-up as the tree): `HelpAutosave`, `HelpCheckpoint`, `HelpManual`,
   `HelpOriginal`, in all eleven languages. The Year and Turn columns were

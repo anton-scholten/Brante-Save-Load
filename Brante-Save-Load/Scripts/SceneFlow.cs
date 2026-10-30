@@ -45,6 +45,9 @@ namespace Doorstop
 		{
 			public Row Row;
 			public Tri Condition;
+			// The scene's time gate matches the live turn/season (or it is a
+			// trigger scene): it can be the very next scene, before later slots.
+			public bool Immediate;
 		}
 
 		private static List<Row> _rows;
@@ -171,6 +174,9 @@ namespace Doorstop
 				return result;
 			}
 			Context ctx = new Context();
+			GameManager gm = GameManager.Instance;
+			int turn = gm != null ? gm.Turn : 0;
+			int season = gm != null ? gm.Season : 0;
 			List<Row> later = new List<Row>();
 			foreach (Row r in _rows)
 			{
@@ -219,8 +225,27 @@ namespace Doorstop
 				Ahead a = new Ahead();
 				a.Row = r;
 				a.Condition = cond;
+				a.Immediate = !future
+					&& (r.Turn == 0 || (r.Turn == turn && (r.Season == 0 || r.Season == season)));
 				result.Add(a);
 			}
+			// Immediate scenes first (flow order), then the rest of the
+			// chapter (later time slots), then later chapters. This is the
+			// order the game can actually take them in.
+			result.Sort(delegate(Ahead a, Ahead b)
+			{
+				int ra = a.Row.Chapter != start.Chapter ? 2 : (a.Immediate ? 0 : 1);
+				int rb = b.Row.Chapter != start.Chapter ? 2 : (b.Immediate ? 0 : 1);
+				if (ra != rb)
+				{
+					return ra.CompareTo(rb);
+				}
+				if (a.Row.Chapter != b.Row.Chapter)
+				{
+					return a.Row.Chapter.CompareTo(b.Row.Chapter);
+				}
+				return Compare(a.Row, b.Row);
+			});
 			return result;
 		}
 

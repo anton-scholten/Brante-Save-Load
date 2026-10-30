@@ -275,6 +275,24 @@ namespace Doorstop
 							}
 							ModLog.Info("DEV LOAD: now at '" + AutoPlay.Story() + "', main save '"
 								+ Recorder.CurrentRunId() + "'");
+							string keyMarker = Path.Combine(Recorder.SnapshotDir, "dev-keyparam.txt");
+							if (File.Exists(keyMarker))
+							{
+								string spec = "";
+								try { spec = File.ReadAllText(keyMarker).Trim(); File.Delete(keyMarker); }
+								catch (Exception) { }
+								int eq = spec.IndexOf('=');
+								if (eq > 0)
+								{
+									_Scripts.AMVCC.Models.Static.KeyChapterParametersController kc =
+										_Scripts.AMVCC.Models.Static.KeyChapterParametersController.Initiate;
+									if (kc != null)
+									{
+										kc.SetKeyChapterParameterValue(spec.Substring(0, eq), spec.Substring(eq + 1));
+										ModLog.Info("DEV KEYPARAM: " + spec);
+									}
+								}
+							}
 							string loadPlanMarker = Path.Combine(Recorder.SnapshotDir, "dev-plan.txt");
 							if (File.Exists(loadPlanMarker))
 							{

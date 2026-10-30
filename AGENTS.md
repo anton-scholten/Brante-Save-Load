@@ -201,6 +201,11 @@ community event sheet (`data/events.json`).
   `02.07.02`) is therefore offered as the next scene, as the game does; the
   per-branch order keeps the true/false branches apart. The TSV is regenerated
   by `tools/bolt_story.py`.
+- **Time gates put immediate scenes first.** `SceneFlow.Ahead.Immediate` marks
+  a candidate whose `Turn`/`Season` gate matches the live game (or a trigger
+  scene with Turn 0); `After` sorts immediate scenes (flow order) before later
+  time slots and later chapters. The turn/season progression itself is still
+  driven by the game; the tree only orders what can come next.
 - **Key chapter parameters are extracted per scene/answer.** `scene-params.tsv`
   (from `tools/scene_params.py`) records the `KeyChapterParametersOnEnableChanger`
   (button 0) and `KeyChapterParametersChanger` (answer button index) values.
@@ -259,6 +264,7 @@ on use) and must be paired with `dev-autoload.txt`:
 | `dev-autoload.txt` | replay the vanilla load sequence onto the newest autosave |
 | `dev-load.txt` | with `dev-autoload.txt`: after the autoloaded scene is open, load one mod save through the table path (checkpoint, baseline, adopt). Holds a file name under `Runs/` |
 | `dev-plan.txt` | with `dev-autoload.txt`: build a path from the scene on screen to the named scene (first open answer everywhere), log the plan and its pre-checks; with `dev-load.txt` too, plan from the loaded scene. Does not replay |
+| `dev-keyparam.txt` | with `dev-load.txt`: `Name=Value` set on `KeyChapterParametersController` after the load, before `dev-plan`. Used to test a branch such as `TriggerBlock=false` |
 | `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
 | `dev-book.txt` | the book tabs (tree view, then save table), the save table, then the tree view: wheel, pop-ups, stat pop-up, a conflicting pick, chapter rule, a pick + its load plan, undo |
 | `dev-loadpath.txt` | with `dev-book.txt`: Load scene end to end; `back N` replays from another answer N scenes back, `chapter` from the chapter's start save, `start` from chapter 1 with an early change, `ahead` into the next chapter, `death` through a death, `offpath` a stop off the path, `first` the story's first scenes from a stand-in start (another run's chapter 1 save), `new` the same from a start built from the game's defaults, `file <name>` load that mod save as the table does (`file <name> norun`: with no run active) |

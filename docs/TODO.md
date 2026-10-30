@@ -458,6 +458,20 @@ save folders and only copies them.
   branch. Extract the Bolt `SetMember`/objective units per scene to simulate
   it; until then the ordered replay stops at the first divergence with the
   scene named.
+- [x] Time-gate ordering (30 Oct 2026): `SceneFlow.Ahead.Immediate` marks a
+  scene whose `Turn`/`Season` gate matches the live game (or a Turn-0 trigger);
+  `After` sorts immediate scenes (flow order) before later time slots, then
+  later chapters. Turn/season progression itself remains the game's.
+- [ ] **The Poets post-answer condition** (next): `02.N.03` is gated by
+  `SceneConditionsCollector.GetConditionBySceneName("02.N.03")`, which checks
+  the hero's stats/relations/objectives. Setting `TriggerBlock=false` in game
+  still did not put it in the plan because the condition was false before the
+  answer. To fix: evaluate `SceneFlow.After` under the simulated
+  `SceneEffects.Hero` **after** the selected current answer (swap it into
+  `ParametersManager`/`CharacterParametersSerializeHelper`), and rebuild the
+  upcoming columns when a current-scene answer is picked (the tree currently
+  builds them once per open, before picks are applied). Then the plan can
+  include `02.N.03` and select its answer.
 - [x] Loading any row goes through the same flow (pre-rewind checkpoint -> adopt
   the run slot -> load -> loading screen/dissolve).
 - [x] `Auto` -> `Choice` folder rename with a one-time migration
