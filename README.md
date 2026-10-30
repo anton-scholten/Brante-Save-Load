@@ -92,7 +92,7 @@ Two extra flags:
 The game keeps its whole state in one object and has a public method to restore it.
 The mod saves that object whenever a choice is on screen and loads it back later. It's exact, randomness included, since the dice have already been rolled by the time you see the choice.
 It also copies the game's own autosave as the game writes it, and keeps a snapshot of the live state before every rewind, so a rewind can itself be undone.
-The tree view uses three tables extracted from the game (`scene-flow.tsv`, `scene-texts.tsv`, `scene-effects.tsv`). After a game update, regenerate them with the scripts in `tools/` (see `docs/BRANCHES.md`).
+The tree view uses four tables extracted from the game (`scene-flow.tsv`, `scene-texts.tsv`, `scene-effects.tsv`, `scene-objectives.tsv`, plus `scene-params.tsv` for key chapter parameters). After a game update, regenerate them with the scripts in `tools/` (see `docs/BRANCHES.md`).
 More details in [docs/FINDINGS.md](docs/FINDINGS.md), and [AGENTS.md](AGENTS.md) for working on the mod.
 
 ## Building

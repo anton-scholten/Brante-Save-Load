@@ -930,11 +930,10 @@ collapsed, 8–10 rows shown.
   offered there).
 - Remaining limit: the switch labels and conditions are evaluated against the
   **state before the answer** (the tree's `scene-effects.tsv` simulates stats,
-  relations and statuses only). A key parameter or objective set by the scene
-  events (e.g. `TriggerBlock` after the `02.07.02` answer) can still change the
+  relations, statuses and now the scene/answer objectives). A key parameter
+  set by a scene event (e.g. the true-death `GoToFinals`) can still change the
   branch after the answer; the replay's ordered check stops at the first
-  divergence and names it. Extracting the Bolt `SetMember`/objective units per
-  scene would be the next step for exact pre-answer prediction.
+  divergence and names it.
 - A replay stop or a failed pre-check is shown in the tree's hint line in
   `Palette.Red`, the same red as the delete marks.
 
@@ -1000,13 +999,63 @@ collapsed, 8–10 rows shown.
   exception. `Recorder.UniqueButtons` keeps one button per `ButtonIndex`, and
   `Recorder.DedupeSidecars` strips duplicate `[n]` lines from existing
   sidecars at startup.
-- **Remaining limit:** objectives are simulated from the hero/start save
-  (`SceneFlow.After` swaps their `Unlocked` flags), but an objective set by a
-  **scene event** after that state is not; conditions depending on such a new
-  objective can still diverge, and the ordered replay stops at the first real
-  divergence.
+- **Remaining limit:** objectives are simulated from the hero/start save and
+  from `scene-objectives.tsv` (the objectives an answer or a scene earns).
+  A key parameter set by a scene event (the true-death `GoToFinals`) is still
+  not simulated, so a plan crossing a true death can diverge; the ordered
+  replay stops at the first real divergence.
 - The table's type cells show a short explanation on hover (the same paper
   pop-up as the tree): `HelpAutosave`, `HelpCheckpoint`, `HelpManual`,
   `HelpOriginal`, in all eleven languages. The Year and Turn columns were
   widened to 110/100 reference px.
 
+
+## Story objectives a scene/answer unlocks (30 Oct 2026)
+
+- `Objective.Unlocked` has exactly one gameplay writer:
+  `KeyChapterParametersController.EarnObjective(Objective)`. It is called by
+  three scene MonoBehaviours: `SceneConsequenceGenerator` (after an answer's
+  consequence), `UniversalParametersGenerator` (a scene with no answers) and
+  `ConsequenceNextButton` (a consequence "Next" page). A list unlocks **every**
+  entry, one pop-up each; an already unlocked objective is skipped. Bolt never
+  sets one (its 72 `Objective` hits are `GetObjectiveStatus` reads).
+- The data is serialized per scene, not in prefabs: 181 components with
+  `ShowObjective = true` carry an objective (178 generators + 3 next-buttons),
+  plus scene-level generators in 27 no-answer scenes. The generator of an
+  answer sits under `ConsequenceN`; `ParameterButtonChanger.Consequence`
+  points at it. The owning button number comes from the
+  `ButtonDescriptionN` GameObject name.
+- `tools/scene_objectives.py` reads the objective assets from
+  `resources.assets` (asset name + `_name` enum) and the components raw,
+  then writes `scene-objectives.tsv`:
+  `<scene> <button> <order> <asset name> <ObjectiveEnum value>`; button 0 is
+  the scene itself. 201 rows, 94 scenes, 78 objectives - every objective
+  asset is set somewhere. Asset name and enum name differ often (`Beyond` is
+  `BeyondObjective(12)`, `HeartBussiness` is `FirstLoveObjective(16)`); saves
+  store the enum, so the TSV carries the value.
+- The unlock happens after the answer click, when the consequence fade-in
+  ends, before the next scene loads - so a scene-open snapshot does not
+  contain the objective that scene's answer earns. Verified against the
+  saves: `Chapter_3.dat` has `Cunning`/`Discipline` (from the `02.N.02`/
+  `02.N.03` answers), `Chapter_4.dat` adds `BezudelSafe`, `Bourgeois`,
+  `Friendship` (`030.070.030_RecruitForReal`, the `030.020.010_Exam`
+  Bourgeois answer, `030.020.020_TommasPath`).
+- 455 of 2059 flow rows (92 scenes) test `GetObjectiveStatus`; the chapter-3
+  track after `030.020.010_Exam` is gated by
+  `Bourgeois && !Cleric && !Noble` (or the reverse tracks), so without the
+  delta a changed exam answer hid the whole chapter.
+  `SceneEffects.Hero.ApplyObjectives` adds the scene/answer objectives after
+  `Apply` in `WorkOutOpenAnswers` and `StatsHero`; a scene-level row is
+  applied when the scene ends.
+- `ИстиннаяСмерть` has a C# side effect beyond `Unlocked`: closing its pop-up
+  broadcasts `CloseTrueDeathPopupEvent` and sets the key parameter
+  `GoToFinals=Yes`. That is not in `scene-params.tsv`, so a plan crossing a
+  true death can still diverge there; verify in game at a finals scene.
+- **Button index quirk (also fixed in `tools/scene_effects.py`).** Nine
+  buttons in six scenes (`051.020.010_Scene_3`,
+  `051.020.030_The_Call_of_the_Ancestors`, `051.060.030_Mortally`,
+  `051.070.020_BrokenBranch`, `051.070.035_Mortally`,
+  `051.070.080_NobleBlood`) serialize `ParameterButtonChanger.ButtonIndex`
+  as 0 while their object is `ButtonDescription3`/`4`. Keying the effects
+  TSV by that field lost their effects and requirements (including the
+  `Death 4` change in `Mortally`); both extractors now use the object name.

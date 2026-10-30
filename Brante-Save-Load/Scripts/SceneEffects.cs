@@ -114,7 +114,7 @@ namespace Doorstop
 			return new List<Effect>();
 		}
 
-		private static int ButtonIndex(string name)
+		public static int ButtonIndex(string name)
 		{
 			if (string.IsNullOrEmpty(name))
 			{
@@ -214,6 +214,39 @@ namespace Doorstop
 				finally
 				{
 					pm.Parameters = real;
+				}
+			}
+
+			// The objectives the scene or an answer earns (SceneObjectives;
+			// button 0 is the scene itself, N is answer ButtonDescriptionN).
+			// The game unlocks every entry of its list at once, so a set keeps
+			// this idempotent; a hero whose objectives are unknown starts from
+			// what is unlocked right now rather than from nothing.
+			public void ApplyObjectives(string scene, int button)
+			{
+				List<int> ids = SceneObjectives.For(scene, button);
+				if (ids.Count == 0)
+				{
+					return;
+				}
+				if (Objectives == null)
+				{
+					Objectives = new HashSet<_Scripts.AMVCC.Views.Windows.ObjectiveEnum>();
+					KeyChapterParametersController kc = KeyChapterParametersController.Initiate;
+					if (kc != null && kc.AllGameObjectives != null)
+					{
+						foreach (Objective o in kc.AllGameObjectives)
+						{
+							if (o != null && o.Unlocked)
+							{
+								Objectives.Add(o.Name);
+							}
+						}
+					}
+				}
+				foreach (int id in ids)
+				{
+					Objectives.Add((_Scripts.AMVCC.Views.Windows.ObjectiveEnum)id);
 				}
 			}
 

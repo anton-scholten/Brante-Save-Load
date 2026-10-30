@@ -23,6 +23,7 @@ Brante-Save-Load/            the folder that gets installed into the game dir
   scene-flow.tsv             every chapter's scene gates: flow row(s) per scene + conditions (from the game)
   scene-effects.tsv          every answer's stat/relation/status changes (from the game)
   scene-params.tsv           key chapter parameter changes by scenes/answers (from the game)
+  scene-objectives.tsv       the story objectives scenes/answers unlock (from the game)
   Scripts/*.cs               the source
     Entrypoint.cs            Doorstop entry: Harmony patches, host creation
     ModLog.cs                file logger (usable before Unity is up)
@@ -36,6 +37,8 @@ Brante-Save-Load/            the folder that gets installed into the game dir
     SceneTexts.cs            loader for scene-texts.tsv (titles + answers)
     SceneFlow.cs             scene-flow.tsv: upcoming scenes, condition evaluator
     SceneEffects.cs          scene-effects.tsv: what each answer changes (tree pop-up)
+    SceneParams.cs           scene-params.tsv: key chapter parameter simulation
+    SceneObjectives.cs       scene-objectives.tsv: objectives scenes/answers unlock
     StatPanel.cs             tree's stat columns: clones of the game's stat row
     Loc.cs                   the UI's own translations (11 languages)
     Palette.cs               every colour the UI uses (fades, not near-copies)
@@ -54,6 +57,7 @@ tools/bolt_graph.py          Walk Bolt graphs (macro resolution, LoadScene)
 tools/bolt_story.py          every chapter's scene flow + conditions -> shipped TSV
 tools/scene_effects.py       answer effects from the scene files -> shipped TSV
 tools/scene_params.py        key chapter parameter changes from scenes/answers -> shipped TSV
+tools/scene_objectives.py    the objectives scenes/answers unlock -> shipped TSV
 tools/build_graph.py         merge traces + snapshots + event sheet
 data/                        extracted game data (see docs/BRANCHES.md)
 docs/                        FINDINGS (game internals), BRANCHES (choice data), TODO
@@ -86,8 +90,8 @@ and `--uninstall` removes exactly what was installed.
 
 ## Game data files (regenerate, don't hand-edit)
 
-`Brante-Save-Load/scene-texts.tsv`, `scene-flow.tsv`, `scene-effects.tsv` and
-`scene-params.tsv` are extracted from the
+`Brante-Save-Load/scene-texts.tsv`, `scene-flow.tsv`, `scene-effects.tsv`,
+`scene-params.tsv` and `scene-objectives.tsv` are extracted from the
 installed game and shipped with the mod. Regenerate them after a game update with
 
 ```sh
@@ -95,9 +99,11 @@ python3 tools/bolt_story.py       # scene-flow.tsv (needs UnityPy); run first
 python3 tools/localization.py     # scene-texts.tsv (+ data/localization.csv)
 python3 tools/scene_effects.py    # scene-effects.tsv (needs UnityPy)
 python3 tools/scene_params.py     # scene-params.tsv (needs UnityPy)
+python3 tools/scene_objectives.py # scene-objectives.tsv (needs UnityPy)
 ```
 
-`tools/bolt_*.py`, `tools/scene_effects.py`, `tools/scene_params.py` and `tools/localization.py` need the
+`tools/bolt_*.py`, `tools/scene_effects.py`, `tools/scene_params.py`,
+`tools/scene_objectives.py` and `tools/localization.py` need the
 game installed; all but `localization.py` and `bolt_extract.py` need UnityPy (`pip install unitypy`, or PYTHONPATH pointing at it).
 `tools/build_graph.py` is optional tooling that merges the mod's traces with the
 community event sheet (`data/events.json`).
@@ -221,6 +227,15 @@ community event sheet (`data/events.json`).
   the scene conditions. A current/played-scene pick rebuilds the columns
   (`RefreshKeepingScroll(true)`), so an answer that turns a trigger's condition
   true makes it appear ahead; an upcoming-scene pick only restyles.
+- **Objectives unlocked by an answer or a scene are simulated too.**
+  `scene-objectives.tsv` (from `tools/scene_objectives.py`) lists every
+  `KeyChapterParametersController.EarnObjective` target by scene and button
+  (0 = the scene itself, N = `ButtonDescriptionN`; 201 rows, 94 scenes).
+  `Hero.ApplyObjectives` adds them after the answer's `SceneEffects`, so a
+  changed pick keeps the branches its objectives open (e.g. the chapter-3
+  `Bourgeois`/`Noble`/`Cleric` tracks after `030.020.010_Exam`). A scene-level
+  row is applied when the scene ends, never at its open, so a scene cannot
+  unblock its own answers.
 - **Key chapter parameters are extracted per scene/answer.** `scene-params.tsv`
   (from `tools/scene_params.py`) records the `KeyChapterParametersOnEnableChanger`
   (button 0) and `KeyChapterParametersChanger` (answer button index) values.

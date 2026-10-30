@@ -2207,6 +2207,8 @@ namespace Doorstop
 				{
 					SceneEffects.Hero h = col.Hero.Clone();
 					h.Apply(SceneEffects.For(_selScene, _selChoice));
+					h.ApplyObjectives(_selScene, SceneEffects.ButtonIndex(_selChoice));
+					h.ApplyObjectives(_selScene, 0);
 					return h;
 				}
 			}
@@ -2586,6 +2588,18 @@ namespace Doorstop
 				{
 					carry = afterBase.Clone();
 					carry.Apply(SceneEffects.For(col.Scene, taken));
+					// The objectives this answer and the scene itself earn
+					// (the game unlocks them before the next scene loads).
+					carry.ApplyObjectives(col.Scene, SceneEffects.ButtonIndex(taken));
+					carry.ApplyObjectives(col.Scene, 0);
+					col.AfterHero = carry;
+				}
+				else if (afterBase != null && col.Choices.Count == 0)
+				{
+					// A scene with no answers earns its own objectives when it
+					// ends, so the next scene's checks see them.
+					carry = afterBase.Clone();
+					carry.ApplyObjectives(col.Scene, 0);
 					col.AfterHero = carry;
 				}
 				string pick;

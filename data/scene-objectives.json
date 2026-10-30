@@ -1,0 +1,1413 @@
+{
+ "schema": 1,
+ "source": "Scene objective generators (tools/scene_objectives.py)",
+ "objectives": [
+  {
+   "scene": "01.07.01",
+   "button": 4,
+   "order": 0,
+   "objective": "Beyond",
+   "enum": 12
+  },
+  {
+   "scene": "01.11.01",
+   "button": 4,
+   "order": 0,
+   "objective": "Will",
+   "enum": 11
+  },
+  {
+   "scene": "01.N.01_Mama",
+   "button": 1,
+   "order": 0,
+   "objective": "Curiosity",
+   "enum": 10
+  },
+  {
+   "scene": "01.N.01_Mama",
+   "button": 2,
+   "order": 0,
+   "objective": "Curiosity",
+   "enum": 10
+  },
+  {
+   "scene": "01.N2.01_Papa",
+   "button": 1,
+   "order": 0,
+   "objective": "Activity",
+   "enum": 9
+  },
+  {
+   "scene": "01.N2.01_Papa",
+   "button": 2,
+   "order": 0,
+   "objective": "Activity",
+   "enum": 9
+  },
+  {
+   "scene": "02.02.01",
+   "button": 1,
+   "order": 0,
+   "objective": "СпасениеСофьи",
+   "enum": 49
+  },
+  {
+   "scene": "02.04.01",
+   "button": 1,
+   "order": 0,
+   "objective": "HeartBussiness",
+   "enum": 16
+  },
+  {
+   "scene": "02.07.01",
+   "button": 1,
+   "order": 0,
+   "objective": "HeartBussiness",
+   "enum": 16
+  },
+  {
+   "scene": "02.07.01",
+   "button": 4,
+   "order": 0,
+   "objective": "WhiteTreeRevelation",
+   "enum": 19
+  },
+  {
+   "scene": "02.10.02_Funeral_Ded",
+   "button": 2,
+   "order": 0,
+   "objective": "RiverOfBlood",
+   "enum": 18
+  },
+  {
+   "scene": "02.10.02_Funeral_Ded",
+   "button": 3,
+   "order": 0,
+   "objective": "RiverOfBlood",
+   "enum": 18
+  },
+  {
+   "scene": "02.11.01",
+   "button": 1,
+   "order": 0,
+   "objective": "HeartBussiness",
+   "enum": 16
+  },
+  {
+   "scene": "02.11.01",
+   "button": 3,
+   "order": 0,
+   "objective": "HeartBussiness",
+   "enum": 16
+  },
+  {
+   "scene": "02.N.01",
+   "button": 1,
+   "order": 0,
+   "objective": "Spirituality",
+   "enum": 15
+  },
+  {
+   "scene": "02.N.01",
+   "button": 2,
+   "order": 0,
+   "objective": "Spirituality",
+   "enum": 15
+  },
+  {
+   "scene": "02.N.02",
+   "button": 1,
+   "order": 0,
+   "objective": "Discipline",
+   "enum": 13
+  },
+  {
+   "scene": "02.N.02",
+   "button": 2,
+   "order": 0,
+   "objective": "Discipline",
+   "enum": 13
+  },
+  {
+   "scene": "02.N.03",
+   "button": 1,
+   "order": 0,
+   "objective": "Cunning",
+   "enum": 14
+  },
+  {
+   "scene": "02.N.03",
+   "button": 2,
+   "order": 0,
+   "objective": "Cunning",
+   "enum": 14
+  },
+  {
+   "scene": "030.020.010_Exam",
+   "button": 1,
+   "order": 0,
+   "objective": "Noble",
+   "enum": 20
+  },
+  {
+   "scene": "030.020.010_Exam",
+   "button": 2,
+   "order": 0,
+   "objective": "Cleric",
+   "enum": 21
+  },
+  {
+   "scene": "030.020.010_Exam",
+   "button": 3,
+   "order": 0,
+   "objective": "Bourgeois",
+   "enum": 22
+  },
+  {
+   "scene": "030.020.020_TommasPath",
+   "button": 1,
+   "order": 0,
+   "objective": "Friendship",
+   "enum": 27
+  },
+  {
+   "scene": "030.020.020_TommasPath",
+   "button": 2,
+   "order": 0,
+   "objective": "Friendship",
+   "enum": 27
+  },
+  {
+   "scene": "030.030.020_ReligiousDisput",
+   "button": 1,
+   "order": 0,
+   "objective": "OldFaithDefend",
+   "enum": 29
+  },
+  {
+   "scene": "030.030.020_ReligiousDisput",
+   "button": 2,
+   "order": 0,
+   "objective": "NewFaithDefend",
+   "enum": 28
+  },
+  {
+   "scene": "030.040.020_LegacyOfTheEvilAges",
+   "button": 1,
+   "order": 0,
+   "objective": "AlisLife",
+   "enum": 26
+  },
+  {
+   "scene": "030.040.020_LegacyOfTheEvilAges",
+   "button": 3,
+   "order": 0,
+   "objective": "AlisLife",
+   "enum": 26
+  },
+  {
+   "scene": "030.050.010_FirstCase",
+   "button": 1,
+   "order": 0,
+   "objective": "AlisLife",
+   "enum": 26
+  },
+  {
+   "scene": "030.050.010_FirstCase",
+   "button": 3,
+   "order": 0,
+   "objective": "AlisLife",
+   "enum": 26
+  },
+  {
+   "scene": "030.050.030_Action",
+   "button": 2,
+   "order": 0,
+   "objective": "AlisLife",
+   "enum": 26
+  },
+  {
+   "scene": "030.050.030_Action",
+   "button": 3,
+   "order": 0,
+   "objective": "AlisLife",
+   "enum": 26
+  },
+  {
+   "scene": "030.070.010_Graduation",
+   "button": 4,
+   "order": 0,
+   "objective": "TournamentVictory",
+   "enum": 25
+  },
+  {
+   "scene": "030.070.030_RecruitForReal",
+   "button": 1,
+   "order": 0,
+   "objective": "BezudelSafe",
+   "enum": 31
+  },
+  {
+   "scene": "030.070.030_RecruitForReal",
+   "button": 3,
+   "order": 0,
+   "objective": "BezudelEnd",
+   "enum": 30
+  },
+  {
+   "scene": "030.070.030_RecruitForReal",
+   "button": 4,
+   "order": 0,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "051.060.030_Mortally",
+   "button": 3,
+   "order": 0,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "051.070.010_Deathbed",
+   "button": 2,
+   "order": 0,
+   "objective": "ВыздоровлениеМатери",
+   "enum": 61
+  },
+  {
+   "scene": "051.070.010_Deathbed",
+   "button": 3,
+   "order": 0,
+   "objective": "ВыздоровлениеМатери",
+   "enum": 61
+  },
+  {
+   "scene": "051.070.010_Deathbed",
+   "button": 3,
+   "order": 1,
+   "objective": "МирВСемье",
+   "enum": 54
+  },
+  {
+   "scene": "051.070.020_BrokenBranch",
+   "button": 1,
+   "order": 0,
+   "objective": "ГлорияИзРодаБранте",
+   "enum": 51
+  },
+  {
+   "scene": "051.070.020_BrokenBranch",
+   "button": 2,
+   "order": 0,
+   "objective": "ГлорияИзРодаБранте",
+   "enum": 51
+  },
+  {
+   "scene": "051.070.025_GloriaFromBrante",
+   "button": 0,
+   "order": 0,
+   "objective": "ГлорияИзРодаБранте",
+   "enum": 51
+  },
+  {
+   "scene": "051.070.026_GloriaFromBrante",
+   "button": 0,
+   "order": 0,
+   "objective": "ГлорияИзРодаБранте",
+   "enum": 51
+  },
+  {
+   "scene": "051.070.035_Mortally",
+   "button": 3,
+   "order": 0,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "051.070.050_ThomasWedding",
+   "button": 1,
+   "order": 0,
+   "objective": "НоваяЖизньТоммаса",
+   "enum": 56
+  },
+  {
+   "scene": "051.070.050_ThomasWedding",
+   "button": 2,
+   "order": 0,
+   "objective": "НоваяЖизньТоммаса",
+   "enum": 56
+  },
+  {
+   "scene": "051.070.050_ThomasWedding",
+   "button": 3,
+   "order": 0,
+   "objective": "НоваяЖизньТоммаса",
+   "enum": 56
+  },
+  {
+   "scene": "051.070.070_FamilyCouncil",
+   "button": 1,
+   "order": 0,
+   "objective": "ДворянствоМеча",
+   "enum": 52
+  },
+  {
+   "scene": "051.070.070_FamilyCouncil",
+   "button": 2,
+   "order": 0,
+   "objective": "ДворянствоМеча",
+   "enum": 52
+  },
+  {
+   "scene": "051.070.070_FamilyCouncil",
+   "button": 2,
+   "order": 1,
+   "objective": "ПриближённыеНаместника",
+   "enum": 57
+  },
+  {
+   "scene": "051.070.070_FamilyCouncil",
+   "button": 4,
+   "order": 0,
+   "objective": "СемьяРаспалась",
+   "enum": 59
+  },
+  {
+   "scene": "051.070.080_NobleBlood",
+   "button": 1,
+   "order": 0,
+   "objective": "НаследникРода",
+   "enum": 55
+  },
+  {
+   "scene": "051.090.020_Devastation",
+   "button": 0,
+   "order": 0,
+   "objective": "РазорениеСемьи",
+   "enum": 58
+  },
+  {
+   "scene": "051.090.030_StigmaOfShame",
+   "button": 0,
+   "order": 0,
+   "objective": "КлеймоПозора",
+   "enum": 53
+  },
+  {
+   "scene": "051.090.050_RichFamily",
+   "button": 1,
+   "order": 0,
+   "objective": "БогатыйРод",
+   "enum": 50
+  },
+  {
+   "scene": "051.090.050_RichFamily",
+   "button": 2,
+   "order": 0,
+   "objective": "БогатыйРод",
+   "enum": 50
+  },
+  {
+   "scene": "051.090.050_RichFamily",
+   "button": 3,
+   "order": 0,
+   "objective": "БогатыйРод",
+   "enum": 50
+  },
+  {
+   "scene": "051.090.050_RichFamily",
+   "button": 4,
+   "order": 0,
+   "objective": "БогатыйРод",
+   "enum": 50
+  },
+  {
+   "scene": "051.090.060_GloriousFamily",
+   "button": 0,
+   "order": 0,
+   "objective": "СлавныйРод",
+   "enum": 60
+  },
+  {
+   "scene": "052.010.020_Case2",
+   "button": 3,
+   "order": 0,
+   "objective": "РитуалЛаТариИнк",
+   "enum": 112
+  },
+  {
+   "scene": "052.050.030_Case8",
+   "button": 1,
+   "order": 0,
+   "objective": "ДоказательстваПротивКассия",
+   "enum": 63
+  },
+  {
+   "scene": "052.060.010_Case9",
+   "button": 1,
+   "order": 0,
+   "objective": "ДоказательстваПротивКассия",
+   "enum": 63
+  },
+  {
+   "scene": "052.060.010_Case9",
+   "button": 2,
+   "order": 0,
+   "objective": "ДоказательстваПротивКассия",
+   "enum": 63
+  },
+  {
+   "scene": "052.060.010_Case9",
+   "button": 3,
+   "order": 0,
+   "objective": "ДоказательстваПротивКассия",
+   "enum": 63
+  },
+  {
+   "scene": "052.210.010_Final1",
+   "button": 0,
+   "order": 0,
+   "objective": "ПриговорУльриха",
+   "enum": 91
+  },
+  {
+   "scene": "052.210.020_Final2",
+   "button": 0,
+   "order": 0,
+   "objective": "ОгоньНовойВеры",
+   "enum": 64
+  },
+  {
+   "scene": "052.210.030_Final3",
+   "button": 0,
+   "order": 0,
+   "objective": "Трибунал",
+   "enum": 70
+  },
+  {
+   "scene": "052.210.040_Final4",
+   "button": 0,
+   "order": 0,
+   "objective": "СвержениеКассия",
+   "enum": 67
+  },
+  {
+   "scene": "052.210.050_Final5",
+   "button": 0,
+   "order": 0,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "052.210.065_Final7",
+   "button": 1,
+   "order": 0,
+   "objective": "ТеньВоли",
+   "enum": 93
+  },
+  {
+   "scene": "052.210.065_Final7",
+   "button": 2,
+   "order": 0,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "052.N1.010_Trigger1",
+   "button": 1,
+   "order": 0,
+   "objective": "СлабостьИнквизиции",
+   "enum": 68
+  },
+  {
+   "scene": "052.N1.010_Trigger1",
+   "button": 2,
+   "order": 0,
+   "objective": "СлабостьИнквизиции",
+   "enum": 68
+  },
+  {
+   "scene": "052.N1.010_Trigger1",
+   "button": 3,
+   "order": 0,
+   "objective": "СлабостьИнквизиции",
+   "enum": 68
+  },
+  {
+   "scene": "052.N2.010_Trigger2",
+   "button": 3,
+   "order": 0,
+   "objective": "СлабостьИнквизиции",
+   "enum": 68
+  },
+  {
+   "scene": "052.N7.010_Trigger7",
+   "button": 1,
+   "order": 0,
+   "objective": "СлабостьНовойВеры",
+   "enum": 69
+  },
+  {
+   "scene": "052.N7.010_Trigger7",
+   "button": 2,
+   "order": 0,
+   "objective": "СлабостьНовойВеры",
+   "enum": 69
+  },
+  {
+   "scene": "052.N7.010_Trigger7",
+   "button": 3,
+   "order": 0,
+   "objective": "СлабостьНовойВеры",
+   "enum": 69
+  },
+  {
+   "scene": "052.N8.010_Trigger8",
+   "button": 3,
+   "order": 0,
+   "objective": "СлабостьНовойВеры",
+   "enum": 69
+  },
+  {
+   "scene": "052.N9.010_Trigger9",
+   "button": 1,
+   "order": 0,
+   "objective": "ОполчениеНововеров",
+   "enum": 65
+  },
+  {
+   "scene": "053.010.010_FirstSteps",
+   "button": 3,
+   "order": 0,
+   "objective": "ДоходноеДело",
+   "enum": 83
+  },
+  {
+   "scene": "053.050.010_Powder",
+   "button": 1,
+   "order": 0,
+   "objective": "ТайникСПорохом",
+   "enum": 88
+  },
+  {
+   "scene": "053.050.010_Powder",
+   "button": 2,
+   "order": 0,
+   "objective": "ТайникСПорохом",
+   "enum": 88
+  },
+  {
+   "scene": "053.060.030_DangerousCargo",
+   "button": 4,
+   "order": 0,
+   "objective": "ОтрядПростолюдинов",
+   "enum": 84
+  },
+  {
+   "scene": "053.080.010_SecretMeet",
+   "button": 4,
+   "order": 0,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "053.090.010_Final1",
+   "button": 0,
+   "order": 0,
+   "objective": "БунтПоследнейКапли",
+   "enum": 89
+  },
+  {
+   "scene": "053.090.020_Final2",
+   "button": 0,
+   "order": 0,
+   "objective": "ПрощайтеCоветник",
+   "enum": 81
+  },
+  {
+   "scene": "053.090.030_Final3",
+   "button": 0,
+   "order": 0,
+   "objective": "ВольныйГород",
+   "enum": 82
+  },
+  {
+   "scene": "053.090.040_Final4",
+   "button": 0,
+   "order": 0,
+   "objective": "ХозяинАнизотти",
+   "enum": 86
+  },
+  {
+   "scene": "053.090.050_Final5",
+   "button": 0,
+   "order": 0,
+   "objective": "СвободныйЧеловек",
+   "enum": 87
+  },
+  {
+   "scene": "053.090.060_Final6",
+   "button": 0,
+   "order": 0,
+   "objective": "ДаЗдравствуетИмперия",
+   "enum": 97
+  },
+  {
+   "scene": "053.100.030_OfferSofya",
+   "button": 1,
+   "order": 0,
+   "objective": "ПорохВРукахСофьи",
+   "enum": 85
+  },
+  {
+   "scene": "053.100.070_Catastrophe2",
+   "button": 1,
+   "order": 0,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "054.020.020_Case2",
+   "button": 3,
+   "order": 0,
+   "objective": "ЗащитникНарода",
+   "enum": 71
+  },
+  {
+   "scene": "054.050.010_HuntForEvidence",
+   "button": 1,
+   "order": 0,
+   "objective": "УликиПротивОттона",
+   "enum": 78
+  },
+  {
+   "scene": "054.050.010_HuntForEvidence",
+   "button": 2,
+   "order": 0,
+   "objective": "УликиПротивОттона",
+   "enum": 78
+  },
+  {
+   "scene": "054.050.010_HuntForEvidence",
+   "button": 3,
+   "order": 0,
+   "objective": "УликиПротивОттона",
+   "enum": 78
+  },
+  {
+   "scene": "054.050.020_SmallVictory",
+   "button": 1,
+   "order": 0,
+   "objective": "РитуалЛаТари",
+   "enum": 75
+  },
+  {
+   "scene": "054.060.020_Case5",
+   "button": 3,
+   "order": 0,
+   "objective": "ПокровительствоВластей",
+   "enum": 73
+  },
+  {
+   "scene": "054.060.020_Case5",
+   "button": 4,
+   "order": 0,
+   "objective": "СудЧестиЗапрещен",
+   "enum": 76
+  },
+  {
+   "scene": "054.060.040_RebelSentence",
+   "button": 3,
+   "order": 0,
+   "objective": "ПокровительствоВластей",
+   "enum": 73
+  },
+  {
+   "scene": "054.070.010_Case6",
+   "button": 2,
+   "order": 0,
+   "objective": "ЗащитникНарода",
+   "enum": 71
+  },
+  {
+   "scene": "054.080.010_Final1",
+   "button": 0,
+   "order": 0,
+   "objective": "ЦепиСброшены",
+   "enum": 80
+  },
+  {
+   "scene": "054.080.020_Final2",
+   "button": 0,
+   "order": 0,
+   "objective": "НочьЗмей",
+   "enum": 72
+  },
+  {
+   "scene": "054.080.100_Final5",
+   "button": 0,
+   "order": 0,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "054.080.110_Final4",
+   "button": 0,
+   "order": 0,
+   "objective": "СудЧестиНадОттоном",
+   "enum": 77
+  },
+  {
+   "scene": "054.080.130_Final6",
+   "button": 0,
+   "order": 0,
+   "objective": "ПриговорОттону",
+   "enum": 74
+  },
+  {
+   "scene": "054.080.140_Final_JudgeFall",
+   "button": 0,
+   "order": 0,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "054.100.010_MartialLaw",
+   "button": 3,
+   "order": 0,
+   "objective": "ЗащитникНарода",
+   "enum": 71
+  },
+  {
+   "scene": "054.100.040_AbuseOfAuthority",
+   "button": 2,
+   "order": 0,
+   "objective": "ЗащитникНарода",
+   "enum": 71
+  },
+  {
+   "scene": "054.100.090_Milanid",
+   "button": 1,
+   "order": 0,
+   "objective": "ПокровительствоВластей",
+   "enum": 73
+  },
+  {
+   "scene": "054.100.100_Present",
+   "button": 1,
+   "order": 0,
+   "objective": "ПокровительствоВластей",
+   "enum": 73
+  },
+  {
+   "scene": "060.010.010_FamilyFate",
+   "button": 1,
+   "order": 0,
+   "objective": "СемьяВГороде",
+   "enum": 108
+  },
+  {
+   "scene": "060.010.010_FamilyFate",
+   "button": 3,
+   "order": 0,
+   "objective": "ЗащитникИмперии",
+   "enum": 105
+  },
+  {
+   "scene": "060.010.010_FamilyFate",
+   "button": 3,
+   "order": 1,
+   "objective": "СемьяВГороде",
+   "enum": 108
+  },
+  {
+   "scene": "060.010.010_FamilyFate",
+   "button": 4,
+   "order": 0,
+   "objective": "Мятежник",
+   "enum": 100
+  },
+  {
+   "scene": "060.010.010_FamilyFate",
+   "button": 4,
+   "order": 1,
+   "objective": "СемьяВГороде",
+   "enum": 108
+  },
+  {
+   "scene": "060.010.030_EscapeFromTheCity",
+   "button": 1,
+   "order": 0,
+   "objective": "СемьяСбежала",
+   "enum": 99
+  },
+  {
+   "scene": "060.010.030_EscapeFromTheCity",
+   "button": 1,
+   "order": 1,
+   "objective": "БегствоИЗГорода",
+   "enum": 107
+  },
+  {
+   "scene": "060.010.030_EscapeFromTheCity",
+   "button": 1,
+   "order": 2,
+   "objective": "СмутноеВремя",
+   "enum": 102
+  },
+  {
+   "scene": "060.010.030_EscapeFromTheCity",
+   "button": 2,
+   "order": 0,
+   "objective": "СемьяСбежала",
+   "enum": 99
+  },
+  {
+   "scene": "060.010.030_EscapeFromTheCity",
+   "button": 3,
+   "order": 0,
+   "objective": "СемьяСбежала",
+   "enum": 99
+  },
+  {
+   "scene": "060.010.030_EscapeFromTheCity",
+   "button": 4,
+   "order": 0,
+   "objective": "СемьяСбежала",
+   "enum": 99
+  },
+  {
+   "scene": "060.010.030_EscapeFromTheCity",
+   "button": 5,
+   "order": 0,
+   "objective": "СемьяВГороде",
+   "enum": 108
+  },
+  {
+   "scene": "060.010.040_GatheringForces",
+   "button": 1,
+   "order": 0,
+   "objective": "Мятежник",
+   "enum": 100
+  },
+  {
+   "scene": "060.010.040_GatheringForces",
+   "button": 2,
+   "order": 0,
+   "objective": "Мятежник",
+   "enum": 100
+  },
+  {
+   "scene": "060.010.040_GatheringForces",
+   "button": 3,
+   "order": 0,
+   "objective": "Мятежник",
+   "enum": 100
+  },
+  {
+   "scene": "060.010.040_GatheringForces",
+   "button": 4,
+   "order": 0,
+   "objective": "ЗащитникИмперии",
+   "enum": 105
+  },
+  {
+   "scene": "060.010.040_GatheringForces",
+   "button": 5,
+   "order": 0,
+   "objective": "ЗащитникИмперии",
+   "enum": 105
+  },
+  {
+   "scene": "060.010.040_GatheringForces",
+   "button": 6,
+   "order": 0,
+   "objective": "ЗащитникИмперии",
+   "enum": 105
+  },
+  {
+   "scene": "060.010.060_ElBornChoice",
+   "button": 2,
+   "order": 0,
+   "objective": "Мятежник",
+   "enum": 100
+  },
+  {
+   "scene": "060.010.060_ElBornChoice",
+   "button": 4,
+   "order": 0,
+   "objective": "ЗащитникИмперии",
+   "enum": 105
+  },
+  {
+   "scene": "060.010.080_OrderSprit",
+   "button": 1,
+   "order": 0,
+   "objective": "Мятежник",
+   "enum": 100
+  },
+  {
+   "scene": "060.010.080_OrderSprit",
+   "button": 2,
+   "order": 0,
+   "objective": "Мятежник",
+   "enum": 100
+  },
+  {
+   "scene": "060.010.080_OrderSprit",
+   "button": 3,
+   "order": 0,
+   "objective": "ЗащитникИмперии",
+   "enum": 105
+  },
+  {
+   "scene": "060.010.080_OrderSprit",
+   "button": 4,
+   "order": 0,
+   "objective": "ЗащитникИмперии",
+   "enum": 105
+  },
+  {
+   "scene": "060.010.080_OrderSprit",
+   "button": 6,
+   "order": 0,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "060.010.090_PrefectureSiege",
+   "button": 1,
+   "order": 0,
+   "objective": "Мятежник",
+   "enum": 100
+  },
+  {
+   "scene": "060.010.090_PrefectureSiege",
+   "button": 2,
+   "order": 0,
+   "objective": "Мятежник",
+   "enum": 100
+  },
+  {
+   "scene": "060.010.090_PrefectureSiege",
+   "button": 3,
+   "order": 0,
+   "objective": "ЗащитникИмперии",
+   "enum": 105
+  },
+  {
+   "scene": "060.010.090_PrefectureSiege",
+   "button": 4,
+   "order": 0,
+   "objective": "ЗащитникИмперии",
+   "enum": 105
+  },
+  {
+   "scene": "060.010.090_PrefectureSiege",
+   "button": 5,
+   "order": 0,
+   "objective": "ЗащитникИмперии",
+   "enum": 105
+  },
+  {
+   "scene": "060.010.100_OttonDuel",
+   "button": 3,
+   "order": 0,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "060.010.110_NewFaithProcession",
+   "button": 1,
+   "order": 0,
+   "objective": "Мятежник",
+   "enum": 100
+  },
+  {
+   "scene": "060.010.110_NewFaithProcession",
+   "button": 2,
+   "order": 0,
+   "objective": "ЗащитникИмперии",
+   "enum": 105
+  },
+  {
+   "scene": "060.010.110_NewFaithProcession",
+   "button": 3,
+   "order": 0,
+   "objective": "Мятежник",
+   "enum": 100
+  },
+  {
+   "scene": "060.010.110_NewFaithProcession",
+   "button": 4,
+   "order": 0,
+   "objective": "ЗащитникИмперии",
+   "enum": 105
+  },
+  {
+   "scene": "060.010.130_ChiefOftheRiot",
+   "button": 2,
+   "order": 0,
+   "objective": "ВоГлавеВосстания",
+   "enum": 92
+  },
+  {
+   "scene": "060.010.130_ChiefOftheRiot",
+   "button": 5,
+   "order": 0,
+   "objective": "ВоГлавеВосстания",
+   "enum": 92
+  },
+  {
+   "scene": "060.010.140_IfyourHouseisdeartoyou",
+   "button": 1,
+   "order": 0,
+   "objective": "СемьяПогибла",
+   "enum": 98
+  },
+  {
+   "scene": "060.010.140_IfyourHouseisdeartoyou",
+   "button": 1,
+   "order": 1,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "060.010.140_IfyourHouseisdeartoyou",
+   "button": 2,
+   "order": 0,
+   "objective": "СемьяСпасена",
+   "enum": 109
+  },
+  {
+   "scene": "060.010.140_IfyourHouseisdeartoyou",
+   "button": 3,
+   "order": 0,
+   "objective": "СемьяСпасена",
+   "enum": 109
+  },
+  {
+   "scene": "060.010.140_IfyourHouseisdeartoyou",
+   "button": 4,
+   "order": 0,
+   "objective": "СемьяСпасена",
+   "enum": 109
+  },
+  {
+   "scene": "060.010.140_IfyourHouseisdeartoyou",
+   "button": 5,
+   "order": 0,
+   "objective": "СемьяСпасена",
+   "enum": 109
+  },
+  {
+   "scene": "060.010.140_IfyourHouseisdeartoyou",
+   "button": 6,
+   "order": 0,
+   "objective": "СемьяСпасена",
+   "enum": 109
+  },
+  {
+   "scene": "060.010.140_IfyourHouseisdeartoyou",
+   "button": 7,
+   "order": 0,
+   "objective": "СемьяПогибла",
+   "enum": 98
+  },
+  {
+   "scene": "060.010.170_TheFinal1",
+   "button": 1,
+   "order": 0,
+   "objective": "РазгромВосстания",
+   "enum": 96
+  },
+  {
+   "scene": "060.010.170_TheFinal1",
+   "button": 2,
+   "order": 0,
+   "objective": "МятежСдался",
+   "enum": 101
+  },
+  {
+   "scene": "060.010.170_TheFinal1",
+   "button": 3,
+   "order": 0,
+   "objective": "РазгромВосстания",
+   "enum": 96
+  },
+  {
+   "scene": "060.010.170_TheFinal1",
+   "button": 3,
+   "order": 1,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "060.010.170_TheFinal1",
+   "button": 4,
+   "order": 0,
+   "objective": "РазгромВосстания",
+   "enum": 96
+  },
+  {
+   "scene": "060.010.170_TheFinal1",
+   "button": 5,
+   "order": 0,
+   "objective": "СмутноеВремя",
+   "enum": 102
+  },
+  {
+   "scene": "060.010.170_TheFinal1",
+   "button": 5,
+   "order": 1,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "060.010.170_TheFinal1",
+   "button": 6,
+   "order": 0,
+   "objective": "СмутноеВремя",
+   "enum": 102
+  },
+  {
+   "scene": "060.010.170_TheFinal1",
+   "button": 6,
+   "order": 1,
+   "objective": "БегствоИЗГорода",
+   "enum": 107
+  },
+  {
+   "scene": "060.010.180_TheFinal2",
+   "button": 1,
+   "order": 0,
+   "objective": "ГородУдержан",
+   "enum": 103
+  },
+  {
+   "scene": "060.010.180_TheFinal2",
+   "button": 2,
+   "order": 0,
+   "objective": "РазгромВосстания",
+   "enum": 96
+  },
+  {
+   "scene": "060.010.180_TheFinal2",
+   "button": 2,
+   "order": 1,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "060.010.180_TheFinal2",
+   "button": 3,
+   "order": 0,
+   "objective": "РазгромВосстания",
+   "enum": 96
+  },
+  {
+   "scene": "060.010.180_TheFinal2",
+   "button": 4,
+   "order": 0,
+   "objective": "СмутноеВремя",
+   "enum": 102
+  },
+  {
+   "scene": "060.010.180_TheFinal2",
+   "button": 4,
+   "order": 1,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "060.010.180_TheFinal2",
+   "button": 5,
+   "order": 0,
+   "objective": "СмутноеВремя",
+   "enum": 102
+  },
+  {
+   "scene": "060.010.180_TheFinal2",
+   "button": 5,
+   "order": 1,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "060.010.180_TheFinal2",
+   "button": 6,
+   "order": 0,
+   "objective": "СмутноеВремя",
+   "enum": 102
+  },
+  {
+   "scene": "060.010.180_TheFinal2",
+   "button": 6,
+   "order": 1,
+   "objective": "БегствоИЗГорода",
+   "enum": 107
+  },
+  {
+   "scene": "060.010.190_TheFinal3",
+   "button": 1,
+   "order": 0,
+   "objective": "РазгромЛегиона",
+   "enum": 95
+  },
+  {
+   "scene": "060.010.190_TheFinal3",
+   "button": 2,
+   "order": 0,
+   "objective": "МирСНаместником",
+   "enum": 104
+  },
+  {
+   "scene": "060.010.190_TheFinal3",
+   "button": 3,
+   "order": 0,
+   "objective": "ГородУдержан",
+   "enum": 103
+  },
+  {
+   "scene": "060.010.190_TheFinal3",
+   "button": 4,
+   "order": 0,
+   "objective": "СмутноеВремя",
+   "enum": 102
+  },
+  {
+   "scene": "060.010.190_TheFinal3",
+   "button": 4,
+   "order": 1,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "060.010.190_TheFinal3",
+   "button": 5,
+   "order": 0,
+   "objective": "СмутноеВремя",
+   "enum": 102
+  },
+  {
+   "scene": "060.010.190_TheFinal3",
+   "button": 5,
+   "order": 1,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "060.010.190_TheFinal3",
+   "button": 6,
+   "order": 0,
+   "objective": "СмутноеВремя",
+   "enum": 102
+  },
+  {
+   "scene": "060.010.190_TheFinal3",
+   "button": 6,
+   "order": 1,
+   "objective": "БегствоИЗГорода",
+   "enum": 107
+  },
+  {
+   "scene": "060.010.200_TheFinal4",
+   "button": 1,
+   "order": 0,
+   "objective": "РезняВАнизотти",
+   "enum": 94
+  },
+  {
+   "scene": "060.010.200_TheFinal4",
+   "button": 1,
+   "order": 1,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "060.010.200_TheFinal4",
+   "button": 2,
+   "order": 0,
+   "objective": "РезняВАнизотти",
+   "enum": 94
+  },
+  {
+   "scene": "060.010.200_TheFinal4",
+   "button": 2,
+   "order": 1,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "060.010.200_TheFinal4",
+   "button": 3,
+   "order": 0,
+   "objective": "РезняВАнизотти",
+   "enum": 94
+  },
+  {
+   "scene": "060.010.200_TheFinal4",
+   "button": 4,
+   "order": 0,
+   "objective": "РазгромВосстания",
+   "enum": 96
+  },
+  {
+   "scene": "060.010.200_TheFinal4",
+   "button": 4,
+   "order": 1,
+   "objective": "ИстиннаяСмерть",
+   "enum": 90
+  },
+  {
+   "scene": "060.010.200_TheFinal4",
+   "button": 5,
+   "order": 0,
+   "objective": "РезняВАнизотти",
+   "enum": 94
+  },
+  {
+   "scene": "060.010.200_TheFinal4",
+   "button": 5,
+   "order": 1,
+   "objective": "БегствоИЗГорода",
+   "enum": 107
+  },
+  {
+   "scene": "Insurrection_Incident_13",
+   "button": 0,
+   "order": 0,
+   "objective": "Мятежник",
+   "enum": 100
+  },
+  {
+   "scene": "Insurrection_Incident_5",
+   "button": 0,
+   "order": 0,
+   "objective": "ЗащитникИмперии",
+   "enum": 105
+  },
+  {
+   "scene": "Insurrection_Incident_6",
+   "button": 0,
+   "order": 0,
+   "objective": "Мятежник",
+   "enum": 100
+  },
+  {
+   "scene": "Insurrection_Incident_8",
+   "button": 0,
+   "order": 0,
+   "objective": "ЗащитникИмперии",
+   "enum": 105
+  },
+  {
+   "scene": "Insurrection_Incident_9",
+   "button": 0,
+   "order": 0,
+   "objective": "Мятежник",
+   "enum": 100
+  }
+ ]
+}

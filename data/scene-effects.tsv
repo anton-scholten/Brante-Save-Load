@@ -492,7 +492,6 @@
 051.010.020_Scene_2	4	R	Natan	1
 051.010.020_Scene_2	4	Q	Theology	11	3	and
 051.010.020_Scene_2	4	W	Natan	2	3	and
-051.020.010_Scene_3	0	W	Gloria	3	3	and
 051.020.010_Scene_3	1	P	Reputation	2
 051.020.010_Scene_3	1	P	Diplomacy	1
 051.020.010_Scene_3	1	P	Sabotage	1
@@ -505,6 +504,7 @@
 051.020.010_Scene_3	2	W	Robert	3	3	and
 051.020.010_Scene_3	3	P	Money	2
 051.020.010_Scene_3	3	P	Unity	-1
+051.020.010_Scene_3	4	W	Gloria	3	3	and
 051.020.020_The_Old_Friend	1	P	Reputation	-1
 051.020.020_The_Old_Friend	1	P	Will	10
 051.020.020_The_Old_Friend	1	R	Tommas	1
@@ -615,11 +615,6 @@
 051.060.020_LesserEvil	4	P	Will	10
 051.060.020_LesserEvil	4	R	Gloria	-3
 051.060.020_LesserEvil	4	S	Gloria	57
-051.060.030_Mortally	0	P	Death	4
-051.060.030_Mortally	0	S	Stefan	55
-051.060.030_Mortally	0	Q	Valor	15	3	and
-051.060.030_Mortally	0	Q	Valor	18	1	and
-051.060.030_Mortally	0	Q	Will	10	3	and
 051.060.030_Mortally	1	P	Will	-10
 051.060.030_Mortally	1	P	Unity	-2
 051.060.030_Mortally	1	P	Valor	1
@@ -634,6 +629,15 @@
 051.060.030_Mortally	2	S	Stefan	55
 051.060.030_Mortally	2	Q	Sabotage	12	3	and
 051.060.030_Mortally	2	W	Stefan	2	3	and
+051.060.030_Mortally	3	P	Death	4
+051.060.030_Mortally	4	P	Valor	1
+051.060.030_Mortally	4	P	Unity	-2
+051.060.030_Mortally	4	P	Will	-20
+051.060.030_Mortally	4	P	Heir	0
+051.060.030_Mortally	4	S	Stefan	55
+051.060.030_Mortally	4	Q	Valor	15	3	and
+051.060.030_Mortally	4	Q	Valor	18	1	and
+051.060.030_Mortally	4	Q	Will	10	3	and
 051.060.040_HuntForThomas	1	P	Will	5
 051.060.040_HuntForThomas	1	S	Tommas	1
 051.060.040_HuntForThomas	2	P	Authority	-1
@@ -671,7 +675,6 @@
 051.070.010_Deathbed	3	T	Gloria	57	1	and
 051.070.010_Deathbed	4	O	Cunning	0	0	and
 051.070.010_Deathbed	5	S	Gloria	8
-051.070.020_BrokenBranch	0	W	Gloria	3	3	and
 051.070.020_BrokenBranch	1	P	Unity	-1
 051.070.020_BrokenBranch	1	P	Reputation	-10
 051.070.020_BrokenBranch	1	P	Heir	0
@@ -685,6 +688,7 @@
 051.070.020_BrokenBranch	2	S	Gloria	52
 051.070.020_BrokenBranch	2	Q	Unity	5	3	and
 051.070.020_BrokenBranch	2	W	Stefan	1	3	and
+051.070.020_BrokenBranch	4	W	Gloria	3	3	and
 051.070.030_GoldenCage	1	P	Reputation	1
 051.070.030_GoldenCage	1	P	Unity	-1
 051.070.030_GoldenCage	1	R	Stefan	2
@@ -704,11 +708,6 @@
 051.070.030_GoldenCage	3	O	Noble	0	0	and
 051.070.030_GoldenCage	3	O	СудЧестиЗапрещен	0	1	and
 051.070.030_GoldenCage	3	O	RiverOfBlood	0	0	and
-051.070.035_Mortally	0	P	Death	4
-051.070.035_Mortally	0	S	Stefan	55
-051.070.035_Mortally	0	Q	Valor	15	3	and
-051.070.035_Mortally	0	Q	Valor	18	1	and
-051.070.035_Mortally	0	Q	Will	10	3	and
 051.070.035_Mortally	1	P	Will	-10
 051.070.035_Mortally	1	P	Unity	-2
 051.070.035_Mortally	1	P	Valor	1
@@ -723,6 +722,15 @@
 051.070.035_Mortally	2	S	Stefan	55
 051.070.035_Mortally	2	Q	Sabotage	12	3	and
 051.070.035_Mortally	2	W	Stefan	2	3	and
+051.070.035_Mortally	3	P	Death	4
+051.070.035_Mortally	4	P	Will	-20
+051.070.035_Mortally	4	P	Unity	-2
+051.070.035_Mortally	4	P	Valor	1
+051.070.035_Mortally	4	P	Heir	0
+051.070.035_Mortally	4	S	Stefan	55
+051.070.035_Mortally	4	Q	Valor	15	3	and
+051.070.035_Mortally	4	Q	Valor	18	1	and
+051.070.035_Mortally	4	Q	Will	10	3	and
 051.070.050_ThomasWedding	1	P	Will	10
 051.070.050_ThomasWedding	1	W	Tommas	4	3	or
 051.070.050_ThomasWedding	1	O	Friendship	0	0	or

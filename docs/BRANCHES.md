@@ -320,6 +320,34 @@ objective names come from `<ObjectiveEnum>.Title` (the asset name when the
 enum is None). Texts may hold `<el>`, the noble particle: the game puts
 `SwordNobleEl` there once the family has the noble sword, nothing before.
 
+## Answer objectives
+
+```sh
+python3 tools/scene_objectives.py  # -> data/scene-objectives.json + Brante-Save-Load/scene-objectives.tsv
+```
+
+`KeyChapterParametersController.EarnObjective` is the only gameplay writer of
+`Objective.Unlocked`; it is called by `SceneConsequenceGenerator` (after an
+answer), `UniversalParametersGenerator` (a scene with no answers) and
+`ConsequenceNextButton` (a consequence "Next" page). Each component carries
+`ShowObjective` and either one `Objective` PPtr or a list of them; the list
+unlocks every entry, one pop-up each. The generator for an answer sits under
+that answer's `Consequence` object, so the answer number comes from the
+`ButtonDescriptionN` name of the `ParameterButtonChanger` it belongs to (the
+serialized `ButtonIndex` is 0 on nine of them). Objectives are read from
+`resources.assets`; the asset name and the `ObjectiveEnum` differ often, and
+saves store the enum, so the TSV carries both:
+
+```
+<scene>	<button>	<order>	<objective asset name>	<enum value>
+```
+
+Button 0 is the scene itself. 201 rows over 94 scenes, 78 objectives - every
+objective asset is set somewhere. `SceneEffects.Hero.ApplyObjectives` adds them
+after the answer's `SceneEffects`, which is what keeps a changed answer on its
+chapter track; a scene-level row applies when the scene ends, not when it
+opens.
+
 ## The complete flow (chapters 1-5 and the epilogue)
 
 ```sh

@@ -21,7 +21,7 @@ stays the game's).
 ## 2. Save ownership model
 
 One playthrough = one `SaveSlotInfo.Id` (contains slashes, e.g.
-`Biggie_10/23/2026103816AM`). It is the game's, not the mod's.
+`Biggie_10/23/2026103816AM`); it is the game's, not the mod's.
 
 | location | owner | written by | contents | retention |
 |---|---|---|---|---|
@@ -38,15 +38,13 @@ folder from an older version without `.complete` is kept and only marked.
 `Brante-Save-Load/.baseline` makes the pass one-shot; `EnsureBaseline` is the
 fallback before a load.
 
-The game's autosave (`SceneState_GAME_SETUP`) is a resume point; a choice
-snapshot (`SceneState_SHOW_ANIMATION`, scene still pending) is a decision. They
-are kept apart: identical bytes in `Autosaves/` and `Choice/` must not be
-offered as the same thing.
+The game's autosave (`SceneState_GAME_SETUP`) is a resume point, a choice
+snapshot (`SceneState_SHOW_ANIMATION`, scene pending) a decision; identical
+bytes must never be offered as the same thing.
 
 Why no minted save folder: an earlier build minted one when the game had no id,
 splitting a timeline into two folders that adopted each other's id and produced
-saves the game could list but not delete. The folder is the id; a run without
-one keeps an empty id.
+saves the game could list but not delete. The folder is the id.
 
 ## 3. Loading a mod save
 
@@ -95,16 +93,13 @@ mirror is skipped while `AutoPlay.Running`).
 | death -> restart chapter | prefix/postfix `LoadGame(string,int)` | `BeforeChapterRestart` + `MarkChapterLoad` |
 | mod load / replay | `Recorder.BeginModLoad` | run pinned from the save, `_modTimeline = true` |
 
-Rules:
-
 - Ids are recovered, never invented. Save files can carry an empty id (older
   builds); the folder name is the id. `RecoverId` fills it from the path
   (`IdFromSavePath`), a postfix on `LoadSaves()` matches helpers back to files
   by hero + save date only when that pair names exactly one file, and
   `RepairIds` writes the result back into `Saves/**/Autosave.dat` once at
   startup. `RepairLooseRoot` merges a loose `Saves/Autosave.dat` into the one
-  run whose scene list it opens (same hero, shared prefix >= 5, unique best
-  match) and quarantines what it replaces.
+  run whose scene list it opens (same hero, shared prefix >= 5, unique match).
 - Slot repair only on a mod timeline: `EnsureSlotId` fills a missing id and
   never changes a non-empty one; `FixSaveFolder` redirects only the bare
   `Saves/` root and creates the folder it redirects to. A save the player
@@ -152,13 +147,13 @@ needs a known, open answer; `StartLooksOnPath` requires the start save's
 (chapter files use the timeline test; stand-ins and a built start are exempt).
 
 The runtime check is the ordered replay: `ReplayTo`'s `onScene` compares the
-scene on screen with `plan.Order[next]`. Off-path -> `ReplayOffPath`; a skipped
-plan step -> `ReplaySkipped`; either stops and names the scene. Planning is
-best-effort, replay is authoritative.
+scene on screen with `plan.Order[next]`; off-path -> `ReplayOffPath`, a skipped
+plan step -> `ReplaySkipped`, and either stops the run and names the scene.
+Planning is best-effort, replay is authoritative.
 
 ## 6. Table and HUD
 
-One window, opened from the book; the tree view tab sits above the save table.
+One window opened from the book; the tree view tab sits above the save table.
 
 - Categories: `Game autosave`, `Before load`, `Manual`, `Original save`
   (`Backups/<id>/Autosave.dat`, read-only, no delete cell). The live
@@ -175,17 +170,16 @@ One window, opened from the book; the tree view tab sits above the save table.
   at startup; manual files are never removed automatically. Identical states
   are not merged across categories.
 - Paging: rows are built 120 at a time, with a "Show more" row. Type cells show
-  the `Loc.K.Help*` explanation on hover in the tree's paper/outline pop-up.
-- Layout is flushed with `Canvas.ForceUpdateCanvases()` after building; the
-  game's TMP build needs wrap off + `ForceMeshUpdate` to size text.
+  the `Loc.K.Help*` explanation on hover. Layout is flushed with
+  `Canvas.ForceUpdateCanvases()`; the game's TMP build needs wrap off +
+  `ForceMeshUpdate` to size text.
 - The tree view is a separate tab: columns per scene (played, then ahead),
   answers stacked, path highlighted, hover pop-up with effects and live
   requirements, clicks build a path, `Load scene` runs the replay.
 
 ## 7. Testing and verification model
 
-Dev markers in `Snapshots/`, one-shot, all paired with `dev-autoload.txt`
-except the table/book drivers:
+Dev markers in `Snapshots/`, one-shot, paired with `dev-autoload.txt` unless noted:
 
 | marker | drives |
 |---|---|
@@ -196,7 +190,7 @@ except the table/book drivers:
 | `dev-uitest.txt`, `dev-table.txt` | table open/confirm/delete/load; filter cycle, row counts, type pop-up |
 | `dev-book.txt` | tabs, table, tree: wheel, pop-ups, conflicting pick, plan, undo |
 | `dev-loadpath.txt` | Load scene end to end (`back`, `chapter`, `start`, `ahead`, `death`, `offpath`, `first`, `new`, `file`) |
-| `dev-autoplay.txt` | debug runs that make test saves at named chapters |
+| `dev-autoplay.txt` | standalone: debug runs that make test saves at named chapters |
 | `dev-history.txt`, `dev-scene-tree.txt`, `dev-bolt.txt`, `dev-ironman.txt`, `dev-lang.txt` | history dump, UI dump, Bolt dump, Iron Man load, language switch |
 
 Documented as verified in game: bootstrap and probe; capture and dedup; a mod
@@ -241,18 +235,18 @@ reads carrying a non-empty id; no `GAME Exception` in the log from a mod step.
 
 ## 9. Open questions / future work
 
-- Objectives are simulated from the start save / hero (`SceneFlow.After` swaps
-  their `Unlocked` flags), but objectives set by a scene event after that state
-  are not: extract the Bolt `SetMember`/objective units per scene for
-  `SceneFlow.After` and `SceneParams.Simulate`.
+- Objectives unlocked by a scene or an answer are extracted
+  (`scene-objectives.tsv`) and simulated after the answer; the remaining gap is
+  a key parameter set by a scene event (the true-death `GoToFinals`), which
+  `SceneParams.Simulate` does not model.
 - Exact pre-answer branch prediction: labels and conditions are evaluated on the
   state before the answer, so a switch set by the scene's events can still
   change the branch; the replay stops at the first divergence meanwhile.
 - Performance: the tree scans folders and builds the playthrough plus ahead
   columns per open; caching across opens is open.
-- Same-scene edge cases: a load while a pop-up or consequence page is open, and
-  a load during a replay, have no test.
+- Same-scene edge cases: a load while a pop-up or consequence page is open, or
+  during a replay, have no test.
 - Achievements: a replay can re-grant a held achievement (Steam ones are
-  idempotent) — needs an in-game check. Steam Cloud is out of scope: Auto-Cloud
-  is disabled for the app and the save path is not recursive.
+  idempotent) — needs an in-game check; Steam Cloud is out of scope (Auto-Cloud
+  disabled, save path not recursive).
 - Verification debt: section 7 and phases 8-13 in [docs/TODO.md](TODO.md).

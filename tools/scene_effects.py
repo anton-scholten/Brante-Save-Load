@@ -52,6 +52,7 @@ plain lists, "or" for the OR group.
 import argparse
 import json
 import pathlib
+import re
 import struct
 import sys
 
@@ -144,6 +145,10 @@ def main():
         env = UnityPy.load(str(level))
         f = list(env.files.values())[0]
         externals = [e.path for e in f.externals]
+        game_objects = {}
+        for o in env.objects:
+            if o.type.name == "GameObject":
+                game_objects[o.path_id] = o.read_typetree()
 
         def ref(file_id, path_id):
             if file_id > 0 and externals[file_id - 1].endswith("resources.assets"):
@@ -164,6 +169,14 @@ def main():
                 rd.pptr()                           # MainContainer
                 rd.string()                         # ButtonTextKey
                 button = rd.i32()
+                # The serialized ButtonIndex is 0 on a few buttons whose
+                # ButtonDescriptionN name still has the right number (nine
+                # buttons in six scenes), so the name wins when it has one.
+                go_id = struct.unpack_from("<q", data, 4)[0]
+                go_name = game_objects.get(go_id, {}).get("m_Name", "") or ""
+                match = re.match(r"ButtonDescription(\d+)$", go_name)
+                if match:
+                    button = int(match.group(1))
                 lists = []
                 for _ in range(3):                  # Parameters, Relations, Statuses
                     items = []
