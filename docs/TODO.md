@@ -474,11 +474,17 @@ save folders and only copies them.
   `dev-replay` drove the game through The Poets to `02.09.01` without stopping.
   The old stop was the missing condition/branch order, not an unavailable
   answer.
+- [x] Same-scene load double copy (30 Oct 2026): `LoadFlow` unloads every copy
+  of the scene on screen after `LoadGame`, makes the loading screen active, then
+  transitions; in game the same-scene load showed one `unloading the copy of
+  02.09.01` and 7 buttons, no `TextController` exception. `UniqueButtons`
+  dedupes by `ButtonIndex`; `DedupeSidecars` repairs existing sidecars at
+  startup.
 - [ ] Objective-based conditions are still evaluated on the live game during
   simulation; extract/simulate `GetObjectiveStatus` and scene-event flags if a
   path still diverges on them.
 - [ ] Full `dev-loadpath` pass (`back`, `chapter`, `start`, `first`, `new`,
-  `offpath`, death) and the double-scene-load guard.
+  `offpath`, death) after the unload/sidecar changes.
 - [x] Loading any row goes through the same flow (pre-rewind checkpoint -> adopt
   the run slot -> load -> loading screen/dissolve).
 - [x] `Auto` -> `Choice` folder rename with a one-time migration

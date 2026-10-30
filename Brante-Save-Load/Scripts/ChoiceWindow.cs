@@ -4315,6 +4315,30 @@ namespace Doorstop
 			{
 				yield return null;
 			}
+			// The game unloads `SceneManager.GetActiveScene()` after loading the
+			// next scene. The mod loads from inside a story scene, where the
+			// active scene can be the persistent one, leaving the old story
+			// scene behind (two copies, a game TextController exception when
+			// the target is the one already on screen). Unload every copy of
+			// the scene on screen before the transition; the game's own unload
+			// then removes the loading screen only.
+			string previousScene = PreviousStoryScene();
+			while (!string.IsNullOrEmpty(previousScene))
+			{
+				Scene copy = FindLoadedScene(previousScene);
+				if (!copy.IsValid())
+				{
+					break;
+				}
+				ModLog.Info("ChoiceWindow: unloading the copy of " + previousScene
+					+ " already on screen before the transition");
+				AsyncOperation unloading = UnloadStoryScene(copy);
+				while (unloading != null && !unloading.isDone)
+				{
+					yield return null;
+				}
+			}
+			ActivateLoadingScreen();
 			ModLog.Info("ChoiceWindow: broadcasting StartSceneTransitionEvent");
 			try
 			{
@@ -4323,6 +4347,67 @@ namespace Doorstop
 			catch (Exception e)
 			{
 				ModLog.Error("ChoiceWindow: transition broadcast failed:\n" + e);
+			}
+		}
+
+		private static string PreviousStoryScene()
+		{
+			try
+			{
+				GameManager gm = GameManager.Instance;
+				string current = gm != null ? gm.OpenedSceneName : "";
+				if (string.IsNullOrEmpty(current) || current == "GameLoadingScreen"
+					|| current == "MainMenu")
+				{
+					return "";
+				}
+				return current;
+			}
+			catch
+			{
+				return "";
+			}
+		}
+
+		private static Scene FindLoadedScene(string name)
+		{
+			for (int i = SceneManager.sceneCount - 1; i >= 0; i--)
+			{
+				Scene s = SceneManager.GetSceneAt(i);
+				if (s.IsValid() && s.isLoaded && s.name == name)
+				{
+					return s;
+				}
+			}
+			return default(Scene);
+		}
+
+		private static AsyncOperation UnloadStoryScene(Scene scene)
+		{
+			try
+			{
+				return SceneManager.UnloadSceneAsync(scene);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: unloading " + scene.name + " failed:\n" + e);
+				return null;
+			}
+		}
+
+		private static void ActivateLoadingScreen()
+		{
+			try
+			{
+				Scene loading = SceneManager.GetSceneByName("GameLoadingScreen");
+				if (loading.IsValid() && loading.isLoaded)
+				{
+					SceneManager.SetActiveScene(loading);
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: activating the loading screen failed:\n" + e);
 			}
 		}
 

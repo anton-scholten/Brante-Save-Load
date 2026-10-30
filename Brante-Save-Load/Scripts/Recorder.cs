@@ -981,6 +981,91 @@ namespace Doorstop
 			}
 		}
 
+		// One-off repair of sidecars written while two copies of a scene were
+		// loaded: their choices: block lists every answer twice. Keep the first
+		// line per [index], and every chosen= line after it.
+		public static void DedupeSidecars()
+		{
+			try
+			{
+				if (!Directory.Exists(RunsDir))
+				{
+					return;
+				}
+				int fixedFiles = 0;
+				foreach (string run in Directory.GetDirectories(RunsDir))
+				{
+					string dir = Path.Combine(run, KindChoice);
+					if (!Directory.Exists(dir))
+					{
+						continue;
+					}
+					foreach (string file in Directory.GetFiles(dir, "*.meta.txt"))
+					{
+						try
+						{
+							string[] lines = File.ReadAllLines(file);
+							List<string> keep = new List<string>();
+							HashSet<int> seen = new HashSet<int>();
+							bool inChoices = false;
+							bool changed = false;
+							foreach (string line in lines)
+							{
+								string trimmed = line.Trim();
+								if (trimmed == "choices:")
+								{
+									inChoices = true;
+									keep.Add(line);
+									continue;
+								}
+								if (inChoices && trimmed.StartsWith("["))
+								{
+									int close = trimmed.IndexOf(']');
+									int index;
+									if (close > 1 && int.TryParse(trimmed.Substring(1, close - 1), out index))
+									{
+										if (!seen.Add(index))
+										{
+											changed = true;
+											continue;
+										}
+									}
+								}
+								else if (inChoices && (trimmed.StartsWith("chosen=")
+									|| trimmed.Length == 0))
+								{
+									// chosen= lines and the trailing blank are kept
+								}
+								else
+								{
+									inChoices = false;
+								}
+								keep.Add(line);
+							}
+							if (changed)
+							{
+								File.WriteAllLines(file, keep.ToArray());
+								fixedFiles++;
+							}
+						}
+						catch (Exception e)
+						{
+							ModLog.Error("Recorder: sidecar repair of " + file + " failed:\n" + e);
+						}
+					}
+				}
+				if (fixedFiles > 0)
+				{
+					ModLog.Info("Recorder: removed duplicate answer lines from "
+						+ fixedFiles + " sidecar(s)");
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Recorder: sidecar repair failed:\n" + e);
+			}
+		}
+
 		// Renames the old Runs/<run>/Auto folder to Choice, so the tree's
 		// saves and the game autosaves are never mistaken for one another.
 		public static void MigrateFolderNames()
@@ -2071,7 +2156,7 @@ namespace Doorstop
 				InCurrentScene(UnityEngine.Object.FindObjectsOfType<ParameterButtonChanger>(), scene);
 			if (active.Length > 0)
 			{
-				return active;
+				return UniqueButtons(active);
 			}
 			// FindObjectsOfType only sees ACTIVE objects; the buttons may be
 			// inactive scene objects at this moment. Their texts are plain
@@ -2088,8 +2173,26 @@ namespace Doorstop
 					inScenes.Add(b);
 				}
 			}
-			ModLog.Info("Buttons: 0 active, " + inScenes.Count + " inactive in loaded scenes");
-			return inScenes.ToArray();
+			ModLog.Info("Buttons: 0 active, " + UniqueButtons(inScenes.ToArray()).Length
+				+ " inactive in loaded scenes");
+			return UniqueButtons(inScenes.ToArray());
+		}
+
+		// Two additive copies of the same scene (the game can reload a scene
+		// while its old copy is still up) carry the same answer buttons; keep
+		// one per ButtonIndex so a sidecar is never written twice over.
+		private static ParameterButtonChanger[] UniqueButtons(ParameterButtonChanger[] buttons)
+		{
+			List<ParameterButtonChanger> keep = new List<ParameterButtonChanger>();
+			HashSet<int> seen = new HashSet<int>();
+			foreach (ParameterButtonChanger b in buttons)
+			{
+				if (b != null && seen.Add(b.ButtonIndex))
+				{
+					keep.Add(b);
+				}
+			}
+			return keep.ToArray();
 		}
 
 		private static void WriteSidecar(string dir, string baseName, string scene, SaveLoadHelper helper)
@@ -2123,8 +2226,8 @@ namespace Doorstop
 				sb.AppendLine("title=" + title + "   [key: " + titleKey + "]");
 			}
 			sb.AppendLine("choices:");
-			ParameterButtonChanger[] buttons =
-				UnityEngine.Object.FindObjectsOfType<ParameterButtonChanger>();
+			ParameterButtonChanger[] buttons = UniqueButtons(
+				UnityEngine.Object.FindObjectsOfType<ParameterButtonChanger>());
 			Array.Sort(buttons, (a, b) => a.ButtonIndex.CompareTo(b.ButtonIndex));
 			foreach (ParameterButtonChanger b in buttons)
 			{
@@ -2178,6 +2281,7 @@ namespace Doorstop
 
 		private static void FillChoicesNow(string dir, string baseName, ParameterButtonChanger[] buttons)
 		{
+			buttons = UniqueButtons(buttons);
 			Array.Sort(buttons, (a, b) => a.ButtonIndex.CompareTo(b.ButtonIndex));
 			StringBuilder sb = new StringBuilder();
 			foreach (ParameterButtonChanger b in buttons)

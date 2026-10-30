@@ -74,6 +74,7 @@ namespace Doorstop
 			Recorder.RepairLooseRoot();
 			Recorder.Arm();
 			Recorder.MigrateLegacy();
+			Recorder.DedupeSidecars();
 			StartCoroutine(DevAutoload());
 		}
 

@@ -192,6 +192,14 @@ community event sheet (`data/events.json`).
   still ahead is logged as speculative. `dev-plan.txt` logs a plan without
   replaying it. A stop or a failed pre-check is shown in the tree's hint line in
   `Palette.Red` (the delete-mark red).
+- **Same-scene loads unload the old copy first.** The game adds a scene and
+  unloads the previous active scene only after the new copy's `Start`; loading
+  a save of the scene on screen therefore left two copies (`14 buttons` for a
+  7-answer scene, `TextController.Start` out of range). `LoadFlow` unloads every
+  loaded copy of the scene on screen after `LoadGame`, makes `GameLoadingScreen`
+  active, then broadcasts the transition. Answer sidecars are also de-duplicated
+  by `ButtonIndex` (and repaired at startup by `Recorder.DedupeSidecars`), so a
+  duplicate copy can never write each answer twice.
 - **The chapter flow restarts at the top after every scene.** `scene-flow.tsv`
   has one row per flow occurrence (a scene can sit at different positions under
   different switch labels, e.g. `TriggerBlock`), and `SceneFlow.After` returns

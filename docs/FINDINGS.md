@@ -988,6 +988,18 @@ collapsed, 8–10 rows shown.
   because the answer was unavailable. (`PointerSfxPlayer` NullReference
   exceptions appeared while AutoPlay clicked an achievement popup; game-side,
   the replay continued.)
+- **Same-scene loads no longer double the scene (30 Oct 2026).** The game's
+  `GameManager.LoadScene` loads additively and unloads `GetActiveScene()` only
+  after the new copy's `Start`; the mod loading from inside a story scene left
+  the old copy alive (14 buttons for 7 answers, `TextController.Start`
+  `ArgumentOutOfRangeException`, sidecars listing every answer twice).
+  `ChoiceWindow.LoadFlow` now unloads every loaded copy of the scene on screen
+  after `LoadGame`, sets `GameLoadingScreen` active, then broadcasts the
+  transition. Verified in game: same-scene load logged one
+  `unloading the copy of 02.09.01` and showed 7 buttons, no `TextController`
+  exception. `Recorder.UniqueButtons` keeps one button per `ButtonIndex`, and
+  `Recorder.DedupeSidecars` strips duplicate `[n]` lines from existing
+  sidecars at startup.
 - **Remaining limit:** objectives (`GetObjectiveStatus`) are still evaluated on
   the live game while simulating, and conditions set by scene events that are
   not stats/key params/relations/statuses cannot be predicted; the ordered
