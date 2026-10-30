@@ -657,3 +657,24 @@ only when the sender also has a `HudButtonBehavior`. Placement is
 (`Offset` in tooltip sizes) at the tab's position: `UpperCenter` with
 `Offset (0, 1.1)` hangs it centred below the tab.
 
+## More replay facts (29 Oct 2026)
+
+- **Pop-up buttons that never switch on.** `ObjectivePopupComponent`,
+  `InterludePopupController` and the event pop-up switch their continue
+  button off in `Start` and back on from an animation event at the end of
+  their show animation (`SetButtonInteractable`). At ten times speed that
+  animation can finish before `Start` runs (a pop-up instantiated late in a
+  frame is animated that frame, started the next), so the event comes first
+  and the button stays off for good - even at normal speed afterwards. The
+  replay calls `SetButtonInteractable` itself on any pop-up that has one
+  once nothing has moved for two seconds.
+- **Deaths.** A death opens `_Scripts.AMVCC.Views.Windows.Death.
+  DeathWindowBehaviour` (restart the chapter, or go on with one death spent;
+  `DeathChoiceButtonBehaviour.RestartChapter`). That is a decision, not a
+  continue: the replay stops there.
+- **Chapter-start saves.** The game writes `Saves/<ID>/Chapter_N.dat` as each
+  chapter begins (the file "Restart chapter" reads). It loads like any save,
+  and the latest one of a chapter at or before the scene on screen belongs
+  to the current timeline, so a replay can start there when the mod has no
+  save of an earlier scene.
+

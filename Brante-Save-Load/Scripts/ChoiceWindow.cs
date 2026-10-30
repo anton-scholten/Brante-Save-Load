@@ -434,7 +434,7 @@ namespace Doorstop
 			public bool Current;    // the scene on screen (the pending entry)
 			public bool Recorded;   // the answer played here is known
 			public string PlayedChoice = "";   // that answer's name
-			public string Implied = "";        // ahead and unpicked: the answer counted (first open)
+			public string Implied = "";        // ahead and unpicked: the answer the checks assume (first open)
 			public SceneEffects.Hero Hero;     // the hero at this scene along the path (null: unknown)
 			public HashSet<string> Blocked = new HashSet<string>();   // answers he could not take
 			public bool Upcoming;   // ahead of the current scene, from scene-flow.tsv
@@ -1139,11 +1139,32 @@ namespace Doorstop
 
 		// Clicking an answer selects it: the path follows it, the dashed mark
 		// moves to it, and "Load scene" will go there. Nothing loads yet.
+		// Clicking the answer picked there again takes the pick back; the scene
+		// to load becomes the furthest pick left (none: nothing selected).
 		private static void SelectChoice(string scene, string choice)
 		{
-			_overrides[scene] = choice;
-			_selScene = scene;
-			_selChoice = choice;
+			string had;
+			if (_overrides.TryGetValue(scene, out had) && had == choice)
+			{
+				_overrides.Remove(scene);
+				_selScene = null;
+				_selChoice = null;
+				for (int i = _tree.Count - 1; i >= 0; i--)
+				{
+					if (_overrides.TryGetValue(_tree[i].Scene, out had))
+					{
+						_selScene = _tree[i].Scene;
+						_selChoice = had;
+						break;
+					}
+				}
+			}
+			else
+			{
+				_overrides[scene] = choice;
+				_selScene = scene;
+				_selChoice = choice;
+			}
 			RefreshKeepingScroll();
 		}
 
@@ -1207,13 +1228,31 @@ namespace Doorstop
 					break;
 				}
 			}
+			// The start: the nearest known state at or before that point - a
+			// mod save of a scene, or the start of a chapter (the game keeps
+			// Saves/<ID>/Chapter_N.dat, the state as the chapter began; from
+			// there every answer of the chapter is given, picked or played).
 			int start = -1;
-			for (int i = diverge; i >= 0; i--)
+			string startPath = null;
+			for (int i = diverge; i >= 0 && start < 0; i--)
 			{
-				if (_tree[i].HasSnapshot && !_tree[i].Upcoming)
+				if (_tree[i].Upcoming)
+				{
+					continue;
+				}
+				if (_tree[i].HasSnapshot && !DevFromChapterStart)
 				{
 					start = i;
-					break;
+					startPath = _tree[i].SnapshotPath;
+				}
+				else
+				{
+					string chapterSave = ChapterStartSave(i);
+					if (chapterSave != null)
+					{
+						start = i;
+						startPath = chapterSave;
+					}
 				}
 			}
 			if (start < 0)
@@ -1222,7 +1261,7 @@ namespace Doorstop
 				return null;
 			}
 			LoadPlan plan = new LoadPlan();
-			plan.StartPath = _tree[start].SnapshotPath;
+			plan.StartPath = startPath;
 			plan.StartScene = _tree[start].Scene;
 			plan.Target = _tree[target].Scene;
 			plan.TargetTitle = _tree[target].Title;
@@ -1233,24 +1272,45 @@ namespace Doorstop
 				{
 					pick = _tree[i].PlayedChoice;
 				}
+				// every scene on the way needs its answer: picked, or played and
+				// recorded - the replay plays exactly those, nothing guessed
 				if (string.IsNullOrEmpty(pick))
 				{
-					pick = _tree[i].Implied;   // the answer the tree counted for an unpicked scene
+					why = string.Format(Loc.T(Loc.K.MissingPick), _tree[i].Title);
+					return null;
 				}
-				if (!string.IsNullOrEmpty(pick) && _tree[i].Blocked.Contains(pick))
+				if (_tree[i].Blocked.Contains(pick))
 				{
 					why = string.Format(Loc.T(Loc.K.PickBlocked), _tree[i].Title);
 					return null;
 				}
-				if (!string.IsNullOrEmpty(pick))
-				{
-					plan.Picks[_tree[i].Scene] = pick;
-				}
+				plan.Picks[_tree[i].Scene] = pick;
 			}
 			return plan;
 		}
 
 		private static LoadPlan _pendingPlan;
+
+		public static bool DevFromChapterStart;   // dev-loadpath "chapter": ignore the scenes' saves
+
+		// The game's own save of the chapter's start, when column `i` is the
+		// chapter's first scene and the file is there; else null.
+		private static string ChapterStartSave(int i)
+		{
+			int chapter = SceneFlow.ChapterOf(_tree[i].Scene);
+			if (chapter <= 0 || (i > 0 && SceneFlow.ChapterOf(_tree[i - 1].Scene) == chapter))
+			{
+				return null;
+			}
+			string id = Recorder.CurrentRunId();
+			if (string.IsNullOrEmpty(id))
+			{
+				return null;
+			}
+			string path = Path.Combine(Path.Combine(Application.persistentDataPath, "Saves"),
+				Path.Combine(id, "Chapter_" + chapter + ".dat"));
+			return File.Exists(path) ? path : null;
+		}
 
 		// Load scene is greyed out while it would bring back exactly what is on
 		// screen: nothing picked, or a pick in the scene on screen with every
@@ -1339,7 +1399,12 @@ namespace Doorstop
 			{
 				return string.Format(Loc.T(Loc.K.PickConflict), conflict.Title);
 			}
-			return PathChanged() ? null : Loc.T(Loc.K.NothingToLoad);
+			if (!PathChanged())
+			{
+				return Loc.T(Loc.K.NothingToLoad);
+			}
+			string why;
+			return PlanLoad(out why) == null ? why : null;   // a scene with no answer, no save to start from
 		}
 
 		private static bool _loadSized;
@@ -1350,7 +1415,7 @@ namespace Doorstop
 			{
 				return;
 			}
-			bool on = PathChanged() && FirstConflict() == null;
+			bool on = LoadBlockedReason() == null;
 			// just wider than its label: measured once, the first time it is
 			// on screen, and kept
 			if (!_loadSized)
@@ -1762,7 +1827,7 @@ namespace Doorstop
 				: n.Col.Upcoming ? Palette.Fade(Palette.Card, 0.45f) : Palette.Card;
 			n.Label.color = conflict ? Palette.Ink : blocked ? Palette.Fade(Palette.Ink, 0.35f)
 				: !n.Col.Upcoming ? Palette.Ink : Palette.Fade(Palette.Ink, 0.6f);
-			n.Btn.interactable = !blocked;
+			n.Btn.interactable = !blocked || conflict;   // a red pick can be clicked again to take it back
 			bool selected = n.Col.Scene == _selScene && n.Choice.Name == _selChoice;
 			if (selected && n.Mark == null)
 			{
@@ -2111,8 +2176,8 @@ namespace Doorstop
 					}
 				}
 				// A scene ahead (or the one on screen) with no pick counts as
-				// its first open answer - what Load scene will give there - so
-				// the hero after it, and every check further on, is still known.
+				// its first open answer for the checks further on, so they are
+				// not left blank; Load scene itself asks for a pick there.
 				col.Implied = "";
 				if (chosen == null && at != null && (col.Upcoming || col.Current))
 				{
@@ -3655,6 +3720,28 @@ namespace Doorstop
 				yield return new WaitForSeconds(3f);
 				statsHover.GetComponent<TreeHover>().OnHover(false);
 			}
+			// Dev: a pick two scenes ahead with none between - Load greyed with
+			// the gap named; the same answer clicked again takes the pick back.
+			{
+				int cur = _tree.FindIndex(c => c.Current);
+				if (cur >= 0 && cur + 2 < _tree.Count)
+				{
+					TreeCol far = _tree[cur + 2];
+					SelectChoice(far.Scene, far.Choices[0].Name);
+					ModLog.Info("ChoiceWindow: dev gap pick: load interactable=" + _loadHereBtn.GetComponent<Button>().interactable
+						+ ", why '" + LoadBlockedReason() + "'");
+					SelectChoice(far.Scene, far.Choices[0].Name);
+					ModLog.Info("ChoiceWindow: dev unpick: picks left " + _overrides.Count + ", selected '" + (_selScene ?? "") + "'");
+				}
+				for (int i = 0; i < _tree.Count; i++)
+				{
+					string cs = _tree[i].Upcoming ? null : ChapterStartSave(i);
+					if (cs != null)
+					{
+						ModLog.Info("ChoiceWindow: dev chapter start save for " + _tree[i].Scene + ": " + cs);
+					}
+				}
+			}
 			// Dev: a pick made impossible by an earlier one - red, Load greyed.
 			if (DevMakeConflict())
 			{
@@ -3732,6 +3819,41 @@ namespace Doorstop
 				catch (Exception) { }
 				TreeCol cur = _tree.Find(c => c.Current);
 				int ci = cur != null ? _tree.IndexOf(cur) : -1;
+				// "chapter": from the start of the chapter on screen (its game
+				// save), every played answer again, to the scene on screen with
+				// another answer there selected
+				if (lpArgs == "chapter" && ci > 0)
+				{
+					int first = ci;
+					while (first > 0 && SceneFlow.ChapterOf(_tree[first - 1].Scene) == SceneFlow.ChapterOf(cur.Scene))
+					{
+						first--;
+					}
+					DevFromChapterStart = true;
+					History.Choice other = _tree[first].Choices.Find(c => c.Name == _tree[first].PlayedChoice);
+					SelectChoice(_tree[first].Scene, other != null ? other.Name : _tree[first].Choices[0].Name);
+					SelectChoice(cur.Scene, cur.Choices.Find(c => !cur.Blocked.Contains(c.Name)).Name);
+					string planWhy;
+					LoadPlan cp = PlanLoad(out planWhy);
+					ModLog.Info("ChoiceWindow: dev load-path: from the chapter start - plan "
+						+ (cp != null ? cp.StartPath + " with " + cp.Picks.Count + " answer(s)" : "none: " + planWhy));
+					if (cp != null)
+					{
+						LoadSelected();
+						yield return new WaitForSeconds(1f);
+						RunPending();
+						yield return new WaitForSeconds(5f);
+						float until3 = Time.realtimeSinceStartup + 500f;
+						while (AutoPlay.Running && Time.realtimeSinceStartup < until3)
+						{
+							yield return new WaitForSeconds(1f);
+						}
+						ModLog.Info("ChoiceWindow: dev load-path: now at " + AutoPlay.Story()
+							+ (AutoPlay.Story() == cur.Scene ? " (the selected scene)" : " (NOT the selected scene)"));
+					}
+					DevFromChapterStart = false;
+					yield break;
+				}
 				int back;
 				// "back N": another answer N scenes back, then on to the scene on
 				// screen - a replay across several scenes (and years)

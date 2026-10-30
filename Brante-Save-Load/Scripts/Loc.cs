@@ -19,7 +19,7 @@ namespace Doorstop
 			TypeAuto, TypeManual, Current, NothingYet,
 			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath,
 			PickConflict, NothingToLoad,
-			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText
+			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick
 		}
 
 		static Loc()
@@ -79,6 +79,17 @@ namespace Doorstop
 			AddNoStatText(_ja, "この能力値にはゲーム内の説明がありません。");
 			AddNoStatText(_ko, "게임에 이 능력치에 대한 설명이 없습니다.");
 			AddNoStatText(_zh, "游戏中没有这项属性的说明。");
+			AddMissingPick(_en, "Pick an answer in every scene before the one you load: \"{0}\" has none yet.");
+			AddMissingPick(_ru, "Выберите ответ в каждой сцене до загружаемой: в «{0}» его пока нет.");
+			AddMissingPick(_de, "Wähle in jeder Szene vor der geladenen eine Antwort: „{0}“ hat noch keine.");
+			AddMissingPick(_fr, "Choisissez une réponse dans chaque scène avant celle à charger : « {0} » n'en a pas encore.");
+			AddMissingPick(_es, "Elige una respuesta en cada escena antes de la que cargas: «{0}» aún no tiene.");
+			AddMissingPick(_it, "Scegli una risposta in ogni scena prima di quella da caricare: «{0}» non ne ha ancora.");
+			AddMissingPick(_pl, "Wybierz odpowiedź w każdej scenie przed wczytywaną: „{0}” jeszcze jej nie ma.");
+			AddMissingPick(_tr, "Yükleyeceğin sahneden önceki her sahnede bir cevap seç: \"{0}\" için henüz yok.");
+			AddMissingPick(_ja, "読み込むシーンより前のすべてのシーンで回答を選んでください：「{0}」はまだ未選択です。");
+			AddMissingPick(_ko, "불러올 장면 이전의 모든 장면에서 답을 고르세요: \"{0}\"에는 아직 없습니다.");
+			AddMissingPick(_zh, "请在要读取的场景之前的每个场景中选择答案：“{0}”尚未选择。");
 			AddConflict(_en, "The answer in \"{0}\" on your path conflicts with your hero's stats at that moment: an earlier pick changed them. Pick another answer there.", "Nothing to load: choices selected correspond to the current scene.");
 			AddConflict(_ru, "Ответ в «{0}» на вашем пути противоречит характеристикам героя в тот момент: их изменил более ранний выбор. Выберите там другой ответ.", "Загружать нечего: выбранные ответы соответствуют текущей сцене.");
 			AddConflict(_de, "Die Antwort in „{0}“ auf deinem Weg passt nicht zu den Werten deines Helden in diesem Moment: eine frühere Wahl hat sie verändert. Wähle dort eine andere Antwort.", "Nichts zu laden: die gewählten Antworten entsprechen der aktuellen Szene.");
@@ -162,6 +173,11 @@ namespace Doorstop
 		private static void AddNoStatText(Dictionary<K, string> d, string text)
 		{
 			d[K.NoStatText] = text;
+		}
+
+		private static void AddMissingPick(Dictionary<K, string> d, string text)
+		{
+			d[K.MissingPick] = text;
 		}
 
 		private static void AddConflict(Dictionary<K, string> d, string conflict, string nothing)

@@ -79,6 +79,7 @@ namespace Doorstop
 		{
 			Running = true;
 			_pressedAt.Clear();
+			_unlocked.Clear();
 			// Fast: the game's clock runs FastScale times faster (animations,
 			// page turns and timed waits follow it), the sound is off, and the
 			// driver looks for the next button every 50 ms. Scene loading is
@@ -110,6 +111,14 @@ namespace Doorstop
 				string scene = Story();
 				bool moved = false;
 				string stopWhy = null;
+				// A death is the player's call (restart the chapter, or go on
+				// with one death spent), and the tree cannot foresee one: stop
+				// with the game's death page up.
+				if (DeathOnScreen())
+				{
+					ModLog.Info("AUTOPLAY: a death at " + scene + " - stopping, the choice is the player's");
+					break;
+				}
 				// One step, guarded: an exception inside a coroutine would end
 				// it without a word (seen right after a scene opened twice).
 				bool failed = false;
@@ -131,7 +140,11 @@ namespace Doorstop
 				{
 					lastMove = Time.realtimeSinceStartup;
 				}
-				else if (Time.realtimeSinceStartup - lastMove > 4f)
+				else if (Time.realtimeSinceStartup - lastMove > 2f && fast)
+				{
+					UnlockPopups();
+				}
+				if (!moved && Time.realtimeSinceStartup - lastMove > 4f)
 				{
 					string now = DescribeButtons();
 					if (now != lastButtons)
@@ -353,6 +366,55 @@ namespace Doorstop
 				ModLog.Error("AUTOPLAY: making the debug save failed:\n" + e);
 				return null;
 			}
+		}
+
+		// The game's pop-ups (an objective earned, an interlude) switch their
+		// continue button off in Start and back on from an animation event at
+		// the end of their show animation (SetButtonInteractable). At ten times
+		// speed that animation can end before Start runs, so the button stays
+		// off for good and the replay waits forever. Once nothing has moved
+		// for a while, each such pop-up gets that call made for it, once.
+		private static readonly HashSet<int> _unlocked = new HashSet<int>();
+
+		private static void UnlockPopups()
+		{
+			foreach (MonoBehaviour mb in UnityEngine.Object.FindObjectsOfType<MonoBehaviour>())
+			{
+				if (mb == null || !mb.isActiveAndEnabled || _unlocked.Contains(mb.GetInstanceID()))
+				{
+					continue;
+				}
+				System.Reflection.MethodInfo m = mb.GetType().GetMethod("SetButtonInteractable",
+					System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public, null, Type.EmptyTypes, null);
+				if (m == null)
+				{
+					continue;
+				}
+				_unlocked.Add(mb.GetInstanceID());
+				try
+				{
+					m.Invoke(mb, null);
+					ModLog.Info("AUTOPLAY: switched on the continue button of " + PathOf(mb.transform));
+				}
+				catch (Exception e)
+				{
+					ModLog.Info("AUTOPLAY: " + mb.GetType().Name + ".SetButtonInteractable failed: " + e.Message);
+				}
+			}
+		}
+
+		// The game's death page (restart the chapter or go on) is up.
+		public static bool DeathOnScreen()
+		{
+			foreach (_Scripts.AMVCC.Views.Windows.Death.DeathWindowBehaviour w in
+				Resources.FindObjectsOfTypeAll<_Scripts.AMVCC.Views.Windows.Death.DeathWindowBehaviour>())
+			{
+				if (w != null && w.gameObject.scene.IsValid() && w.gameObject.activeInHierarchy)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		// The story scene on screen ("" between scenes).

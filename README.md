@@ -65,7 +65,8 @@ filled in red from the start of the story up to the scene you are on. The
   requires: all of the listed requirements, or one of a "one of" group, green
   when the hero meets it at that point, red when not.
 - **Click answers to build a path.** Each click picks that answer; the path
-  follows it and the last pick carries a red dashed outline. Answers your hero
+  follows it and the last pick carries a red dashed outline. Click a picked
+  answer again to take the pick back. Answers your hero
   could not take at that point are greyed out and cannot be picked. The
   **reset path** arrow (top right, next to the ×) puts every pick back to
   what you played. Changing an answer re-checks everything after it at once:
@@ -86,19 +87,24 @@ filled in red from the start of the story up to the scene you are on. The
   under its title.
 - **Load scene** (top middle) takes you to the scene of your last pick along
   your path. It is greyed out while that would load exactly the scene and
-  answers you have now, or while a pick conflicts; hover it to see why. The
-  mod loads its save from just before the first answer you changed and plays
-  the answers itself - at ten times speed, sound off - until the selected
-  scene is on screen, where it stops and leaves the choice to you.
+  answers you have now, while a pick conflicts, or while a scene before the
+  selected one has no answer yet - every scene on the way needs one, picked
+  or played; hover it to see why. The mod loads its save from just before the
+  first answer you changed (or, when it has none there - scenes played before
+  the mod was installed - the game's own save of that chapter's start) and
+  plays the answers itself, at ten times speed with the sound off, until the
+  selected scene is on screen, where it stops and leaves the choice to you.
+  If the hero dies on the way it stops at the game's death page: restarting
+  the chapter or going on is your call.
 
 To grey answers out, the tree works out the hero at every scene of the path,
 from left to right. Up to your first changed answer it is the hero exactly as
 the mod saved him at that scene - on *this* path: a scene reached on other
 paths too (an earlier Load scene with other answers) has a save from each, and
 the tree takes the one that leads to where you are now. From the first changed
-answer on, each answer's effects are applied with the game's own rules; a
-scene ahead you did not pick counts as its first open answer, which is also
-the one Load scene gives there.
+answer on, each answer's effects are applied with the game's own rules; for
+the checks beyond a scene ahead you have not picked, that scene counts as its
+first open answer (Load scene itself waits for your pick there).
 
 ## Notes
 
@@ -170,9 +176,10 @@ kept for reference; `tools/build_graph.py` maps it onto the game's scenes.
 
 ### Known limitations
 
-- Load scene needs a mod save at or before the first changed answer, so it
-  cannot reach back past the moment the mod was installed: the game keeps no
-  earlier states.
+- Load scene needs a known state at or before the first changed answer: a mod
+  save, or the start of that chapter (the game keeps one save per chapter
+  start). Before the mod was installed, that means from a chapter's start,
+  with every answer of that chapter up to the change picked by you.
 - Upcoming scenes are the rest of your chapter in the order the game reaches
   them, on your run's track (your Lot in chapter 3, your post in chapter 4),
   then every later chapter. In a later chapter a track that is decided by
@@ -186,8 +193,6 @@ kept for reference; `tools/build_graph.py` maps it onto the game's scenes.
   epilogue's fate pages have no answers, so the tree ends with the last choice
   of chapter 5.
 - Load scene replays the path in the game itself, about 5 to 10 seconds a scene.
-- A scene ahead without a pick counts as its first open answer - the one
-  Load scene gives there - so every scene after it is still checked.
 - Greying past a changed answer is an estimate: stat changes that happen
   between scenes are not simulated, and story objectives are taken from the
   mod's saves and carried forward unchanged past a changed answer. If the
