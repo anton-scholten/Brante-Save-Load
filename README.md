@@ -9,9 +9,9 @@ never touches the game's saves.
 
 - **Load any past choice point.** Every time a choice appears on screen, the mod
   records the exact game state. Click the save / load tab on top of the book
-  (the medallion with an up and a down arrow, next to the chapter tab), pick
-  any entry from the full-screen list, confirm — and the
-  game returns to that exact choice screen. Entries can also be removed from the
+  (the medallion with a down and an up arrow, next to the chapter tab), pick
+  any entry from the full-screen list, confirm — and the game returns to that
+  exact choice screen. Entries can also be removed from the
   list (that only deletes the mod's own save file).
 - **Its own snapshots, and a backup of the game's save.** Choice points are
   recorded into the mod's own folder as you reach them. Before the mod loads one
@@ -24,7 +24,7 @@ never touches the game's saves.
 - **Your own saves.** The same window lists the saves of the **current main save
   only** in one table: automatic choice points and manual saves (**"Save now"**,
   shown in a yellow row colour). Click a column header to sort by it, click again
-  to reverse; the table scrolls and the × on the right removes a row. A choice
+  to reverse; the table scrolls and the bin on the right removes a row. A choice
   name too long for its column rests with an ellipsis and then scrolls (marquee)
   until its end is shown. Saves are kept
   per main save in `Brante-Save-Load/Runs/<main save ID>/`, separate from the game's
@@ -42,14 +42,16 @@ never touches the game's saves.
 ## Tree view
 
 The tree view tab on top of the book's left page (the medallion with linked
-boxes, right of the save / load tab; both light up and name themselves on
-hover, as the game's own tabs do) opens the whole story as a tree, left to right, filling the whole screen like the game's own pages (the mouse
-wheel scrolls it sideways). The scrollbar doubles as a progress bar: its track
-is filled in red from the start of the story up to the scene you are on. The
-× in the top right corner closes it.
+boxes, right of the save / load tab; both tabs light up and name themselves on
+hover, as the game's own tabs do) opens the whole story as a tree, left to
+right, filling the whole screen like the game's own pages (the mouse wheel
+scrolls it sideways). The scrollbar doubles as a progress bar: its track is
+filled in red from the start of the story up to the scene you are on. The
+× in the top right corner goes back to the game.
 
 - **Columns are scenes, boxes are answers.** The scene on screen says
-  "Current" at its foot, the next one "Upcoming". Every scene this save has been
+  "Current" at its foot, the next one "Upcoming", and a scene that may not
+  come at all what it is "possible depending on". Every scene this save has been
   through, in order, then everything still ahead: the rest of this chapter and
   every later one, each chapter starting at a vertical rule with its name on
   top. Answer texts come from the game's own translation table, so scenes
@@ -65,15 +67,17 @@ is filled in red from the start of the story up to the scene you are on. The
 - **Click answers to build a path.** Each click picks that answer; the path
   follows it and the last pick carries a red dashed outline. Answers your hero
   could not take at that point are greyed out and cannot be picked. The
-  **reset path** button (top right, next to the ×) puts every pick back to
-  what you played. If a pick changes the hero so much that an answer you
-  picked further on is no longer open to him there, that answer turns red
-  and Load scene is greyed out until you pick another one.
+  **reset path** arrow (top right, next to the ×) puts every pick back to
+  what you played. Changing an answer re-checks everything after it at once:
+  if the hero can no longer take an answer further along the path (one you
+  picked, or one you played and kept), that answer turns red and Load scene
+  is greyed out until you pick another one.
 - **Your hero's stats** fill the space under the tree's scrollbar (the tree
   takes only the height its answers need): every stat in the game, one
   column per tab of the game's book (Personality, House of Brante, Destiny,
   The Province, Occupation, The Revolt), each stat a row in the game's own style - icon, name, value, the game's
-  word for the level, and its slider with the stat's scale. They show the
+  word for the level, and its slider with the stat's scale (the stats no
+  window of the game shows join the tab they belong to). They show the
   hero after your last pick along the path, values above today's in green
   and below in red, and go back to today's with reset path. Hover a stat for
   the game's own pop-up: what it means and every step of its scale, the
@@ -82,15 +86,19 @@ is filled in red from the start of the story up to the scene you are on. The
   under its title.
 - **Load scene** (top middle) takes you to the scene of your last pick along
   your path. It is greyed out while that would load exactly the scene and
-  answers you have now, or while a pick conflicts; hover it to see why. The mod loads its newest save from before the first answer you
-  changed and plays your picked answers itself - at ten times speed, sound off,
-  a few seconds a scene - until the selected scene is on screen, where it
-  stops and leaves the choice to you.
+  answers you have now, or while a pick conflicts; hover it to see why. The
+  mod loads its save from just before the first answer you changed and plays
+  the answers itself - at ten times speed, sound off - until the selected
+  scene is on screen, where it stops and leaves the choice to you.
 
-To grey answers out, the tree works out the hero at every scene of the path:
-exactly as the mod saved him there where it has a save, and from your first
-changed answer on by applying each picked answer's effects with the game's own
-rules.
+To grey answers out, the tree works out the hero at every scene of the path,
+from left to right. Up to your first changed answer it is the hero exactly as
+the mod saved him at that scene - on *this* path: a scene reached on other
+paths too (an earlier Load scene with other answers) has a save from each, and
+the tree takes the one that leads to where you are now. From the first changed
+answer on, each answer's effects are applied with the game's own rules; a
+scene ahead you did not pick counts as its first open answer, which is also
+the one Load scene gives there.
 
 ## Notes
 

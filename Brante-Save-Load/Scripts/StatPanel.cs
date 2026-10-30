@@ -480,7 +480,7 @@ namespace Doorstop
 			}
 			t.text = text;
 			t.fontSize = 22f;
-			t.color = new Color(0.55f, 0.30f, 0.25f);
+			t.color = Palette.Accent;
 			t.alignment = TextAlignmentOptions.Center;
 			t.enableWordWrapping = false;
 			t.overflowMode = TextOverflowModes.Ellipsis;
@@ -509,7 +509,7 @@ namespace Doorstop
 				tab.Title.text = locked
 					? name + "\n<size=58%>" + Loc.Game("HUD.WillOpen" + tab.Chapter, "") + "</size>"
 					: name;
-				tab.Title.color = locked ? new Color(0.55f, 0.30f, 0.25f, 0.45f) : new Color(0.55f, 0.30f, 0.25f);
+				tab.Title.color = locked ? Palette.Fade(Palette.Accent, 0.45f) : Palette.Accent;
 			}
 			foreach (Row row in _rows)
 			{
@@ -524,8 +524,8 @@ namespace Doorstop
 				if (row.Value != null)
 				{
 					row.Value.text = row.Param.ParameterName == ParametersList.Death ? "" : value.ToString();
-					row.Value.color = value > today ? new Color(0.18f, 0.42f, 0.18f)
-						: value < today ? new Color(0.62f, 0.16f, 0.12f) : new Color(0.12f, 0.10f, 0.08f);
+					row.Value.color = value > today ? Palette.Good
+						: value < today ? Palette.Bad : Palette.Ink;
 				}
 				if (row.Slider != null)
 				{
@@ -552,7 +552,7 @@ namespace Doorstop
 			rt.anchoredPosition = new Vector2(x, 0f);
 			rt.sizeDelta = new Vector2(3f, -8f);
 			Image img = go.AddComponent<Image>();
-			img.color = new Color(0.84f, 0.79f, 0.68f);
+			img.color = Palette.Card;
 			img.raycastTarget = false;
 		}
 

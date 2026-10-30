@@ -511,11 +511,6 @@ namespace Doorstop
 			return list;
 		}
 
-		// A stat's name in the game's language.
-		public static string StatName(Parameter p)
-		{
-			return Translated(p.name, p.ParameterName.ToString());
-		}
 
 		public static Parameter ParameterAsset(string name)
 		{

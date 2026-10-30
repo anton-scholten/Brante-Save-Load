@@ -26,7 +26,7 @@ Brante-Save-Load/            the folder that gets installed into the game dir
     ModLog.cs                file logger (usable before Unity is up)
     ModHost.cs               host component; probes, dev markers, save-slot adopt
     Recorder.cs              snapshots, dedup, backup, traces, save repair
-    ChoiceWindow.cs          save table, tree view, path picks + Load scene
+    ChoiceWindow.cs          book tabs, save table, tree view, path picks + Load scene
     AutoPlay.cs              plays scenes by itself (Load scene replay, debug runs)
     History.cs               the save's scene path + offered answers
     SceneTexts.cs            loader for scene-texts.tsv (titles + answers)
@@ -34,6 +34,7 @@ Brante-Save-Load/            the folder that gets installed into the game dir
     SceneEffects.cs          scene-effects.tsv: what each answer changes (tree pop-up)
     StatPanel.cs             tree's stat columns: clones of the game's stat row
     Loc.cs                   the UI's own translations (11 languages)
+    Palette.cs               every colour the UI uses (fades, not near-copies)
     BoltDump.cs              runtime dump of the choice machine (dev only)
 doorstop/doorstop_config.ini the Doorstop config installed into the game folder
 vendor/                      vendored third-party binaries + their licenses

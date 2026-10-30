@@ -285,8 +285,8 @@ namespace Doorstop
 						ModLog.Info("DEV HISTORY: marker found - dumping the scene path");
 						History.Dump();
 					}
-					// Phase 6 book test: a marker opens the book and logs the
-					// menu layout dump (the "Save / Load" button placement).
+					// UI test: the book tabs, the save table and the tree view
+					// (ChoiceWindow.DevBook).
 					string book = Path.Combine(Recorder.SnapshotDir, "dev-book.txt");
 					if (File.Exists(book))
 					{

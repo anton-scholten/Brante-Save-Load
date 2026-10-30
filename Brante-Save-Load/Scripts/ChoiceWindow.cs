@@ -305,19 +305,20 @@ namespace Doorstop
 		}
 	}
 
-	// Turns a cross's bars red while the pointer is on its button.
+	// Turns a cross's bars (or a delete icon) red while the pointer is on its
+	// button.
 	public sealed class CrossHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 	{
 		public Image[] Bars;
 
 		public void OnPointerEnter(PointerEventData eventData)
 		{
-			Paint(new Color(0.85f, 0.10f, 0.10f));
+			Paint(Palette.Red);
 		}
 
 		public void OnPointerExit(PointerEventData eventData)
 		{
-			Paint(new Color(0.05f, 0.04f, 0.03f));
+			Paint(Palette.Ink);
 		}
 
 		private void Paint(Color c)
@@ -339,28 +340,6 @@ namespace Doorstop
 	public static class ChoiceWindow
 	{
 		// Colours - parchment style of the game.
-		private static readonly Color ColDim = new Color(0f, 0f, 0f, 0.65f);
-		private static readonly Color ColPanel = new Color(0.93f, 0.89f, 0.79f);
-		private static readonly Color ColAuto = new Color(0.84f, 0.79f, 0.68f);
-		private static readonly Color ColAutoAlt = new Color(0.88f, 0.84f, 0.75f);
-		private static readonly Color ColManual = new Color(1f, 0.96f, 0.66f);
-		private static readonly Color ColManualAlt = new Color(1f, 0.93f, 0.55f);
-		private static readonly Color ColButtonDark = new Color(0.30f, 0.26f, 0.20f, 0.95f);
-		private static readonly Color ColLoadButton = new Color(0.55f, 0.30f, 0.25f);
-		private static readonly Color ColCancelButton = new Color(0.55f, 0.53f, 0.48f);
-		private static readonly Color ColTextLight = new Color(0.95f, 0.92f, 0.82f);
-		private static readonly Color ColTextDark = new Color(0.12f, 0.10f, 0.08f);
-		private static readonly Color ColDashRed = new Color(0.85f, 0.10f, 0.10f);
-		private static readonly Color ColCrossNormal = new Color(0.05f, 0.04f, 0.03f);
-		private static readonly Color ColTreeLine = new Color(0.55f, 0.50f, 0.42f, 0.55f);
-		private static readonly Color ColTreeChosen = new Color(0.55f, 0.30f, 0.25f);
-		private static readonly Color ColTreeChosenBg = new Color(1f, 0.93f, 0.72f);
-		private static readonly Color ColTreeUpcomingBg = new Color(0.84f, 0.79f, 0.68f, 0.45f);
-		private static readonly Color ColTreeMuted = new Color(0.45f, 0.40f, 0.32f);
-		private static readonly Color ColTreeBlocked = new Color(0.72f, 0.70f, 0.66f, 0.55f);
-		private static readonly Color ColTreeConflictBg = new Color(0.86f, 0.42f, 0.38f, 0.85f);
-		private static readonly Color ColTreeChapter = new Color(0.55f, 0.30f, 0.25f, 0.55f);
-		private static readonly Color ColTreePlayedBand = new Color(0.55f, 0.30f, 0.25f, 0.07f);
 
 		private enum Pending { Load, Delete, SaveNow, LoadPath }
 
@@ -435,7 +414,6 @@ namespace Doorstop
 		private static Sprite _triDown;
 		private static Sprite _dashH;
 		private static Sprite _dashV;
-		private static GameObject _saveNowBtn;
 		private static GameObject _historyPanel;
 		private static int _historyLoadable;
 		private static TextMeshProUGUI _historyInfo;
@@ -501,15 +479,13 @@ namespace Doorstop
 		private static string _firstItemTitle;
 
 		// ------------------------------------------------------------------
-		// The book tab: a way into the tree view from the game screen
+		// The book tabs: the way into the save table and the tree view
 		// ------------------------------------------------------------------
 
-		// A tab on the book's left page, next to the year and chapter tabs, made
-		// like the settings tab: a copy of its button (hover sound and all)
-		// showing the chapter tab's plain medallion, a wooden strip behind it,
-		// and "save / load / mod" written on it. Clicking it opens the tree view.
-		// Every story scene brings its own HUD, so this runs after each scene
-		// load (ModHost) and does nothing when the tab is there.
+		// Two tabs on the book's left page, right of the year and chapter tabs,
+		// made like the settings tab (MakeBookTab): one opens the save table,
+		// one the tree view. Every story scene brings its own HUD, so this runs
+		// after each scene load (ModHost) and does nothing when they are there.
 		public static void EnsureBookTab()
 		{
 			try
@@ -608,7 +584,7 @@ namespace Doorstop
 					}
 				}
 
-				Color ink = new Color(0.86f, 0.83f, 0.76f);
+				Color ink = Palette.TextLight;
 				foreach (TextMeshProUGUI t in chapter.GetComponentsInChildren<TextMeshProUGUI>(true))
 				{
 					if (t.name != "Value")
@@ -799,7 +775,7 @@ namespace Doorstop
 			GameObject dim = CreateUiObject("Dim", _canvas.transform);
 			Stretch(dim.GetComponent<RectTransform>());
 			Image dimImg = dim.AddComponent<Image>();
-			dimImg.color = ColDim;
+			dimImg.color = Palette.Shade;
 			Button dimBtn = dim.AddComponent<Button>();
 			dimBtn.targetGraphic = dimImg;
 			dimBtn.transition = Selectable.Transition.None;
@@ -810,11 +786,11 @@ namespace Doorstop
 			RectTransform prt = panel.GetComponent<RectTransform>();
 			Stretch(prt);
 			Image pimg = panel.AddComponent<Image>();
-			pimg.color = ColPanel;
+			pimg.color = Palette.Paper;
 
 			// Title.
 			TextMeshProUGUI title = AddLabel(panel.transform, "Title",
-				Loc.T(Loc.K.Title), 34f, ColTextDark, false);
+				Loc.T(Loc.K.Title), 34f, Palette.Ink, false);
 			title.alignment = TextAlignmentOptions.MidlineLeft;
 			RectTransform trt = title.rectTransform;
 			trt.anchorMin = new Vector2(0f, 1f);
@@ -884,9 +860,9 @@ namespace Doorstop
 			BuildScrollbar(scroll.transform);
 
 			// Save now (bottom centre).
-			_saveNowBtn = AddButton(panel.transform, "SaveNow", new Vector2(0.5f, 0f), new Vector2(0f, 20f),
-				new Vector2(260f, 52f), ColLoadButton, Loc.T(Loc.K.SaveNow), 24f,
-				delegate { Ask(Pending.SaveNow, "", "", null); }).gameObject;
+			AddButton(panel.transform, "SaveNow", new Vector2(0.5f, 0f), new Vector2(0f, 20f),
+				new Vector2(260f, 52f), Palette.Accent, Loc.T(Loc.K.SaveNow), 24f,
+				delegate { Ask(Pending.SaveNow, "", "", null); });
 
 			// Both on the canvas itself: the tree is wider than the save window,
 			// and the confirm dialog must be able to sit on top of the tree.
@@ -922,7 +898,6 @@ namespace Doorstop
 			_itemContainer = null;
 			_headerLabels = null;
 			_sortIcons = null;
-			_saveNowBtn = null;
 			_historyPanel = null;
 			_historyList = null;
 			_historyScroll = null;
@@ -964,7 +939,7 @@ namespace Doorstop
 			_historyPanel = CreateUiObject("HistoryPanel", panel);
 			Stretch(_historyPanel.GetComponent<RectTransform>());
 			Image overlay = _historyPanel.AddComponent<Image>();
-			overlay.color = new Color(0f, 0f, 0f, 0.55f);
+			overlay.color = Palette.Shade;
 
 			// The whole screen, as the game's own pages: the canvas is always
 			// 1080 units tall and as wide as the window's aspect makes it, so
@@ -974,11 +949,11 @@ namespace Doorstop
 			Stretch(brt);
 			box.AddComponent<TreeResize>();
 			Image bimg = box.AddComponent<Image>();
-			bimg.color = ColPanel;
+			bimg.color = Palette.Paper;
 			_historyBox = brt;
 
 			TextMeshProUGUI title = AddLabel(box.transform, "Title",
-				Loc.T(Loc.K.Playthrough), 32f, ColTextDark, false);
+				Loc.T(Loc.K.Playthrough), 32f, Palette.Ink, false);
 			title.alignment = TextAlignmentOptions.MidlineLeft;
 			RectTransform trt = title.rectTransform;
 			trt.anchorMin = new Vector2(0f, 1f);
@@ -1019,7 +994,7 @@ namespace Doorstop
 			hst.offsetMin = new Vector2(0f, 0f);
 			hst.offsetMax = new Vector2(0f, 12f);
 			Image htimg = track.AddComponent<Image>();
-			htimg.color = new Color(0f, 0f, 0f, 0.12f);
+			htimg.color = Palette.Track;
 			Scrollbar hsb = track.AddComponent<Scrollbar>();
 			hsb.direction = Scrollbar.Direction.LeftToRight;
 			// Progress through the story: the track filled in the path's red
@@ -1032,12 +1007,12 @@ namespace Doorstop
 			_historyProgress.offsetMin = Vector2.zero;
 			_historyProgress.offsetMax = Vector2.zero;
 			Image pimg2 = progress.AddComponent<Image>();
-			pimg2.color = new Color(ColTreeChosen.r, ColTreeChosen.g, ColTreeChosen.b, 0.75f);
+			pimg2.color = Palette.Fade(Palette.Accent, 0.75f);
 			pimg2.raycastTarget = false;
 			GameObject handle = CreateUiObject("Handle", track.transform);
 			Stretch(handle.GetComponent<RectTransform>());
 			Image hhimg = handle.AddComponent<Image>();
-			hhimg.color = ColButtonDark;
+			hhimg.color = Palette.Dark;
 			hsb.targetGraphic = hhimg;
 			hsb.handleRect = handle.GetComponent<RectTransform>();
 			sc.horizontalScrollbar = hsb;
@@ -1058,7 +1033,7 @@ namespace Doorstop
 
 			// Hint line (why a load could not start), under the header row.
 			_historyInfo = AddLabel(box.transform, "Info", "", 18f,
-				new Color(0.30f, 0.26f, 0.20f), false);
+				Palette.Dark, false);
 			RectTransform irt2 = _historyInfo.rectTransform;
 			irt2.anchorMin = new Vector2(0f, 1f);
 			irt2.anchorMax = new Vector2(1f, 1f);
@@ -1091,8 +1066,12 @@ namespace Doorstop
 
 			// One header row: the title on the left, Load scene in the middle,
 			// reset (back to the answers actually played) left of the x.
-			_undoBtn = AddButton(box.transform, "Undo", new Vector2(1f, 1f), new Vector2(-84f, -20f),
-				new Vector2(58f, 46f), ColCancelButton, null, 0f, UndoSelections).gameObject;
+			// just the arrow, in the x's colour (and, unlike the x, not red
+			// under the pointer: it deletes nothing)
+			Button undoBtn = AddButton(box.transform, "Undo", new Vector2(1f, 1f), new Vector2(-84f, -20f),
+				new Vector2(58f, 46f), Color.clear, null, 0f, UndoSelections);
+			undoBtn.transition = Selectable.Transition.None;
+			_undoBtn = undoBtn.gameObject;
 			TreeHover undoHover = _undoBtn.AddComponent<TreeHover>();
 			RectTransform undoRt = _undoBtn.GetComponent<RectTransform>();
 			undoHover.OnHover = delegate(bool on)
@@ -1113,14 +1092,14 @@ namespace Doorstop
 			uirt.offsetMax = new Vector2(-12f, -7f);
 			Image uiImg = uicon.AddComponent<Image>();
 			uiImg.sprite = MakeUndoIcon();
-			uiImg.color = ColTextLight;
+			uiImg.color = Palette.Ink;
 			uiImg.preserveAspect = true;
 			uiImg.raycastTarget = false;
 
 			// Load scene: goes to the selected answer's scene along the selected
 			// path. Just wider than its label.
 			Button loadBtn = AddButton(box.transform, "LoadHere", new Vector2(0.5f, 1f), new Vector2(0f, -20f),
-				new Vector2(200f, 46f), ColLoadButton, Loc.T(Loc.K.LoadScene), 22f, LoadSelected);
+				new Vector2(200f, 46f), Palette.Accent, Loc.T(Loc.K.LoadScene), 22f, LoadSelected);
 			ColorBlock lcb = loadBtn.colors;
 			lcb.disabledColor = Color.white;   // greyed by UpdateLoadButton's own colour
 			loadBtn.colors = lcb;
@@ -1385,11 +1364,11 @@ namespace Doorstop
 				}
 			}
 			_loadHereBtn.GetComponent<Button>().interactable = on;
-			_loadHereBtn.GetComponent<Image>().color = on ? ColLoadButton : ColCancelButton;
+			_loadHereBtn.GetComponent<Image>().color = on ? Palette.Accent : Palette.Grey;
 			TextMeshProUGUI label = _loadHereBtn.GetComponentInChildren<TextMeshProUGUI>();
 			if (label != null)
 			{
-				label.color = on ? ColTextLight : new Color(ColTextLight.r, ColTextLight.g, ColTextLight.b, 0.55f);
+				label.color = on ? Palette.TextLight : Palette.Fade(Palette.TextLight, 0.55f);
 			}
 		}
 
@@ -1527,19 +1506,7 @@ namespace Doorstop
 				_baseCols = BuildColumns();
 			}
 			List<TreeCol> cols = _baseCols;
-			// The player's picks replace what was played (or nothing, ahead).
-			foreach (TreeCol col in cols)
-			{
-				string picked;
-				if (!_overrides.TryGetValue(col.Scene, out picked))
-				{
-					picked = col.PlayedChoice;
-				}
-				foreach (History.Choice c in col.Choices)
-				{
-					c.Chosen = !string.IsNullOrEmpty(picked) && c.Name == picked;
-				}
-			}
+			ApplyPicks(cols);
 			long tData = sw.ElapsedMilliseconds;
 			WorkOutOpenAnswers(cols);
 			long tHero = sw.ElapsedMilliseconds;
@@ -1580,7 +1547,7 @@ namespace Doorstop
 			if (cols.Count == 0)
 			{
 				TextMeshProUGUI empty = AddLabel(_historyList, "Empty",
-					Loc.T(Loc.K.NothingYet), 20f, ColTextDark, true);
+					Loc.T(Loc.K.NothingYet), 20f, Palette.Ink, true);
 				RectTransform ert = empty.rectTransform;
 				ert.anchorMin = new Vector2(0f, 1f);
 				ert.anchorMax = new Vector2(0f, 1f);
@@ -1625,9 +1592,9 @@ namespace Doorstop
 				int chapter = SceneFlow.ChapterOf(e.Scene);
 				if (chapter > 0 && chapter != prevChapter)
 				{
-					AddLine(_historyList, x + 2f, 0f, x + 2f, height, ColTreeChapter, 3f);
+					AddLine(_historyList, x + 2f, 0f, x + 2f, height, Palette.Fade(Palette.Accent, 0.55f), 3f);
 					TextMeshProUGUI ch = AddLabel(_historyList, "Chapter", ChapterTitle(chapter),
-						20f, ColTreeChosen, false);
+						20f, Palette.Accent, false);
 					Wrap(ch, x + 14f, 2f, TreeColW * 2f, 28f);
 					ch.enableWordWrapping = false;
 				}
@@ -1651,12 +1618,12 @@ namespace Doorstop
 					brt2.anchoredPosition = new Vector2(x + 6f, -(TreeHeadY - 4f));
 					brt2.sizeDelta = new Vector2(TreeColW - 8f, height - TreeHeadY - 6f);
 					Image bandImg = band.AddComponent<Image>();
-					bandImg.color = ColTreePlayedBand;
+					bandImg.color = Palette.Fade(Palette.Accent, 0.07f);
 					bandImg.raycastTarget = false;
 					if (!e.Recorded && !e.Current)
 					{
 						TextMeshProUGUI nr = AddLabel(band.transform, "NotRecorded",
-							Loc.T(Loc.K.NotRecorded), 15f, ColTreeMuted, true);
+							Loc.T(Loc.K.NotRecorded), 15f, Palette.Muted, true);
 						RectTransform nrt2 = nr.rectTransform;
 						nrt2.anchorMin = new Vector2(0f, 0f);
 						nrt2.anchorMax = new Vector2(1f, 0f);
@@ -1684,7 +1651,7 @@ namespace Doorstop
 				if (foot.Count > 0)
 				{
 					TextMeshProUGUI up = AddLabel(_historyList, "Foot", string.Join("\n", foot.ToArray()),
-						15f, ColTreeMuted, true);
+						15f, Palette.Muted, true);
 					up.enableWordWrapping = true;
 					up.overflowMode = TextOverflowModes.Overflow;
 					// centred in a two-line band at the column's foot
@@ -1693,12 +1660,12 @@ namespace Doorstop
 				}
 				float barEnd = e.Current ? x + TreeNodeX + TreeNodeW * 0.5f : x + TreeColW;
 				AddLine(_historyList, x + 6f, TreeBarY, barEnd, TreeBarY,
-					played ? ColTreeChosen : ColTreeLine, played ? 6f : 3f);
+					played ? Palette.Accent : Palette.Fade(Palette.Muted, 0.55f), played ? 6f : 3f);
 
 				// Column header: the scene's title.
 				string headText = e.Title;
 				TextMeshProUGUI head = AddLabel(_historyList, "Head", headText,
-					18f, e.Upcoming ? ColTreeMuted : ColTextDark, false);
+					18f, e.Upcoming ? Palette.Muted : Palette.Ink, false);
 				Wrap(head, x + 14f, TreeHeadY, TreeNodeW + TreeNodeX - 14f, 44f);
 				head.enableWordWrapping = true;
 				head.overflowMode = TextOverflowModes.Ellipsis;
@@ -1706,7 +1673,7 @@ namespace Doorstop
 				// The spine joins the node centres of this column.
 				if (shown.Count > 1)
 				{
-					AddLine(_historyList, x + 16f, RowCentre(0), x + 16f, RowCentre(shown.Count - 1), ColTreeLine, 3f);
+					AddLine(_historyList, x + 16f, RowCentre(0), x + 16f, RowCentre(shown.Count - 1), Palette.Fade(Palette.Muted, 0.55f), 3f);
 				}
 
 				// Answers, top to bottom, each on a pale connector (the picked
@@ -1715,7 +1682,7 @@ namespace Doorstop
 				{
 					History.Choice c = e.Choices[shown[r]];
 					float y = TreeTop + r * TreeRowH;
-					AddLine(_historyList, x + 16f, RowCentre(r), x + TreeNodeX, RowCentre(r), ColTreeLine, 3f);
+					AddLine(_historyList, x + 16f, RowCentre(r), x + TreeNodeX, RowCentre(r), Palette.Fade(Palette.Muted, 0.55f), 3f);
 					_nodes.Add(MakeNode(e, c, x + TreeNodeX, y));
 				}
 			}
@@ -1753,7 +1720,7 @@ namespace Doorstop
 			string choiceName = c.Name;
 			n.Btn.onClick.AddListener(delegate { SelectChoice(sceneId, choiceName); });
 
-			n.Label = AddLabel(node.transform, "Text", SceneEffects.NobleParticle(c.Text), 17f, ColTextDark, false);
+			n.Label = AddLabel(node.transform, "Text", SceneEffects.NobleParticle(c.Text), 17f, Palette.Ink, false);
 			RectTransform lrt = n.Label.rectTransform;
 			lrt.anchorMin = Vector2.zero;
 			lrt.anchorMax = Vector2.one;
@@ -1791,10 +1758,10 @@ namespace Doorstop
 			// pick changed his stats) turns red; another answer there can
 			// replace it
 			bool conflict = blocked && n.Choice.Chosen && IsConflict(n.Col);
-			n.Img.color = conflict ? ColTreeConflictBg : n.Choice.Chosen ? ColTreeChosenBg : blocked ? ColTreeBlocked
-				: n.Col.Upcoming ? ColTreeUpcomingBg : ColAuto;
-			n.Label.color = conflict ? ColTextDark : blocked ? new Color(0.12f, 0.10f, 0.08f, 0.35f)
-				: !n.Col.Upcoming ? ColTextDark : new Color(0.12f, 0.10f, 0.08f, 0.6f);
+			n.Img.color = conflict ? Palette.ConflictBg : n.Choice.Chosen ? Palette.Highlight : blocked ? Palette.Fade(Palette.Grey, 0.45f)
+				: n.Col.Upcoming ? Palette.Fade(Palette.Card, 0.45f) : Palette.Card;
+			n.Label.color = conflict ? Palette.Ink : blocked ? Palette.Fade(Palette.Ink, 0.35f)
+				: !n.Col.Upcoming ? Palette.Ink : Palette.Fade(Palette.Ink, 0.6f);
 			n.Btn.interactable = !blocked;
 			bool selected = n.Col.Scene == _selScene && n.Choice.Name == _selChoice;
 			if (selected && n.Mark == null)
@@ -1919,7 +1886,7 @@ namespace Doorstop
 				int fromRow = ChosenRow(cols[i], _visible[i]);
 				if (fromRow >= 0)
 				{
-					AddLine(_pathLayer, x + 16f, RowCentre(fromRow), x + TreeNodeX, RowCentre(fromRow), ColTreeChosen, 5f);
+					AddLine(_pathLayer, x + 16f, RowCentre(fromRow), x + TreeNodeX, RowCentre(fromRow), Palette.Accent, 5f);
 				}
 				if (i + 1 >= cols.Count || _visible[i + 1].Count == 0)
 				{
@@ -1931,11 +1898,11 @@ namespace Doorstop
 					continue;   // no answer here (yet): nothing joins it to the next scene
 				}
 				float fromY = RowCentre(fromRow);
-				AddLine(_pathLayer, x + TreeNodeX + TreeNodeW, fromY, nextSpine, fromY, ColTreeChosen, 5f);
+				AddLine(_pathLayer, x + TreeNodeX + TreeNodeW, fromY, nextSpine, fromY, Palette.Accent, 5f);
 				int toRow = ChosenRow(cols[i + 1], _visible[i + 1]);
 				if (toRow >= 0 && Mathf.Abs(RowCentre(toRow) - fromY) > 0.5f)
 				{
-					AddLine(_pathLayer, nextSpine, fromY, nextSpine, RowCentre(toRow), ColTreeChosen, 5f);
+					AddLine(_pathLayer, nextSpine, fromY, nextSpine, RowCentre(toRow), Palette.Accent, 5f);
 				}
 			}
 		}
@@ -1989,6 +1956,23 @@ namespace Doorstop
 				AddUpcoming(cols, all);
 			}
 			return cols;
+		}
+
+		// The player's picks replace what was played (or nothing, ahead).
+		private static void ApplyPicks(List<TreeCol> cols)
+		{
+			foreach (TreeCol col in cols)
+			{
+				string picked;
+				if (!_overrides.TryGetValue(col.Scene, out picked))
+				{
+					picked = col.PlayedChoice;
+				}
+				foreach (History.Choice c in col.Choices)
+				{
+					c.Chosen = !string.IsNullOrEmpty(picked) && c.Name == picked;
+				}
+			}
 		}
 
 		// Which answers the hero could take at each scene of the shown path.
@@ -2276,10 +2260,10 @@ namespace Doorstop
 			_popup.pivot = new Vector2(0f, 1f);
 			_popup.sizeDelta = new Vector2(PopupWidth, 100f);
 			Image bg = go.AddComponent<Image>();
-			bg.color = new Color(0.98f, 0.96f, 0.90f, 0.98f);
+			bg.color = Palette.PaperLight;
 			bg.raycastTarget = false;
 			Outline outline = go.AddComponent<Outline>();
-			outline.effectColor = new Color(0.30f, 0.26f, 0.20f, 0.9f);
+			outline.effectColor = Palette.Dark;
 			outline.effectDistance = new Vector2(2f, -2f);
 			VerticalLayoutGroup v = go.AddComponent<VerticalLayoutGroup>();
 			v.padding = new RectOffset(16, 16, 12, 14);
@@ -2291,11 +2275,11 @@ namespace Doorstop
 			ContentSizeFitter fit = go.AddComponent<ContentSizeFitter>();
 			fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-			_popupText = AddLabel(go.transform, "Text", "", 19f, ColTextDark, false);
+			_popupText = AddLabel(go.transform, "Text", "", 19f, Palette.Ink, false);
 			_popupText.enableWordWrapping = true;
 			_popupText.overflowMode = TextOverflowModes.Overflow;
 			_popupText.alignment = TextAlignmentOptions.TopLeft;
-			_popupNote = AddLabel(go.transform, "Note", "", 15f, ColTreeMuted, false);
+			_popupNote = AddLabel(go.transform, "Note", "", 15f, Palette.Muted, false);
 			_popupNote.enableWordWrapping = true;
 			_popupNote.alignment = TextAlignmentOptions.TopLeft;
 			GameObject list = CreateUiObject("Effects", go.transform);
@@ -2405,7 +2389,7 @@ namespace Doorstop
 			Sprite icon;
 			string name = SceneEffects.Label(fx, out icon);
 			GameObject row = PopupRow("Effect", icon, 34f);
-			TextMeshProUGUI label = AddLabel(row.transform, "Name", name, 18f, ColTextDark, false);
+			TextMeshProUGUI label = AddLabel(row.transform, "Name", name, 18f, Palette.Ink, false);
 			label.enableWordWrapping = true;
 			LayoutElement nle = label.gameObject.AddComponent<LayoutElement>();
 			nle.flexibleWidth = 1f;
@@ -2413,7 +2397,7 @@ namespace Doorstop
 			{
 				string sign = fx.Value > 0 ? "+" + fx.Value : "-" + (-fx.Value);   // the font has no U+2212
 				TextMeshProUGUI val = AddLabel(row.transform, "Value", sign, 19f,
-					fx.Value > 0 ? new Color(0.18f, 0.42f, 0.18f) : new Color(0.62f, 0.16f, 0.12f), false);
+					fx.Value > 0 ? Palette.Good : Palette.Bad, false);
 				val.alignment = TextAlignmentOptions.MidlineRight;
 				LayoutElement vle = val.gameObject.AddComponent<LayoutElement>();
 				vle.minWidth = 48f;
@@ -2449,7 +2433,7 @@ namespace Doorstop
 
 		private static void AddPopupHeading(string text)
 		{
-			TextMeshProUGUI head = AddLabel(_popupEffects, "Heading", text, 16f, ColTreeMuted, false);
+			TextMeshProUGUI head = AddLabel(_popupEffects, "Heading", text, 16f, Palette.Muted, false);
 			head.fontStyle = FontStyles.Bold;
 			LayoutElement le = head.gameObject.AddComponent<LayoutElement>();
 			le.minHeight = 26f;
@@ -2463,8 +2447,8 @@ namespace Doorstop
 			string text = SceneEffects.Label(req, out icon);
 			bool? met = hero != null ? hero.Meets(req) : null;
 			GameObject row = PopupRow("Requirement", icon, 30f);
-			Color colour = met == null ? ColTextDark
-				: met.Value ? new Color(0.18f, 0.42f, 0.18f) : new Color(0.62f, 0.16f, 0.12f);
+			Color colour = met == null ? Palette.Ink
+				: met.Value ? Palette.Good : Palette.Bad;
 			TextMeshProUGUI label = AddLabel(row.transform, "Text", text, 17f, colour, false);
 			label.enableWordWrapping = true;
 			LayoutElement le = label.gameObject.AddComponent<LayoutElement>();
@@ -2594,14 +2578,14 @@ namespace Doorstop
 			trt.offsetMin = new Vector2(-18f, 0f);
 			trt.offsetMax = new Vector2(-6f, 0f);
 			Image timg = track.AddComponent<Image>();
-			timg.color = new Color(0f, 0f, 0f, 0.12f);
+			timg.color = Palette.Track;
 			Scrollbar sb = track.AddComponent<Scrollbar>();
 			sb.direction = Scrollbar.Direction.BottomToTop;
 
 			GameObject handle = CreateUiObject("Handle", track.transform);
 			Stretch(handle.GetComponent<RectTransform>());
 			Image himg = handle.AddComponent<Image>();
-			himg.color = ColButtonDark;
+			himg.color = Palette.Dark;
 			sb.targetGraphic = himg;
 			sb.handleRect = handle.GetComponent<RectTransform>();
 
@@ -2636,7 +2620,7 @@ namespace Doorstop
 				Col col = (Col)i;
 				GameObject cell = CreateUiObject("Head_" + col, header.transform);
 				Image img = cell.AddComponent<Image>();
-				img.color = ColButtonDark;
+				img.color = Palette.Dark;
 				Button btn = cell.AddComponent<Button>();
 				btn.targetGraphic = img;
 				btn.onClick.AddListener(delegate { SetSort(col); });
@@ -2646,7 +2630,7 @@ namespace Doorstop
 				{
 					le.flexibleWidth = 1f;
 				}
-				TextMeshProUGUI label = AddLabel(cell.transform, "Label", ColName(col), 19f, ColTextLight,
+				TextMeshProUGUI label = AddLabel(cell.transform, "Label", ColName(col), 19f, Palette.TextLight,
 					col != Col.Choice);
 				label.overflowMode = TextOverflowModes.Ellipsis;
 				label.enableWordWrapping = false;
@@ -2667,7 +2651,7 @@ namespace Doorstop
 				irt.anchoredPosition = new Vector2(-8f, 0f);
 				irt.sizeDelta = new Vector2(14f, 14f);
 				Image iimg = icon.AddComponent<Image>();
-				iimg.color = ColTextLight;
+				iimg.color = Palette.TextLight;
 				iimg.raycastTarget = false;
 				iimg.enabled = false;
 				_sortIcons[i] = iimg;
@@ -2675,7 +2659,7 @@ namespace Doorstop
 			// Blank cell over the delete column, so headers line up with rows.
 			GameObject spacer = CreateUiObject("Head_Delete", header.transform);
 			Image simg = spacer.AddComponent<Image>();
-			simg.color = ColButtonDark;
+			simg.color = Palette.Dark;
 			LayoutElement sle = spacer.AddComponent<LayoutElement>();
 			sle.preferredWidth = DeleteWidth;
 		}
@@ -2721,7 +2705,7 @@ namespace Doorstop
 			_confirmPanel = CreateUiObject("Confirm", panel);
 			Stretch(_confirmPanel.GetComponent<RectTransform>());
 			Image overlay = _confirmPanel.AddComponent<Image>();
-			overlay.color = new Color(0f, 0f, 0f, 0.45f);
+			overlay.color = Palette.Shade;
 			Button overlayBtn = _confirmPanel.AddComponent<Button>();
 			overlayBtn.targetGraphic = overlay;
 			overlayBtn.transition = Selectable.Transition.None;
@@ -2737,10 +2721,10 @@ namespace Doorstop
 			// without ellipsizing.
 			brt.sizeDelta = new Vector2(640f, 380f);
 			Image bimg = box.AddComponent<Image>();
-			bimg.color = new Color(0.96f, 0.94f, 0.88f);
+			bimg.color = Palette.PaperLight;
 
 			_confirmText = AddLabel(box.transform, "Msg",
-				"Are you sure?", 24f, ColTextDark, false);
+				"Are you sure?", 24f, Palette.Ink, false);
 			_confirmText.alignment = TextAlignmentOptions.TopLeft;
 			_confirmText.enableWordWrapping = true;
 			RectTransform mrt = _confirmText.rectTransform;
@@ -2750,10 +2734,10 @@ namespace Doorstop
 			mrt.offsetMax = new Vector2(-30f, -26f);
 
 			_confirmLoadBtn = AddButton(box.transform, "Load", new Vector2(0f, 0f), new Vector2(30f, 26f),
-				new Vector2(250f, 56f), ColLoadButton, Loc.T(Loc.K.Load), 24f, delegate { RunPending(); });
+				new Vector2(250f, 56f), Palette.Accent, Loc.T(Loc.K.Load), 24f, delegate { RunPending(); });
 			_confirmLoadLabel = _confirmLoadBtn.GetComponentInChildren<TextMeshProUGUI>();
 			AddButton(box.transform, "Cancel", new Vector2(1f, 0f), new Vector2(-30f, 26f),
-				new Vector2(250f, 56f), ColCancelButton, Loc.T(Loc.K.Cancel), 24f, CancelConfirm);
+				new Vector2(250f, 56f), Palette.Grey, Loc.T(Loc.K.Cancel), 24f, CancelConfirm);
 
 			_confirmPanel.SetActive(false);
 		}
@@ -2937,7 +2921,7 @@ namespace Doorstop
 			Image img = go.AddComponent<Image>();
 			img.sprite = sprite;
 			img.type = Image.Type.Tiled;
-			img.color = ColDashRed;
+			img.color = Palette.Red;
 			img.raycastTarget = false;
 		}
 
@@ -3192,7 +3176,7 @@ namespace Doorstop
 			if (_entries.Count == 0)
 			{
 				TextMeshProUGUI empty = AddLabel(_itemContainer, "Empty",
-					Loc.T(Loc.K.EmptySaves), 22f, ColTextDark, true);
+					Loc.T(Loc.K.EmptySaves), 22f, Palette.Ink, true);
 				LayoutElement le = empty.gameObject.AddComponent<LayoutElement>();
 				le.preferredHeight = 60f;
 				return;
@@ -3207,8 +3191,8 @@ namespace Doorstop
 		{
 			bool manual = e.Kind == "Manual";
 			Color bg = manual
-				? (index % 2 == 0 ? ColManual : ColManualAlt)
-				: (index % 2 == 0 ? ColAuto : ColAutoAlt);
+				? (index % 2 == 0 ? Palette.Highlight : Palette.HighlightAlt)
+				: (index % 2 == 0 ? Palette.Card : Palette.CardAlt);
 			string p = e.Dat;
 			string t = e.Choice;
 			GameObject row = CreateUiObject("Row", _itemContainer);
@@ -3258,7 +3242,7 @@ namespace Doorstop
 					mask.AddComponent<RectMask2D>();
 					cellParent = mask.transform;
 				}
-				TextMeshProUGUI cell = AddLabel(cellParent, "Cell", values[i], 19f, ColTextDark,
+				TextMeshProUGUI cell = AddLabel(cellParent, "Cell", values[i], 19f, Palette.Ink,
 					!scrolls);
 				cell.overflowMode = TextOverflowModes.Ellipsis;
 				cell.enableWordWrapping = false;
@@ -3296,7 +3280,20 @@ namespace Doorstop
 			Button dbtn = del.AddComponent<Button>();
 			dbtn.targetGraphic = dimg;
 			dbtn.onClick.AddListener(delegate { Ask(Pending.Delete, dp, dt, row); });
-			AddCross(del.transform, 24f, 4f);
+			// a bin, red under the pointer as the x's are
+			GameObject bin = CreateUiObject("Bin", del.transform);
+			RectTransform binRt = bin.GetComponent<RectTransform>();
+			binRt.anchorMin = binRt.anchorMax = new Vector2(0.5f, 0.5f);
+			binRt.sizeDelta = new Vector2(30f, 30f);
+			Image binImg = bin.AddComponent<Image>();
+			if (_binIcon == null)
+			{
+				_binIcon = MakeBinIcon();
+			}
+			binImg.sprite = _binIcon;
+			binImg.color = Palette.Ink;
+			binImg.raycastTarget = false;
+			del.AddComponent<CrossHover>().Bars = new[] { binImg };
 
 			if (_firstItemPath == null)
 			{
@@ -3522,8 +3519,6 @@ namespace Doorstop
 			}
 		}
 
-		// Dev settings test (marker: Snapshots/dev-book.txt): opens the pause
-		// menu, adds the button and logs the menu buttons' positions.
 		// Dev: finds two nearby scenes where picking another answer in the
 		// first shuts the answer taken (or picked) in the second, makes both
 		// picks and scrolls to them.
@@ -3554,18 +3549,7 @@ namespace Doorstop
 							_overrides.Clear();
 							_overrides[cj.Scene] = later.Name;
 							_overrides[cols[i].Scene] = earlier.Name;
-							foreach (TreeCol col in cols)
-							{
-								string picked;
-								if (!_overrides.TryGetValue(col.Scene, out picked))
-								{
-									picked = col.PlayedChoice;
-								}
-								foreach (History.Choice c in col.Choices)
-								{
-									c.Chosen = !string.IsNullOrEmpty(picked) && c.Name == picked;
-								}
-							}
+							ApplyPicks(cols);
 							WorkOutOpenAnswers(cols);
 							if (cj.Blocked.Contains(later.Name))
 							{
@@ -3980,7 +3964,7 @@ namespace Doorstop
 			const int n = 128;
 			Canvas32 c = new Canvas32(n, n);
 			// (the drawings keep a sixth of their square empty all round)
-			DrawTrayArrow(c, 0f, 0f, 72f, false);
+			DrawTrayArrow(c, -6f, -6f, 72f, false);   // pulled up and left: its tray clear of the line
 			DrawTrayArrow(c, 56f, 56f, 72f, true);
 			c.Line(14f, 114f, 114f, 14f, 6f);
 			return c.ToSprite();
@@ -4042,6 +4026,29 @@ namespace Doorstop
 			c.Rect(lBox + bw, mid[1] - t * 0.5f, rSpine - (lBox + bw), t);   // the path across
 			return c.ToSprite();
 		}
+
+		// The delete icon, after Delete.png: a bin with its lid and handle and
+		// two slats, on the drawing's 1000-unit grid.
+		private static Sprite MakeBinIcon()
+		{
+			const int n = 100;
+			Canvas32 c = new Canvas32(n, n);
+			const float k = n / 1000f;
+			System.Action<float, float, float, float> box = delegate(float x0, float y0, float x1, float y1)
+			{
+				c.Rect(x0 * k, y0 * k, (x1 - x0) * k, (y1 - y0) * k);
+			};
+			box(362f, 125f, 638f, 160f);   // handle
+			box(167f, 157f, 833f, 218f);   // lid
+			box(210f, 218f, 272f, 873f);   // sides
+			box(728f, 218f, 790f, 873f);
+			box(210f, 812f, 790f, 873f);   // bottom
+			box(382f, 307f, 445f, 722f);   // slats
+			box(555f, 307f, 618f, 722f);
+			return c.ToSprite();
+		}
+
+		private static Sprite _binIcon;
 
 		// An undo arrow: three quarters of a ring, open at the top left, with
 		// the arrowhead at its top end pointing left.
@@ -4159,7 +4166,7 @@ namespace Doorstop
 				brt.sizeDelta = new Vector2(size * 1.4f, thick);
 				brt.localRotation = Quaternion.Euler(0f, 0f, i == 0 ? 45f : -45f);
 				bars[i] = bar.AddComponent<Image>();
-				bars[i].color = ColCrossNormal;
+				bars[i].color = Palette.Ink;
 				bars[i].raycastTarget = false;
 			}
 			CrossHover hover = parent.gameObject.AddComponent<CrossHover>();
@@ -4185,7 +4192,7 @@ namespace Doorstop
 			b.onClick.AddListener(onClick);
 			if (label != null)
 			{
-				Stretch(AddLabel(go.transform, "Label", label, fontSize, ColTextLight, true).rectTransform);
+				Stretch(AddLabel(go.transform, "Label", label, fontSize, Palette.TextLight, true).rectTransform);
 			}
 			return b;
 		}
