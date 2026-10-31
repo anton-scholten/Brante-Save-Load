@@ -555,10 +555,18 @@ save folders and only copies them.
 - [x] Table UI (30 Oct 2026): `dev-table` cycled the filter
   `All 18 -> Game autosave 7 -> Before load 8 -> Manual 2 -> Original 1 -> All`
   and the type cell's pop-up opened (`type pop-up active True`).
-- [ ] Table: "Show more" paging and loading the Original row in game.
+- [ ] Table: "Show more" paging and clicking the Original row in game (the
+  shared load flow behind the row is verified via `dev-loadpath file`; the
+  row's own click/delete suppression is code-only).
 - [x] Design document `docs/DESIGN.md` written (goals, save ownership, load
   flow, run identity, story path model, table/HUD, verification model,
   invariants, open questions).
-- [ ] Playthrough pass (death -> restart chapter) and the achievements check, as
-  in Phase 7 above.
+- [x] Partial playthrough (30 Oct 2026): `dev-autoplay chapters 4` played
+  chapters 1-3 end to end (first open answer everywhere) and stopped at
+  `051.000.030_Arrive_Prefect`, capturing every answer and writing chapter
+  saves on the same timeline.
+- [ ] Death -> Restart chapter checkpoint and the achievements/Steam check.
+  The death page itself is exercised (`dev-loadpath death` goes through it to
+  the next scene); the chapter-restart control is a separate UI path not yet
+  driven.
 - [ ] Refresh the README screenshots for the table's new first column.

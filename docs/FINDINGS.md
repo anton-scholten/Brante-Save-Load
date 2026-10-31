@@ -1114,3 +1114,9 @@ run from an early scene:
 back to `Chapter_2.dat` and then failed on a chapter-1 scene with no recorded
 answer ("Birth has none yet"). That is a dev-mode-only fallback
 (`DevFromChapterStart`); a clean run has the chapter save on its own timeline.
+
+The death page's six `DeathChoiceButtonBehaviour` buttons are death outcomes
+(the page's own continue choices); `AutoPlay.AcceptDeath` presses the one that
+goes on, and the replay continued to the next scene. The chapter-restart
+control is a separate UI path, so the `LoadGame(string,int)` restart
+checkpoint is still not driven end to end.
