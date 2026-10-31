@@ -351,7 +351,8 @@ namespace Doorstop
 								}
 							}
 						}
-						yield break;
+						// Fall through to the other dev markers (dev-book and
+						// friends) so a load can be followed by a UI test.
 					}
 					// Phase 4 UI test: a second marker drives the choice-list
 					// window (open -> list -> simulated clicks -> load).

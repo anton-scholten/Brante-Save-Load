@@ -292,7 +292,7 @@ on use) and must be paired with `dev-autoload.txt`:
 | marker | what it does |
 |---|---|
 | `dev-autoload.txt` | replay the vanilla load sequence onto the newest autosave |
-| `dev-load.txt` | with `dev-autoload.txt`: after the autoloaded scene is open, load one mod save through the table path (checkpoint, baseline, adopt). Holds a file name under `Runs/` |
+| `dev-load.txt` | with `dev-autoload.txt`: after the autoloaded scene is open, load one mod save through the table path (checkpoint, baseline, adopt). Holds a file name under `Runs/`. The other dev markers still run afterwards, so `dev-load` + `dev-book`/`dev-loadpath` works on the loaded scene |
 | `dev-plan.txt` | with `dev-autoload.txt`: build a path from the scene on screen to the named scene (first open answer everywhere), log the plan and its pre-checks; with `dev-load.txt` too, plan from the loaded scene. Does not replay |
 | `dev-keyparam.txt` | with `dev-load.txt`: `Name=Value` set on `KeyChapterParametersController` after the load, before `dev-plan`. Used to test a branch such as `TriggerBlock=false` |
 | `dev-stat.txt` | with `dev-load.txt`: `Name=Value` set on `ParametersManager.Parameters` (e.g. `Cunning=4`) after the load, before `dev-plan` |

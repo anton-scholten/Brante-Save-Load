@@ -1071,3 +1071,46 @@ collapsed, 8–10 rows shown.
   and stopped there - a changed answer kept its own track. Before the delta
   the scene-open snapshot had no exam objective and the whole chapter-3 track
   was hidden.
+
+## The replay matrix (30 Oct 2026)
+
+Two fresh debug runs (`dev-autoplay chapters 2 3` and `chapters 4`) made clean
+timelines: every answer captured by the mod, chapter saves written by the same
+run (`Saves/Debug_10/30/2026082645PM`, `.../2026083332PM`). `dev-book` +
+`dev-loadpath` then drove each mode:
+
+| mode | what happened |
+|---|---|
+| `back 2` | changed `030.010.030_MeetSofia` to `ButtonDescription3`; replayed to `030.030.010_StudBrothers` |
+| `back 5` | changed `030.010.020_OppositeEtern` to `ButtonDescription2`; plan `OppositeEtern > MeetSofia > Exam > TommasPath > StudBrothers > OfficersClub`, reached `030.040.010_OfficersClub` |
+| `chapter` | from `Chapter_3.dat` with 7 answers, `YouthChapterStart` -> `030.040.010_OfficersClub`, reached the selected scene |
+| `start` | from `Chapter_3.dat` with 5 answers, to `030.020.020_TommasPath`, reached (the goal's chapter start is chapter 3, not chapter 1) |
+| `first` | stand-in `Chapter_1.dat` of the other clean run, 2 answers, `ChildhoodChapterStart` -> `01.02.01`, Load scene enabled, reached |
+| `new` | `new-game-start`, 2 answers, `ChildhoodChapterStart` -> `01.02.01`, reached (Load greyed because it is the current path) |
+| `offpath` | dropped the middle pick; stopped at `054.010.010_FirstDayWork`, tree open, hint "Load scene stopped at \"First Day of Service\": the story went another way and this scene is not on your path" |
+| `death` | `02.10.01` `ButtonDescription3` (Death +1), 2 answers, through the death page to `02.11.01`, reached |
+| `file <name>` | loaded `030.040.010_OfficersClub` from another chapter; scene and chapter correct |
+| `file <name> norun` | the same with the run forgotten first: the save's own id (`Debug_10/30/2026083332PM`) was adopted and saved back into that folder |
+
+`ahead` and `start` are the two modes that did not produce a clean end-to-end
+run from an early scene:
+
+- `ahead` from `030.010.010_CulturalShock` planned to
+  `060.010.010_FamilyFate`, skipping the chapter-3 track. Those scenes are
+  gated on `Noble`, which the exam **ahead** earns; the tree only simulates the
+  objective of the answer on screen, so the track is not visible yet. The
+  replay went to `030.030.010_StudBrothers` (the real track) and stopped there
+  as off-path - the known speculative-ahead limit, not a wrong branch.
+- `ahead` from `054.010.010_FirstDayWork` planned `051.*` scenes before the
+  `054.*` branch because that run's snapshot mixed attempts (a scene list
+  carrying later scenes ordered after the current one); the replay stopped at
+  the actual next scene. The ordered stop is correct; the plan data was stale.
+- `start` from a chapter-3 scene starts from `Chapter_3.dat` (the goal's
+  chapter), not from `Chapter_1.dat`; the mode's comment is misleading. A real
+  chapter-1 start is what `first`/`new` exercise, and both passed.
+
+`chapter` on the older Debug run first showed the guard working: its
+`Chapter_3.dat` was from another timeline (`OnThisTimeline`), so the plan fell
+back to `Chapter_2.dat` and then failed on a chapter-1 scene with no recorded
+answer ("Birth has none yet"). That is a dev-mode-only fallback
+(`DevFromChapterStart`); a clean run has the chapter save on its own timeline.

@@ -505,8 +505,14 @@ save folders and only copies them.
   scenes serialize `ButtonIndex == 0` but sit on `ButtonDescription3`/`4`;
   the effects TSV is now keyed by that name, restoring their effects and
   requirements (the `Mortally` `Death 4` change among them).
-- [ ] Full `dev-loadpath` pass (`back`, `chapter`, `start`, `first`, `new`,
-  `offpath`, death) after the unload/sidecar changes.
+- [x] Replay matrix (30 Oct 2026, fresh debug runs): `back 2`, `back 5`,
+  `chapter`, `first`, `new`, `offpath`, `death`, `file` and `file ... norun`
+  all reached/stopped where expected (see `docs/FINDINGS.md`, "The replay
+  matrix"). `start` from a chapter-3 scene uses that chapter's start save.
+  `ahead` exposed two limits, not crashes: objectives earned by a scene still
+  ahead are not simulated (the plan skips the track until the exam), and a
+  snapshot from an older attempt can carry later scenes in its scene list, so
+  the plan order was stale; the ordered replay stopped at the real next scene.
 - [x] Loading any row goes through the same flow (pre-rewind checkpoint -> adopt
   the run slot -> load -> loading screen/dissolve).
 - [x] `Auto` -> `Choice` folder rename with a one-time migration
@@ -532,10 +538,12 @@ save folders and only copies them.
   cell (code) and loading a row of each kind goes through the shared flow.
 - [ ] In-game: click the type header through the whole cycle, the Show more
   row, and the original row's load/delete behaviour.
-- [ ] Load scene pass: a played path (all answers already played) reaches its
-  target; a changed answer that the story does not follow stops with the
-  skipped/unplanned scene named, and the tree opens there; a path through
-  still-ahead scenes logs as speculative.
+- [x] Load scene pass (30 Oct 2026): a played path reaches its target
+  (`back 5`, `chapter`), a changed answer the story does not follow stops with
+  the scene named and the tree open (`offpath`), a death answer replays through
+  the death page (`death`), and a path through still-ahead scenes logs as
+  speculative (`ahead`). The remaining speculative limit is an objective
+  earned by a scene still ahead.
 
 ## Phase 13 — verification
 

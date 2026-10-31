@@ -205,8 +205,9 @@ and a type pop-up opening; the per-branch plan
 `02.07.02 > 02.N.03 > 02.08.01 > 02.09.01`; the objective-driven changed
 answer at the exam (`030.020.010_Exam -> ButtonDescription1 -> ... ->
 030.030.010_StudBrothers` from a snapshot whose recorded answer was Cleric);
-chapter 1's tree and conditions (chapters 4-5 offline only); a two-answer
-replay; language switch.
+the replay matrix on fresh debug runs (`back`, `chapter`, `first`, `new`,
+`offpath`, death page, `file`, `file norun`); chapter 1's tree and conditions
+(chapters 4-5 offline only); a two-answer replay; language switch.
 
 Pending in game (not to be claimed): the "Show more" paging and loading the
 Original row, the complete `dev-loadpath` matrix after the unload change, a
