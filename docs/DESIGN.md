@@ -202,8 +202,11 @@ the same-scene load leaving one scene copy; the table type filter cycle
 (All 18 -> Game autosave 7 -> Before load 8 -> Manual 2 -> Original 1 -> All)
 and a type pop-up opening; the per-branch plan
 `02.07.02 > 02.08.01 > 02.09.01`; the `Cunning >= 4` Poets replay
-`02.07.02 > 02.N.03 > 02.08.01 > 02.09.01`; chapter 1's tree and conditions
-(chapters 4-5 offline only); a two-answer replay; language switch.
+`02.07.02 > 02.N.03 > 02.08.01 > 02.09.01`; the objective-driven changed
+answer at the exam (`030.020.010_Exam -> ButtonDescription1 -> ... ->
+030.030.010_StudBrothers` from a snapshot whose recorded answer was Cleric);
+chapter 1's tree and conditions (chapters 4-5 offline only); a two-answer
+replay; language switch.
 
 Pending in game (not to be claimed): the "Show more" paging and loading the
 Original row, the complete `dev-loadpath` matrix after the unload change, a
@@ -236,12 +239,12 @@ reads carrying a non-empty id; no `GAME Exception` in the log from a mod step.
 ## 9. Open questions / future work
 
 - Objectives unlocked by a scene or an answer are extracted
-  (`scene-objectives.tsv`) and simulated after the answer; the remaining gap is
-  a key parameter set by a scene event (the true-death `GoToFinals`), which
-  `SceneParams.Simulate` does not model.
-- Exact pre-answer branch prediction: labels and conditions are evaluated on the
-  state before the answer, so a switch set by the scene's events can still
-  change the branch; the replay stops at the first divergence meanwhile.
+  (`scene-objectives.tsv`) and simulated after the answer; `SceneParams.Simulate`
+  still pre-checks only switch labels, not full conditions, and a key parameter
+  set solely by the true-death pop-up (`052.210.050_Final5`) is not modelled.
+- Exact pre-answer branch prediction: labels and conditions are evaluated from
+  the simulated hero, but a switch set only by a pop-up/event can still change
+  the branch; the replay stops at the first divergence meanwhile.
 - Performance: the tree scans folders and builds the playthrough plus ahead
   columns per open; caching across opens is open.
 - Same-scene edge cases: a load while a pop-up or consequence page is open, or

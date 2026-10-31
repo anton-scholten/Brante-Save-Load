@@ -1049,8 +1049,9 @@ collapsed, 8–10 rows shown.
   applied when the scene ends.
 - `ИстиннаяСмерть` has a C# side effect beyond `Unlocked`: closing its pop-up
   broadcasts `CloseTrueDeathPopupEvent` and sets the key parameter
-  `GoToFinals=Yes`. That is not in `scene-params.tsv`, so a plan crossing a
-  true death can still diverge there; verify in game at a finals scene.
+  `GoToFinals=Yes`. Most final scenes already carry that change in
+  `scene-params.tsv`; only `052.210.050_Final5` (not in the flow table) is set
+  solely by the pop-up, so a planned path is unlikely to cross it.
 - **Button index quirk (also fixed in `tools/scene_effects.py`).** Nine
   buttons in six scenes (`051.020.010_Scene_3`,
   `051.020.030_The_Call_of_the_Ancestors`, `051.060.030_Mortally`,
@@ -1059,3 +1060,14 @@ collapsed, 8–10 rows shown.
   as 0 while their object is `ButtonDescription3`/`4`. Keying the effects
   TSV by that field lost their effects and requirements (including the
   `Death 4` change in `Mortally`); both extractors now use the object name.
+- **The objective delta is verified in game (30 Oct 2026).** Loading a
+  scene-open snapshot of `030.020.010_Exam` (the run had answered
+  `ButtonDescription2`, Cleric) and planning to the Noble-only
+  `030.030.010_StudBrothers` made the tree offer it: the picked first open
+  answer was `ButtonDescription1` (Noble), so `AddUpcoming` evaluated the
+  chapter-3 conditions with the exam's objective applied. `dev-replay` then
+  drove `030.020.010_Exam -> ButtonDescription1 ->
+  030.020.020_TommasPath -> ButtonDescription1 -> 030.030.010_StudBrothers`
+  and stopped there - a changed answer kept its own track. Before the delta
+  the scene-open snapshot had no exam objective and the whole chapter-3 track
+  was hidden.

@@ -452,12 +452,12 @@ save folders and only copies them.
   `02.07.02` to `02.09.01` logged `02.07.02 > 02.08.01 > 02.09.01` under the
   live `TriggerBlock=true` branch; the `02.N.03` path (false branch) is
   correctly not offered there.
-- [ ] Exact pre-answer branch prediction: the labels/conditions are evaluated
-  on the state before the answer; a key parameter set by the scene's Bolt
-  events (the true-death `GoToFinals`) can still change the next branch. The
-  scene/answer objectives are now extracted (`scene-objectives.tsv`) and
-  simulated; until the remaining key parameters are, the ordered replay stops
-  at the first divergence with the scene named.
+- [ ] Exact pre-answer branch prediction: `SceneParams.Simulate` pre-checks the
+  flow switch labels of each next scene, not the full condition (stats,
+  objectives, character status). The tree's `After` does evaluate the full
+  condition from the simulated hero, and the ordered replay stops at the first
+  divergence meanwhile. A key parameter set only by a Bolt/pop-up event (the
+  true-death pop-up on `052.210.050_Final5`) is not modelled either.
 - [x] Time-gate ordering (30 Oct 2026): `SceneFlow.Ahead.Immediate` marks a
   scene whose `Turn`/`Season` gate matches the live game (or a Turn-0 trigger);
   `After` sorts immediate scenes (flow order) before later time slots, then
@@ -494,7 +494,13 @@ save folders and only copies them.
   answer's `SceneEffects`, and a scene-level row applies at the scene end;
   `SceneFlow.After` already swapped `Unlocked` from the hero. This keeps a
   changed `030.020.010_Exam` answer on its chapter-3 track
-  (`Bourgeois`/`Noble`/`Cleric`). In-game check pending.
+  (`Bourgeois`/`Noble`/`Cleric`).
+- [x] In game (30 Oct 2026): the exam snapshot had `ButtonDescription2`
+  (Cleric) chosen; the tree offered the Noble-only
+  `030.030.010_StudBrothers` ahead, and `dev-replay` drove
+  `030.020.010_Exam -> ButtonDescription1 -> 030.020.020_TommasPath ->
+  ButtonDescription1 -> 030.030.010_StudBrothers` without stopping, so the
+  changed answer kept its own objective track.
 - [x] `scene_effects.py` button keying (30 Oct 2026): nine buttons in six
   scenes serialize `ButtonIndex == 0` but sit on `ButtonDescription3`/`4`;
   the effects TSV is now keyed by that name, restoring their effects and
