@@ -3,6 +3,39 @@
 The plan, as approved, with status. Phases 0–7 are history; 8–13 are the save/load
 rework (implemented, the in-game pass still pending).
 
+## Remaining work (30 Oct 2026)
+
+Current, de-duplicated remainder. The phase sections below keep the history.
+
+- [ ] Simulate objectives/key parameters earned by scenes **still ahead**. The
+  tree only applies the current answer's objective, so `ahead` from early
+  chapter 3 planned the epilogue instead of the `Noble` track; the replay
+  stopped at the real track. Also the true-death pop-up's
+  `GoToFinals` on `052.210.050_Final5`.
+- [ ] Make plan order robust against a snapshot whose `ShowedScenesList` mixes
+  attempts (played entries after the current scene). `ahead` from a mixed
+  chapter-4 run planned `051.*` before the actual `054.*` branch; the ordered
+  replay stopped at the real next scene.
+- [ ] Death -> Restart chapter checkpoint. The death page is reached (its six
+  buttons are death outcomes), but the chapter-restart control is a separate
+  UI path and `BeforeChapterRestart` has not been exercised end to end.
+- [ ] Achievements / Steam after a mod load: no duplicate or invalid unlock.
+- [ ] Table: "Show more" paging and clicking the Original row in game (the
+  shared load flow behind it is verified; the row's own click/delete
+  suppression is code-only).
+- [ ] Full playthrough pass (chapters 1-5 + epilogue) on a clean run; the
+  partial pass reached chapter 4 (`051.000.030_Arrive_Prefect`).
+- [ ] Performance: the tree builds in ~500-1300 ms (2059 flow rows); cache
+  `SceneFlow.After` / column data across opens.
+- [ ] `SceneParams.Simulate` checks switch labels only; a full-condition
+  pre-check would make `plan.Speculative` accurate (prediction only; the
+  ordered replay stays authoritative).
+- [ ] Dev-mode polish: `chapter`/`start` fall back to an earlier chapter when
+  the target chapter's save is from another timeline, then fail on a chapter-1
+  scene with no recorded answer ("Birth has none yet"). Fail with
+  `StartNotOnPath` instead.
+- [ ] Refresh the README screenshots for the table's new first column.
+
 ## Phase 0 — repo scaffold (done)
 
 - [x] Layout mirroring Besiege-Sand: installable folder, tools/, docs/, AGENTS.md
