@@ -8,8 +8,8 @@ for people who just want to use it.
 A mod for [The Life and Suffering of Sir Brante](https://store.steampowered.com/app/1272160/)
 (Unity 2018.3, Windows build under Proton): load the game at **any choice you have
 already reached**, plus a save/load system of its own whose saves live outside the
-game's own. A settings button opens the mod's window: the tree of past choice
-points, and the table of saves it can return to. Clicking an entry returns the
+game's own. Two tabs the mod adds to the top of the book open its window: the
+tree of past choice points, and the table of saves it can return to. Clicking an entry returns the
 game to that exact state. [docs/FINDINGS.md](docs/FINDINGS.md) explains how the
 game works and where every fact used by the mod came from.
 
@@ -129,11 +129,14 @@ community event sheet (`data/events.json`).
   `Recorder.RepairIds` writes the recovered id back into `Saves/**/Autosave.dat`
   once at startup.
 - **A loose `Saves/Autosave.dat` is merged into its run.** A game that lost its
-  id saves in `Saves/` itself. `Recorder.RepairLooseRoot` matches it to the one
-  run folder whose scene list is the start of its own (same hero, shared prefix
-  >= 5, exactly one best match) and moves it plus `Chapter_N.dat` and
-  `testSave.txt` in, quarantining the files it replaces to
-  `Brante-Save-Load/Backups/quarantine/<id>/`.
+  id saves in `Saves/` itself. `Recorder.RepairLooseRoot` merges it only into
+  a run it continues: same hero, the run's whole scene list is the start of the
+  loose one (>= 5 scenes - every run shares the opening), the loose file is
+  newer than the run's `Autosave.dat`, and exactly one run shares the longest
+  start. Then it moves it plus `Chapter_N.dat` and `testSave.txt` in,
+  quarantining the files it replaces to
+  `Brante-Save-Load/Backups/quarantine/<id>/`. Anything else stays in place
+  (logged); an older loose state never replaces a newer run save.
 - **The current run is tracked, never guessed.** It is set only where the game
   changes saves: postfix on `LoadGame(int)` (the game's own Load/Continue),
   `CreateSaveLoadSlot` (new game), `LoadGame(string,int)` (death -> restart

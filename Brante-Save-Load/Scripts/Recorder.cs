@@ -779,10 +779,11 @@ namespace Doorstop
 					return;
 				}
 				SaveLoadHelper h = ReadHelper(rootAuto);
-				string match = MatchRunFor(h);
+				string why;
+				string match = MatchRunFor(h, File.GetLastWriteTimeUtc(rootAuto), out why);
 				if (string.IsNullOrEmpty(match))
 				{
-					ModLog.Info("Repair: Saves/Autosave.dat matches no run folder; left in place");
+					ModLog.Info("Repair: Saves/Autosave.dat left in place - " + why);
 					return;
 				}
 				string dest = Path.Combine(SavesDir, match);
@@ -839,14 +840,23 @@ namespace Doorstop
 			}
 		}
 
-		private static string MatchRunFor(SaveLoadHelper h)
+		// The run a loose save belongs to, or "" (with the reason in `why`).
+		// It must continue that run's story - the run's scene list is the
+		// start of its own, so it is the same timeline, further on or level -
+		// and be newer than the run's save; otherwise merging would put an
+		// older or another timeline's state where the game's Continue looks.
+		// Every run shares the game's opening scenes, so at least five scenes
+		// must be shared, and one run must share clearly more than any other.
+		private static string MatchRunFor(SaveLoadHelper h, DateTime looseTime, out string why)
 		{
+			why = "no run folder continues into it";
 			if (h == null || !Directory.Exists(SavesDir))
 			{
 				return "";
 			}
 			string best = "";
 			int bestLen = -1;
+			bool tie = false;
 			foreach (string f in Directory.GetFiles(SavesDir, "Autosave.dat", SearchOption.AllDirectories))
 			{
 				string id = IdFromSavePath(f);
@@ -862,21 +872,36 @@ namespace Doorstop
 						continue;
 					}
 					int len = SharedPrefix(h.ShowedScenesList, o.ShowedScenesList);
-					if (len < 5)
+					// the run's whole list is the start of the loose one
+					if (len < 5 || len != Count(o.ShowedScenesList) || Count(o.ShowedScenesList) > Count(h.ShowedScenesList))
 					{
 						continue;
 					}
-					bool prefix = len == Math.Min(Count(h.ShowedScenesList), Count(o.ShowedScenesList));
-					if (prefix && len > bestLen)
+					if (File.GetLastWriteTimeUtc(f) >= looseTime)
+					{
+						ModLog.Info("Repair: Saves/" + id + " continues into the loose save but is newer - not replaced");
+						continue;
+					}
+					if (len > bestLen)
 					{
 						bestLen = len;
 						best = id;
+						tie = false;
+					}
+					else if (len == bestLen)
+					{
+						tie = true;
 					}
 				}
 				catch
 				{
 					// unreadable save: skip
 				}
+			}
+			if (tie)
+			{
+				why = "more than one run folder matches it equally";
+				return "";
 			}
 			return best;
 		}

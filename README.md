@@ -11,7 +11,7 @@ It also features a "tree view" visual of your playthrough so you can see your mi
 
 ## What it does
 
-- **Load any past scene (when you had to make a choice).** The mod records the exact game state at every scene, so you can go back to any choice you already reached: open its window from the tab at the top of the book (the medallion with linked boxes), then the tree view at the top of the window, and pick the choice.
+- **Load any past scene (when you had to make a choice).** The mod records the exact game state at every scene, so you can go back to any choice you already reached: click the tree view tab at the top of the book (the medallion with linked boxes) and pick the choice. The save / load tab next to it (the medallion with a down and an up arrow) opens the list of saves.
 ![The save / load screen.](Screenshot_2.jpg)
 
 - **A backup of your original save, and the game's saves keep working.** The first time you start the game with this version the mod copies your game save folder once to `Brante-Save-Load/Backups/<save>/` (with a `README.txt` saying how to put it back) and never touches that copy again. Your game saves then work normally: the game keeps its one rolling autosave in the same save folder, exactly as it would after loading an older save from its own menu, and a chapter restart after a death continues *your* timeline.
@@ -92,7 +92,7 @@ Two extra flags:
 The game keeps its whole state in one object and has a public method to restore it.
 The mod saves that object whenever a choice is on screen and loads it back later. It's exact, randomness included, since the dice have already been rolled by the time you see the choice.
 It also copies the game's own autosave as the game writes it, and keeps a snapshot of the live state before every rewind, so a rewind can itself be undone.
-The tree view uses four tables extracted from the game (`scene-flow.tsv`, `scene-texts.tsv`, `scene-effects.tsv`, `scene-objectives.tsv`, plus `scene-params.tsv` for key chapter parameters). After a game update, regenerate them with the scripts in `tools/` (see `docs/BRANCHES.md`).
+The tree view uses five tables extracted from the game (`scene-flow.tsv`, `scene-texts.tsv`, `scene-effects.tsv`, `scene-objectives.tsv` and `scene-params.tsv`). After a game update, regenerate them with the scripts in `tools/` (see `docs/BRANCHES.md`).
 More details in [docs/FINDINGS.md](docs/FINDINGS.md), [MODDING.md](MODDING.md) for a compact how-to, and [AGENTS.md](AGENTS.md) for working on the mod.
 
 ## Building

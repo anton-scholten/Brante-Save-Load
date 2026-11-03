@@ -59,13 +59,22 @@ echo "Game:    $GAME"
 echo "Managed: $MANAGED"
 
 mkdir -p "$BUILD_DIR"
-TMP_OUT="$BUILD_DIR/Brante-Save-Load.$$.dll"
-trap 'rm -f "$TMP_OUT"' EXIT
+# A per-build folder, but the real file name: the compiler records the output
+# name in the assembly (its module name), so a temporary name would make
+# every build differ.
+TMP_DIR="$BUILD_DIR/tmp.$$"
+mkdir -p "$TMP_DIR"
+TMP_OUT="$TMP_DIR/Brante-Save-Load.dll"
+trap 'rm -rf "$TMP_DIR"' EXIT
 
 # -nostdlib: the game's mscorlib is the framework. Referencing the game's own
 # facades + module DLLs is how Unity 2018 resolves UnityEngine types.
 set +e
+# -deterministic + -pathmap: the same source gives the same DLL bytes (no
+# build time, GUID or local paths baked in), so an install does not leave a
+# changed DLL to commit.
 "$DOTNET" "$CSC" -nologo -noconfig -nostdlib+ -langversion:latest \
+    -deterministic -pathmap:"$REPO_DIR"=/src \
     -target:library -out:"$TMP_OUT" \
     -r:"$MANAGED/mscorlib.dll" \
     -r:"$MANAGED/System.dll" \
