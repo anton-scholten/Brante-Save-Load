@@ -76,6 +76,104 @@ namespace Doorstop
 			Recorder.MigrateLegacy();
 			Recorder.DedupeSidecars();
 			StartCoroutine(DevAutoload());
+			StartCoroutine(DevStatTrail());
+		}
+
+		// Dev (dev-stattrail.txt: "<run folder> <stat> [<stat> ...]"): the
+		// stats at every choice point of a run, oldest first - where a stat
+		// such as Death or Will changed along a playthrough.
+		private System.Collections.IEnumerator DevStatTrail()
+		{
+			string marker = Path.Combine(Recorder.SnapshotDir, "dev-stattrail.txt");
+			if (!File.Exists(marker))
+			{
+				yield break;
+			}
+			string[] args = File.ReadAllText(marker).Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+			try { File.Delete(marker); }
+			catch (Exception) { }
+			yield return new WaitForSeconds(8f);
+			try
+			{
+				string dir = Path.Combine(Path.Combine(Recorder.RunsDir, args[0]), "Choice");
+				List<string> files = new List<string>(Directory.GetFiles(dir, "*.dat"));
+				files.Sort((a, b) => File.GetLastWriteTimeUtc(a).CompareTo(File.GetLastWriteTimeUtc(b)));
+				string last = null;
+				foreach (string f in files)
+				{
+					SceneEffects.Hero h = SceneEffects.FromSnapshot(f);
+					if (h == null)
+					{
+						continue;
+					}
+					System.Text.StringBuilder sb = new System.Text.StringBuilder();
+					for (int i = 1; i < args.Length; i++)
+					{
+						sb.Append(" " + args[i] + "=" + h.Value(SceneEffects.ParameterAsset(args[i])));
+					}
+					string line = sb.ToString();
+					if (line != last)
+					{
+						ModLog.Info("DEV STATTRAIL: " + Path.GetFileNameWithoutExtension(f) + line);
+						last = line;
+					}
+				}
+				ModLog.Info("DEV STATTRAIL: " + files.Count + " choice point(s)");
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("DEV STATTRAIL failed:\n" + e);
+			}
+		}
+
+		// Achievements: the game unlocks one only while
+		// GameManager.BlockAchievements is false (set by AchievementsBlocker
+		// objects in its scenes). Logged whenever it changes, with the
+		// blockers that are loaded and whether Steam's stats arrived.
+		private float _achNext;
+		private int _achLast = -1;
+
+		private void Update()
+		{
+			if (Time.realtimeSinceStartup < _achNext)
+			{
+				return;
+			}
+			_achNext = Time.realtimeSinceStartup + 1f;
+			try
+			{
+				GameManager gm = GameManager.Instance;
+				if (gm == null)
+				{
+					return;
+				}
+				int now = gm.BlockAchievements ? 1 : 0;
+				if (now == _achLast)
+				{
+					return;
+				}
+				_achLast = now;
+				System.Text.StringBuilder sb = new System.Text.StringBuilder();
+				foreach (AchievementsBlocker b in Resources.FindObjectsOfTypeAll<AchievementsBlocker>())
+				{
+					sb.Append(" " + b.gameObject.scene.name + "/" + b.gameObject.name + "=" + b.BlockAchievements);
+				}
+				string stats = "?";
+				foreach (_Scripts.AMVCC.Core.SteamAPI.SteamStatsAndAchievements st in
+					Resources.FindObjectsOfTypeAll<_Scripts.AMVCC.Core.SteamAPI.SteamStatsAndAchievements>())
+				{
+					System.Reflection.FieldInfo f = st.GetType().GetField("m_bStatsValid",
+						System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+					stats = f != null ? f.GetValue(st).ToString() : "?";
+				}
+				ModLog.Info("Achievements: " + (now == 1 ? "BLOCKED" : "allowed") + " in " + AutoPlay.Story()
+					+ ", Steam stats " + stats + ", blockers:" + (sb.Length > 0 ? sb.ToString() : " none"));
+			}
+			catch (Exception e)
+			{
+				_achNext = float.MaxValue;
+				ModLog.Error("Achievements probe failed:\n" + e);
+			}
 		}
 
 		private static string _lastGameLog;

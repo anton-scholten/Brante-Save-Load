@@ -24,6 +24,8 @@ It also features a "tree view" visual of your playthrough so you can see your mi
 
 - **In your language.** The mod is translated into all eleven languages the game ships (English, Russian, German, French, Spanish, Italian, Polish, Turkish, Japanese, Korean, Simplified Chinese).
 
+- **Achievements still count.** Loading through the mod leaves Steam achievements switched on, as the game's own Continue does.
+
 - **Iron Man included.** The game disables its own save/load menu in Iron Man but the mod's window keeps working there, so a permadeath run can still be rewound (cheater!).
 
 - **A tree view of the whole story.** See below.
@@ -80,7 +82,7 @@ Two extra flags:
 - Load scene needs a starting point before your first changed choice: a mod save, the start of that chapter, or the very start of the story (built from the game's own new-game defaults if no chapter 1 save exists at all). For scenes played before the mod was installed, you need to pick every choice from that starting point.
 - The scenes ahead are a prediction: the mod plays your picks (or the first open choice) forward through the story's own rules, but a few stat changes the game makes between scenes aren't in its tables, so far-off scenes and greyed-out choices are a close estimate.
   When Load scene meets a scene the prediction didn't have, it stops there so you can pick its choice and load again.
-- Load scene takes about 5 to 10 seconds per scene to replay.
+- Load scene takes about 3 to 4 seconds per scene to replay.
 - The list keeps the newest 100 autosaves and 100 pre-rewind snapshots per playthrough; older ones are dropped. Manual saves, choice points and the backup of your original save are never removed.
 - The list shows 120 rows at a time; the **"Show more"** row loads the rest.
 - Some stats (Love, Rule, Volition, Tolerance, Wrath, Control, Cruelty, Weight, Contention) have no description in the game itself.

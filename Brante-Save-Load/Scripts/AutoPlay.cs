@@ -22,7 +22,67 @@ namespace Doorstop
 		public delegate string Picker(string scene);
 
 		public static bool Running { get; private set; }
-		private const float FastScale = 10f;
+		private const float FastScale = 20f;
+		// The driver's own waits were tuned at a 10x clock; they guard game
+		// animations (a fade, a page turn), which run on the scaled clock, so
+		// they shrink with it.
+		private static float Guard
+		{
+			get { return _fast ? 10f / FastScale : 1f; }
+		}
+		private static float _sceneSince;
+		private static bool _fast;
+		private static float _lastPress;
+		private static readonly Dictionary<int, float> _alphaSeen = new Dictionary<int, float>();
+		private static readonly System.Reflection.FieldInfo PageIndex = typeof(_Scripts.AMVCC.Controllers.TextController)
+			.GetField("_pageIndex", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+		private static readonly System.Reflection.FieldInfo PageCount = typeof(_Scripts.AMVCC.Controllers.TextController)
+			.GetField("_pageCount", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+		// Fast replay: a scene's text pages are turned in one go through the
+		// game's own TextController.NextPage (each page still fires its
+		// events: music, picture, HUD, title), one press each at the scene's
+		// pace cost 5-35 presses a scene. It stops after a page that triggers
+		// a death or opens a stat/character pop-up, which then wants the
+		// player. -1 when the button is not a text pager.
+		private static int TurnPages(GameObject nextButton)
+		{
+			if (PageIndex == null || PageCount == null)
+			{
+				return -1;
+			}
+			foreach (_Scripts.AMVCC.Controllers.TextController tc in
+				UnityEngine.Object.FindObjectsOfType<_Scripts.AMVCC.Controllers.TextController>())
+			{
+				if (tc.NextButton != nextButton || tc.TextBlock == null)
+				{
+					continue;
+				}
+				int turned = 0;
+				while (turned < 100)
+				{
+					int index = (int)PageIndex.GetValue(tc);
+					int count = (int)PageCount.GetValue(tc);
+					if (index >= count || index + 1 >= tc.TextBlock.Count)
+					{
+						break;
+					}
+					_Scripts.AMVCC.Controllers.TextBlock page = tc.TextBlock[index + 1];
+					bool stops = page != null && page.UseTextBlockSpecialSceneries && page.SpecialSceneries != null
+						&& (page.SpecialSceneries.IsDeathTrigger || page.SpecialSceneries.TextBlockShowParameter
+							|| page.SpecialSceneries.TextBlockShowCharacter);
+					tc.NextPage();
+					turned++;
+					if (stops || !nextButton.activeInHierarchy)
+					{
+						break;
+					}
+				}
+				return turned;
+			}
+			return -1;
+		}
+		private static int _pageTurns;
 		private static float _readySince = -1f;
 		private static readonly Dictionary<int, float> _pressedAt = new Dictionary<int, float>();
 
@@ -82,6 +142,9 @@ namespace Doorstop
 			_deathsAtAnswer = Deaths();
 			_pressedAt.Clear();
 			_unlocked.Clear();
+			_pageTurns = 0;
+			_sceneSince = Time.realtimeSinceStartup;
+			_fast = fast;
 			// Fast: the game's clock runs FastScale times faster (animations,
 			// page turns and timed waits follow it), the sound is off, and the
 			// driver looks for the next button every 50 ms. Scene loading is
@@ -221,7 +284,7 @@ namespace Doorstop
 				{
 					_readySince = Time.realtimeSinceStartup;
 				}
-				if (ready && Time.realtimeSinceStartup - _readySince < 0.25f)
+				if (ready && Time.realtimeSinceStartup - _readySince < 0.25f * Guard)
 				{
 					return false;
 				}
@@ -245,7 +308,10 @@ namespace Doorstop
 							+ " in " + scene + " - stopping";
 						return false;
 					}
-					ModLog.Info("AUTOPLAY: " + scene + " -> " + b.gameObject.name);
+					ModLog.Info("AUTOPLAY: " + scene + " -> " + b.gameObject.name + " (" + _pageTurns + " page turn(s), "
+						+ (Time.realtimeSinceStartup - _sceneSince).ToString("0.0") + " s since the last answer)");
+					_pageTurns = 0;
+					_sceneSince = Time.realtimeSinceStartup;
 					_deathsAtAnswer = Deaths();
 					b.Button_Click();
 					answered = scene;
@@ -261,22 +327,48 @@ namespace Doorstop
 					// copies, whose answer clicks then throw in the game's
 					// GoToConsequence and never register. Kept per button, as
 					// other buttons (an event pop-up) come up in between.
-					// Pagers turn a page per press and may go again soon.
+					// Pagers turn a page per press and may go again soon. The
+					// fade itself is excluded by Reachable; this pause covers
+					// the frames before it starts.
 					float at;
 					if (next != null && _pressedAt.TryGetValue(next.GetInstanceID(), out at)
 						&& Time.realtimeSinceStartup - at
-							< (next.gameObject.name == "Next" || next.gameObject.name == "RightArrow" ? 0.3f : 1.5f))
+							< (next.gameObject.name == "Next" || next.gameObject.name == "RightArrow" ? 0.3f : 0.6f) * Guard)
 					{
+						next = null;
+					}
+					bool pager = next != null && (next.gameObject.name == "Next" || next.gameObject.name == "RightArrow");
+					if (next != null && !pager && Time.realtimeSinceStartup - _lastPress < 0.5f * Guard)
+					{
+						// two presses that each start a scene change in quick
+						// succession (an answer screen's continue, then an event
+						// pop-up's) crashed the game in native code at 20x
 						next = null;
 					}
 					if (next != null)
 					{
+						if (!pager)
+						{
+							_lastPress = Time.realtimeSinceStartup;
+						}
 						_pressedAt[next.GetInstanceID()] = Time.realtimeSinceStartup;
+						if (next.gameObject.name == "Next" || next.gameObject.name == "RightArrow")
+						{
+							_pageTurns++;
+						}
 						if (next.gameObject.name != "Next")
 						{
 							ModLog.Info("AUTOPLAY: continue via " + PathOf(next.transform));
 						}
-						Click(next.gameObject);
+						int turned = _fast && next.gameObject.name == "Next" ? TurnPages(next.gameObject) : -1;
+						if (turned < 0)
+						{
+							Click(next.gameObject);
+						}
+						else
+						{
+							_pageTurns += Math.Max(0, turned - 1);
+						}
 						moved = true;
 					}
 				}
@@ -291,7 +383,6 @@ namespace Doorstop
 		// Debug runs play on through the hero's last death into the finals
 		// (the epilogue); a replay stops there.
 		private static bool _throughLastDeath;
-
 		public static IEnumerator DebugRun(int[] chapters)
 		{
 			string start = MakeDebugSave();
@@ -511,22 +602,111 @@ namespace Doorstop
 
 		// The forced answer when it is offered and open to the hero, else the
 		// first open one.
-		// Debug runs: the first open answer that does not cost a life, else
-		// the first open one - always picking the first answer used up the
-		// hero's lives by the end of chapter 4 (FourthDeath_1).
+		// Debug runs: an answer that keeps the hero alive. Answers that add
+		// Death are left out. Two things ended the hero for good at the end
+		// of chapter 4 with Death still 0: Will running out (the first open
+		// answers kept spending it, 30 -> -10, and some scenes drain it
+		// whatever is answered), and the track's last scene opening its
+		// surviving answers only to a stat built over the chapter (the
+		// rebel's 053.080.010_SecretMeet: Protest or Repression >= 8, else
+		// only the answer that sets Death to 4). So each open answer scores
+		// the Will it leaves (up to 30) plus five per point of the one stat
+		// the track's requirements ask most of and the hero is closest to;
+		// the first of equals wins.
 		private static string SafePick(string scene)
 		{
 			List<ParameterButtonChanger> buttons = VisibleChoices();
 			buttons.Sort((a, b) => ButtonNumber(a.gameObject.name).CompareTo(ButtonNumber(b.gameObject.name)));
+			SceneEffects.Hero now = SceneEffects.Now();
+			int will = StatOf(now, "Will", 100);
+			string focus = FocusStat(scene, now);
+			string best = null;
+			int bestScore = int.MinValue;
 			foreach (ParameterButtonChanger b in buttons)
 			{
-				if (b.GetButtonState() && !SceneEffects.For(scene, b.gameObject.name).Exists(
-					f => f.Kind == 'P' && f.Name == "Death" && f.Value > 0 && !f.IsRequirement))
+				if (!b.GetButtonState())
 				{
-					return b.gameObject.name;
+					continue;
+				}
+				string name = b.gameObject.name;
+				List<SceneEffects.Effect> fx = SceneEffects.For(scene, name);
+				if (fx.Exists(f => f.Kind == 'P' && f.Name == "Death" && f.Value > 0))
+				{
+					continue;
+				}
+				int after = will, push = 0;
+				foreach (SceneEffects.Effect f in fx)
+				{
+					if (f.Kind == 'P' && f.Name == "Will")
+					{
+						after += f.Value;
+					}
+					else if (f.Kind == 'P' && f.Name == focus)
+					{
+						push += f.Value;
+					}
+				}
+				int score = Math.Min(after, 30) + 5 * push;
+				if (score > bestScore)
+				{
+					bestScore = score;
+					best = name;
 				}
 			}
-			return null;
+			return best;
+		}
+
+		private static int StatOf(SceneEffects.Hero h, string stat, int unknown)
+		{
+			var asset = SceneEffects.ParameterAsset(stat);
+			return h != null && asset != null ? h.Value(asset) : unknown;
+		}
+
+		// The stat of the scene's track (its first four characters, "053.")
+		// whose highest requirement the hero is nearest to at the track's
+		// first decision, Will left out - then kept for the whole track:
+		// switching between two close stats (Justice and Carier on the judge's
+		// track) let both fall short of the last scene's gate.
+		private static readonly Dictionary<string, string> _focus = new Dictionary<string, string>();
+		private static readonly Dictionary<string, Dictionary<string, int>> _thresholds =
+			new Dictionary<string, Dictionary<string, int>>();
+
+		private static string FocusStat(string scene, SceneEffects.Hero now)
+		{
+			if (scene == null || scene.Length < 4)
+			{
+				return null;
+			}
+			string prefix = scene.Substring(0, 4);
+			string kept;
+			if (_focus.TryGetValue(prefix, out kept))
+			{
+				return kept;
+			}
+			Dictionary<string, int> need;
+			if (!_thresholds.TryGetValue(prefix, out need))
+			{
+				need = SceneEffects.ThresholdsIn(prefix);
+				_thresholds[prefix] = need;
+			}
+			string focus = null;
+			float bestShare = -1f;
+			foreach (KeyValuePair<string, int> kv in need)
+			{
+				if (kv.Key == "Will" || kv.Key == "Death" || kv.Value <= 0)
+				{
+					continue;
+				}
+				float share = (float)StatOf(now, kv.Key, 0) / kv.Value;
+				if (share > bestShare)
+				{
+					bestShare = share;
+					focus = kv.Key;
+				}
+			}
+			_focus[prefix] = focus;
+			ModLog.Info("AUTOPLAY: debug picks on track " + prefix + " build " + (focus ?? "(none)") + " and keep Will");
+			return focus;
 		}
 
 		public static ParameterButtonChanger Pick(string wanted, string scene)
@@ -570,13 +750,48 @@ namespace Doorstop
 		// The button a player would press to go on: a "Next" pager or page
 		// arrow first, else any button whose name or click handler says
 		// continue/close/skip. Never the HUD, the pause menu, or our own UI.
+		// Whether a player's click could reach the button, on a settled
+		// screen: no parent CanvasGroup stops raycasts or is still fading. The answer screen's fade
+		// (SceneAnimationController.ConsequenceAlphaAnim) turns them off on
+		// both pages as it starts, so its continue is not pressed again while
+		// it fades - a press then loaded the next scene twice.
+		private static bool Reachable(UnityEngine.UI.Button b)
+		{
+			for (Transform t = b.transform; t != null; t = t.parent)
+			{
+				CanvasGroup g = t.GetComponent<CanvasGroup>();
+				if (g != null)
+				{
+					if (!g.blocksRaycasts || g.alpha < 0.01f)
+					{
+						return false;
+					}
+					// still fading in or out: its alpha moved since the last
+					// look (a group may rest at any alpha, so no fixed value)
+					float before;
+					int id = g.GetInstanceID();
+					bool moving = !_alphaSeen.TryGetValue(id, out before) || Math.Abs(before - g.alpha) > 0.001f;
+					_alphaSeen[id] = g.alpha;
+					if (moving)
+					{
+						return false;
+					}
+					if (g.ignoreParentGroups)
+					{
+						break;
+					}
+				}
+			}
+			return true;
+		}
+
 		public static UnityEngine.UI.Button FindContinue()
 		{
 			UnityEngine.UI.Button byHandler = null;
 			foreach (UnityEngine.UI.Button b in Resources.FindObjectsOfTypeAll<UnityEngine.UI.Button>())
 			{
 				if (b == null || !b.gameObject.scene.IsValid() || !b.gameObject.activeInHierarchy
-					|| !b.interactable || IsOurs(b))
+					|| !b.interactable || IsOurs(b) || !Reachable(b))
 				{
 					continue;
 				}

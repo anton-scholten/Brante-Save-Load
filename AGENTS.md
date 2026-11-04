@@ -265,6 +265,23 @@ community event sheet (`data/events.json`).
   when the start save cannot be simulated. Stats the game changes outside answer
   effects are not simulated, so this is a prediction: the ordered replay is
   still the final check.
+- **Achievements stay on.** The game unlocks one only while
+  `GameManager.BlockAchievements` is false; `AchievementsBlocker` objects set it
+  on `Start` (the main menu's to true, the loading screen's to false). The
+  mod's load passes the loading screen too, and `ChoiceWindow.AllowAchievements`
+  clears the flag after every mod load unless a scene that blocks on purpose is
+  loaded. `ModHost.Update` logs the flag, the loaded blockers and Steam's stats
+  whenever it changes ("Achievements: ...").
+- **Fast replay.** `AutoPlay` runs the game's clock at 20x (every animation
+  and timed wait is on the scaled clock), its own waits shrink with it
+  (`Guard`), a scene's text pages are turned in one step through
+  `TextController.NextPage` (`TurnPages`; it stops after a page that triggers a
+  death or opens a stat/character pop-up), and a button counts only when a
+  click could reach it on a settled screen (`Reachable`: no parent
+  `CanvasGroup` blocks raycasts or is still fading). Two presses that each
+  start a scene change are kept 0.25 s apart: closer, an answer screen's
+  continue and an event pop-up's crashed the game in native code. A 28-answer
+  chapter-4 replay went from 389 s to ~100 s.
 - **Answer names are the button objects' names.** A few localisation keys are
   `ButtonDescription_1`; the scene's button is always `ButtonDescription1`, and
   `tools/localization.py` writes that name, or a predicted answer can never be
@@ -330,7 +347,8 @@ on use) and must be paired with `dev-autoload.txt`:
 | `dev-book.txt` | the book tabs (tree view, then save table), the save table, then the tree view: wheel, pop-ups, stat pop-up, a conflicting pick, chapter rule, a pick + its load plan, undo |
 | `dev-loadpath.txt` | with `dev-book.txt`: Load scene end to end; `back N` replays from another answer N scenes back, `chapter` from the chapter's start save, `start` from chapter 1 with an early change, `ahead` into the next chapter, `death` through a death, `offpath` a stop off the path, `first` the story's first scenes from a stand-in start (another run's chapter 1 save), `new` the same from a start built from the game's defaults, `file <name>` load that mod save as the table does (`file <name> norun`: with no run active) |
 | `dev-history.txt` | log the save's scene path (`ShowedScenesList`) |
-| `dev-autoplay.txt` | empty: log the buttons the game puts up after an answer; `chapters 2 3`: start a debug run (own main save `Debug_<date>`, from the newest `Chapter_1.dat`), play the first open answer that costs no life everywhere (on through the hero's last death) and make a mod save when each listed chapter starts |
+| `dev-autoplay.txt` | empty: log the buttons the game puts up after an answer; `chapters 2 3`: start a debug run (own main save `Debug_<date>`, from the newest `Chapter_1.dat`), play answers that keep the hero alive (no Death, most Will, build the stat the track's final gate needs - `AutoPlay.SafePick`), on through the hero's last death, and make a mod save when each listed chapter starts |
+| `dev-stattrail.txt` | `<run folder> <stat> ...`: log those stats at every choice point of a run, oldest first (no `dev-autoload.txt` needed) |
 | `dev-scene-tree.txt` | dump the loaded scene's UI components |
 | `dev-bolt.txt` | dump the live Bolt graph of the choice machine |
 | `dev-ironman.txt` | load the save as an Iron Man game |

@@ -30,12 +30,17 @@ Current, de-duplicated remainder. The phase sections below keep the history.
   changed chapter's own start save is from another timeline.
 - [x] Id-less games get an id at load (`NewSlotId`, as `CreateSaveLoadSlot`).
 - [x] Refresh the README screenshot for the table's new first column.
-- [ ] Full playthrough pass, chapter 5 and the epilogue. A debug run (first
-  open answer that costs no life) plays chapters 1-4 cleanly in ~16 minutes and
-  takes the hero's true death at the end of chapter 4; the game's true-death
-  pop-up then throws in its own `ObjectivePopupComponent.Start` at autoplay
-  speed and the finals never start. Reaching chapter 5 needs a picker that
-  survives chapter 4 (or a chapter-5 start save).
+- [x] Full playthrough pass through chapter 5: a debug run with the
+  survival picker plays chapters 1-5 in ~14 minutes (rebel post) to chapter 5's
+  finale.
+- [x] Achievements under the mod: allowed after every mod load (verified in
+  game, flag logged).
+- [x] Replay speed: 20x clock, pages turned in one step, settle checks
+  (389 s -> ~100 s for 28 answers).
+- [ ] The epilogue: on the true-death page `FourthDeath_3` the CONTINUE throws
+  in `UIManager.SetAchievementInfo` (the true-death pop-up never builds), at
+  normal speed too, so the finals do not start in a debug run. Unknown whether
+  a player sees the same; worth checking by hand once.
 - [ ] Stats the game changes outside answer effects (e.g. `Carier`) are not in
   the extracted tables, so a long simulated path can drift; the replay stays
   authoritative.

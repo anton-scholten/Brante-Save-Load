@@ -4786,6 +4786,7 @@ namespace Doorstop
 				}
 			}
 			ActivateLoadingScreen();
+			AllowAchievements();
 			ModLog.Info("ChoiceWindow: broadcasting StartSceneTransitionEvent");
 			try
 			{
@@ -4794,6 +4795,37 @@ namespace Doorstop
 			catch (Exception e)
 			{
 				ModLog.Error("ChoiceWindow: transition broadcast failed:\n" + e);
+			}
+		}
+
+		// The game unlocks achievements only while GameManager.BlockAchievements
+		// is false. Its own loads pass the loading screen, whose
+		// AchievementsBlocker clears it (the main menu's sets it); a mod load
+		// does the same, so a game continued through the mod earns them like
+		// any other - unless a scene that blocks them is loaded.
+		private static void AllowAchievements()
+		{
+			try
+			{
+				GameManager gm = GameManager.Instance;
+				if (gm == null || !gm.BlockAchievements)
+				{
+					return;
+				}
+				foreach (AchievementsBlocker b in Resources.FindObjectsOfTypeAll<AchievementsBlocker>())
+				{
+					if (b.BlockAchievements && b.gameObject.scene.isLoaded
+						&& b.gameObject.scene.name != "GameLoadingScreen")
+					{
+						return;   // a scene that blocks them on purpose
+					}
+				}
+				gm.BlockAchievements = false;
+				ModLog.Info("ChoiceWindow: achievements allowed for the loaded game");
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: achievement flag not set:\n" + e);
 			}
 		}
 

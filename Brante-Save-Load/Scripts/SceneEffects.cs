@@ -497,6 +497,68 @@ namespace Doorstop
 		private static Dictionary<string, Objective> _objectives;
 
 		// "≥ 4", the way the game compares (ParametersManager.Compare).
+		// The ">=" / ">" stat requirements of the gate a story track ends on
+		// (scene names starting with `prefix`, e.g. "053." - the rebel's
+		// chapter 4; trigger scenes, numbered 100 and up, left out): its
+		// latest scene with an answer that sets Death to 4 (the rebel's
+		// 053.080.010_SecretMeet, before 053.090.070_Revolution), else its
+		// last scene (the judge's 054.080.090_Court). Debug runs steer by it.
+		public static Dictionary<string, int> ThresholdsIn(string prefix)
+		{
+			Load();
+			Dictionary<string, int> need = new Dictionary<string, int>();
+			if (_effects == null)
+			{
+				return need;
+			}
+			string last = null, deadly = null;
+			foreach (KeyValuePair<string, Dictionary<int, List<Effect>>> s in _effects)
+			{
+				string name = s.Key;
+				string[] parts = name.Split('.', '_');
+				int part;
+				if (!name.StartsWith(prefix, StringComparison.Ordinal) || parts.Length < 3
+					|| !int.TryParse(parts[1], out part) || part >= 100)
+				{
+					continue;
+				}
+				if (last == null || string.CompareOrdinal(name, last) > 0)
+				{
+					last = name;
+				}
+				bool kills = false;
+				foreach (List<Effect> fx in s.Value.Values)
+				{
+					kills |= fx.Exists(e => e.Kind == 'P' && e.Name == "Death" && e.Value >= 4);
+				}
+				if (kills && (deadly == null || string.CompareOrdinal(name, deadly) > 0))
+				{
+					deadly = name;
+				}
+			}
+			last = deadly ?? last;
+			foreach (KeyValuePair<string, Dictionary<int, List<Effect>>> scene in _effects)
+			{
+				if (scene.Key != last)
+				{
+					continue;
+				}
+				foreach (List<Effect> fx in scene.Value.Values)
+				{
+					foreach (Effect e in fx)
+					{
+						int v = e.Op == 0 ? e.Value + 1 : e.Value;
+						int had;
+						if (e.Kind == 'Q' && (e.Op == 0 || e.Op == 3) && (!need.TryGetValue(e.Name, out had) || v > had))
+						{
+							need[e.Name] = v;
+						}
+					}
+				}
+			}
+			return need;
+		}
+
 		private static string OpText(int op, int value)
 		{
 			// ASCII only: the game's font has no ≥/≤/≠ glyphs.

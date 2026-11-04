@@ -1187,3 +1187,51 @@ checkpoint is still not driven end to end.
   stopped as stuck. Debug runs now play on through the last death; replays still
   stop there.
 
+## Achievements, survival, replay speed (3 Nov 2026, evening)
+
+- **What gates achievements.** `SteamStatsAndAchievements.Update` does nothing
+  while `GameManager.BlockAchievements` is true (its default). Logged in game:
+  `MainMenu/MainMenu` carries an `AchievementsBlocker` with true and
+  `GameLoadingScreen/Window_GameLoadingScreen` one with false; Steam's stats
+  arrive a few seconds after boot. A mod load passes the loading screen, so the
+  flag was already false after it; the mod now also clears it after every mod
+  load (unless a blocking scene is loaded), so no path of its own can leave it
+  set.
+- **How the hero dies for good in chapter 4.** Not by the Death counter: in the
+  debug runs Death stayed 0-1 while Will fell from 30 to -10 over the chapter
+  (answers costing 5-10 each, and scenes such as `053.100.070_Catastrophe2` that
+  take 20 whatever is answered). Each post's track ends on a gate whose
+  surviving answers need its key stat: the rebel's `053.080.010_SecretMeet`
+  (Protest or Repression >= 8; answer 4 sets Death to 4), the judge's
+  `054.080.090_Court` (Justice or Carier >= 7-8). Switching between two close
+  stats loses both (Justice 7 -> 0 while Carier was favoured). A picker that
+  keeps the most Will and builds one gate stat from the track's first decision
+  survived chapter 4 and played chapter 5 to `060.010.200_TheFinal4`. Online
+  sources had no route; a Steam thread only confirms that a lesser death spends
+  a life.
+- **The true-death page's CONTINUE throws.** `FourthDeathContinueButtonController.Button_Click`
+  -> `UIManager.ShowObjectivePopupEvent` -> `SetAchievementInfo` throws a
+  NullReference on `FourthDeath_3` (rebel, chapter 5), at 20x and at the normal
+  clock, so the `ИстиннаяСмерть` pop-up never builds and nothing sets
+  `GoToFinals`. Setting it and clicking the talisman flow from the mod did not
+  start the finals either.
+- **Where a replay's time went.** At 10x a scene cost ~14 s: ~3.5 s of text
+  pages (5-56 per scene, one "Next" press each behind a 0.3 s wait), ~1.5 s per
+  answer-screen page behind the double-load guard, the rest animation. All of
+  the game's animations and waits use the scaled clock (no `unscaledDeltaTime`
+  or `WaitForSecondsRealtime` in the game), so the clock can go faster; the
+  text pages can be turned in one step (`TextController.NextPage` is
+  synchronous; a page's events are music, picture, HUD, title, a death trigger
+  or a stat/character pop-up); and the answer screen's fade turns
+  `blocksRaycasts` off on both pages as it starts, so "can a click reach it"
+  replaces most of the guard. 20x + batched pages + reachability: 389 s ->
+  91-101 s for the same 28 answers, the right scene every time, never two
+  copies of a scene.
+- **A native crash at 20x.** With 0.3 s between presses, an answer screen's
+  continue followed by an event pop-up's started the next scene's load twice
+  (`SceneState_HIDE_ANIMATION` twice in `output_log.txt`) and UnityPlayer died
+  with an access violation (crash report in
+  `AppData/Local/Temp/SEVER/.../Crashes`). Keeping such presses 0.25 s apart and
+  waiting for fading pop-ups (a `CanvasGroup` whose alpha still moves) stopped
+  it in the following runs. The game's own logs are `output_log.txt` in the
+  persistent data folder.
