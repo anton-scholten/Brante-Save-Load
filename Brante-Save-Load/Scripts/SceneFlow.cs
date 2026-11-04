@@ -35,7 +35,9 @@ namespace Doorstop
 			public int Chapter;
 			public int Order;
 			public string Scene;
-			public int Turn;       // 0 when not gated on time
+			public int Turn;       // 0 when not gated on time; the first turn of a range
+			public int TurnMax;    // the last turn it can open in (= Turn unless a range)
+			public bool Timed;     // gated on the turn at all
 			public int Season;     // 0 when not gated on time
 			public List<List<KeyValuePair<string, string>>> Labels;
 			public string Condition;
@@ -93,7 +95,7 @@ namespace Doorstop
 					r.Chapter = ToInt(p[0]);
 					r.Order = ToInt(p[1]);
 					r.Scene = p[2];
-					r.Turn = ToInt(p[3]);
+					ParseTurn(p[3], r);
 					r.Season = ToInt(p[4]);
 					r.Labels = ParseLabels(p[5]);
 					r.Condition = p[6];
@@ -119,6 +121,35 @@ namespace Doorstop
 		}
 
 		// "Post=Judge;Disclosure=No|Post=Rebel" -> alternatives of label sets.
+		// "N" (the gate's Turn == N), or the inclusive range "N-M" of a
+		// trigger gate (Turn >= N && Turn < M+1), open at either end
+		// ("N-", "-M"); empty when the gate does not look at the turn.
+		private static void ParseTurn(string text, Row r)
+		{
+			text = (text ?? "").Trim();
+			r.Timed = text.Length > 0;
+			int dash = text.IndexOf('-');
+			if (dash < 0)
+			{
+				r.Turn = ToInt(text);
+				r.TurnMax = r.Turn;
+				return;
+			}
+			string lo = text.Substring(0, dash), hi = text.Substring(dash + 1);
+			r.Turn = lo.Length > 0 ? ToInt(lo) : 0;
+			r.TurnMax = hi.Length > 0 ? ToInt(hi) : int.MaxValue;
+		}
+
+		// Whether the row's time gate is open at this turn and season.
+		private static bool InSlot(Row r, int turn, int season)
+		{
+			if (!r.Timed)
+			{
+				return true;
+			}
+			return turn >= r.Turn && turn <= r.TurnMax && (r.Season == 0 || r.Season == season);
+		}
+
 		private static List<List<KeyValuePair<string, string>>> ParseLabels(string text)
 		{
 			List<List<KeyValuePair<string, string>>> alts = new List<List<KeyValuePair<string, string>>>();
@@ -177,12 +208,19 @@ namespace Doorstop
 		public static List<Ahead> After(string from, ICollection<string> shown, bool laterChapters,
 			SceneEffects.Hero hero)
 		{
+			return WithHero(hero, delegate { return AfterCore(from, shown, laterChapters); });
+		}
+
+		// Runs `body` with `hero`'s stats, characters and objectives swapped
+		// into the game's managers, and puts the live ones back afterwards.
+		private static List<Ahead> WithHero(SceneEffects.Hero hero, Func<List<Ahead>> body)
+		{
 			ParametersManager pm = ParametersManager.Instance;
 			CharacterParametersSerializeHelper csh = CharacterParametersSerializeHelper.Initiate;
 			KeyChapterParametersController kc = KeyChapterParametersController.Initiate;
 			if (hero == null || hero.Stats == null || pm == null || csh == null)
 			{
-				return AfterCore(from, shown, laterChapters);
+				return body();
 			}
 			ModelParameters stats = pm.Parameters;
 			List<CharacterModel> chars = csh.Characters;
@@ -204,7 +242,7 @@ namespace Doorstop
 						o.Unlocked = hero.Objectives.Contains(o.Name);
 					}
 				}
-				return AfterCore(from, shown, laterChapters);
+				return body();
 			}
 			finally
 			{
@@ -222,13 +260,24 @@ namespace Doorstop
 
 		private static List<Ahead> AfterCore(string from, ICollection<string> shown, bool laterChapters)
 		{
-			List<Ahead> result = new List<Ahead>();
 			Row start = Find(from);
 			if (start == null)
 			{
-				return result;
+				return new List<Ahead>();
 			}
-			Context ctx = new Context();
+			return AfterCore(start.Chapter, from, shown, laterChapters);
+		}
+
+		private static List<Ahead> AfterCore(int chapter, string from, ICollection<string> shown, bool laterChapters)
+		{
+			return AfterCore(chapter, from, shown, laterChapters, new Context());
+		}
+
+		private static List<Ahead> AfterCore(int chapter, string from, ICollection<string> shown, bool laterChapters,
+			Context ctx)
+		{
+			List<Ahead> result = new List<Ahead>();
+			Row start = new Row { Chapter = chapter, Scene = from ?? "" };
 			GameManager gm = GameManager.Instance;
 			int turn = gm != null ? gm.Turn : 0;
 			int season = gm != null ? gm.Season : 0;
@@ -249,6 +298,10 @@ namespace Doorstop
 				if (shown != null && shown.Contains(r.Scene))
 				{
 					continue;
+				}
+				if (r.Chapter == start.Chapter && r.Timed && turn > 0 && r.TurnMax < turn)
+				{
+					continue;   // its turns are over: the game will not open it any more
 				}
 				later.Add(r);
 			}
@@ -281,7 +334,7 @@ namespace Doorstop
 				a.Row = r;
 				a.Condition = cond;
 				a.Immediate = !future
-					&& (r.Turn == 0 || (r.Turn == turn && (r.Season == 0 || r.Season == season)));
+					&& InSlot(r, turn, season);
 				result.Add(a);
 			}
 			// Immediate scenes first (flow order), then the rest of the
@@ -299,9 +352,167 @@ namespace Doorstop
 				{
 					return a.Row.Chapter.CompareTo(b.Row.Chapter);
 				}
+				int ta = Math.Max(a.Row.Turn, turn), tb = Math.Max(b.Row.Turn, turn);
+				if (ra == 1 && (ta != tb || a.Row.Season != b.Row.Season))
+				{
+					// later time slots of this chapter: the game moves on to
+					// the earliest one, whatever the flow order
+					return ta != tb ? ta.CompareTo(tb) : a.Row.Season.CompareTo(b.Row.Season);
+				}
 				return Compare(a.Row, b.Row);
 			});
 			return result;
+		}
+
+		// The scene AfterCore would list first, for a step of the simulation:
+		// the candidates are put in that order (immediate ones in flow order,
+		// then the earliest later slot) before any condition is evaluated,
+		// and the first that can open wins - the conditions of the rest of
+		// the chapter are never evaluated. An empty list when none can.
+		private static List<Ahead> FirstCore(int chapter, ICollection<string> shown, Context ctx)
+		{
+			GameManager gm = GameManager.Instance;
+			int turn = gm != null ? gm.Turn : 0;
+			int season = gm != null ? gm.Season : 0;
+			List<Row> now = new List<Row>();
+			List<Row> later = new List<Row>();
+			foreach (Row r in ChapterRows(chapter))
+			{
+				if (shown.Contains(r.Scene) || (r.Timed && turn > 0 && r.TurnMax < turn))
+				{
+					continue;
+				}
+				(InSlot(r, turn, season) ? now : later).Add(r);
+			}
+			later.Sort(delegate(Row a, Row b)
+			{
+				int ta = Math.Max(a.Turn, turn), tb = Math.Max(b.Turn, turn);
+				if (ta != tb)
+				{
+					return ta.CompareTo(tb);
+				}
+				return a.Season != b.Season ? a.Season.CompareTo(b.Season) : Compare(a, b);
+			});
+			List<Ahead> result = new List<Ahead>();
+			foreach (List<Row> group in new[] { now, later })
+			{
+				foreach (Row r in group)
+				{
+					if (!LabelsMatch(r, ctx, false))
+					{
+						continue;
+					}
+					Tri cond = Evaluate(r, ctx);
+					if (cond == Tri.False)
+					{
+						continue;
+					}
+					result.Add(new Ahead { Row = r, Condition = cond, Immediate = group == now });
+					return result;
+				}
+			}
+			return result;
+		}
+
+		// A chapter's rows in flow order (kept: the TSV does not change).
+		private static readonly Dictionary<int, List<Row>> _chapterRows = new Dictionary<int, List<Row>>();
+
+		private static List<Row> ChapterRows(int chapter)
+		{
+			List<Row> rows;
+			if (!_chapterRows.TryGetValue(chapter, out rows))
+			{
+				rows = _rows.FindAll(r => r.Chapter == chapter);
+				rows.Sort(Compare);
+				_chapterRows[chapter] = rows;
+			}
+			return rows;
+		}
+
+		// One step of a forward simulation: the scenes of `chapter` that can
+		// come next for a simulated game - its hero (stats, characters,
+		// objectives), key chapter parameters, scenes shown so far, turn and
+		// season - immediate ones first. The simulated state is swapped into
+		// the game's managers only while the conditions are evaluated (the
+		// evaluator reads them there) and always put back.
+		public static List<Ahead> Step(int chapter, SceneEffects.Hero hero, Dictionary<string, string> keys,
+			List<ShowedScenes> shownList, int turn, int season)
+		{
+			Load();
+			GameManager gm = GameManager.Instance;
+			KeyChapterParametersController kc = KeyChapterParametersController.Initiate;
+			if (_rows == null || gm == null || kc == null || hero == null)
+			{
+				return new List<Ahead>();
+			}
+			HashSet<string> shown = new HashSet<string>();
+			foreach (ShowedScenes sc in shownList)
+			{
+				if (sc != null && sc.IsShowed)
+				{
+					shown.Add(sc.SceneName);
+				}
+			}
+			List<ShowedScenes> liveList = gm.ShowedScenesList;
+			int liveTurn = gm.Turn, liveSeason = gm.Season;
+			List<_Scripts.KeyParams.KeyChapterParameterModel> liveKeys = kc.AllKeyParameters;
+			try
+			{
+				gm.ShowedScenesList = shownList;
+				gm.Turn = turn;
+				gm.Season = season;
+				List<_Scripts.KeyParams.KeyChapterParameterModel> simKeys = new List<_Scripts.KeyParams.KeyChapterParameterModel>();
+				foreach (KeyValuePair<string, string> kv in keys)
+				{
+					simKeys.Add(new _Scripts.KeyParams.KeyChapterParameterModel { Name = kv.Key, Value = kv.Value });
+				}
+				kc.AllKeyParameters = simKeys;
+				// The steps of one simulation run in one frame: the scene's
+				// objects and singletons are the same for all of them, and
+				// looking them up (FindObjectsOfTypeAll) is most of a step's
+				// cost. Key parameters change every step and are read again.
+				int frame = UnityEngine.Time.frameCount;
+				if (_stepCtx == null || _stepFrame != frame)
+				{
+					_stepCtx = new Context();
+					_stepFrame = frame;
+				}
+				_stepCtx.ResetKeys();
+				Context ctx = _stepCtx;
+				return WithHero(hero, delegate { return FirstCore(chapter, shown, ctx); });
+			}
+			finally
+			{
+				gm.ShowedScenesList = liveList;
+				gm.Turn = liveTurn;
+				gm.Season = liveSeason;
+				kc.AllKeyParameters = liveKeys;
+			}
+		}
+
+		private static Context _stepCtx;
+		private static int _stepFrame = -1;
+
+		// The earliest time slot (turn, season) of a chapter's flow, for a
+		// simulation entering the chapter.
+		public static void FirstSlot(int chapter, out int turn, out int season)
+		{
+			Load();
+			turn = int.MaxValue;
+			season = 0;
+			foreach (Row r in _rows)
+			{
+				if (r.Chapter == chapter && r.Timed && r.Turn > 0 && r.Turn < turn)
+				{
+					turn = r.Turn;
+					season = r.Season;
+				}
+			}
+			if (turn == int.MaxValue)
+			{
+				turn = 1;
+				season = 1;
+			}
 		}
 
 		// Whether `scene` can be reached with these key chapter parameters: its
@@ -571,6 +782,11 @@ namespace Doorstop
 			private readonly Dictionary<string, Dictionary<string, UnityEngine.Object>> _objects =
 				new Dictionary<string, Dictionary<string, UnityEngine.Object>>();
 			private readonly Dictionary<string, string> _keys = new Dictionary<string, string>();
+
+			public void ResetKeys()
+			{
+				_keys.Clear();
+			}
 
 			public string KeyParameter(string name)
 			{

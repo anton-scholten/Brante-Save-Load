@@ -2106,8 +2106,8 @@
   "051.020.020_The_Old_Friend": {
    "title": "An Old Friend",
    "buttons": {
-    "ButtonDescription_1": "You aren’t about to miss a chance to spend some time with your old friend, no matter what kind of danger he’s in.",
-    "ButtonDescription_2": "You and Tommas parted ways long ago. His fate is no longer linked to yours."
+    "ButtonDescription1": "You aren’t about to miss a chance to spend some time with your old friend, no matter what kind of danger he’s in.",
+    "ButtonDescription2": "You and Tommas parted ways long ago. His fate is no longer linked to yours."
    },
    "consequences": [
     "You give Tommas your hand.\nYou shake hands firmly.",
@@ -6958,9 +6958,9 @@
   "054.080.070_FinalPreparations": {
    "title": "<need translation>",
    "buttons": {
-    "ButtonDescription_1": "<need translation>",
-    "ButtonDescription_2": "<need translation>",
-    "ButtonDescription_3": "<need translation>"
+    "ButtonDescription1": "<need translation>",
+    "ButtonDescription2": "<need translation>",
+    "ButtonDescription3": "<need translation>"
    },
    "consequences": [
     "<need translation>"
@@ -6969,11 +6969,11 @@
   "054.080.090_Court": {
    "title": "",
    "buttons": {
-    "ButtonDescription_1": "You respond to Otton by summoning him to trial. You wield the power of the law, and you have enough evidence to indict even an Arknian.",
-    "ButtonDescription_2": "You respond to Otton by summoning him to trial. The power of law has grown substantially in Magra — not even an Arknian can escape justice now.",
-    "ButtonDescription_3": "You have assembled enough evidence and garnered enough influence with the aristocracy to submit the case to the overseer and doom Otton to face the Court of Honor.",
-    "ButtonDescription_4": "You have garnered enough influence with the aristocracy to submit the case to the overseer and doom Otton to face the Court of Honor.",
-    "ButtonDescription_5": "You are not strong enough to oppose Otton. You forfeit the struggle and do as the Arknian orders."
+    "ButtonDescription1": "You respond to Otton by summoning him to trial. You wield the power of the law, and you have enough evidence to indict even an Arknian.",
+    "ButtonDescription2": "You respond to Otton by summoning him to trial. The power of law has grown substantially in Magra — not even an Arknian can escape justice now.",
+    "ButtonDescription3": "You have assembled enough evidence and garnered enough influence with the aristocracy to submit the case to the overseer and doom Otton to face the Court of Honor.",
+    "ButtonDescription4": "You have garnered enough influence with the aristocracy to submit the case to the overseer and doom Otton to face the Court of Honor.",
+    "ButtonDescription5": "You are not strong enough to oppose Otton. You forfeit the struggle and do as the Arknian orders."
    },
    "consequences": [
     "You descend the stairs and walk to the door of the Prefecture, ready to meet Otton face to face.",

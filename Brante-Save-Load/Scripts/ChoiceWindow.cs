@@ -1194,10 +1194,19 @@ namespace Doorstop
 				}
 			}
 			TreeCol picked = _tree.Find(c => c.Scene == scene);
-			// A pick in a played/current scene can change which scenes are
-			// ahead (a condition may turn true); a pick in an upcoming scene
-			// only changes that column and the ones after it.
-			RefreshKeepingScroll(picked == null || !picked.Upcoming);
+			// A pick in a played/current scene rebuilds everything (the hero
+			// and the scenes ahead start from it); a pick ahead re-steps the
+			// scenes after the scene on screen, and redraws only if they
+			// changed.
+			if (picked == null || !picked.Upcoming)
+			{
+				RefreshKeepingScroll(true);
+			}
+			else
+			{
+				_redrawAhead = ResimulateAhead();
+				RefreshKeepingScroll(false);
+			}
 		}
 
 		// Rebuilds the tree without moving the view.
@@ -1300,6 +1309,13 @@ namespace Doorstop
 				why = Loc.T(Loc.K.NoSaveBefore);
 				return null;
 			}
+			if (DevFromChapterStart && SceneFlow.ChapterOf(_tree[start].Scene) != SceneFlow.ChapterOf(_tree[diverge].Scene))
+			{
+				// dev: the changed chapter's own start save is from another
+				// timeline - an earlier chapter's start is not what was asked
+				why = Loc.T(Loc.K.StartNotOnPath);
+				return null;
+			}
 			LoadPlan plan = new LoadPlan();
 			plan.StartPath = startPath;
 			plan.StartScene = _tree[start].Scene;
@@ -1358,8 +1374,20 @@ namespace Doorstop
 				why = Loc.T(Loc.K.StartNotOnPath);
 				return null;
 			}
-			string branchBad;
-			if (!SceneParams.Simulate(plan.Order, plan.Picks, startPath, out branchBad))
+			string branchBad, expected;
+			bool? sim = SimulatePlan(plan, startPath, out branchBad, out expected);
+			if (sim == true && plan.Order.Count > 1)
+			{
+				ModLog.Info("ChoiceWindow: plan simulation: the game opens the path's " + plan.Order.Count
+					+ " choice scenes in this order");
+			}
+			if (sim == false)
+			{
+				plan.Speculative = true;
+				ModLog.Info("ChoiceWindow: plan simulation: after the picked answers the game would open '"
+					+ expected + "' where the path has '" + branchBad + "'; the replay will stop there");
+			}
+			else if (sim == null && !SceneParams.Simulate(plan.Order, plan.Picks, startPath, out branchBad))
 			{
 				plan.Speculative = true;
 				ModLog.Info("ChoiceWindow: plan simulation: the picked answers change a key parameter,"
@@ -1379,6 +1407,83 @@ namespace Doorstop
 			}
 			ModLog.Info("ChoiceWindow: plan answers " + planPicks.ToString().Trim());
 			return plan;
+		}
+
+		// Steps a simulated game (Sim: stats, characters, objectives, key
+		// parameters, scenes shown, turn, season - every scene condition)
+		// from the start save through the plan's answers, and checks that
+		// each choice scene the game would open next is the plan's next one.
+		// False with the two scenes when they differ, null when the start
+		// save cannot be simulated (the key-parameter check is used then).
+		private static bool? SimulatePlan(LoadPlan plan, string startPath, out string bad, out string expected)
+		{
+			bad = "";
+			expected = "";
+			if (plan.Order.Count < 2 || string.IsNullOrEmpty(startPath) || !File.Exists(startPath))
+			{
+				return null;
+			}
+			SaveLoadHelper h;
+			SceneEffects.Hero hero;
+			try
+			{
+				h = Recorder.ReadHelper(startPath);
+				hero = SceneEffects.FromSnapshot(startPath);
+			}
+			catch
+			{
+				return null;
+			}
+			int chapter = SceneFlow.ChapterOf(plan.Order[0]);
+			if (h == null || hero == null || h.ShowedScenesList == null || chapter <= 0)
+			{
+				return null;
+			}
+			List<ShowedScenes> list = new List<ShowedScenes>();
+			foreach (ShowedScenes sc in h.ShowedScenesList)
+			{
+				if (sc != null)
+				{
+					list.Add(new ShowedScenes { SceneName = sc.SceneName, IsShowed = sc.IsShowed || sc.SceneName == plan.Order[0] });
+				}
+			}
+			if (!list.Exists(sc => sc.SceneName == plan.Order[0]))
+			{
+				// a chapter start save: the chapter's first scene is not in
+				// its list yet
+				list.Add(new ShowedScenes { SceneName = plan.Order[0], IsShowed = true });
+			}
+			Sim sim = new Sim(hero, SceneParams.FromSave(h), list, chapter, h.Turn, h.Season);
+			for (int i = 0; i + 1 < plan.Order.Count; i++)
+			{
+				string pick;
+				plan.Picks.TryGetValue(plan.Order[i], out pick);
+				sim.Answer(plan.Order[i], pick);
+				// the scenes in between that offer no answer are stepped over
+				for (int guard = 0; guard < 100; guard++)
+				{
+					SceneFlow.Ahead a = sim.Advance();
+					if (a == null)
+					{
+						bad = plan.Order[i + 1];
+						expected = "(the end of the story)";
+						return false;
+					}
+					if (VisibleChoices(SceneCol(a.Row.Scene)).Count == 0)
+					{
+						sim.Answer(a.Row.Scene, "");
+						continue;
+					}
+					if (a.Row.Scene != plan.Order[i + 1])
+					{
+						bad = plan.Order[i + 1];
+						expected = a.Row.Scene;
+						return false;
+					}
+					break;
+				}
+			}
+			return true;
 		}
 
 		// Whether a start save is on the tree's path up to `start`: its
@@ -1913,6 +2018,8 @@ namespace Doorstop
 		// `rebuild` (on open): read the history and the scenes ahead and draw
 		// everything. Otherwise (a pick, undo) re-apply the picks, restyle the
 		// drawn answers and redraw only the path.
+		private static bool _redrawAhead;   // the scenes ahead changed after a pick: draw them again
+
 		private static int RefreshHistory(bool rebuild)
 		{
 			if (_historyList == null)
@@ -1931,8 +2038,9 @@ namespace Doorstop
 			WorkOutOpenAnswers(cols);
 			long tHero = sw.ElapsedMilliseconds;
 			_tree = cols;
-			if (rebuild || _nodes.Count == 0 || _pathLayer == null)
+			if (rebuild || _redrawAhead || _nodes.Count == 0 || _pathLayer == null)
 			{
+				_redrawAhead = false;
 				DrawTree(cols);
 			}
 			else
@@ -2335,6 +2443,7 @@ namespace Doorstop
 		// every scene still ahead (AddUpcoming).
 		private static List<TreeCol> BuildColumns()
 		{
+			System.Diagnostics.Stopwatch st = System.Diagnostics.Stopwatch.StartNew();
 			List<History.Entry> all = History.FromCurrentGame();
 			if (all.Count == 0)
 			{
@@ -2370,19 +2479,70 @@ namespace Doorstop
 			if (pendingCol >= 0)
 			{
 				cols[pendingCol].Current = true;
+				// Entries after the scene on screen are left over from an
+				// abandoned attempt (a save's list can hold them): the game
+				// counts them as shown and will not open them again, but they
+				// are not on this path - no columns for them.
+				if (pendingCol + 1 < cols.Count)
+				{
+					ModLog.Info("ChoiceWindow: " + (cols.Count - pendingCol - 1)
+						+ " scene(s) after the scene on screen are from another attempt - left out of the path");
+					cols.RemoveRange(pendingCol + 1, cols.Count - pendingCol - 1);
+				}
 			}
 			_focusCol = pendingCol >= 0 ? pendingCol : cols.Count - 1;
+			long tHistory = st.ElapsedMilliseconds;
 			ResolveTimeline(cols, _focusCol);
+			long tTimeline = st.ElapsedMilliseconds;
+			_played = all;
 			// The picks decide the branch of the scenes ahead; work out the
 			// hero after the current answer before building the upcoming
 			// columns (a scene condition can turn true only after it).
 			ApplyPicks(cols);
 			WorkOutOpenAnswers(cols);
+			long tOpen = st.ElapsedMilliseconds;
 			if (all.Count > 0)
 			{
 				AddUpcoming(cols, all);
 			}
+			ModLog.Info("ChoiceWindow: columns: history " + tHistory + " ms, timeline " + (tTimeline - tHistory)
+				+ " ms, open answers " + (tOpen - tTimeline) + " ms, ahead " + (st.ElapsedMilliseconds - tOpen) + " ms");
 			return cols;
+		}
+
+		private static List<History.Entry> _played = new List<History.Entry>();
+
+		// After a pick in a scene ahead: the played columns stay, the scenes
+		// ahead are stepped through again from the scene on screen (the pick
+		// changes what follows it). True if the columns ahead changed.
+		private static bool ResimulateAhead()
+		{
+			if (_baseCols == null || _played.Count == 0)
+			{
+				return false;
+			}
+			List<string> before = new List<string>();
+			foreach (TreeCol c in _baseCols)
+			{
+				if (c.Upcoming)
+				{
+					before.Add(c.Scene);
+				}
+			}
+			List<TreeCol> cols = _baseCols.FindAll(c => !c.Upcoming);
+			ApplyPicks(cols);
+			WorkOutOpenAnswers(cols);
+			AddUpcoming(cols, _played);
+			_baseCols = cols;
+			List<string> after = new List<string>();
+			foreach (TreeCol c in cols)
+			{
+				if (c.Upcoming)
+				{
+					after.Add(c.Scene);
+				}
+			}
+			return string.Join("|", before.ToArray()) != string.Join("|", after.ToArray());
 		}
 
 		// The player's picks replace what was played (or nothing, ahead).
@@ -2644,12 +2804,18 @@ namespace Doorstop
 			return TreeTop + row * TreeRowH + TreeNodeH * 0.5f;
 		}
 
-		// The scenes still ahead (scene-flow.tsv), in the order the game
-		// reaches them, each with every answer it will offer: the rest of the
-		// current chapter on this run's track, minus scenes whose conditions
-		// fail now, then every later chapter (see SceneFlow.After). Scenes
-		// whose conditions cannot be decided yet are marked as possible.
-		// Scenes without answers (chapter screens) are left out.
+		// The scenes still ahead, in the order the game would take them on the
+		// picked path. The story is stepped forward from the scene on screen:
+		// the next scene the flow would open (SceneFlow.Step, conditions
+		// evaluated with the simulated game), then its answer - the pick, or
+		// the first answer open to the hero - and everything that answer and
+		// the scene change (stats, relations, fates, objectives, key chapter
+		// parameters, scenes shown, the time slot), then the next scene, up to
+		// the end of the story. So a pick ahead changes what follows it, and a
+		// later chapter shows the track the path leads to. If the simulation
+		// stops early (step or time budget), the rest is listed as before:
+		// every scene that can still come. Scenes without answers (chapter
+		// screens) are stepped through but not shown.
 		private static void AddUpcoming(List<TreeCol> cols, List<History.Entry> played)
 		{
 			HashSet<string> shown = new HashSet<string>();
@@ -2662,16 +2828,265 @@ namespace Doorstop
 					from = e.SceneName;
 				}
 			}
-			// The condition of a scene ahead is checked with the hero as it is
-			// after the answer on screen: an answer can make a trigger possible.
-			SceneEffects.Hero after = null;
-			TreeCol cur = cols.Find(c => c.Current);
-			if (cur != null)
+			GameManager gm = GameManager.Instance;
+			_Scripts.AMVCC.Models.Static.KeyChapterParametersController kc = _Scripts.AMVCC.Models.Static.KeyChapterParametersController.Initiate;
+			// Where the path leaves what is known: the first played scene whose
+			// answer was changed, else the scene on screen.
+			int curIndex = cols.FindIndex(c => c.Current);
+			int at = curIndex;
+			for (int i = 0; i < curIndex; i++)
 			{
-				after = cur.AfterHero;
+				string pk;
+				if (_overrides.TryGetValue(cols[i].Scene, out pk) && pk != cols[i].PlayedChoice)
+				{
+					at = i;
+					break;
+				}
 			}
-			foreach (SceneFlow.Ahead a in SceneFlow.After(from, shown, true, after))
+			TreeCol cur = at >= 0 ? cols[at] : null;
+			int startChapter = cur != null ? SceneFlow.ChapterOf(cur.Scene) : 0;
+			if (cur == null || cur.AfterHero == null || gm == null || kc == null || startChapter <= 0)
 			{
+				AddUpcomingListed(cols, from, shown, cur != null ? cur.AfterHero : null, startChapter);
+				return;
+			}
+			System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+			// the answers played on the old path: kept where the new path meets
+			// the same scene and the answer is still open
+			Dictionary<string, string> playedAnswer = new Dictionary<string, string>();
+			for (int i = at + 1; i < cols.Count; i++)
+			{
+				if (!string.IsNullOrEmpty(cols[i].PlayedChoice))
+				{
+					playedAnswer[cols[i].Scene] = cols[i].PlayedChoice;
+				}
+			}
+			SceneEffects.Hero hero = cur.AfterHero.Clone();
+			Dictionary<string, string> keys = new Dictionary<string, string>();
+			List<ShowedScenes> list = new List<ShowedScenes>();
+			int turn = gm.Turn, season = gm.Season;
+			SaveLoadHelper snap = null;
+			if (at != curIndex && cur.HasSnapshot)
+			{
+				try
+				{
+					snap = Recorder.ReadHelper(cur.SnapshotPath);
+				}
+				catch
+				{
+					snap = null;
+				}
+			}
+			if (snap != null)
+			{
+				// the game as it was at the changed scene
+				keys = SceneParams.FromSave(snap);
+				foreach (ShowedScenes sc in snap.ShowedScenesList)
+				{
+					if (sc != null)
+					{
+						list.Add(new ShowedScenes { SceneName = sc.SceneName, IsShowed = sc.IsShowed });
+					}
+				}
+				turn = snap.Turn;
+				season = snap.Season;
+			}
+			else
+			{
+				foreach (_Scripts.KeyParams.KeyChapterParameterModel p in kc.AllKeyParameters)
+				{
+					if (p != null && !string.IsNullOrEmpty(p.Name))
+					{
+						keys[p.Name] = p.Value ?? "";
+					}
+				}
+				// up to the start scene: later entries are the old path's
+				foreach (ShowedScenes sc in gm.ShowedScenesList)
+				{
+					if (sc == null)
+					{
+						continue;
+					}
+					list.Add(new ShowedScenes { SceneName = sc.SceneName, IsShowed = sc.IsShowed });
+					if (sc.SceneName == cur.Scene)
+					{
+						break;
+					}
+				}
+			}
+			if (!list.Exists(sc => sc.SceneName == cur.Scene))
+			{
+				list.Add(new ShowedScenes { SceneName = cur.Scene, IsShowed = false });
+			}
+			list.Find(sc => sc.SceneName == cur.Scene).IsShowed = true;   // it ends with the answer
+			if (at != curIndex)
+			{
+				// the old path after the changed answer is replaced by the
+				// predicted one
+				int dropped = cols.Count - at - 1;
+				cols.RemoveRange(at + 1, dropped);
+				shown = new HashSet<string>();
+				foreach (ShowedScenes sc in list)
+				{
+					if (sc.IsShowed)
+					{
+						shown.Add(sc.SceneName);
+					}
+				}
+				ModLog.Info("ChoiceWindow: the answer changed at " + cur.Scene + " - " + dropped
+					+ " column(s) after it predicted again");
+			}
+			string curPick;
+			if (!_overrides.TryGetValue(cur.Scene, out curPick))
+			{
+				curPick = string.IsNullOrEmpty(cur.PlayedChoice) ? cur.Implied : cur.PlayedChoice;
+			}
+			SceneParams.Apply(cur.Scene, SceneParams.ButtonOf(curPick), keys);
+			int chapter = startChapter, steps = 0;
+			bool finished = false;
+			string last = cur.Scene;
+			Sim sim = new Sim(hero, keys, list, chapter, turn, season);
+			while (steps < 400 && sw.ElapsedMilliseconds < 1500)
+			{
+				SceneFlow.Ahead a = sim.Advance();
+				if (a == null)
+				{
+					finished = true;
+					break;
+				}
+				steps++;
+				chapter = sim.Chapter;
+				string scene = a.Row.Scene;
+				last = scene;
+				shown.Add(scene);
+				TreeCol col = SceneCol(scene);
+				col.Upcoming = true;
+				// a prediction: a scene whose condition the simulated game
+				// meets still depends on it
+				col.Possible = a.Condition != SceneFlow.Tri.True
+					|| (chapter != startChapter && !string.IsNullOrEmpty(a.Row.Condition));
+				string pick;
+				string old;
+				if (playedAnswer.TryGetValue(scene, out old) && hero.Allows(SceneEffects.For(scene, old)))
+				{
+					col.PlayedChoice = old;   // the same scene on the new path: the old answer by default
+				}
+				if (!_overrides.TryGetValue(scene, out pick) && !string.IsNullOrEmpty(col.PlayedChoice))
+				{
+					pick = col.PlayedChoice;
+				}
+				if (pick == null)
+				{
+					pick = "";
+					foreach (int k in VisibleChoices(col))
+					{
+						if (hero.Allows(SceneEffects.For(scene, col.Choices[k].Name)))
+						{
+							pick = col.Choices[k].Name;
+							break;
+						}
+					}
+				}
+				sim.Answer(scene, pick);
+				if (VisibleChoices(col).Count > 0)
+				{
+					cols.Add(col);
+				}
+			}
+			ModLog.Info("ChoiceWindow: simulated " + steps + " scene(s) ahead in " + sw.ElapsedMilliseconds + " ms (flow "
+				+ sim.FlowMs + " ms)"
+				+ (finished ? " (to the end of the story)" : " - the rest listed"));
+			if (!finished)
+			{
+				AddUpcomingListed(cols, last, shown, hero, chapter);
+			}
+		}
+
+		// A simulated game stepped through the story: its hero, key chapter
+		// parameters, scenes shown, chapter, turn and season. Advance() opens
+		// the next scene the flow would (SceneFlow.Step, then the next
+		// chapter), Answer() applies an answer and what the scene earns.
+		private sealed class Sim
+		{
+			public readonly SceneEffects.Hero Hero;
+			public readonly Dictionary<string, string> Keys;
+			public readonly List<ShowedScenes> Shown;
+			public int Chapter, Turn, Season;
+			public long FlowMs;
+
+			public Sim(SceneEffects.Hero hero, Dictionary<string, string> keys, List<ShowedScenes> shown,
+				int chapter, int turn, int season)
+			{
+				Hero = hero;
+				Keys = keys;
+				Shown = shown;
+				Chapter = chapter;
+				Turn = turn;
+				Season = season;
+			}
+
+			// The scene that opens next, already marked shown with its
+			// opening changes applied; null at the end of the story.
+			public SceneFlow.Ahead Advance()
+			{
+				while (true)
+				{
+					System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+					List<SceneFlow.Ahead> next = SceneFlow.Step(Chapter, Hero, Keys, Shown, Turn, Season);
+					FlowMs += sw.ElapsedMilliseconds;
+					if (next.Count == 0)
+					{
+						if (++Chapter > 5)
+						{
+							return null;
+						}
+						SceneFlow.FirstSlot(Chapter, out Turn, out Season);
+						continue;
+					}
+					SceneFlow.Ahead a = next[0];
+					if (!a.Immediate && a.Row.Timed)
+					{
+						// the game moves on to the scene's slot; a scene of any
+						// season (Season 0) in a new turn opens it at its first season
+						int nextTurn = Math.Max(Turn, a.Row.Turn);
+						if (a.Row.Season > 0 && nextTurn == Turn && a.Row.Season < Season)
+						{
+							nextTurn++;   // its season of this turn is over
+						}
+						Season = a.Row.Season > 0 ? a.Row.Season : (nextTurn != Turn ? 1 : Season);
+						Turn = nextTurn;
+					}
+					Shown.Add(new ShowedScenes { SceneName = a.Row.Scene, IsShowed = true });
+					SceneParams.Apply(a.Row.Scene, 0, Keys);
+					return a;
+				}
+			}
+
+			public void Answer(string scene, string pick)
+			{
+				if (!string.IsNullOrEmpty(pick))
+				{
+					int button = SceneParams.ButtonOf(pick);
+					Hero.Apply(SceneEffects.For(scene, pick));
+					Hero.ApplyObjectives(scene, button);
+					SceneParams.Apply(scene, button, Keys);
+				}
+				Hero.ApplyObjectives(scene, 0);   // what the scene itself earns, once it ends
+			}
+		}
+
+		// Every scene that can still come after `from` (the rest of the
+		// chapter whose conditions hold for `hero`, then every later chapter),
+		// for when the path cannot be stepped through.
+		private static void AddUpcomingListed(List<TreeCol> cols, string from, HashSet<string> shown,
+			SceneEffects.Hero hero, int chapter)
+		{
+			foreach (SceneFlow.Ahead a in SceneFlow.After(from, shown, true, hero))
+			{
+				if (cols.Exists(c => c.Scene == a.Row.Scene))
+				{
+					continue;
+				}
 				TreeCol col = SceneCol(a.Row.Scene);
 				col.Upcoming = true;
 				col.Possible = a.Condition != SceneFlow.Tri.True;
@@ -4599,12 +5014,80 @@ namespace Doorstop
 						break;
 					}
 				}
+				// "Show more": the next page of rows (a first page of 10 when
+				// the run has fewer rows than a page)
+				if (ActiveChild("More") == null && _entries.Count > 10)
+				{
+					_shown = 10;
+					BuildRows();
+				}
+				Transform more = ActiveChild("More");
+				ModLog.Info("DEV TABLE: filter " + FilterName(_filter) + ", rows built " + RowCount()
+					+ " of " + _entries.Count + ", Show more " + (more != null ? "present" : "absent"));
+				if (more != null)
+				{
+					more.GetComponent<Button>().onClick.Invoke();
+					ModLog.Info("DEV TABLE: after Show more, rows built " + RowCount() + " of " + _entries.Count
+						+ ", Show more " + (ActiveChild("More") != null ? "present" : "absent"));
+				}
+				// the Original row: read-only (no delete cell), loads like any row
+				while (_filter != SaveFilter.Original)
+				{
+					CycleFilter();
+				}
+				Transform orow = ActiveChild("Row");
+				ModLog.Info("DEV TABLE: Original rows " + _entries.Count
+					+ (orow != null ? ", delete cell " + (orow.Find("Delete") != null ? "PRESENT" : "absent") : ""));
+				if (orow != null && File.Exists(Path.Combine(Recorder.SnapshotDir, "dev-table-load.txt")))
+				{
+					try { File.Delete(Path.Combine(Recorder.SnapshotDir, "dev-table-load.txt")); }
+					catch (Exception) { }
+					orow.GetComponent<Button>().onClick.Invoke();
+					ModLog.Info("DEV TABLE: Original row clicked - asks " + _pendingAction + " of " + _pendingPath
+						+ ", confirm shown " + (_confirmPanel != null && _confirmPanel.activeSelf));
+					_confirmLoadBtn.onClick.Invoke();
+					return;
+				}
 				Close();
+				// screenshots: the table left open on All
+				string keep = Path.Combine(Recorder.SnapshotDir, "dev-table-open.txt");
+				if (File.Exists(keep))
+				{
+					try { File.Delete(keep); }
+					catch (Exception) { }
+					Open();
+				}
 			}
 			catch (Exception e)
 			{
 				ModLog.Error("DEV TABLE failed:\n" + e);
 			}
+		}
+
+		private static int RowCount()
+		{
+			int n = 0;
+			foreach (Transform t in _itemContainer)
+			{
+				if (t.name == "Row" && t.gameObject.activeSelf)
+				{
+					n++;
+				}
+			}
+			return n;
+		}
+
+		// A live child (rows being replaced are inactive until destroyed).
+		private static Transform ActiveChild(string name)
+		{
+			foreach (Transform t in _itemContainer)
+			{
+				if (t.name == name && t.gameObject.activeSelf)
+				{
+					return t;
+				}
+			}
+			return null;
 		}
 
 		public static void DevBook()

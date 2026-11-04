@@ -129,10 +129,16 @@ replay or re-roll.
 
 ## Achievements
 
-`SteamStatsAndAchievements` fires from scene-show events keyed on `ShowedScenesList`
-contents and `BlockAchievements` (`AchievementsBlocker` scenes). Steam achievements are
-one-way and idempotent; replaying a scene after loading a snapshot can at worst re-grant
-an already-held achievement. No harm; noted for completeness.
+`SteamStatsAndAchievements.Update()` polls the live game every frame: for each
+achievement not yet held (`m_bAchieved`) it tests `ShowedScenesList`, objectives or
+stats and calls `UnlockAchievement` (`SteamUserStats.SetAchievement`, then a store).
+Nothing runs while `GameManager.BlockAchievements` is set (`AchievementsBlocker`
+scenes; true by default). Steam achievements are one-way and idempotent, and the
+flag stops a second unlock in the same session, so a load or a replay can at worst
+re-grant one already held. The mod's simulations swap simulated state into the
+same managers, but only inside one synchronous call that restores it in
+`finally`: the per-frame poll never runs in between, so a predicted scene can
+never unlock anything (checked 3 Nov 2026).
 
 ## Mod loader facts
 
@@ -839,6 +845,10 @@ folder; only a save the mod loaded can need a repaired id.
 
 ### Why no id minting
 
+(Superseded 3 Nov 2026 for one case: a save with no id at all that the mod loads
+now gets one built the way `CreateSaveLoadSlot` builds it - see the last
+section. A save that has an id still keeps it.)
+
 The old fallback minted an id when the game had none. That split one timeline
 into two save folders (on this machine `Biggie_10/23/…` and
 `Biggie_10/30/…` for the same run), which then matched each other's id in
@@ -1120,3 +1130,60 @@ The death page's six `DeathChoiceButtonBehaviour` buttons are death outcomes
 goes on, and the replay continued to the next scene. The chapter-restart
 control is a separate UI path, so the `LoadGame(string,int)` restart
 checkpoint is still not driven end to end.
+
+## Forward simulation, turn ranges, id minting (3 Nov 2026)
+
+- **Trigger gates use turn ranges.** A scene's gate macro compares
+  `GameManager.Turn` with `==` for the regular slots, but the trigger scenes
+  (`054.100.*`, `051.090.*`, `052.N*`, `053.100.*`, ...) compare with `>=`/`<`
+  pairs: `054.100.090_Milanid` is `Turn >= 4 && Turn < 8`. `bolt_story.py`
+  recorded the first constant only, as `Turn == 8`, so the tree placed it four
+  turns late while the game showed it at turn 6. The comparison's output port
+  (`aGreaterThanOrEqualToB`, `aLessThanB`, ...) is the operator; the TSV now
+  holds `4-7`. About 45 scenes (1113 flow rows) changed. The ports are visible
+  without UnityPy in the raw blobs `bolt_extract.iter_blobs` reads.
+- **The game moves to the earliest slot.** When nothing fits the current turn
+  and season, the next scene is the one with the earliest (turn, season), not
+  the next in flow order: `054.030.010_Call` (3/1) before `051.030.010_Scene_4`
+  (3/2). A Season-0 scene that opens a new turn does so at season 1.
+- **`051.*` and `054.*` interleave in chapter 4.** The family track and the
+  post's track share the time slots; the real order of the debug run was
+  `054.010.010`, `051.010.010`, `051.010.020`, `054.010.020`, ... With the two
+  rules above the simulation predicted all of chapter 4 in order (verified by an
+  `ahead` replay through 11 scenes to the chapter's end).
+- **Three scenes have `ButtonDescription_N` keys.** `051.020.020_The_Old_Friend`,
+  `054.080.070_FinalPreparations` and `054.080.090_Court` name their answer
+  texts `ButtonDescription_1..`; their buttons are `ButtonDescription1..` like
+  everywhere else.
+- **Evaluating every condition every step was the cost.** One step over 2059 flow
+  rows took ~10 ms, mostly `Resources.FindObjectsOfTypeAll` in a fresh evaluation
+  context and evaluating conditions of scenes that could not come first. A context
+  reused for the frame and evaluation stopped at the first passing candidate
+  brought the whole story (78 scenes) to ~60 ms.
+- **Stats the game changes outside answer effects are not in the tables.** From a
+  chapter-4 start save the simulation got `Carier` under 5 at `054.060.020_Case5`
+  and expected `054.060.030_Witness` where the game opened `054.100.090_Milanid`
+  (`Carier >= 5`). The plan check logs it; the replay went on and arrived.
+- **Id minting for id-less loads.** `CreateSaveLoadSlot` builds an id as
+  `HeroName + "_" + $"{DateTime.Now}"` with spaces, colons and dots removed
+  (`Biggie_11/3/202655727PM` under Proton's en-US culture; the slashes make the
+  folder nested). A save loaded through the mod with no id now gets one built the
+  same way; the game then wrote `Autosave.dat` into `Saves/Biggie_11/3/…` and the
+  scene drew normally.
+- **The chapter-restart call.** `RestartOrContinuePopupController.RestartButton_Click`
+  calls `SaveLoadManager.LoadChapterState(chapter)` -> `LoadGame(path, chapter)`.
+  The mod's prefix on that overload filed `reason=before restarting chapter 4`
+  and the run stayed the same; the Iron Man death page's restart goes through
+  `GameLoadingScreen` instead.
+- **The debug playthrough.** `dev-autoplay.txt` `chapters 2 3 4 5 6` played
+  chapters 1-4 from `Biggie`'s `Chapter_1.dat` in about 16 minutes with no mod
+  error, making a mod save at each chapter start. Always taking the first open
+  answer ran out of lives at the end of chapter 4 (`FourthDeath_1`); skipping
+  answers that add `Death` got as far, to `054.080.090_Court`. The fourth death
+  is the true death: `ObjectivePopupComponent` for `ИстиннаяСмерть` sets
+  `GoToFinals=Yes` and clicks the talisman flow when it closes. At autoplay speed
+  its `Start()` threw (NullReference) and so did `DisactivePopup()` when the
+  achievement pop-up's button closed it, so the finals never started and the run
+  stopped as stuck. Debug runs now play on through the last death; replays still
+  stop there.
+

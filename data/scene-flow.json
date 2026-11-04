@@ -285,7 +285,7 @@
    "macro": "ChildhoodChapter",
    "order": 14,
    "scene": "ChildhoodFinishScreen",
-   "turn": "9",
+   "turn": "9-",
    "season": "",
    "labels": [
     [
@@ -618,7 +618,7 @@
    "macro": "TeenChapter",
    "order": 16,
    "scene": "TeenFinishScreen",
-   "turn": "9",
+   "turn": "9-",
    "season": "",
    "labels": [
     [
@@ -636,7 +636,7 @@
    "macro": "TeenChapter",
    "order": 17,
    "scene": "02.N.01",
-   "turn": "0",
+   "turn": "0-7",
    "season": "",
    "labels": [
     [
@@ -653,7 +653,7 @@
    "macro": "TeenChapter",
    "order": 18,
    "scene": "02.N.02",
-   "turn": "0",
+   "turn": "0-7",
    "season": "",
    "labels": [
     [
@@ -670,7 +670,7 @@
    "macro": "TeenChapter",
    "order": 19,
    "scene": "02.N.03",
-   "turn": "0",
+   "turn": "0-7",
    "season": "",
    "labels": [
     [
@@ -894,7 +894,7 @@
    "macro": "YouthChapter",
    "order": 15,
    "scene": "YouthFinishScreen",
-   "turn": "5",
+   "turn": "5-",
    "season": "",
    "labels": [
     []
@@ -1100,7 +1100,7 @@
    "macro": "PeaceChapter",
    "order": 1,
    "scene": "PeaceChapterStart_Prefect",
-   "turn": "1",
+   "turn": "-1",
    "season": "",
    "labels": [
     [
@@ -1115,7 +1115,7 @@
    "macro": "PeaceChapter",
    "order": 2,
    "scene": "051.090.010_FamilyQuarrel",
-   "turn": "8",
+   "turn": "-8",
    "season": "",
    "labels": [
     [
@@ -1141,7 +1141,7 @@
    "macro": "PeaceChapter",
    "order": 3,
    "scene": "051.090.020_Devastation",
-   "turn": "8",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -1167,7 +1167,7 @@
    "macro": "PeaceChapter",
    "order": 4,
    "scene": "051.090.030_StigmaOfShame",
-   "turn": "7",
+   "turn": "6-7",
    "season": "",
    "labels": [
     [
@@ -1193,7 +1193,7 @@
    "macro": "PeaceChapter",
    "order": 5,
    "scene": "051.090.040_MinuteOfRest",
-   "turn": "2",
+   "turn": "2-",
    "season": "",
    "labels": [
     [
@@ -1219,7 +1219,7 @@
    "macro": "PeaceChapter",
    "order": 6,
    "scene": "051.090.050_RichFamily",
-   "turn": "2",
+   "turn": "2-7",
    "season": "",
    "labels": [
     [
@@ -1245,7 +1245,7 @@
    "macro": "PeaceChapter",
    "order": 7,
    "scene": "051.090.060_GloriousFamily",
-   "turn": "7",
+   "turn": "2-7",
    "season": "",
    "labels": [
     [
@@ -1559,7 +1559,7 @@
    "macro": "PeaceChapter",
    "order": 20,
    "scene": "051.060.040_HuntForThomas",
-   "turn": "6",
+   "turn": "6-",
    "season": "2",
    "labels": [
     [
@@ -1939,7 +1939,7 @@
    "macro": "PeaceChapter",
    "order": 84,
    "scene": "054.100.020_Pickets",
-   "turn": "8",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -1965,7 +1965,7 @@
    "macro": "PeaceChapter",
    "order": 85,
    "scene": "054.100.010_MartialLaw",
-   "turn": "0",
+   "turn": "0-",
    "season": "",
    "labels": [
     [
@@ -1991,7 +1991,7 @@
    "macro": "PeaceChapter",
    "order": 86,
    "scene": "054.100.030_Rotshild",
-   "turn": "4",
+   "turn": "4-7",
    "season": "",
    "labels": [
     [
@@ -2017,7 +2017,7 @@
    "macro": "PeaceChapter",
    "order": 87,
    "scene": "054.100.040_AbuseOfAuthority",
-   "turn": "8",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -2043,7 +2043,7 @@
    "macro": "PeaceChapter",
    "order": 88,
    "scene": "054.100.080_Snakes",
-   "turn": "8",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -2069,7 +2069,7 @@
    "macro": "PeaceChapter",
    "order": 89,
    "scene": "054.100.070_Dismissal",
-   "turn": "8",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -2095,7 +2095,7 @@
    "macro": "PeaceChapter",
    "order": 90,
    "scene": "054.100.090_Milanid",
-   "turn": "8",
+   "turn": "4-7",
    "season": "",
    "labels": [
     [
@@ -2121,7 +2121,7 @@
    "macro": "PeaceChapter",
    "order": 91,
    "scene": "054.100.100_Present",
-   "turn": "8",
+   "turn": "5-7",
    "season": "2",
    "labels": [
     [
@@ -2363,7 +2363,7 @@
    "macro": "PeaceChapter",
    "order": 101,
    "scene": "054.040.030_Reckoning",
-   "turn": "6",
+   "turn": "-6",
    "season": "2",
    "labels": [
     [
@@ -2650,7 +2650,7 @@
    "macro": "PeaceChapter",
    "order": 112,
    "scene": "PeaceFinishScreen_Prefect",
-   "turn": "9",
+   "turn": "9-",
    "season": "",
    "labels": [
     [
@@ -4693,7 +4693,7 @@
    "macro": "PeaceChapter",
    "order": 113,
    "scene": "PeaceFinishScreen_Inquisitor",
-   "turn": "9",
+   "turn": "9-",
    "season": "",
    "labels": [
     [
@@ -6736,7 +6736,7 @@
    "macro": "PeaceChapter",
    "order": 114,
    "scene": "PeaceFinishScreen_Rebel",
-   "turn": "9",
+   "turn": "9-",
    "season": "",
    "labels": [
     [
@@ -8857,7 +8857,7 @@
    "macro": "PeaceChapter",
    "order": 118,
    "scene": "054.080.040_Arrest",
-   "turn": "8",
+   "turn": "8-",
    "season": "1",
    "labels": [
     [
@@ -9719,7 +9719,7 @@
    "macro": "PeaceChapter",
    "order": 220,
    "scene": "052.N3.010_Trigger3",
-   "turn": "6",
+   "turn": "4-6",
    "season": "",
    "labels": [
     [
@@ -9778,7 +9778,7 @@
    "macro": "PeaceChapter",
    "order": 221,
    "scene": "052.N9.010_Trigger9",
-   "turn": "4",
+   "turn": "4-6",
    "season": "",
    "labels": [
     [
@@ -12436,7 +12436,7 @@
    "macro": "PeaceChapter",
    "order": 329,
    "scene": "052.N1.010_Trigger1",
-   "turn": "7",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -12480,7 +12480,7 @@
    "macro": "PeaceChapter",
    "order": 330,
    "scene": "052.N2.010_Trigger2",
-   "turn": "7",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -12524,7 +12524,7 @@
    "macro": "PeaceChapter",
    "order": 331,
    "scene": "052.N4.010_Trigger4",
-   "turn": "7",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -12568,7 +12568,7 @@
    "macro": "PeaceChapter",
    "order": 332,
    "scene": "052.N7.010_Trigger7",
-   "turn": "7",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -12612,7 +12612,7 @@
    "macro": "PeaceChapter",
    "order": 333,
    "scene": "052.N8.010_Trigger8",
-   "turn": "3",
+   "turn": "3-",
    "season": "",
    "labels": [
     [
@@ -12656,7 +12656,7 @@
    "macro": "PeaceChapter",
    "order": 334,
    "scene": "052.N10.010_Trigger10",
-   "turn": "7",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -12726,7 +12726,7 @@
    "macro": "PeaceChapter",
    "order": 568,
    "scene": "053.100.080_Tortures",
-   "turn": "7",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -12752,7 +12752,7 @@
    "macro": "PeaceChapter",
    "order": 569,
    "scene": "053.100.070_Catastrophe2",
-   "turn": "7",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -12778,7 +12778,7 @@
    "macro": "PeaceChapter",
    "order": 570,
    "scene": "053.100.100_Lynch",
-   "turn": "7",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -12804,7 +12804,7 @@
    "macro": "PeaceChapter",
    "order": 571,
    "scene": "053.100.020_Arrest",
-   "turn": "7",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -12830,7 +12830,7 @@
    "macro": "PeaceChapter",
    "order": 572,
    "scene": "053.100.010_Catastrophe1",
-   "turn": "7",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -12856,7 +12856,7 @@
    "macro": "PeaceChapter",
    "order": 573,
    "scene": "053.100.040_Pogrom",
-   "turn": "7",
+   "turn": "-7",
    "season": "",
    "labels": [
     [
@@ -13026,7 +13026,7 @@
    "macro": "PeaceChapter",
    "order": 580,
    "scene": "053.100.030_OfferSofya",
-   "turn": "3",
+   "turn": "3-6",
    "season": "",
    "labels": [
     [
@@ -13052,7 +13052,7 @@
    "macro": "PeaceChapter",
    "order": 581,
    "scene": "053.100.090_Chancellor",
-   "turn": "3",
+   "turn": "3-6",
    "season": "",
    "labels": [
     [
@@ -13972,7 +13972,7 @@
    "macro": "PeaceChapter",
    "order": 1896,
    "scene": "PeaceChapterStart_Inquisitor",
-   "turn": "1",
+   "turn": "-1",
    "season": "",
    "labels": [
     [
@@ -13987,7 +13987,7 @@
    "macro": "PeaceChapter",
    "order": 1903,
    "scene": "PeaceChapterStart_Rebel",
-   "turn": "1",
+   "turn": "-1",
    "season": "",
    "labels": [
     [

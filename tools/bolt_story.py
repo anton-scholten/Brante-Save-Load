@@ -224,17 +224,39 @@ class Walker:
 
     @staticmethod
     def slot(g, member):
-        """The constant a time member is compared to with ==, if any."""
+        """The time slot a gate compares a time member to: "N" for ==, or an
+        inclusive range "N-M" ("N-" / "-M" when open) for the trigger gates
+        that use <, <=, >=, > (e.g. Turn >= 4 && Turn < 8 is "4-7")."""
+        exact, low, high = None, None, None
         for uid, u in g.units.items():
             if u.get("$type") != "Bolt.Comparison":
                 continue
             for src, _ in g.value.get((uid, "a"), []):
                 m = (g.units.get(src, {}).get("member") or {}).get("name")
-                if m == member:
-                    b = bg._text((u.get("defaultValues") or {}).get("b"))
-                    if b is not None:
-                        return str(int(float(b)))
-        return ""
+                if m != member:
+                    continue
+                b = bg._text((u.get("defaultValues") or {}).get("b"))
+                if b is None:
+                    continue
+                n = int(float(b))
+                # which of the comparison's outputs the gate uses
+                ports = {port for sources in g.value.values()
+                         for (s2, port) in sources if s2 == uid}
+                if "aGreaterThanOrEqualToB" in ports:
+                    low = n if low is None else max(low, n)
+                elif "aGreaterThanB" in ports or "aGreatherThanB" in ports:
+                    low = n + 1 if low is None else max(low, n + 1)
+                elif "aLessThanOrEqualToB" in ports:
+                    high = n if high is None else min(high, n)
+                elif "aLessThanB" in ports:
+                    high = n - 1 if high is None else min(high, n - 1)
+                elif exact is None:
+                    exact = n
+        if exact is not None:
+            return str(exact)
+        if low is None and high is None:
+            return ""
+        return "%s-%s" % ("" if low is None else low, "" if high is None else high)
 
     def walk_chapter(self, entry, number):
         """The chapter's scene gates in flow order, each with the condition

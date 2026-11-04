@@ -14,7 +14,7 @@ It also features a "tree view" visual of your playthrough so you can see your mi
 - **Load any past scene (when you had to make a choice).** The mod records the exact game state at every scene, so you can go back to any choice you already reached: click the tree view tab at the top of the book (the medallion with linked boxes) and pick the choice. The save / load tab next to it (the medallion with a down and an up arrow) opens the list of saves.
 ![The save / load screen.](Screenshot_2.jpg)
 
-- **A backup of your original save, and the game's saves keep working.** The first time you start the game with this version the mod copies your game save folder once to `Brante-Save-Load/Backups/<save>/` (with a `README.txt` saying how to put it back) and never touches that copy again. Your game saves then work normally: the game keeps its one rolling autosave in the same save folder, exactly as it would after loading an older save from its own menu, and a chapter restart after a death continues *your* timeline.
+- **A backup of your original save, and the game's saves keep working.** The first time you start the game with this version the mod copies your game save folder once to `Brante-Save-Load/Backups/<save>/` (with a `README.txt` saying how to put it back) and never touches that copy again. Your game saves then work normally: the game keeps its one rolling autosave in the same save folder, exactly as it would after loading an older save from its own menu, and a chapter restart after a death continues *your* timeline. A game from an old version that has no save ID gets one, named the way the game names a new game, the first time you load it through the mod.
 
 - **You can save whenever you want.** Use the **"Save now"** button at the bottom of the window. These saves are kept in `Brante-Save-Load/Runs/<main save ID>/`, separate from the game's saves so they never overwrite them.
 
@@ -36,7 +36,7 @@ Click the tree view tab on top of the book (the medallion with linked boxes) to 
 Scroll sideways with the mouse wheel.
 The scrollbar also works as a progress bar showing how far you are in the story.
 
-- **Columns are scenes, boxes are choices.** It shows every scene you went through, then everything still ahead until the end of chapter 5. "Current" and "Upcoming" mark where you are, and scenes that may not happen say what they depend on (stats, relationships, characters' fates or story events).
+- **Columns are scenes, boxes are choices.** It shows every scene you went through, then the scenes your picks lead to, until the end of the story. Change a choice and everything after it is worked out again. "Current" and "Upcoming" mark where you are, and scenes that may not happen say what they depend on (stats, relationships, characters' fates or story events).
 - **Your path is highlighted.** Your choices are in yellow, joined by a red line. Scenes played before the mod was installed have no recorded choice and say so.
 - **Hover a choice** to see its full text, what it changes and what it requires (green if your hero meets it, red if not).
 - **Click choices to build a path.** Click a picked choice again to undo it, or use the reset arrow next to the × to undo them all. Choices your hero can't take at that point are greyed out. If an earlier pick makes a later choice impossible, that choice turns red.
@@ -78,9 +78,8 @@ Two extra flags:
 ## Known limitations
 
 - Load scene needs a starting point before your first changed choice: a mod save, the start of that chapter, or the very start of the story (built from the game's own new-game defaults if no chapter 1 save exists at all). For scenes played before the mod was installed, you need to pick every choice from that starting point.
-- Future chapters only show the scenes shared by every path, since which path you get (your Lot, your post) isn't decided yet.
-  When Load scene meets one of the other scenes, it stops there so you can pick its choice and load again.
-- Greyed-out choices after a changed pick are a close estimate: changes the game makes between scenes aren't simulated.
+- The scenes ahead are a prediction: the mod plays your picks (or the first open choice) forward through the story's own rules, but a few stat changes the game makes between scenes aren't in its tables, so far-off scenes and greyed-out choices are a close estimate.
+  When Load scene meets a scene the prediction didn't have, it stops there so you can pick its choice and load again.
 - Load scene takes about 5 to 10 seconds per scene to replay.
 - The list keeps the newest 100 autosaves and 100 pre-rewind snapshots per playthrough; older ones are dropped. Manual saves, choice points and the backup of your original save are never removed.
 - The list shows 120 rows at a time; the **"Show more"** row loads the rest.

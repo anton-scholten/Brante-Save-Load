@@ -1608,6 +1608,19 @@ namespace Doorstop
 				SaveSlotInfo slot = helper != null && helper.SlotInfo != null
 					? helper.SlotInfo : new SaveSlotInfo();
 				string id = RealOrEmpty(slot.Id) ?? "";
+				if (id == "")
+				{
+					// A save with no main-save id (an old game, or one that
+					// lost it): give it one, the way the game names a new
+					// game's folder, so its autosaves and chapter files get a
+					// folder of their own and the game's menu lists it.
+					id = NewSlotId(helper);
+					if (string.IsNullOrEmpty(slot.Date))
+					{
+						slot.Date = DateTime.Now.ToString();
+					}
+					ModLog.Info("Recorder: the save had no main-save id - it is now " + id);
+				}
 				slot.Id = id;
 				FieldInfo f = typeof(SaveLoadManager).GetField("_currentSaveSlotInfo",
 					BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -1639,6 +1652,34 @@ namespace Doorstop
 			catch (Exception e)
 			{
 				ModLog.Error("Recorder: adopting the save slot failed:\n" + e);
+			}
+		}
+
+		// A main-save id as SaveLoadManager.CreateSaveLoadSlot makes one:
+		// hero name + "_" + DateTime.Now with its spaces, colons and dots
+		// removed (slashes stay: the folder is nested). One second later if a
+		// folder of that name exists already.
+		private static string NewSlotId(SaveLoadHelper helper)
+		{
+			string hero = helper != null ? helper.HeroName : null;
+			if (string.IsNullOrEmpty(hero) && ParametersManager.Instance != null)
+			{
+				hero = ParametersManager.Instance.HeroName;
+			}
+			if (string.IsNullOrEmpty(hero))
+			{
+				hero = "Hero";
+			}
+			DateTime now = DateTime.Now;
+			for (int i = 0; ; i++)
+			{
+				string stamp = string.Format("{0}", now.AddSeconds(i))
+					.Replace(" ", string.Empty).Replace(":", string.Empty).Replace(".", string.Empty);
+				string id = hero + "_" + stamp;
+				if (i >= 60 || !Directory.Exists(Path.Combine(SavesDir, id)))
+				{
+					return id;
+				}
 			}
 		}
 

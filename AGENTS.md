@@ -111,10 +111,15 @@ community event sheet (`data/events.json`).
 ## Rules that are not obvious
 
 - **The game's save system is BinaryFormatter** over a `[Serializable]` class
-  (`SaveLoadHelper`) that holds the entire game state. The mod never creates,
-  renames or mints game save folders (`Recorder.MintRunId` is gone): a new game's
-  folder comes from the game's own `CreateSaveLoadSlot`. The mod writes only
-  inside its own folder (`Brante-Save-Load/`) plus the one-time id repair below.
+  (`SaveLoadHelper`) that holds the entire game state. The mod never creates or
+  renames the folder of a save that has an id: a new game's folder comes from the
+  game's own `CreateSaveLoadSlot`. The one exception is a save with **no**
+  main-save id loaded through the mod (an old game, or one that lost its id):
+  `Recorder.AdoptAsCurrentSave` gives it one with `NewSlotId`, built exactly as
+  `CreateSaveLoadSlot` builds it (hero name + `_` + `DateTime.Now` without spaces,
+  colons and dots), so the game's autosave and chapter files get a folder of their
+  own and its menu lists the game. Otherwise the mod writes only inside its own
+  folder (`Brante-Save-Load/`) plus the one-time id repair below.
 - **One live game save per playthrough.** The game has exactly one rolling
   `Autosave.dat` in one `Saves/<id>/` folder, plus a `Chapter_N.dat` at each
   chapter start. Everything else is a copy the mod makes; the game's own save is
@@ -218,18 +223,29 @@ community event sheet (`data/events.json`).
   `02.07.02`) is therefore offered as the next scene, as the game does; the
   per-branch order keeps the true/false branches apart. The TSV is regenerated
   by `tools/bolt_story.py`.
-- **Time gates put immediate scenes first.** `SceneFlow.Ahead.Immediate` marks
-  a candidate whose `Turn`/`Season` gate matches the live game (or a trigger
-  scene with Turn 0); `After` sorts immediate scenes (flow order) before later
-  time slots and later chapters. The turn/season progression itself is still
-  driven by the game; the tree only orders what can come next.
-- **Conditions are evaluated after the current answer.** `WorkOutOpenAnswers`
-  stores each column's hero after its answer (`AfterHero`); `AddUpcoming` asks
-  `SceneFlow.After(..., hero)`, which briefly swaps that hero's stats,
-  characters and unlocked objectives into the live managers while evaluating
-  the scene conditions. A current/played-scene pick rebuilds the columns
-  (`RefreshKeepingScroll(true)`), so an answer that turns a trigger's condition
-  true makes it appear ahead; an upcoming-scene pick only restyles.
+- **Time gates can be ranges.** The flow TSV's turn column is `N` (the gate's
+  `Turn == N`) or an inclusive range `N-M` / `N-` / `-M` for the trigger gates
+  that compare with `<`, `<=`, `>=`, `>` (`054.100.090_Milanid` is
+  `Turn >= 4 && Turn < 8`, i.e. `4-7`, Season any). Recording only the first
+  constant (as `8`) put such scenes turns too late. `SceneFlow.InSlot` is the
+  test; a row whose last turn has passed is dropped. Immediate scenes come first
+  in flow order, then later slots by (turn, season) - the game moves to the
+  earliest slot, not the next in flow order.
+- **The scenes ahead are a forward simulation.** `AddUpcoming` steps a `Sim`
+  (hero stats, characters, objectives, key chapter parameters, scenes shown,
+  chapter, turn, season) from the scene on screen - or from the first played
+  scene whose answer was changed, starting from that scene's snapshot - to the
+  end of the story: `SceneFlow.Step` returns the first scene the flow would
+  open (the simulated state is swapped into the game's managers only for the
+  call, synchronously, and always put back - the game's per-frame achievement
+  poll can never see it), its opening parameters apply, the picked (or played,
+  or first open) answer applies its effects, objectives and parameters, then the
+  scene's own objectives. Columns are added for scenes that offer answers. A
+  pick anywhere re-simulates what follows it. Played entries after the scene on
+  screen (an abandoned attempt in the save's list) get no columns.
+  `SceneFlow.FirstCore` sorts candidates by the final order before evaluating
+  any condition and stops at the first that passes: the whole story simulates
+  in ~60 ms of flow time, and the tree builds in about 0.5 s.
 - **Objectives unlocked by an answer or a scene are simulated too.**
   `scene-objectives.tsv` (from `tools/scene_objectives.py`) lists every
   `KeyChapterParametersController.EarnObjective` target by scene and button
@@ -242,10 +258,17 @@ community event sheet (`data/events.json`).
 - **Key chapter parameters are extracted per scene/answer.** `scene-params.tsv`
   (from `tools/scene_params.py`) records the `KeyChapterParametersOnEnableChanger`
   (button 0) and `KeyChapterParametersChanger` (answer button index) values.
-  `SceneParams` loads them; `PlanLoad` simulates the start save's parameters
-  through the picked answers and scenes and logs when an answer moves a later
-  scene out of its branch (`plan.Speculative`). The ordered replay is still the
-  final check.
+  `SceneParams` loads them. `PlanLoad` runs `SimulatePlan`: the same `Sim` from
+  the start save through the plan's answers, checking that each choice scene the
+  game would open next is the plan's next one, and logs the first difference
+  (`plan.Speculative`); the label-only `SceneParams.Simulate` is the fallback
+  when the start save cannot be simulated. Stats the game changes outside answer
+  effects are not simulated, so this is a prediction: the ordered replay is
+  still the final check.
+- **Answer names are the button objects' names.** A few localisation keys are
+  `ButtonDescription_1`; the scene's button is always `ButtonDescription1`, and
+  `tools/localization.py` writes that name, or a predicted answer can never be
+  clicked.
 - **Save type help.** Each table type cell has an invisible hover target; its
   `TreeHover` shows the same paper/outline pop-up as the tree, with the short
   explanation from `Loc.K.HelpAutosave/HelpCheckpoint/HelpManual/HelpOriginal`.
@@ -302,11 +325,12 @@ on use) and must be paired with `dev-autoload.txt`:
 | `dev-capture.txt` | with `dev-load.txt`: capture the current scene's choice point after `dev-stat`, so `dev-plan` starts from the modified state |
 | `dev-replay.txt` | with `dev-plan.txt`: replay the planned path (fast-forward) instead of only logging it |
 | `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
-| `dev-table.txt` | open the save table, cycle the type filter through every category, log row counts, and show/hide a type pop-up |
+| `dev-table.txt` | open the save table, cycle the type filter through every category, log row counts, show/hide a type pop-up, page with "Show more" (a 10-row first page when the run has fewer rows) and check the Original row has no delete cell; with `dev-table-load.txt` also click the Original row and confirm its load; with `dev-table-open.txt` leave the table open afterwards (screenshots) |
+| `dev-restart.txt` | with `dev-autoload.txt` (and `dev-load.txt`): make the game's chapter restart call (`LoadChapterState`, as its Restart button does) and log the checkpoint and run state |
 | `dev-book.txt` | the book tabs (tree view, then save table), the save table, then the tree view: wheel, pop-ups, stat pop-up, a conflicting pick, chapter rule, a pick + its load plan, undo |
 | `dev-loadpath.txt` | with `dev-book.txt`: Load scene end to end; `back N` replays from another answer N scenes back, `chapter` from the chapter's start save, `start` from chapter 1 with an early change, `ahead` into the next chapter, `death` through a death, `offpath` a stop off the path, `first` the story's first scenes from a stand-in start (another run's chapter 1 save), `new` the same from a start built from the game's defaults, `file <name>` load that mod save as the table does (`file <name> norun`: with no run active) |
 | `dev-history.txt` | log the save's scene path (`ShowedScenesList`) |
-| `dev-autoplay.txt` | empty: log the buttons the game puts up after an answer; `chapters 2 3`: start a debug run (own main save `Debug_<date>`, from the newest `Chapter_1.dat`), play the first open answer everywhere and make a mod save when each listed chapter starts |
+| `dev-autoplay.txt` | empty: log the buttons the game puts up after an answer; `chapters 2 3`: start a debug run (own main save `Debug_<date>`, from the newest `Chapter_1.dat`), play the first open answer that costs no life everywhere (on through the hero's last death) and make a mod save when each listed chapter starts |
 | `dev-scene-tree.txt` | dump the loaded scene's UI components |
 | `dev-bolt.txt` | dump the live Bolt graph of the choice machine |
 | `dev-ironman.txt` | load the save as an Iron Man game |
@@ -324,12 +348,12 @@ work here (black/`BadMatch` on the X1 root).
 ## Open work
 
 - [docs/TODO.md](docs/TODO.md): what remains of the plan.
-- Phases 0–7 are implemented and verified in-game: the tree over the whole
-  playthrough (answers for every scene come from the game's localisation), path
-  picks with Load scene (replayed by `AutoPlay`), and the debug runs that make
-  test saves.
-- The save/load rework (TODO phases 8–13: save ownership and repair, the
-  one-time baseline, pre-rewind checkpoints, the game-autosave mirror, the
-  unified table) is implemented and `./tools/build.sh` passes; **the in-game
-  pass is still pending**. Remaining after that: the achievements check, a full
-  playthrough pass (death -> restart chapter), and a design document.
+- Phases 0–13 are implemented and verified in-game: the tree over the whole
+  playthrough with a forward simulation of the scenes ahead, path picks with
+  Load scene (replayed by `AutoPlay`), the save/load rework (save ownership and
+  repair, the one-time baseline, pre-rewind checkpoints including the chapter
+  restart, the game-autosave mirror, the unified table with paging and the
+  Original row) and id minting for id-less loads.
+- Remaining: the full playthrough pass on a clean run, the README screenshot
+  refresh, and the stat changes outside answer effects that the simulation
+  cannot see.

@@ -122,7 +122,7 @@ namespace Doorstop
 				if (DeathOnScreen())
 				{
 					int deaths = Deaths();
-					if (deaths <= _deathsAtAnswer || deaths >= 4)
+					if (deaths <= _deathsAtAnswer || (deaths >= 4 && !_throughLastDeath))
 					{
 						LastStop = Stop.Death;
 						ModLog.Info("AUTOPLAY: " + (deaths >= 4 ? "the hero's last death" : "a death no answer explains")
@@ -288,6 +288,10 @@ namespace Doorstop
 		// the newest game save, under its own main-save id so the player's run
 		// is never touched, played forward with the first open answer; a mod
 		// save ("Save now") is made when each of `chapters` starts.
+		// Debug runs play on through the hero's last death into the finals
+		// (the epilogue); a replay stops there.
+		private static bool _throughLastDeath;
+
 		public static IEnumerator DebugRun(int[] chapters)
 		{
 			string start = MakeDebugSave();
@@ -303,7 +307,8 @@ namespace Doorstop
 				last = Math.Max(last, c);
 			}
 			HashSet<int> saved = new HashSet<int>();
-			yield return Run(null, delegate(string scene)
+			_throughLastDeath = true;
+			yield return Run(SafePick, delegate(string scene)
 			{
 				int chapter = SceneFlow.ChapterOf(scene);
 				foreach (int c in chapters)
@@ -323,6 +328,7 @@ namespace Doorstop
 				}
 				return chapter <= last && saved.Count < chapters.Length || chapter < last;
 			}, 90f, true);
+			_throughLastDeath = false;
 		}
 
 		// After LoadSnapshot: the loading screen has come and gone.
@@ -505,6 +511,24 @@ namespace Doorstop
 
 		// The forced answer when it is offered and open to the hero, else the
 		// first open one.
+		// Debug runs: the first open answer that does not cost a life, else
+		// the first open one - always picking the first answer used up the
+		// hero's lives by the end of chapter 4 (FourthDeath_1).
+		private static string SafePick(string scene)
+		{
+			List<ParameterButtonChanger> buttons = VisibleChoices();
+			buttons.Sort((a, b) => ButtonNumber(a.gameObject.name).CompareTo(ButtonNumber(b.gameObject.name)));
+			foreach (ParameterButtonChanger b in buttons)
+			{
+				if (b.GetButtonState() && !SceneEffects.For(scene, b.gameObject.name).Exists(
+					f => f.Kind == 'P' && f.Name == "Death" && f.Value > 0 && !f.IsRequirement))
+				{
+					return b.gameObject.name;
+				}
+			}
+			return null;
+		}
+
 		public static ParameterButtonChanger Pick(string wanted, string scene)
 		{
 			ParameterButtonChanger first = null;

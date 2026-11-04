@@ -410,6 +410,21 @@ namespace Doorstop
 							yield return AutoPlay.Probe(80f);
 						}
 					}
+					// The game's chapter restart, as its Restart button makes it
+					// (RestartOrContinuePopupController.RestartButton_Click):
+					// the pre-restart checkpoint and the run state after it.
+					string restart = Path.Combine(Recorder.SnapshotDir, "dev-restart.txt");
+					if (File.Exists(restart))
+					{
+						try { File.Delete(restart); }
+						catch (Exception) { }
+						yield return new WaitForSeconds(2f);
+						DevRestartChapter();
+						yield return new WaitForSeconds(15f);
+						GameManager rg = GameManager.Instance;
+						ModLog.Info("DEV RESTART: now at " + AutoPlay.Story() + ", chapter "
+							+ (rg != null ? rg.Chapter.ToString() : "?") + ", run '" + Recorder.CurrentRunId() + "'");
+					}
 					// Phase 6: dump the scene path the playthrough has taken.
 					string history = Path.Combine(Recorder.SnapshotDir, "dev-history.txt");
 					if (File.Exists(history))
@@ -437,6 +452,21 @@ namespace Doorstop
 				}
 			}
 			ModLog.Error("DEV AUTOLOAD: scene " + scene + " never opened");
+		}
+
+		private static void DevRestartChapter()
+		{
+			try
+			{
+				GameManager gm = GameManager.Instance;
+				SaveLoadManager slm = Recorder.GameSaveManager();
+				ModLog.Info("DEV RESTART: restarting chapter " + (gm != null ? gm.Chapter : 0) + " from " + AutoPlay.Story());
+				slm.LoadChapterState(gm.Chapter);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("DEV RESTART: failed:\n" + e);
+			}
 		}
 
 		// try/catch without yields (C# forbids yield inside try-catch).

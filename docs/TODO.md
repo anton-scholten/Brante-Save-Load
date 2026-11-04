@@ -3,38 +3,42 @@
 The plan, as approved, with status. Phases 0–7 are history; 8–13 are the save/load
 rework (implemented, the in-game pass still pending).
 
-## Remaining work (30 Oct 2026)
+## Remaining work (3 Nov 2026)
 
 Current, de-duplicated remainder. The phase sections below keep the history.
 
-- [ ] Simulate objectives/key parameters earned by scenes **still ahead**. The
-  tree only applies the current answer's objective, so `ahead` from early
-  chapter 3 planned the epilogue instead of the `Noble` track; the replay
-  stopped at the real track. Also the true-death pop-up's
-  `GoToFinals` on `052.210.050_Final5`.
-- [ ] Make plan order robust against a snapshot whose `ShowedScenesList` mixes
-  attempts (played entries after the current scene). `ahead` from a mixed
-  chapter-4 run planned `051.*` before the actual `054.*` branch; the ordered
-  replay stopped at the real next scene.
-- [ ] Death -> Restart chapter checkpoint. The death page is reached (its six
-  buttons are death outcomes), but the chapter-restart control is a separate
-  UI path and `BeforeChapterRestart` has not been exercised end to end.
-- [ ] Achievements / Steam after a mod load: no duplicate or invalid unlock.
-- [ ] Table: "Show more" paging and clicking the Original row in game (the
-  shared load flow behind it is verified; the row's own click/delete
-  suppression is code-only).
-- [ ] Full playthrough pass (chapters 1-5 + epilogue) on a clean run; the
-  partial pass reached chapter 4 (`051.000.030_Arrive_Prefect`).
-- [ ] Performance: the tree builds in ~500-1300 ms (2059 flow rows); cache
-  `SceneFlow.After` / column data across opens.
-- [ ] `SceneParams.Simulate` checks switch labels only; a full-condition
-  pre-check would make `plan.Speculative` accurate (prediction only; the
-  ordered replay stays authoritative).
-- [ ] Dev-mode polish: `chapter`/`start` fall back to an earlier chapter when
-  the target chapter's save is from another timeline, then fail on a chapter-1
-  scene with no recorded answer ("Birth has none yet"). Fail with
-  `StartNotOnPath` instead.
-- [ ] Refresh the README screenshots for the table's new first column.
+- [x] Simulate objectives/key parameters earned by scenes **still ahead**: the
+  tree is a forward simulation (`Sim`, `SceneFlow.Step`) to the end of the story;
+  an `ahead` replay followed the predicted chapter-4 order to the chapter's end.
+- [x] Plan order robust against a snapshot whose `ShowedScenesList` mixes
+  attempts: entries after the scene on screen get no columns, and a changed
+  played answer re-predicts everything after it from that scene's snapshot.
+- [x] Turn-range gates (`Turn >= 4 && Turn < 8`) extracted as ranges; later
+  slots ordered by (turn, season).
+- [x] Death -> Restart chapter checkpoint: `dev-restart.txt` makes the game's
+  `LoadChapterState` call; the checkpoint was filed with its reason and the run
+  kept. The Iron Man death page's own restart (via `GameLoadingScreen`) is not
+  driven.
+- [x] Achievements / Steam after a mod load: checked against the decompile - a
+  per-frame poll of the live state, unlock-once; the simulations' swaps never
+  span a frame.
+- [x] Table: "Show more" paging and the Original row (no delete cell, click asks
+  to load the backup, load ran with a checkpoint, backup unchanged).
+- [x] Performance: the tree builds in ~0.5 s (was 1.2-1.7 s).
+- [x] Full-condition plan pre-check (`SimulatePlan`).
+- [x] Dev-mode polish: `chapter`/`start` fail with `StartNotOnPath` when the
+  changed chapter's own start save is from another timeline.
+- [x] Id-less games get an id at load (`NewSlotId`, as `CreateSaveLoadSlot`).
+- [x] Refresh the README screenshot for the table's new first column.
+- [ ] Full playthrough pass, chapter 5 and the epilogue. A debug run (first
+  open answer that costs no life) plays chapters 1-4 cleanly in ~16 minutes and
+  takes the hero's true death at the end of chapter 4; the game's true-death
+  pop-up then throws in its own `ObjectivePopupComponent.Start` at autoplay
+  speed and the finals never start. Reaching chapter 5 needs a picker that
+  survives chapter 4 (or a chapter-5 start save).
+- [ ] Stats the game changes outside answer effects (e.g. `Carier`) are not in
+  the extracted tables, so a long simulated path can drift; the replay stays
+  authoritative.
 
 ## Phase 0 — repo scaffold (done)
 

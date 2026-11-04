@@ -246,8 +246,8 @@ B	051.020.010_Scene_3	ButtonDescription1	You accept the jewels from the archduke
 B	051.020.010_Scene_3	ButtonDescription2	You send the precious box back to the archduke.
 B	051.020.010_Scene_3	ButtonDescription3	You accept the jewels from the archduke in order to sell them for a good price.
 S	051.020.020_The_Old_Friend	An Old Friend
-B	051.020.020_The_Old_Friend	ButtonDescription_1	You aren’t about to miss a chance to spend some time with your old friend, no matter what kind of danger he’s in.
-B	051.020.020_The_Old_Friend	ButtonDescription_2	You and Tommas parted ways long ago. His fate is no longer linked to yours.
+B	051.020.020_The_Old_Friend	ButtonDescription1	You aren’t about to miss a chance to spend some time with your old friend, no matter what kind of danger he’s in.
+B	051.020.020_The_Old_Friend	ButtonDescription2	You and Tommas parted ways long ago. His fate is no longer linked to yours.
 S	051.020.030_The_Call_of_the_Ancestors	The Call of the Ancestors
 B	051.020.030_The_Call_of_the_Ancestors	ButtonDescription1	Robert Brante remains the head of the family.
 B	051.020.030_The_Call_of_the_Ancestors	ButtonDescription2	The eldest brother has earned the right to speak to the ancestors on behalf of the family.
@@ -675,15 +675,15 @@ S	054.080.060_Trap	Twilight over Anizotte
 B	054.080.060_Trap	ButtonDescription1	You warn the prefect in an attempt to sabotage El Verman’s conspiracy.
 B	054.080.060_Trap	ButtonDescription2	You follow El Verman’s advice and wait to see how the night ends.
 S	054.080.070_FinalPreparations	<need translation>
-B	054.080.070_FinalPreparations	ButtonDescription_1	<need translation>
-B	054.080.070_FinalPreparations	ButtonDescription_2	<need translation>
-B	054.080.070_FinalPreparations	ButtonDescription_3	<need translation>
+B	054.080.070_FinalPreparations	ButtonDescription1	<need translation>
+B	054.080.070_FinalPreparations	ButtonDescription2	<need translation>
+B	054.080.070_FinalPreparations	ButtonDescription3	<need translation>
 S	054.080.090_Court	
-B	054.080.090_Court	ButtonDescription_1	You respond to Otton by summoning him to trial. You wield the power of the law, and you have enough evidence to indict even an Arknian.
-B	054.080.090_Court	ButtonDescription_2	You respond to Otton by summoning him to trial. The power of law has grown substantially in Magra — not even an Arknian can escape justice now.
-B	054.080.090_Court	ButtonDescription_3	You have assembled enough evidence and garnered enough influence with the aristocracy to submit the case to the overseer and doom Otton to face the Court of Honor.
-B	054.080.090_Court	ButtonDescription_4	You have garnered enough influence with the aristocracy to submit the case to the overseer and doom Otton to face the Court of Honor.
-B	054.080.090_Court	ButtonDescription_5	You are not strong enough to oppose Otton. You forfeit the struggle and do as the Arknian orders.
+B	054.080.090_Court	ButtonDescription1	You respond to Otton by summoning him to trial. You wield the power of the law, and you have enough evidence to indict even an Arknian.
+B	054.080.090_Court	ButtonDescription2	You respond to Otton by summoning him to trial. The power of law has grown substantially in Magra — not even an Arknian can escape justice now.
+B	054.080.090_Court	ButtonDescription3	You have assembled enough evidence and garnered enough influence with the aristocracy to submit the case to the overseer and doom Otton to face the Court of Honor.
+B	054.080.090_Court	ButtonDescription4	You have garnered enough influence with the aristocracy to submit the case to the overseer and doom Otton to face the Court of Honor.
+B	054.080.090_Court	ButtonDescription5	You are not strong enough to oppose Otton. You forfeit the struggle and do as the Arknian orders.
 S	054.080.100_Final5	A Lesson Writ in Blood
 S	054.080.110_Final4	Otton and the Court of Honor
 S	054.080.120_Final3	Night of the Serpents

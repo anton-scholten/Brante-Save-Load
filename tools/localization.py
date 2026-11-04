@@ -82,7 +82,11 @@ def build_scenes(table, known):
         if part == "Title":
             entry["title"] = text
         elif part.startswith("ButtonDescription"):
-            entry["buttons"][part] = text
+            # a few keys are "ButtonDescription_1"; the button object in the
+            # scene is always "ButtonDescription1", and that is the name the
+            # mod matches answers by
+            part = re.sub(r"^ButtonDescription_(\d+)$", r"ButtonDescription\1", part)
+            entry["buttons"].setdefault(part, text)
         elif part.startswith("ConsequenceText"):
             if text and text not in entry["consequences"]:
                 entry["consequences"].append(text)
