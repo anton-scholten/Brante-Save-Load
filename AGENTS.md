@@ -295,22 +295,39 @@ community event sheet (`data/events.json`).
   clears `IsPopupOpened` before `LoadGame`, or a pop-up of the scene left
   behind lands its changes on the loaded state. Interludes applied are logged
   ("Interlude X applied in S: ...").
-- **Quick load (estimated).** Load scene's confirm dialog offers Quick load
-  when the path stays in one chapter and starts at a choice snapshot of its
-  first scene (`ChoiceWindow.Estimate`): each step to the next choice scene is
-  what the game did there in a recorded run (`Transitions`: per scene, answer
-  and next choice scene, the stat and relation changes, statuses, objectives,
-  key parameters, scenes in between and the time, learned from consecutive
-  `Choice/` snapshots), else the tables through a `Sim`. The state is written
-  to `Runs/<run>/Estimated/` (not in the table) and loaded like any save. A
-  jump past a chapter start is never estimated: the game writes
-  `Chapter_N.dat` as a chapter starts and Restart chapter needs it. Everything
-  captured on a timeline that started from an estimate is marked
-  `estimated=yes` (`Recorder.Estimated`), and `Transitions` skips it, so an
-  estimate never teaches the model. Measured (`dev-accuracy.txt`): tables
-  predict 40% of 1325 recorded steps exactly, learned steps 90% (each run
-  predicted from the others); a quick load and the exact replay of the same
-  path differed in 3 stats.
+- **Quick load (estimated, the default when it is faster).** Load scene's
+  confirm dialog makes Quick load its main button (Exact replay beside it)
+  whenever some steps of the path can be estimated. A step to the next choice
+  scene is estimated (`ChoiceWindow.Estimable`) only when it stays in one
+  chapter, was recorded (`Transitions`: per scene, answer and next choice
+  scene, learned from consecutive `Choice/` snapshots), and every recording of
+  that scene and answer went on to the same next scene; at run time
+  (`QuickChain`) only from a recording with the same key chapter parameters,
+  the one whose stats were nearest (`Transitions.Find`). Every other step is
+  played: chapter changes (the game writes `Chapter_N.dat` there, Restart
+  chapter needs it, and stats convert from earlier ones), steps that depend on
+  the state, the opening of a chapter start save. So a chain: estimate a run,
+  write it to `Runs/<run>/Estimated/`, play the next run in one `ReplayTo`
+  from it, estimate on (`QuickSteps` estimates a run only when it saves time:
+  1 step at the start, 3 inside, 2 at the end - a load costs about two
+  replayed steps). Only the first load files a checkpoint
+  (`Recorder.SkipNextCheckpoint`). A played run that leaves the path stops the
+  chain as a replay stops. The table fallback is gone: it was 40% exact and
+  shared the forward simulation's guesses. Measured (`dev-accuracy.txt`, 19
+  runs): 99% of the steps quick load estimates are exact (1132 of 1143); in
+  game nine quick loads matched the exact replay field for field, three that
+  left the path stopped at the same scene, and long paths took 22 s instead of
+  46-51 s. Everything after an estimate is marked `estimated=yes` and never
+  teaches `Transitions`.
+- **Chapter flows' `Once` units are reset before a mod load.** Every chapter's
+  flow macro (`ChildhoodChapter` ... `Insurrection_Default`, on the persistent
+  `TalismanFlowMachine`) has a Bolt `Once`: the first chapter end loads the
+  finish screen, any later one fires `ClickTriggerEvent`, which reruns the
+  flow - endless recursion, a native crash. Its flag lives in the machine's
+  graph data, not in the save, so playing a chapter end a second time in one
+  session after a mod load crashed (any replay or quick load across it).
+  `BoltDump.ResetOnceUnits` clears every `Once` flag in `LoadFlow`, as in a
+  fresh session.
 - **Answer names are the button objects' names.** A few localisation keys are
   `ButtonDescription_1`; the scene's button is always `ButtonDescription1`, and
   `tools/localization.py` writes that name, or a predicted answer can never be
@@ -369,12 +386,13 @@ on use) and must be paired with `dev-autoload.txt`:
 | `dev-keyparam.txt` | with `dev-load.txt`: `Name=Value` set on `KeyChapterParametersController` after the load, before `dev-plan`. Used to test a branch such as `TriggerBlock=false` |
 | `dev-stat.txt` | with `dev-load.txt`: `Name=Value` set on `ParametersManager.Parameters` (e.g. `Cunning=4`) after the load, before `dev-plan` |
 | `dev-capture.txt` | with `dev-load.txt`: capture the current scene's choice point after `dev-stat`, so `dev-plan` starts from the modified state |
-| `dev-replay.txt` | with `dev-plan.txt`: replay the planned path (fast-forward) instead of only logging it |
+| `dev-replay.txt` | with `dev-plan.txt`: replay the planned path (fast-forward) instead of only logging it; `N`: load the `dev-load` save again and replay, N times in one session (logs Bolt variables that changed) |
+| `dev-slow.txt` | kept while present: replays run at 1x instead of 40x |
 | `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
 | `dev-table.txt` | open the save table, cycle the type filter through every category, log row counts, show/hide a type pop-up, page with "Show more" (a 10-row first page when the run has fewer rows) and check the Original row has no delete cell; with `dev-table-load.txt` also click the Original row and confirm its load; with `dev-table-open.txt` leave the table open afterwards (screenshots) |
 | `dev-restart.txt` | with `dev-autoload.txt` (and `dev-load.txt`): make the game's chapter restart call (`LoadChapterState`, as its Restart button does) and log the checkpoint and run state |
 | `dev-book.txt` | the book tabs (tree view, then save table), the save table, then the tree view: wheel, pop-ups, stat pop-up, a conflicting pick, chapter rule, a pick + its load plan, undo |
-| `dev-loadpath.txt` | with `dev-book.txt`: Load scene end to end; `back N` replays from another answer N scenes back, `chapter` from the chapter's start save, `start` from chapter 1 with an early change, `ahead` into the next chapter, `death` through a death, `offpath` a stop off the path, `first` the story's first scenes from a stand-in start (another run's chapter 1 save), `new` the same from a start built from the game's defaults, `file <name>` load that mod save as the table does (`file <name> norun`: with no run active), `quick N` another answer near N scenes back, Quick load two scenes on, then the exact replay of the same path and the two states compared |
+| `dev-loadpath.txt` | with `dev-book.txt`: Load scene end to end; `back N` replays from another answer N scenes back, `chapter` from the chapter's start save, `start` from chapter 1 with an early change, `ahead` into the next chapter, `death` through a death, `offpath` a stop off the path, `first` the story's first scenes from a stand-in start (another run's chapter 1 save), `new` the same from a start built from the game's defaults, `file <name>` load that mod save as the table does (`file <name> norun`: with no run active), `quick N [M]; quick ...` another answer near N scenes back, Quick load M (default 2) scenes on, then the exact replay of the same path and the two states compared ("DEV QUICK RESULT"), several specs in a row |
 | `dev-history.txt` | log the save's scene path (`ShowedScenesList`) |
 | `dev-autoplay.txt` | empty: log the buttons the game puts up after an answer; `chapters 2 3`: start a debug run (own main save `Debug_<date>`, from the newest `Chapter_1.dat`), play answers that keep the hero alive (no Death, most Will, build the stat the track's final gate needs - `AutoPlay.SafePick`), on through the hero's last death, and make a mod save when each listed chapter starts |
 | `dev-accuracy.txt` | run folders or `all`: compare every two consecutive choice points with what the tables and the learned steps predict, and log the fields each gets wrong (no `dev-autoload.txt` needed) |

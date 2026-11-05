@@ -23,7 +23,7 @@ namespace Doorstop
 			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick, ReplayOffPath, ReplayDeath, ReplayStopped,
 			ReplaySkipped, StartNotOnPath,
 			HelpAutosave, HelpCheckpoint, HelpManual, HelpOriginal,
-			QuickLoad, QuickNote
+			QuickLoad, QuickNote, ExactLoad
 		}
 
 		static Loc()
@@ -38,17 +38,28 @@ namespace Doorstop
 				"A snapshot taken automatically before a load or a chapter restart. Use it to undo that rewind.",
 				"A save you made with Save now.",
 				"The one-time copy of your game save from before the mod was first used. It is read-only.");
-			AddQuickLoad(_en, "Quick load", "Quick load builds the scene's state from what the game did in your recorded playthroughs ({0} of {1} steps; the rest from the game's tables) instead of playing there. It is instant but an estimate: stats can differ from a real playthrough.");
-			AddQuickLoad(_ru, "Быстрая загрузка", "Быстрая загрузка собирает состояние сцены из того, что игра делала в ваших записанных прохождениях ({0} из {1} шагов; остальное по таблицам игры), вместо того чтобы проигрывать путь. Мгновенно, но приблизительно: характеристики могут отличаться от настоящего прохождения.");
-			AddQuickLoad(_de, "Schnell laden", "Schnell laden baut den Zustand der Szene aus dem, was das Spiel in deinen aufgezeichneten Durchgängen getan hat ({0} von {1} Schritten; der Rest aus den Tabellen des Spiels), statt dorthin zu spielen. Sofort, aber geschätzt: Werte können von einem echten Durchgang abweichen.");
-			AddQuickLoad(_fr, "Chargement rapide", "Le chargement rapide reconstruit l'état de la scène à partir de ce que le jeu a fait dans vos parties enregistrées ({0} étapes sur {1} ; le reste d'après les tables du jeu) au lieu d'y jouer. Instantané, mais estimé : les statistiques peuvent différer d'une vraie partie.");
-			AddQuickLoad(_es, "Carga rápida", "La carga rápida construye el estado de la escena a partir de lo que hizo el juego en tus partidas grabadas ({0} de {1} pasos; el resto según las tablas del juego) en lugar de jugar hasta allí. Es instantánea pero estimada: las estadísticas pueden diferir de una partida real.");
-			AddQuickLoad(_it, "Caricamento rapido", "Il caricamento rapido ricostruisce lo stato della scena da ciò che il gioco ha fatto nelle tue partite registrate ({0} passi su {1}; il resto dalle tabelle del gioco) invece di giocare fin lì. È immediato ma stimato: le statistiche possono differire da una partita vera.");
-			AddQuickLoad(_pl, "Szybkie wczytanie", "Szybkie wczytanie odtwarza stan sceny z tego, co gra zrobiła w twoich zapisanych przejściach ({0} z {1} kroków; resztę z tabel gry), zamiast grać do niej. Natychmiastowe, ale szacunkowe: statystyki mogą różnić się od prawdziwego przejścia.");
-			AddQuickLoad(_tr, "Hızlı yükle", "Hızlı yükleme, oraya kadar oynamak yerine sahnenin durumunu oyunun kayıtlı oynanışlarınızda yaptıklarından ({0}/{1} adım; geri kalanı oyunun tablolarından) kurar. Anında ama tahminidir: değerler gerçek bir oynanıştan farklı olabilir.");
-			AddQuickLoad(_ja, "クイックロード", "クイックロードは、そこまでプレイする代わりに、記録されたプレイでゲームが行ったこと（{1}ステップ中{0}、残りはゲームの表から）からシーンの状態を組み立てます。即時ですが推定です。能力値が実際のプレイと異なる場合があります。");
-			AddQuickLoad(_ko, "빠른 불러오기", "빠른 불러오기는 그 장면까지 플레이하는 대신, 기록된 플레이에서 게임이 한 일({1}단계 중 {0}단계, 나머지는 게임의 표)로 장면의 상태를 만듭니다. 즉시 불러오지만 추정치이므로 능력치가 실제 플레이와 다를 수 있습니다.");
-			AddQuickLoad(_zh, "快速读取", "快速读取不会实际游玩到该场景，而是根据游戏在你已记录的游玩中所做的事（{1} 步中的 {0} 步，其余依据游戏数据表）构建场景状态。即时完成，但只是估算：属性可能与真实游玩不同。");
+			AddQuickLoad(_en, "Quick load", "Quick load builds the state from what the game did in your recorded playthroughs for {0} of {1} steps, and plays the rest (chapter changes, and steps your recordings do not settle). Much faster, but an estimate: stats can differ from a real playthrough.");
+			_en[K.ExactLoad] = "Exact replay";
+			AddQuickLoad(_ru, "Быстрая загрузка", "Быстрая загрузка собирает состояние из того, что игра делала в ваших записанных прохождениях, для {0} из {1} шагов, а остальные проигрывает (смены глав и шаги, которые записи не определяют). Намного быстрее, но приблизительно: характеристики могут отличаться от настоящего прохождения.");
+			_ru[K.ExactLoad] = "Точно проиграть";
+			AddQuickLoad(_de, "Schnell laden", "Schnell laden baut den Zustand für {0} von {1} Schritten aus dem, was das Spiel in deinen aufgezeichneten Durchgängen getan hat, und spielt den Rest (Kapitelwechsel und Schritte, die deine Aufzeichnungen nicht festlegen). Viel schneller, aber geschätzt: Werte können von einem echten Durchgang abweichen.");
+			_de[K.ExactLoad] = "Exakt abspielen";
+			AddQuickLoad(_fr, "Chargement rapide", "Le chargement rapide reconstruit l'état d'après ce que le jeu a fait dans vos parties enregistrées pour {0} étapes sur {1}, et joue le reste (changements de chapitre, étapes que vos enregistrements ne tranchent pas). Bien plus rapide, mais estimé : les statistiques peuvent différer d'une vraie partie.");
+			_fr[K.ExactLoad] = "Rejouer exactement";
+			AddQuickLoad(_es, "Carga rápida", "La carga rápida construye el estado a partir de lo que hizo el juego en tus partidas grabadas para {0} de {1} pasos, y juega el resto (cambios de capítulo y pasos que tus grabaciones no resuelven). Mucho más rápida, pero estimada: las estadísticas pueden diferir de una partida real.");
+			_es[K.ExactLoad] = "Repetición exacta";
+			AddQuickLoad(_it, "Caricamento rapido", "Il caricamento rapido ricostruisce lo stato da ciò che il gioco ha fatto nelle tue partite registrate per {0} passi su {1}, e gioca il resto (cambi di capitolo e passi che le registrazioni non decidono). Molto più veloce, ma stimato: le statistiche possono differire da una partita vera.");
+			_it[K.ExactLoad] = "Rigioca esatto";
+			AddQuickLoad(_pl, "Szybkie wczytanie", "Szybkie wczytanie odtwarza stan z tego, co gra zrobiła w twoich zapisanych przejściach, dla {0} z {1} kroków, a resztę rozgrywa (zmiany rozdziałów i kroki, których zapisy nie rozstrzygają). Dużo szybsze, ale szacunkowe: statystyki mogą różnić się od prawdziwego przejścia.");
+			_pl[K.ExactLoad] = "Dokładnie rozegraj";
+			AddQuickLoad(_tr, "Hızlı yükle", "Hızlı yükleme, {1} adımın {0} tanesinde durumu oyunun kayıtlı oynanışlarınızda yaptıklarından kurar, gerisini oynar (bölüm geçişleri ve kayıtların belirlemediği adımlar). Çok daha hızlı ama tahminidir: değerler gerçek bir oynanıştan farklı olabilir.");
+			_tr[K.ExactLoad] = "Birebir oynat";
+			AddQuickLoad(_ja, "クイックロード", "クイックロードは{1}ステップ中{0}ステップを記録されたプレイでゲームが行ったことから組み立て、残り（章の切り替わりと記録で決まらないステップ）は実際にプレイします。ずっと速いですが推定です。能力値が実際のプレイと異なる場合があります。");
+			_ja[K.ExactLoad] = "正確に再生";
+			AddQuickLoad(_ko, "빠른 불러오기", "빠른 불러오기는 {1}단계 중 {0}단계를 기록된 플레이에서 게임이 한 일로 구성하고, 나머지(장 전환과 기록으로 정해지지 않는 단계)는 실제로 플레이합니다. 훨씬 빠르지만 추정치이므로 능력치가 실제 플레이와 다를 수 있습니다.");
+			_ko[K.ExactLoad] = "정확히 재생";
+			AddQuickLoad(_zh, "快速读取", "快速读取会根据游戏在你已记录的游玩中的表现构建 {1} 步中的 {0} 步，其余步骤（章节切换以及记录无法确定的步骤）会实际游玩。快得多，但只是估算：属性可能与真实游玩不同。");
+			_zh[K.ExactLoad] = "精确重玩";
 			AddLoadSceneWord(_ru, "Загрузить сцену");
 			AddSaveKinds(_ru, "Все", "Автосохранение игры", "Перед загрузкой", "Исходное сохранение", "Показать ещё");
 			AddPathChecks(_ru,

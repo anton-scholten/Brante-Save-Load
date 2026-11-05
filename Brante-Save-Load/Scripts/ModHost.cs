@@ -17,6 +17,7 @@ namespace Doorstop
 	// ChoiceWindow); this component is their Unity-side anchor.
 	public class ModHost : MonoBehaviour
 	{
+		private static List<string> _devVars;
 		// The one live host; lets static code (Recorder) start coroutines.
 		public static ModHost Current;
 
@@ -459,13 +460,57 @@ namespace Doorstop
 								catch (Exception) { }
 								if (!string.IsNullOrEmpty(target))
 								{
-									bool replay = File.Exists(Path.Combine(Recorder.SnapshotDir, "dev-replay.txt"));
+									string replayMarker = Path.Combine(Recorder.SnapshotDir, "dev-replay.txt");
+									bool replay = File.Exists(replayMarker);
+									int times = 1;   // dev-replay.txt "N": load the save again and replay, N times in one session
 									if (replay)
 									{
-										try { File.Delete(Path.Combine(Recorder.SnapshotDir, "dev-replay.txt")); }
+										try { int.TryParse(File.ReadAllText(replayMarker).Trim(), out times); File.Delete(replayMarker); }
 										catch (Exception) { }
 									}
+									_devVars = times > 1 ? BoltDump.VariableLines() : null;
+									if (_devVars != null)
+									{
+										ModLog.Info("DEV BOLT VARS before the first replay (" + _devVars.Count + "):\n  " + string.Join("\n  ", _devVars.ToArray()));
+									}
 									ChoiceWindow.DevPlan(target, replay);
+									for (int again = 1; again < times; again++)
+									{
+										for (int w = 0; w < 60 && !AutoPlay.Running; w++)
+										{
+											yield return new WaitForSeconds(1f);
+										}
+										while (AutoPlay.Running)
+										{
+											yield return new WaitForSeconds(1f);
+										}
+										yield return new WaitForSeconds(3f);
+										ModLog.Info("DEV REPLAY: again (" + (again + 1) + " of " + times + "), from " + found);
+										List<string> now = BoltDump.VariableLines();
+										if (_devVars != null)
+										{
+											foreach (string l in now)
+											{
+												if (!_devVars.Contains(l))
+												{
+													ModLog.Info("DEV BOLT VAR new/changed: " + l);
+												}
+											}
+											foreach (string l in _devVars)
+											{
+												if (!now.Contains(l))
+												{
+													ModLog.Info("DEV BOLT VAR gone/was: " + l);
+												}
+											}
+										}
+										ChoiceWindow.LoadSnapshot(found);
+										for (int w = 0; w < 20; w++)
+										{
+											yield return new WaitForSeconds(1f);
+										}
+										ChoiceWindow.DevPlan(target, true);
+									}
 								}
 							}
 						}

@@ -1317,3 +1317,46 @@ checkpoint is still not driven end to end.
   conversions of the chapter change already in it (Valor 10, Diplomacy 19 at
   chapter 4). `tools/nrbf.py` reads any save outside the game.
 
+## Quick load everywhere, and the chapter-end crash (5 Nov 2026)
+
+- **Chapter ends replayed twice crashed the game.** A replay from chapter 3
+  across the chapter 3 -> 4 change, done a second time in one session (after a
+  quick load had crossed it once), froze on `YouthFinishScreen show status is
+  False` x156 and died in native code; from a fresh session the same replay
+  passed. `dev-replay.txt` `3` reproduced it on the second pass every time.
+  Not Bolt variables (all 25 application/saved ones unchanged, no object or
+  scene variables): the chapter macros' `Bolt.Once` unit (`YouthChapter` 141:
+  once -> `ShowLoadingProgressBar`, after -> `GameManager.ClickTriggerEvent`,
+  which runs the flow again). Its `Once.Data.executed` sits in the
+  `FlowMachine`'s graph data (`reference.data`, `elementsData`,
+  `childrenGraphsData` for nested macros). Clearing every flag before a mod
+  load (4 set after one crossing) made three crossings in a row pass. All 20
+  `Once` units in the extracted graphs are in chapter flows, finish/start
+  screens, the intro, credits and the loading screen.
+- **What a step's estimate needs.** Over 19 runs (`dev-accuracy.txt`): the
+  tables 639 of 1671 exact; any recorded step 1425 of 1634; a recorded step
+  in one chapter whose scene and answer always led to the same next scene in
+  the other runs, from the run whose stats were nearest, 1161 of 1178; of
+  those, from a run with the same key chapter parameters 1132 of 1143 (with
+  the same objectives too, 1124 of 1131 - not worth the lost coverage); the
+  rest 29 of 35. The misses: answers whose consequences depend on story flags
+  (`053.060.030_DangerousCargo` [3] -> `051.070.010_Deathbed`: Egmond
+  arrested or a deal), Will near its caps.
+- **The table fallback misled.** A path through a scene the forward
+  simulation put earlier than the game does (`053.100.130_Suspicions` after
+  `053.050.021_DoriyOtton`) was estimated by the same tables and so "reached";
+  the exact replay skipped the scene. Steps the recordings do not settle are
+  now played, and both stop at the same scene. A replay that skips a scene and
+  stops on its own target is a failure too (`LastReplayReached`).
+- **Loads cost about two replayed steps.** A quick load of 1 estimated step:
+  4.5 s; a played step about 3 s at 40x; each estimated run between played
+  ones adds a load (6-9 s). Playing every played step separately (a load
+  each) made quick loads slower than the replay; played runs are now one
+  `ReplayTo`, and runs too short to pay for their load are played.
+- **Measured in game** (debug runs as recordings, from the chapter-5 scene
+  `060.010.070_HuntedBeast`): nine quick loads, the same state as the exact
+  replay every time (two across a chapter change); three paths left the
+  predicted path and quick load and replay stopped at the same scene. Time:
+  22 s / 51 s and 22 s / 46 s for 25 and 12 steps across chapters 3 -> 4,
+  28 s / 45 s for 10 steps across 1 -> 2, 8-15 s / 10-18 s for 1-6 steps.
+

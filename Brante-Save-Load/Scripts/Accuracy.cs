@@ -46,7 +46,9 @@ namespace Doorstop
 				}
 				Dictionary<string, Tally> tables = new Dictionary<string, Tally>();
 				Dictionary<string, Tally> learned = new Dictionary<string, Tally>();
-				int pairs = 0, exactTables = 0, known = 0, exactLearned = 0;
+				int pairs = 0, exactTables = 0, known = 0, exactLearned = 0, sureSteps = 0, exactSure = 0, sureWrongScene = 0,
+					keySteps = 0, exactKeys = 0, allSteps = 0, exactAll = 0;
+				Dictionary<string, Tally> sure = new Dictionary<string, Tally>();
 				foreach (string run in runs)
 				{
 					string dir = Path.Combine(Path.Combine(Recorder.RunsDir, run), "Choice");
@@ -73,6 +75,52 @@ namespace Doorstop
 						{
 							exactTables++;
 						}
+						// what Quick load does: estimate only when every other run
+						// went on from this scene and answer to one scene
+						List<string> next = Transitions.Destinations(real.From, answer, run);
+						int ca = SceneFlow.ChapterOf(real.From), cb = SceneFlow.ChapterOf(real.To);
+						if (next.Count == 1 && !(ca != 0 && cb != 0 && ca != cb))
+						{
+							if (next[0] != real.To)
+							{
+								sureWrongScene++;
+							}
+							else
+							{
+								sureSteps++;
+								SaveLoadHelper g3 = Recorder.ReadHelper(files[i]);
+								bool sameKeys, sameAll;
+								Transitions.MatchObjectives = false;
+								Transitions.Step k3 = Transitions.Find(real.From, answer, real.To, run, g3, out sameKeys);
+								Transitions.MatchObjectives = true;
+								Transitions.Step o3 = Transitions.Find(real.From, answer, real.To, run, g3, out sameAll);
+								Transitions.MatchObjectives = false;
+								Transitions.Apply(g3, k3);
+								bool exact = Compare(g3, b, step, sure) == 0;
+								if (exact)
+								{
+									exactSure++;
+								}
+								if (sameKeys)
+								{
+									keySteps++;
+									if (exact)
+									{
+										exactKeys++;
+									}
+								}
+								if (sameAll)
+								{
+									allSteps++;
+									SaveLoadHelper g4 = Recorder.ReadHelper(files[i]);
+									Transitions.Apply(g4, o3);
+									if (Compare(g4, b, step, new Dictionary<string, Tally>()) == 0)
+									{
+										exactAll++;
+									}
+								}
+							}
+						}
 						Transitions.Step seen = Transitions.Find(real.From, answer, real.To, run);
 						if (seen != null)
 						{
@@ -87,7 +135,11 @@ namespace Doorstop
 					}
 				}
 				ModLog.Info(Summary("tables", pairs, exactTables, tables) + "\n"
-					+ Summary("learned from the other runs (" + known + " of the steps seen there)", known, exactLearned, learned));
+					+ Summary("learned from the other runs (" + known + " of the steps seen there)", known, exactLearned, learned) + "\n"
+					+ Summary("as Quick load estimates (same chapter, one next scene in the other runs, the nearest start; " + sureWrongScene
+						+ " step(s) where that scene was wrong)", sureSteps, exactSure, sure)
+					+ "\nDEV ACCURACY of those, from a recording with the same key parameters: " + exactKeys + " of " + keySteps
+					+ " exact; with the same key parameters and objectives: " + exactAll + " of " + allSteps);
 			}
 			catch (Exception e)
 			{

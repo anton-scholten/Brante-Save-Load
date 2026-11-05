@@ -19,6 +19,149 @@ namespace Doorstop
 	//   V <fromGuid> <fromPort> <toGuid> <toPort>
 	public static class BoltDump
 	{
+		// The story's chapter flows (ChildhoodChapter ... Insurrection, on the
+		// persistent TalismanFlowMachine) each have a Bolt `Once` unit: the first
+		// time a chapter's end is reached it shows the loading bar and loads the
+		// chapter's finish screen; every later time it takes `after` ->
+		// GameManager.ClickTriggerEvent, which runs the flow again: endless
+		// recursion in one frame, then the game dies in native code. A Once
+		// unit's flag lives in the machine's graph data, not in a save, so after
+		// a mod load back into a chapter whose end was already reached in this
+		// session, playing that end again crashed (a replay across the chapter
+		// 3 -> 4 change, twice). A fresh session has every flag clear; so does
+		// the game after any mod load, by this. Returns the flags cleared.
+		public static int ResetOnceUnits()
+		{
+			int cleared = 0;
+			try
+			{
+				Type machine = Type.GetType("Bolt.FlowMachine, Bolt.Flow.Runtime");
+				if (machine == null)
+				{
+					return 0;
+				}
+				foreach (UnityEngine.Object o in Resources.FindObjectsOfTypeAll(machine))
+				{
+					Component c = o as Component;
+					if (c == null || !c.gameObject.scene.IsValid())
+					{
+						continue;
+					}
+					object reference = FindProperty(machine, "reference").GetValue(c, null);
+					if (reference == null)
+					{
+						continue;
+					}
+					object data = FindProperty(reference.GetType(), "data").GetValue(reference, null);
+					cleared += ClearOnce(data, 0);
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("BoltDump: resetting the flows' Once units failed:\n" + e);
+			}
+			return cleared;
+		}
+
+		private static PropertyInfo FindProperty(Type t, string name)
+		{
+			for (; t != null; t = t.BaseType)
+			{
+				PropertyInfo p = t.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+				if (p != null)
+				{
+					return p;
+				}
+			}
+			return null;
+		}
+
+		private static int ClearOnce(object graphData, int depth)
+		{
+			if (graphData == null || depth > 20)
+			{
+				return 0;
+			}
+			int cleared = 0;
+			IDictionary elements = FindProperty(graphData.GetType(), "elementsData").GetValue(graphData, null) as IDictionary;
+			if (elements != null)
+			{
+				foreach (object d in elements.Values)
+				{
+					if (d != null && d.GetType().FullName == "Bolt.Once+Data")
+					{
+						FieldInfo f = d.GetType().GetField("executed");
+						if ((bool)f.GetValue(d))
+						{
+							f.SetValue(d, false);
+							cleared++;
+						}
+					}
+				}
+			}
+			IDictionary children = FindProperty(graphData.GetType(), "childrenGraphsData").GetValue(graphData, null) as IDictionary;
+			if (children != null)
+			{
+				foreach (object child in children.Values)
+				{
+					cleared += ClearOnce(child, depth + 1);
+				}
+			}
+			return cleared;
+		}
+
+		// Dev: every Bolt variable the game holds outside a save - application,
+		// saved (PlayerPrefs), and each Variables component (object and scene
+		// variables) - as sorted "scope.name=value" lines.
+		public static List<string> VariableLines()
+		{
+			List<string> lines = new List<string>();
+			try
+			{
+				Type vars = Type.GetType("Bolt.Variables, Bolt.Core.Runtime");
+				if (vars == null)
+				{
+					lines.Add("(Bolt.Variables not found)");
+					return lines;
+				}
+				AddDecl(lines, "app", vars.GetProperty("Application", BindingFlags.Static | BindingFlags.Public).GetValue(null, null));
+				AddDecl(lines, "saved", vars.GetProperty("Saved", BindingFlags.Static | BindingFlags.Public).GetValue(null, null));
+				PropertyInfo decl = vars.GetProperty("declarations", BindingFlags.Instance | BindingFlags.Public);
+				foreach (UnityEngine.Object o in Resources.FindObjectsOfTypeAll(vars))
+				{
+					Component c = o as Component;
+					if (c == null || !c.gameObject.scene.IsValid())
+					{
+						continue;
+					}
+					AddDecl(lines, c.gameObject.scene.name + "/" + c.gameObject.name, decl.GetValue(c, null));
+				}
+			}
+			catch (Exception e)
+			{
+				lines.Add("(dump failed: " + e.Message + ")");
+			}
+			lines.Sort(StringComparer.Ordinal);
+			return lines;
+		}
+
+		private static void AddDecl(List<string> lines, string scope, object declarations)
+		{
+			IEnumerable items = declarations as IEnumerable;
+			if (items == null)
+			{
+				return;
+			}
+			foreach (object d in items)
+			{
+				Type t = d.GetType();
+				object name = t.GetProperty("name").GetValue(d, null);
+				object value = t.GetProperty("value").GetValue(d, null);
+				string v = value == null ? "null" : value is UnityEngine.Object ? (((UnityEngine.Object)value) == null ? "destroyed" : ((UnityEngine.Object)value).name) : value.ToString();
+				lines.Add(scope + "." + name + "=" + v);
+			}
+		}
+
 		public static void DumpFor(string scene)
 		{
 			try

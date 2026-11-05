@@ -1157,8 +1157,18 @@ namespace Doorstop
 
 		// Before a mod load: keep the live state (and the original folders of
 		// both runs involved) so the load can always be undone.
+		// Set by a quick load chain for its later loads: they replace a state
+		// the chain made, which needs no checkpoint. Consumed by the next load.
+		public static bool SkipNextCheckpoint;
+
 		public static void BeforeModLoad(string targetRunId, string targetTitle)
 		{
+			if (SkipNextCheckpoint)
+			{
+				SkipNextCheckpoint = false;
+				ModLog.Info("Checkpoint: skipped (a step of a quick load)");
+				return;
+			}
 			try
 			{
 				string live = CurrentRunId();

@@ -24,6 +24,9 @@ namespace Doorstop
 		{
 			public string From, Answer, To, Run;
 			public readonly Dictionary<string, int> Stats = new Dictionary<string, int>();
+			public readonly Dictionary<string, int> FromStats = new Dictionary<string, int>();   // the stats as `From` opened
+			public Dictionary<string, string> FromKeys = new Dictionary<string, string>();       // key chapter parameters then
+			public HashSet<_Scripts.AMVCC.Views.Windows.ObjectiveEnum> FromObjectives;         // objectives unlocked then
 			public readonly Dictionary<CharacterList, int> Relations = new Dictionary<CharacterList, int>();
 			public readonly Dictionary<CharacterList, CharacterStatus> Statuses = new Dictionary<CharacterList, CharacterStatus>();
 			public readonly List<CharacterList> Met = new List<CharacterList>();
@@ -159,6 +162,7 @@ namespace Doorstop
 			}
 			foreach (FieldInfo f in StatFields)
 			{
+				s.FromStats[f.Name] = (int)f.GetValue(a.ModelParameters);
 				int d = (int)f.GetValue(b.ModelParameters) - (int)f.GetValue(a.ModelParameters);
 				if (d != 0)
 				{
@@ -193,6 +197,8 @@ namespace Doorstop
 				}
 			}
 			HashSet<_Scripts.AMVCC.Views.Windows.ObjectiveEnum> had = Unlocked(a);
+			s.FromObjectives = had;
+			s.FromKeys = SceneParams.FromSave(a);
 			foreach (_Scripts.AMVCC.Views.Windows.ObjectiveEnum o in Unlocked(b))
 			{
 				if (!had.Contains(o))
@@ -238,22 +244,99 @@ namespace Doorstop
 		// A recorded step for this scene, answer and next choice scene, the
 		// newest one not from `excludeRun` (a test leaves the run it checks
 		// out), or null.
-		public static Step Find(string from, string answer, string to, string excludeRun = null)
+		// With `like`, the recorded step whose stats as `from` opened are
+		// nearest to it (sum of differences; the newest on a tie): a stat at
+		// its cap in one run changes less there, so a run that was where this
+		// state is predicts it best.
+		public static Step Find(string from, string answer, string to, string excludeRun = null, SaveLoadHelper like = null)
 		{
+			bool same;
+			return Find(from, answer, to, excludeRun, like, out same);
+		}
+
+		// Whether a recording started from the same story branch as `h`: the
+		// same key chapter parameters (`keys`) and, with `objectives`, the
+		// same objectives unlocked. A scene's consequences can depend on them.
+		public static bool SameBranch(Step st, SaveLoadHelper h, bool objectives)
+		{
+			Dictionary<string, string> keys = SceneParams.FromSave(h);
+			if (keys.Count != st.FromKeys.Count)
+			{
+				return false;
+			}
+			foreach (KeyValuePair<string, string> kv in keys)
+			{
+				string v;
+				if (!st.FromKeys.TryGetValue(kv.Key, out v) || v != kv.Value)
+				{
+					return false;
+				}
+			}
+			return !objectives || Unlocked(h).SetEquals(st.FromObjectives);
+		}
+
+		public static bool MatchObjectives = false;
+
+		// The nearest recording; `same`: it is from the same branch (SameBranch),
+		// and recordings from the same branch are preferred over nearer ones.
+		public static Step Find(string from, string answer, string to, string excludeRun, SaveLoadHelper like, out bool same)
+		{
+			same = false;
 			Build();
 			List<Step> list;
 			if (!_steps.TryGetValue(Key(from, answer, to), out list))
 			{
 				return null;
 			}
+			Step best = null;
+			int bestDistance = int.MaxValue;
+			bool bestSame = false;
 			for (int i = list.Count - 1; i >= 0; i--)
 			{
-				if (list[i].Run != excludeRun)
+				if (list[i].Run == excludeRun)
+				{
+					continue;
+				}
+				if (like == null || like.ModelParameters == null)
 				{
 					return list[i];
 				}
+				int distance = 0;
+				foreach (FieldInfo f in StatFields)
+				{
+					int v;
+					list[i].FromStats.TryGetValue(f.Name, out v);
+					distance += Math.Abs((int)f.GetValue(like.ModelParameters) - v);
+				}
+				bool sameBranch = SameBranch(list[i], like, MatchObjectives);
+				if ((sameBranch && !bestSame) || (sameBranch == bestSame && distance < bestDistance))
+				{
+					best = list[i];
+					bestDistance = distance;
+					bestSame = sameBranch;
+				}
 			}
-			return null;
+			same = bestSame;
+			return best;
+		}
+
+		// The next choice scenes recorded after `from` answered `answer`. One
+		// means every recorded run went on the same way; more mean the next
+		// scene depends on the state (a trigger scene, a stat gate).
+		public static List<string> Destinations(string from, string answer, string excludeRun = null)
+		{
+			Build();
+			List<string> to = new List<string>();
+			string prefix = from + "|" + answer + "|";
+			foreach (KeyValuePair<string, List<Step>> kv in _steps)
+			{
+				if (kv.Key.StartsWith(prefix, StringComparison.Ordinal) && !to.Contains(kv.Key.Substring(prefix.Length))
+					&& kv.Value.Exists(st => st.Run != excludeRun))
+				{
+					to.Add(kv.Key.Substring(prefix.Length));
+				}
+			}
+			return to;
 		}
 
 		// `h` (the state as `from` opened) moved on to `to` by a recorded
