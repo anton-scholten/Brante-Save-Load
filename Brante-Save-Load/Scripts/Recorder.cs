@@ -1832,6 +1832,13 @@ namespace Doorstop
 		private static string _shownScene;
 		private static string _shownSnapshot;
 
+		// The snapshot (recorded or found unchanged) of the choice scene on
+		// screen.
+		public static string ShownSnapshot
+		{
+			get { return _shownSnapshot; }
+		}
+
 		public static void OnChoiceSceneShown()
 		{
 			try
@@ -2266,6 +2273,50 @@ namespace Doorstop
 		// grown from it): its choice points are marked estimated=yes, so they
 		// never teach Transitions what the game does.
 		public static bool Estimated;
+
+		// The hero's int stats now, as "Name=Value;..." (for before/after logs).
+		public static string StatLine()
+		{
+			ParametersManager pm = ParametersManager.Instance;
+			if (pm == null || pm.Parameters == null)
+			{
+				return "";
+			}
+			StringBuilder sb = new StringBuilder();
+			foreach (FieldInfo f in pm.Parameters.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public))
+			{
+				if (f.FieldType == typeof(int))
+				{
+					sb.Append(f.Name).Append('=').Append((int)f.GetValue(pm.Parameters)).Append(';');
+				}
+			}
+			return sb.ToString();
+		}
+
+		// The stats two StatLine()s differ in: "Will 25->30, State 1->2".
+		public static string StatDiff(string before, string after)
+		{
+			Dictionary<string, string> a = new Dictionary<string, string>();
+			foreach (string kv in (before ?? "").Split(';'))
+			{
+				int eq = kv.IndexOf('=');
+				if (eq > 0)
+				{
+					a[kv.Substring(0, eq)] = kv.Substring(eq + 1);
+				}
+			}
+			List<string> parts = new List<string>();
+			foreach (string kv in (after ?? "").Split(';'))
+			{
+				int eq = kv.IndexOf('=');
+				string old;
+				if (eq > 0 && a.TryGetValue(kv.Substring(0, eq), out old) && old != kv.Substring(eq + 1))
+				{
+					parts.Add(kv.Substring(0, eq) + " " + old + "->" + kv.Substring(eq + 1));
+				}
+			}
+			return parts.Count == 0 ? "no stat changed" : string.Join(", ", parts.ToArray());
+		}
 
 		public static bool IsEstimated(string datPath)
 		{

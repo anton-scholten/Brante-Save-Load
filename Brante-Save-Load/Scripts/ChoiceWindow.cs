@@ -4752,6 +4752,64 @@ namespace Doorstop
 			ModHost.Current.StartCoroutine(LoadFlow(datPath));
 		}
 
+		// The game's pop-ups (interlude, event, trigger, objective, info) live
+		// on UIManager's DialogCanvas, which survives scene changes; only its
+		// own return to the main menu destroys them. A mod load from a scene
+		// with one open (or queued) carried it into the loaded scene, where
+		// closing it applied its changes to the wrong state: Case6's turn-7
+		// interlude (State +1, Prosperity +1) landed on a replay from Milanid.
+		// Every pop-up is destroyed and the queue emptied before the load; the
+		// loaded scene opens its own again.
+		private static void ClosePopups()
+		{
+			try
+			{
+				UIManager ui = UIManager.Initiate;
+				if (ui == null)
+				{
+					return;
+				}
+				List<string> closed = new List<string>();
+				if (ui.DialogCanvas != null)
+				{
+					foreach (Transform child in ui.DialogCanvas.transform)
+					{
+						string n = child.name;
+						if (n.IndexOf("Popup", StringComparison.OrdinalIgnoreCase) >= 0
+							&& n.EndsWith("(Clone)") && n.IndexOf("Achievement", StringComparison.Ordinal) < 0)
+						{
+							closed.Add(n);
+							UnityEngine.Object.Destroy(child.gameObject);
+						}
+					}
+				}
+				if (ui.OpenedPopup != null && !closed.Contains(ui.OpenedPopup.name))
+				{
+					closed.Add(ui.OpenedPopup.name);
+					UnityEngine.Object.Destroy(ui.OpenedPopup);
+				}
+				ui.OpenedPopup = null;
+				FieldInfo queue = typeof(UIManager).GetField("_showPopupAction", BindingFlags.Instance | BindingFlags.NonPublic);
+				System.Collections.IDictionary pending = queue == null ? null : queue.GetValue(ui) as System.Collections.IDictionary;
+				int queued = pending == null ? 0 : pending.Count;
+				if (pending != null)
+				{
+					pending.Clear();
+				}
+				ui.IsPopupOpened = false;
+				if (closed.Count > 0 || queued > 0)
+				{
+					ModLog.Info("ChoiceWindow: closed the game's pop-ups before the load: "
+						+ (closed.Count > 0 ? string.Join(", ", closed.ToArray()) : "none open")
+						+ (queued > 0 ? " (+" + queued + " queued)" : ""));
+				}
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: closing the game's pop-ups failed:\n" + e);
+			}
+		}
+
 		private static IEnumerator LoadFlow(string datPath)
 		{
 			Recorder.Estimated = datPath != NewGameStart && Recorder.IsEstimated(datPath);
@@ -4897,6 +4955,7 @@ namespace Doorstop
 			{
 				ModLog.Error("ChoiceWindow: closing pause window failed:\n" + e);
 			}
+			ClosePopups();
 
 			// The Instance static can be dead mid-game - the AGENTS.md rule.
 			SaveLoadManager slm = SaveLoadManager.Instance;
@@ -5351,7 +5410,7 @@ namespace Doorstop
 				+ (Time.realtimeSinceStartup - qt).ToString("0.0") + " s"
 				+ (AutoPlay.Story() == target ? " (the selected scene)" : " (NOT the selected scene)"));
 			yield return new WaitForSeconds(2f);
-			string estimated = NewestSnapshotOf(target);
+			string estimated = Recorder.ShownSnapshot;
 			float rt = Time.realtimeSinceStartup;
 			ModHost.Current.StartCoroutine(ReplayTo(qp));
 			yield return new WaitForSeconds(5f);
@@ -5362,24 +5421,9 @@ namespace Doorstop
 			yield return new WaitForSeconds(2f);
 			ModLog.Info("ChoiceWindow: dev quick: the replay reached " + AutoPlay.Story() + " after "
 				+ (Time.realtimeSinceStartup - rt).ToString("0.0") + " s");
-			string real = NewestSnapshotOf(target);
-			ModLog.Info("ChoiceWindow: dev quick vs replay: "
-				+ (estimated == real ? "(no new snapshot)" : Accuracy.Diff(Recorder.ReadHelper(estimated), Recorder.ReadHelper(real))));
-		}
-
-		private static string NewestSnapshotOf(string scene)
-		{
-			string best = null;
-			DateTime t = DateTime.MinValue;
-			foreach (string f in Directory.GetFiles(Recorder.RunsDir, scene + "_*.dat", SearchOption.AllDirectories))
-			{
-				if (f.Replace('\\', '/').IndexOf("/Choice/", StringComparison.Ordinal) >= 0 && File.GetLastWriteTimeUtc(f) > t)
-				{
-					t = File.GetLastWriteTimeUtc(f);
-					best = f;
-				}
-			}
-			return best;
+			string real = Recorder.ShownSnapshot;
+			ModLog.Info("ChoiceWindow: dev quick vs replay: " + Path.GetFileName(estimated) + " / " + Path.GetFileName(real) + ": "
+				+ (estimated == real ? "the same state" : Accuracy.Diff(Recorder.ReadHelper(estimated), Recorder.ReadHelper(real))));
 		}
 
 		private static int RowCount()

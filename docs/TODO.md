@@ -40,10 +40,10 @@ Current, de-duplicated remainder. The phase sections below keep the history.
 - [x] Quick load (estimated save from tree picks, learned from recorded
   steps) and a faster exact replay (40x, frame delta cap raised): see FINDINGS
   5 Nov.
-- [ ] Quick load vs replay at a turn's first scene: Will/State/Prosperity came
-  out 5/1/1 lower in the estimate; the replay re-showed that turn's interlude.
-  Check whether a replay from a turn-start snapshot applies the interlude's
-  changes a second time (then the replay, not the estimate, is off).
+- [x] Quick load vs replay differed in Will/State/Prosperity: no double
+  application from a turn-start snapshot; an interlude pop-up left open in the
+  scene the load started from was carried over and closed in the loaded one.
+  Pop-ups are closed before every mod load; quick load and replay now match.
 - [ ] The epilogue: on the true-death page `FourthDeath_3` the CONTINUE throws
   in `UIManager.SetAchievementInfo` (the true-death pop-up never builds), at
   normal speed too, so the finals do not start in a debug run. Unknown whether

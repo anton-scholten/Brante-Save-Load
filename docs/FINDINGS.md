@@ -1257,8 +1257,8 @@ checkpoint is still not driven end to end.
   -> RebelSentence: the estimate and the replayed state differed in Will 25/30,
   State 1/2, Prosperity 3/4 and nothing else, with one step recorded and one by
   the tables, and again with both steps recorded. The replay paged through
-  that turn's interlude pop-up first (stat conversions); whether loading a
-  turn-start snapshot applies the interlude once more is open.
+  an interlude pop-up first - see "Pop-ups survive a mod load" below: it was
+  Case6's, carried over, and with that fixed the two states are identical.
 - **The replay was capped by the frame delta, not the clock.** With
   `Time.maximumDeltaTime` at 0.1 s a frame moved the scaled clock 0.1 s at most:
   at 60 fps that is 6x however high `timeScale` is. Raising vsync/frame rate and
@@ -1280,4 +1280,40 @@ checkpoint is still not driven end to end.
   picked without yielding kept every old tree alive until the frame ended
   (~100k GameObjects, 30 s draws). One pick per frame - all a player can do -
   has none of it.
+
+## Pop-ups survive a mod load (5 Nov 2026)
+
+- **Interludes are scene events, applied on close.** An interlude is an
+  `Interlude` ScriptableObject (47 in `resources.assets`: `Peace_Interlude6`,
+  `Prefect_Interlude2`, ...) referenced from a scene's `SceneStateMachine`
+  event list; `UIManager.ShowInterludePopupEvent` instantiates
+  `Prefabs/Windows/Popup/InterludePopup` and its `ClosePopupButton_Click` ->
+  `CalculateParams` adds `ParameterValue` / `RelationValue` / `StatusValue`
+  (`SetParameterValue` is additive). Which scenes carry one: found by scanning
+  every level's MonoBehaviours for the 47 asset pointers (the chapter-start
+  screens, and e.g. `054.030.010_Call`, `054.060.010_ThreatsAndPromises`,
+  `054.070.010_Case6`; trigger scenes such as `054.100.090_Milanid` have none).
+- **A choice snapshot is taken before its interlude.** The snapshot is written
+  at `SceneController.Awake` with `SceneState` = `SHOW_ANIMATION` (0), so a load
+  replays the scene from its start: the interlude opens again and applies once
+  - the same as the first time. There is no double application from loading a
+  turn's first scene.
+- **But the pop-up lives on `UIManager.DialogCanvas`**, which survives scene
+  changes; only the game's own return to the main menu (`UIManager.Hide`,
+  PREGAME after RUNNING) destroys it. A mod load from a scene with an
+  interlude still open carried it into the loaded scene, and closing it there
+  applied its changes to the wrong state. That was the 5 Nov quick-vs-replay
+  difference: Case6's turn-7 interlude, open when the test started, was
+  closed by the replay at Milanid (turn 6) and added State +1, Prosperity +1.
+  `ChoiceWindow.ClosePopups` now destroys every `*Popup*(Clone)` on the
+  canvas (achievement pop-ups excepted) and `UIManager.OpenedPopup`, empties
+  `_showPopupAction` and clears `IsPopupOpened` before every mod load; the
+  loaded scene opens its own pop-ups again. The same test then gave quick load
+  and replay identical states (0 fields differ).
+- **Logged:** a Harmony prefix/postfix on `CalculateParams` writes
+  `Interlude <name> applied in <scene>: Will 25->30, ...` to the mod log.
+- **Chapter start saves.** `Chapter_N.dat` resumes at the chapter-start screen
+  (`PeaceChapterStart_Prefect`, `SceneState` PREGAME), with the stat
+  conversions of the chapter change already in it (Valor 10, Diplomacy 19 at
+  chapter 4). `tools/nrbf.py` reads any save outside the game.
 

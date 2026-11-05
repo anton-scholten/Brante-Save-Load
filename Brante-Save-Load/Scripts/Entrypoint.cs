@@ -97,6 +97,57 @@ namespace Doorstop
 				ModLog.Info("Patched " + type.Name + "." + t[1] + " (postfix -> " + t[2] + ")");
 			}
 			PatchSaveRepair(harmony);
+			PatchInterlude(harmony);
+		}
+
+		// The interlude pop-up (a scene's state-machine event) applies its
+		// stat, relation and status changes when its close button is clicked
+		// (CalculateParams). Logged with the scene and the stats it changed,
+		// because a load that re-opens a scene can show it a second time.
+		private static void PatchInterlude(Harmony harmony)
+		{
+			try
+			{
+				Type t = Type.GetType("_Scripts.AMVCC.Views.Windows.Popup.InterludePopupController, Assembly-CSharp");
+				MethodInfo m = t == null ? null : t.GetMethod("CalculateParams", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+				if (m == null)
+				{
+					ModLog.Error("InterludePopupController.CalculateParams not found");
+					return;
+				}
+				harmony.Patch(m,
+					prefix: new HarmonyMethod(typeof(Entrypoint), "InterludePrefix"),
+					postfix: new HarmonyMethod(typeof(Entrypoint), "InterludePostfix"));
+				ModLog.Info("Patched InterludePopupController.CalculateParams (logged)");
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Interlude patch failed:\n" + e);
+			}
+		}
+
+		private static string _interludeBefore;
+
+		private static void InterludePrefix()
+		{
+			_interludeBefore = Recorder.StatLine();
+		}
+
+		private static void InterludePostfix(object __instance)
+		{
+			try
+			{
+				FieldInfo f = __instance.GetType().GetField("_interlude", BindingFlags.Instance | BindingFlags.NonPublic);
+				UnityEngine.Object il = f == null ? null : f.GetValue(__instance) as UnityEngine.Object;
+				ModLog.Info("Interlude " + (il != null ? il.name : "?") + " applied in "
+					+ _Scripts.Managers.GameManager.Instance.OpenedSceneName
+					+ (AutoPlay.Running ? " (replay)" : "") + ": "
+					+ Recorder.StatDiff(_interludeBefore, Recorder.StatLine()));
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("Interlude log failed: " + e.Message);
+			}
 		}
 
 		// The game's save calls are left alone, but if its slot bookkeeping is

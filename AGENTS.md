@@ -53,6 +53,7 @@ tools/build.sh               compile against the game's own Managed/ DLLs (UI, T
 tools/install.sh             build, then symlink/copy into the game folder
 tools/steam.sh               Steam library lookup (distro/Flatpak/Snap), sourced by both
 tools/gamedir.py             the same lookup for the Python tools (+ the prefix's Runs/)
+tools/nrbf.py                read a .dat save (BinaryFormatter) outside the game
 tools/localization.py        extract titles/answers -> data/, shipped TSV
 tools/bolt_extract.py        dump every Bolt graph as JSON (no UnityPy needed)
 tools/bolt_graph.py          Walk Bolt graphs (macro resolution, LoadScene)
@@ -287,6 +288,13 @@ community event sheet (`data/events.json`).
   twice and crashed the game in native code. A 28-answer chapter-4 replay:
   389 s -> 78 s; the whole story (debug run, chapters 1-5) ~4.5 min. What is
   left is mostly scene loading (~0.8 s a scene).
+- **Pop-ups are closed before a mod load.** The game's pop-ups (interlude,
+  event, trigger, objective) live on `UIManager.DialogCanvas`, which survives
+  scene changes, and an interlude applies its stat changes when it is closed.
+  `ChoiceWindow.ClosePopups` destroys them, empties the pop-up queue and
+  clears `IsPopupOpened` before `LoadGame`, or a pop-up of the scene left
+  behind lands its changes on the loaded state. Interludes applied are logged
+  ("Interlude X applied in S: ...").
 - **Quick load (estimated).** Load scene's confirm dialog offers Quick load
   when the path stays in one chapter and starts at a choice snapshot of its
   first scene (`ChoiceWindow.Estimate`): each step to the next choice scene is
