@@ -492,11 +492,7 @@ namespace Doorstop
 		private static TextMeshProUGUI _confirmLoadLabel;
 		private static Button _confirmLoadBtn;
 		private static Pending _pendingAction;
-		private static Button _confirmQuickBtn, _confirmCancelBtn;
-		private static bool _quick;   // the pending Load scene can be quick loaded
-		private static bool _quickFirst;   // the confirm dialog's main button quick loads
-		private static bool DevForceExact;
-		private static string _quickNote;
+		private static Button _confirmCancelBtn;
 		private static string _pendingPath;
 		private static string _pendingTitle;
 		private static List<string> _pendingCopies;
@@ -1856,292 +1852,9 @@ namespace Doorstop
 			}
 			HidePopup();
 			_pendingPlan = plan;
-			QuickPreview q = plan.StartScene != plan.Target ? PreviewQuick(plan) : null;
-			_quick = q != null && q.Recorded > 0;
-			_quickNote = _quick ? string.Format(Loc.T(Loc.K.QuickNote), q.Recorded, q.Recorded + q.Played) : null;
-			if (q != null)
-			{
-				ModLog.Info("ChoiceWindow: quick load preview for " + plan.Target + ": " + q.Recorded + " estimated, "
-					+ q.Played + " played");
-			}
 			Ask(Pending.LoadPath, plan.StartPath, plan.TargetTitle, null);
 		}
 
-		// Quick load: the path to the plan's target, estimated where it can be
-		// and played where it must be. A step to the next choice scene is
-		// estimated from what the game did there in a recorded run
-		// (Transitions; see Estimable for when). It is played when it
-		// crosses into another chapter (the game writes Chapter_N.dat as a
-		// chapter starts, Restart chapter needs it, and the chapter change
-		// converts stats from earlier ones), when no recording settles it, and
-		// from a start save that is not a choice point of the first scene (a
-		// chapter start save). So a chain: estimate, load, play, estimate on.
-		// A played step that reaches another scene stops it, as a replay.
-		private sealed class QuickPreview
-		{
-			public int Recorded, Played;
-		}
-
-		private static bool CrossesChapter(string from, string to)
-		{
-			int a = SceneFlow.ChapterOf(from), b = SceneFlow.ChapterOf(to);
-			return a != 0 && b != 0 && a != b;
-		}
-
-		// The steps to estimate (true) and to play (false), in plan order. A
-		// step can be estimated when Estimable says so; a run of them is
-		// estimated only when that is faster than playing it: every estimated
-		// run between played ones costs one more load (about 6 s) where a
-		// replayed step costs about 3 s, so a run in the middle needs 3 steps
-		// and one at the end 2. A run at the start costs nothing (the start is
-		// loaded anyway). Consecutive played steps are played in one go.
-		private const int InnerRun = 3, LastRun = 2;
-
-		private static bool[] QuickSteps(LoadPlan plan, bool playFirst)
-		{
-			int n = plan.Order.Count - 1;
-			bool[] est = new bool[Math.Max(n, 0)];
-			for (int k = 0; k < n; k++)
-			{
-				string pick;
-				plan.Picks.TryGetValue(plan.Order[k], out pick);
-				est[k] = Estimable(plan.Order[k], pick, plan.Order[k + 1]);
-			}
-			for (int k = 0; k < n; )
-			{
-				if (!est[k])
-				{
-					k++;
-					continue;
-				}
-				int e = k;
-				while (e < n && est[e])
-				{
-					e++;
-				}
-				bool atStart = k == 0 && !playFirst, atEnd = e == n;
-				int need = atStart ? 1 : atEnd ? LastRun : InnerRun;
-				if (e - k < need)
-				{
-					for (int m = k; m < e; m++)
-					{
-						est[m] = false;
-					}
-				}
-				k = e;
-			}
-			return est;
-		}
-
-		// What a quick load of the plan would do: steps estimated, steps
-		// played (a start that is not a choice point of the first scene, a
-		// chapter start save, adds one played step to reach it).
-		private static QuickPreview PreviewQuick(LoadPlan plan)
-		{
-			QuickPreview q = new QuickPreview();
-			SaveLoadHelper h = Recorder.ReadHelper(plan.StartPath);
-			if (h == null || h.ShowedScenesList == null || h.ModelParameters == null)
-			{
-				return null;
-			}
-			bool playFirst = h.LastOpenScene != plan.Order[0];
-			if (playFirst)
-			{
-				q.Played++;
-			}
-			foreach (bool e in QuickSteps(plan, playFirst))
-			{
-				if (e)
-				{
-					q.Recorded++;
-				}
-				else
-				{
-					q.Played++;
-				}
-			}
-			return q;
-		}
-
-		// A step is estimated only from a recording, and only when every
-		// recorded run went on from that scene and answer to the same next
-		// choice scene: the tables predict 40% of the steps exactly (and their
-		// scene order is the forward simulation's guess), recorded steps 88%,
-		// these 99% (dev-accuracy.txt). A scene and answer that led to
-		// different scenes depends on the state. The recording used is the
-		// one whose stats at the scene were nearest (Transitions.Find), among
-		// those with the same key chapter parameters; with none of those the
-		// chain plays the step (QuickChain), as consequences can depend on them.
-		private static bool Estimable(string from, string pick, string to)
-		{
-			if (CrossesChapter(from, to) || Transitions.Find(from, pick, to) == null)
-			{
-				return false;
-			}
-			List<string> next = Transitions.Destinations(from, pick);
-			return next.Count == 1 && next[0] == to;
-		}
-
-		// The confirm dialog's second button while a quick load is offered:
-		// the exact replay.
-		private static void ExactLoadNow()
-		{
-			LoadPlan plan = _pendingPlan;
-			CancelConfirm();
-			if (plan != null && ModHost.Current != null)
-			{
-				ModHost.Current.StartCoroutine(ReplayTo(plan));
-			}
-		}
-
-		// The confirm dialog's Quick load.
-		private static void QuickLoadNow()
-		{
-			LoadPlan plan = _pendingPlan;
-			CancelConfirm();
-			if (plan == null || ModHost.Current == null)
-			{
-				return;
-			}
-			ModHost.Current.StartCoroutine(QuickChain(plan));
-		}
-
-		public static bool QuickRunning { get; private set; }
-
-		// Estimated states are written to Runs/<run>/Estimated/ (not in the
-		// save table) and loaded like any save; what follows is marked
-		// estimated. Only the chain's first load files a pre-rewind
-		// checkpoint: the later ones replace a state the chain itself made.
-		private static IEnumerator QuickChain(LoadPlan plan)
-		{
-			QuickRunning = true;
-			float t0 = Time.realtimeSinceStartup;
-			int estimated = 0, played = 0, loads = 0;
-			string path = plan.StartPath;
-			int last = plan.Order.Count - 1;
-			string dir = Recorder.RunDir(Recorder.RunIdForSavePath(plan.StartPath) ?? Recorder.CurrentRunId(), "Estimated");
-			SaveLoadHelper h0 = Recorder.ReadHelper(path);
-			bool playFirst = h0 != null && h0.LastOpenScene != plan.Order[0];
-			bool[] est = QuickSteps(plan, playFirst);
-			ModLog.Info("ChoiceWindow: quick load " + plan.Target + " from " + Path.GetFileName(plan.StartPath)
-				+ ": " + Array.FindAll(est, e => e).Length + " of " + last + " step(s) estimated");
-			int at = playFirst ? -1 : 0;   // the state at `path` is plan.Order[at]'s (-1: a chapter start save)
-			bool onScreen = false;
-			while (at < last)
-			{
-				if (at >= 0 && est[at])
-				{
-					SaveLoadHelper h = Recorder.ReadHelper(path);
-					if (h == null)
-					{
-						ModLog.Error("ChoiceWindow: quick load: cannot read " + path);
-						break;
-					}
-					int to = at;
-					while (to < last && est[to])
-					{
-						string pick;
-						plan.Picks.TryGetValue(plan.Order[to], out pick);
-						bool sameBranch;
-						Transitions.Step st = Transitions.Find(plan.Order[to], pick, plan.Order[to + 1], null, h, out sameBranch);
-						if (st == null || !sameBranch)
-						{
-							// recorded only with other key chapter parameters, whose
-							// consequences can differ (99% exact with the same, 83%
-							// without): played
-							ModLog.Info("ChoiceWindow: quick load: " + plan.Order[to] + " was recorded only on another branch - played");
-							est[to] = false;
-							break;
-						}
-						Transitions.Apply(h, st);
-						to++;
-					}
-					if (to == at)
-					{
-						continue;   // the step is played after all
-					}
-					estimated += to - at;
-					Directory.CreateDirectory(dir);
-					path = Path.Combine(dir, plan.Order[to] + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + ".dat");
-					using (FileStream fs = File.Create(path))
-					{
-						new BinaryFormatter().Serialize(fs, h);
-					}
-					at = to;
-					onScreen = false;
-					continue;
-				}
-				// a run of played steps, in one replay
-				int end = at + 1;
-				while (end < last && !est[end])
-				{
-					end++;
-				}
-				yield return PlayRun(plan, path, at, end, loads == 0);
-				loads++;
-				played += end - Math.Max(at, 0) + (at < 0 ? 1 : 0);
-				if (!LastReplayReached)
-				{
-					onScreen = true;   // ReplayTo has opened the tree and said why
-					at = -2;
-					break;
-				}
-				path = ArrivedSnapshot(plan.Order[end]);
-				at = end;
-				onScreen = true;
-			}
-			if (at == last && !onScreen)
-			{
-				Recorder.SkipNextCheckpoint = loads > 0;
-				LoadSnapshot(path);
-				loads++;
-				yield return new WaitForSeconds(0.5f);
-				yield return AutoPlay.WaitForLoad();
-			}
-			ModLog.Info("ChoiceWindow: quick load reached " + AutoPlay.Story() + " in "
-				+ (Time.realtimeSinceStartup - t0).ToString("0.0") + " s: " + estimated + " step(s) estimated, "
-				+ played + " played, " + loads + " load(s)");
-			QuickRunning = false;
-		}
-
-		// The choice snapshot of the scene a played run arrived at.
-		private static string ArrivedSnapshot(string scene)
-		{
-			string shown = Recorder.ShownSnapshot;
-			if (shown == null || Path.GetFileName(shown).IndexOf(scene, StringComparison.Ordinal) != 0)
-			{
-				ModLog.Error("ChoiceWindow: quick load: no snapshot of " + scene + " (" + shown + ")");
-			}
-			return shown;
-		}
-
-		// Plays from the save at `path` (the state at plan.Order[from], -1 for
-		// a chapter start save) to plan.Order[to], giving the plan's answers.
-		private static IEnumerator PlayRun(LoadPlan plan, string path, int from, int to, bool first)
-		{
-			LoadPlan run = new LoadPlan();
-			run.StartPath = path;
-			SaveLoadHelper h = from < 0 ? Recorder.ReadHelper(path) : null;
-			run.StartScene = from >= 0 ? plan.Order[from] : (h != null ? h.LastOpenScene : "");
-			run.Target = plan.Order[to];
-			run.TargetTitle = plan.TargetTitle;
-			for (int k = Math.Max(from, 0); k <= to; k++)
-			{
-				run.Order.Add(plan.Order[k]);
-				string pick;
-				if (k < to && plan.Picks.TryGetValue(plan.Order[k], out pick))
-				{
-					run.Picks[plan.Order[k]] = pick;
-				}
-			}
-			ModLog.Info("ChoiceWindow: quick load plays " + run.StartScene + " -> " + run.Target
-				+ " (" + (to - Math.Max(from, 0)) + " step(s))");
-			Recorder.SkipNextCheckpoint = !first;
-			yield return ReplayTo(run);
-		}
-
-		// Loads the plan's start and lets AutoPlay give the picked answers
-		// until the selected scene is on screen (left unanswered).
 		// Whether the last ReplayTo reached its target along the whole path.
 		private static bool LastReplayReached;
 
@@ -4036,11 +3749,6 @@ namespace Doorstop
 			_confirmLoadLabel = _confirmLoadBtn.GetComponentInChildren<TextMeshProUGUI>();
 			_confirmCancelBtn = AddButton(box.transform, "Cancel", new Vector2(1f, 0f), new Vector2(-30f, 26f),
 				new Vector2(250f, 56f), Palette.Grey, Loc.T(Loc.K.Cancel), 24f, CancelConfirm);
-			// Load scene with a quick load offered: the main button quick
-			// loads, this one plays every step (the exact replay)
-			_confirmQuickBtn = AddButton(box.transform, "Exact", new Vector2(0.5f, 0f), new Vector2(0f, 26f),
-				new Vector2(180f, 56f), Palette.Dark, Loc.T(Loc.K.ExactLoad), 22f, ExactLoadNow);
-			_confirmQuickBtn.gameObject.SetActive(false);
 
 			_confirmPanel.SetActive(false);
 		}
@@ -4086,23 +3794,6 @@ namespace Doorstop
 			{
 				MarkRow(row);
 			}
-			bool quick = action == Pending.LoadPath && _quick && _confirmQuickBtn != null;
-			if (_confirmQuickBtn != null)
-			{
-				_confirmQuickBtn.gameObject.SetActive(quick);
-				float w = quick ? 180f : 250f;
-				((RectTransform)_confirmLoadBtn.transform).sizeDelta = new Vector2(w, 56f);
-				((RectTransform)_confirmCancelBtn.transform).sizeDelta = new Vector2(w, 56f);
-			}
-			_quickFirst = quick;
-			if (quick && _confirmLoadLabel != null)
-			{
-				_confirmLoadLabel.text = Loc.T(Loc.K.QuickLoad);
-			}
-			if (quick && _confirmText != null)
-			{
-				_confirmText.text = body + "\n\n" + _quickNote;
-			}
 			if (_confirmPanel != null)
 			{
 				_confirmPanel.SetActive(true);
@@ -4128,11 +3819,6 @@ namespace Doorstop
 					SaveNow();
 					break;
 				case Pending.LoadPath:
-					if (_quickFirst && !DevForceExact)
-					{
-						QuickLoadNow();
-						break;
-					}
 					if (_pendingPlan != null && ModHost.Current != null)
 					{
 						CancelConfirm();
@@ -4970,7 +4656,6 @@ namespace Doorstop
 
 		private static IEnumerator LoadFlow(string datPath)
 		{
-			Recorder.Estimated = datPath != NewGameStart && Recorder.IsEstimated(datPath);
 			// Read the save first: if it fails, the window stays open
 			// and the player can pick another one.
 			SaveLoadHelper helper = null;
@@ -5497,129 +5182,6 @@ namespace Doorstop
 			}
 		}
 
-		// Dev ("quick N [M]; ..."): another answer near N scenes back from the
-		// scene on screen, M (default 2) scenes on along the new path as the
-		// target; Quick load there, then the exact replay of the same plan,
-		// and the two states compared. Several specs run one after another.
-		private static IEnumerator DevQuickCheck(int back, int ahead)
-		{
-			OpenTreeView();
-			yield return new WaitForSeconds(2f);
-			int ci = _tree.FindIndex(c => c.Current);
-			int k = ci - back;
-			if (ci < 0 || k < 0)
-			{
-				ModLog.Info("DEV QUICK: no scene " + back + " back (current column " + ci + ")");
-				yield break;
-			}
-			TreeCol at = null;
-			History.Choice other = null;
-			for (int j = k; j >= 0 && j > k - 8 && other == null; j--)   // the nearest scene with another open answer
-			{
-				TreeCol col = _tree[j];
-				at = col;
-				other = col.Choices.Find(c => c.Name != col.PlayedChoice && !col.Blocked.Contains(c.Name)
-					&& VisibleChoices(col).Contains(col.Choices.IndexOf(c)));
-			}
-			if (other == null)
-			{
-				ModLog.Info("DEV QUICK: no other open answer near " + at.Scene);
-				yield break;
-			}
-			_overrides.Clear();
-			SelectChoice(at.Scene, other.Name);
-			yield return null;
-			string last = at.Scene;
-			for (int step = 0; step < ahead; step++)
-			{
-				// each pick rebuilds the tree: the next column is found again
-				int li = _tree.FindIndex(c => c.Scene == last);
-				if (li < 0 || li + 1 >= _tree.Count)
-				{
-					break;
-				}
-				TreeCol col = _tree[li + 1];
-				string pick = !string.IsNullOrEmpty(col.PlayedChoice) && !col.Blocked.Contains(col.PlayedChoice)
-					&& VisibleChoices(col).Contains(col.Choices.FindIndex(c => c.Name == col.PlayedChoice))
-					? col.PlayedChoice : FirstOpen(col);
-				if (pick == null)
-				{
-					break;
-				}
-				last = col.Scene;
-				if (step + 1 < ahead)
-				{
-					SelectChoice(col.Scene, pick);
-				}
-				else
-				{
-					_selScene = col.Scene;
-				}
-				yield return null;
-			}
-			string target = last;
-			_selScene = target;
-			string pw;
-			if (PlanLoad(out pw) == null)
-			{
-				ModLog.Info("DEV QUICK: no plan to " + target + ": " + pw);
-				_overrides.Clear();
-				Close();
-				yield return new WaitForSeconds(1f);
-				yield break;
-			}
-			_pendingPlan = null;
-			LoadSelected();
-			LoadPlan qp = _pendingPlan;
-			if (!_quick || qp == null)
-			{
-				ModLog.Info("DEV QUICK: '" + other.Name + "' in " + at.Scene + " to " + target + ": quick load NOT offered");
-				CancelConfirm();
-				_overrides.Clear();
-				Close();
-				yield return new WaitForSeconds(1f);
-				yield break;
-			}
-			string note = _quickNote;
-			int chapters = 0;
-			for (int o = 0; o + 1 < qp.Order.Count; o++)
-			{
-				if (CrossesChapter(qp.Order[o], qp.Order[o + 1]))
-				{
-					chapters++;
-				}
-			}
-			float qt = Time.realtimeSinceStartup;
-			QuickLoadNow();
-			yield return null;
-			while (QuickRunning && Time.realtimeSinceStartup - qt < 900f)
-			{
-				yield return new WaitForSeconds(0.5f);
-			}
-			yield return new WaitForSeconds(3f);
-			float quickTime = Time.realtimeSinceStartup - qt;
-			string qAt = AutoPlay.Story();
-			string estimated = Recorder.ShownSnapshot;
-			float rt = Time.realtimeSinceStartup;
-			ModHost.Current.StartCoroutine(ReplayTo(qp));
-			yield return new WaitForSeconds(5f);
-			while (AutoPlay.Running && Time.realtimeSinceStartup - rt < 900f)
-			{
-				yield return new WaitForSeconds(1f);
-			}
-			yield return new WaitForSeconds(2f);
-			float replayTime = Time.realtimeSinceStartup - rt;
-			string real = Recorder.ShownSnapshot;
-			string diff = qAt != target || AutoPlay.Story() != target
-				? "not compared (quick at " + qAt + ", replay at " + AutoPlay.Story() + ")"
-				: estimated == real ? "0 field(s) differ (the same snapshot)"
-				: Accuracy.Diff(Recorder.ReadHelper(estimated), Recorder.ReadHelper(real));
-			ModLog.Info("DEV QUICK RESULT: '" + other.Name + "' in " + at.Scene + " -> " + target + ", "
-				+ (qp.Order.Count - 1) + " step(s), " + chapters + " chapter change(s); quick "
-				+ quickTime.ToString("0") + " s, replay " + replayTime.ToString("0") + " s; " + diff
-				+ " | " + note);
-		}
-
 		private static int RowCount()
 		{
 			int n = 0;
@@ -5908,7 +5470,6 @@ namespace Doorstop
 			if (File.Exists(lp))
 			{
 				string lpArgs = "";
-				DevForceExact = true;   // the load-path tests check the exact replay (quick N runs both itself)
 				try { lpArgs = File.ReadAllText(lp).Trim(); File.Delete(lp); }
 				catch (Exception) { }
 				TreeCol cur = _tree.Find(c => c.Current);
@@ -6223,24 +5784,6 @@ namespace Doorstop
 				int back;
 				// "back N": another answer N scenes back, then on to the scene on
 				// screen - a replay across several scenes (and years)
-				// "quick N": another answer N scenes back, the scene two columns
-				// later on the new path as the target; Quick load there, then the
-				// exact replay of the same plan, and the two states compared
-				if (lpArgs.StartsWith("quick ", StringComparison.Ordinal))
-				{
-					foreach (string spec in lpArgs.Split(';'))
-					{
-						string[] w = spec.Trim().Split(' ');
-						int qn, qm = 2;
-						if (w.Length >= 2 && w[0] == "quick" && int.TryParse(w[1], out qn)
-							&& (w.Length < 3 || int.TryParse(w[2], out qm)))
-						{
-							yield return DevQuickCheck(qn, qm);
-						}
-					}
-					ModLog.Info("DEV QUICK: done");
-					yield break;
-				}
 				if (lpArgs.StartsWith("back ", StringComparison.Ordinal) && int.TryParse(lpArgs.Substring(5), out back)
 					&& ci - back >= 0)
 				{

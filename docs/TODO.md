@@ -44,10 +44,9 @@ Current, de-duplicated remainder. The phase sections below keep the history.
   application from a turn-start snapshot; an interlude pop-up left open in the
   scene the load started from was carried over and closed in the loaded one.
   Pop-ups are closed before every mod load; quick load and replay now match.
-- [x] Quick load across chapters and as the default: recorded, unambiguous,
-  same-branch steps estimated, everything else played in runs; the table
-  fallback dropped (5 Nov). Crash on a second chapter end in one session
-  fixed (Bolt `Once` reset).
+- [x] Quick load built, measured and removed (5 Nov): exact but only ~2x
+  faster on long paths, barely on short ones. Crash on a second chapter end in
+  one session fixed (Bolt `Once` reset).
 - [ ] The epilogue: on the true-death page `FourthDeath_3` the CONTINUE throws
   in `UIManager.SetAchievementInfo` (the true-death pop-up never builds), at
   normal speed too, so the finals do not start in a debug run. Unknown whether

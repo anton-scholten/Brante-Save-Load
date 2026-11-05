@@ -23,7 +23,7 @@ namespace Doorstop
 			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick, ReplayOffPath, ReplayDeath, ReplayStopped,
 			ReplaySkipped, StartNotOnPath,
 			HelpAutosave, HelpCheckpoint, HelpManual, HelpOriginal,
-			QuickLoad, QuickNote, ExactLoad
+			
 		}
 
 		static Loc()
@@ -38,28 +38,6 @@ namespace Doorstop
 				"A snapshot taken automatically before a load or a chapter restart. Use it to undo that rewind.",
 				"A save you made with Save now.",
 				"The one-time copy of your game save from before the mod was first used. It is read-only.");
-			AddQuickLoad(_en, "Quick load", "Quick load builds the state from what the game did in your recorded playthroughs for {0} of {1} steps, and plays the rest (chapter changes, and steps your recordings do not settle). Much faster, but an estimate: stats can differ from a real playthrough.");
-			_en[K.ExactLoad] = "Exact replay";
-			AddQuickLoad(_ru, "Быстрая загрузка", "Быстрая загрузка собирает состояние из того, что игра делала в ваших записанных прохождениях, для {0} из {1} шагов, а остальные проигрывает (смены глав и шаги, которые записи не определяют). Намного быстрее, но приблизительно: характеристики могут отличаться от настоящего прохождения.");
-			_ru[K.ExactLoad] = "Точно проиграть";
-			AddQuickLoad(_de, "Schnell laden", "Schnell laden baut den Zustand für {0} von {1} Schritten aus dem, was das Spiel in deinen aufgezeichneten Durchgängen getan hat, und spielt den Rest (Kapitelwechsel und Schritte, die deine Aufzeichnungen nicht festlegen). Viel schneller, aber geschätzt: Werte können von einem echten Durchgang abweichen.");
-			_de[K.ExactLoad] = "Exakt abspielen";
-			AddQuickLoad(_fr, "Chargement rapide", "Le chargement rapide reconstruit l'état d'après ce que le jeu a fait dans vos parties enregistrées pour {0} étapes sur {1}, et joue le reste (changements de chapitre, étapes que vos enregistrements ne tranchent pas). Bien plus rapide, mais estimé : les statistiques peuvent différer d'une vraie partie.");
-			_fr[K.ExactLoad] = "Rejouer exactement";
-			AddQuickLoad(_es, "Carga rápida", "La carga rápida construye el estado a partir de lo que hizo el juego en tus partidas grabadas para {0} de {1} pasos, y juega el resto (cambios de capítulo y pasos que tus grabaciones no resuelven). Mucho más rápida, pero estimada: las estadísticas pueden diferir de una partida real.");
-			_es[K.ExactLoad] = "Repetición exacta";
-			AddQuickLoad(_it, "Caricamento rapido", "Il caricamento rapido ricostruisce lo stato da ciò che il gioco ha fatto nelle tue partite registrate per {0} passi su {1}, e gioca il resto (cambi di capitolo e passi che le registrazioni non decidono). Molto più veloce, ma stimato: le statistiche possono differire da una partita vera.");
-			_it[K.ExactLoad] = "Rigioca esatto";
-			AddQuickLoad(_pl, "Szybkie wczytanie", "Szybkie wczytanie odtwarza stan z tego, co gra zrobiła w twoich zapisanych przejściach, dla {0} z {1} kroków, a resztę rozgrywa (zmiany rozdziałów i kroki, których zapisy nie rozstrzygają). Dużo szybsze, ale szacunkowe: statystyki mogą różnić się od prawdziwego przejścia.");
-			_pl[K.ExactLoad] = "Dokładnie rozegraj";
-			AddQuickLoad(_tr, "Hızlı yükle", "Hızlı yükleme, {1} adımın {0} tanesinde durumu oyunun kayıtlı oynanışlarınızda yaptıklarından kurar, gerisini oynar (bölüm geçişleri ve kayıtların belirlemediği adımlar). Çok daha hızlı ama tahminidir: değerler gerçek bir oynanıştan farklı olabilir.");
-			_tr[K.ExactLoad] = "Birebir oynat";
-			AddQuickLoad(_ja, "クイックロード", "クイックロードは{1}ステップ中{0}ステップを記録されたプレイでゲームが行ったことから組み立て、残り（章の切り替わりと記録で決まらないステップ）は実際にプレイします。ずっと速いですが推定です。能力値が実際のプレイと異なる場合があります。");
-			_ja[K.ExactLoad] = "正確に再生";
-			AddQuickLoad(_ko, "빠른 불러오기", "빠른 불러오기는 {1}단계 중 {0}단계를 기록된 플레이에서 게임이 한 일로 구성하고, 나머지(장 전환과 기록으로 정해지지 않는 단계)는 실제로 플레이합니다. 훨씬 빠르지만 추정치이므로 능력치가 실제 플레이와 다를 수 있습니다.");
-			_ko[K.ExactLoad] = "정확히 재생";
-			AddQuickLoad(_zh, "快速读取", "快速读取会根据游戏在你已记录的游玩中的表现构建 {1} 步中的 {0} 步，其余步骤（章节切换以及记录无法确定的步骤）会实际游玩。快得多，但只是估算：属性可能与真实游玩不同。");
-			_zh[K.ExactLoad] = "精确重玩";
 			AddLoadSceneWord(_ru, "Загрузить сцену");
 			AddSaveKinds(_ru, "Все", "Автосохранение игры", "Перед загрузкой", "Исходное сохранение", "Показать ещё");
 			AddPathChecks(_ru,
@@ -270,12 +248,6 @@ namespace Doorstop
 			AddUpcomingWord(_ja, "この先");
 			AddUpcomingWord(_ko, "앞으로");
 			AddUpcomingWord(_zh, "接下来");
-		}
-
-		private static void AddQuickLoad(Dictionary<K, string> d, string label, string note)
-		{
-			d[K.QuickLoad] = label;
-			d[K.QuickNote] = note;
 		}
 
 		private static void AddLoadSceneWord(Dictionary<K, string> d, string loadScene)

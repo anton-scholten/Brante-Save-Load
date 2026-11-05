@@ -1359,4 +1359,12 @@ checkpoint is still not driven end to end.
   predicted path and quick load and replay stopped at the same scene. Time:
   22 s / 51 s and 22 s / 46 s for 25 and 12 steps across chapters 3 -> 4,
   28 s / 45 s for 10 steps across 1 -> 2, 8-15 s / 10-18 s for 1-6 steps.
+- **Removed.** For the speed it bought (about 2x on paths of 10+ steps with
+  19 runs of recordings, little on short paths, less with one playthrough
+  recorded) quick load was not worth its code and its 1% of inexact steps;
+  Load scene's exact replay at 40x is the only load path again. Kept from
+  the work: the `Once` reset, the closed pop-ups, the skipped-scene check
+  (`LastReplayReached`), `dev-replay.txt N`, `dev-slow.txt`, `tools/nrbf.py`.
+  The code is in git history (commit b0c88c2: `Transitions.cs`,
+  `Accuracy.cs`, `ChoiceWindow.QuickChain`).
 

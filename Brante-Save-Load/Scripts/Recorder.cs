@@ -175,7 +175,6 @@ namespace Doorstop
 		// game): any slot repair for the previous save no longer applies.
 		public static void MarkGameSave(bool newGame)
 		{
-			Estimated = false;
 			string live = LiveRealIdOf(GameSaveManager());
 			_runId = RealOrEmpty(live);
 			_runKnown = true;
@@ -1157,18 +1156,8 @@ namespace Doorstop
 
 		// Before a mod load: keep the live state (and the original folders of
 		// both runs involved) so the load can always be undone.
-		// Set by a quick load chain for its later loads: they replace a state
-		// the chain made, which needs no checkpoint. Consumed by the next load.
-		public static bool SkipNextCheckpoint;
-
 		public static void BeforeModLoad(string targetRunId, string targetTitle)
 		{
-			if (SkipNextCheckpoint)
-			{
-				SkipNextCheckpoint = false;
-				ModLog.Info("Checkpoint: skipped (a step of a quick load)");
-				return;
-			}
 			try
 			{
 				string live = CurrentRunId();
@@ -1842,13 +1831,6 @@ namespace Doorstop
 		private static string _shownScene;
 		private static string _shownSnapshot;
 
-		// The snapshot (recorded or found unchanged) of the choice scene on
-		// screen.
-		public static string ShownSnapshot
-		{
-			get { return _shownSnapshot; }
-		}
-
 		public static void OnChoiceSceneShown()
 		{
 			try
@@ -2279,11 +2261,6 @@ namespace Doorstop
 			return keep.ToArray();
 		}
 
-		// True while the game plays a state a quick load estimated (or one
-		// grown from it): its choice points are marked estimated=yes, so they
-		// never teach Transitions what the game does.
-		public static bool Estimated;
-
 		// The hero's int stats now, as "Name=Value;..." (for before/after logs).
 		public static string StatLine()
 		{
@@ -2328,31 +2305,10 @@ namespace Doorstop
 			return parts.Count == 0 ? "no stat changed" : string.Join(", ", parts.ToArray());
 		}
 
-		public static bool IsEstimated(string datPath)
-		{
-			try
-			{
-				if (datPath.Replace('\\', '/').IndexOf("/Estimated/", StringComparison.OrdinalIgnoreCase) >= 0)
-				{
-					return true;
-				}
-				string meta = Path.ChangeExtension(datPath, ".meta.txt");
-				return File.Exists(meta) && File.ReadAllText(meta).IndexOf("estimated=yes", StringComparison.Ordinal) >= 0;
-			}
-			catch (Exception)
-			{
-				return false;
-			}
-		}
-
 		private static void WriteSidecar(string dir, string baseName, string scene, SaveLoadHelper helper)
 		{
 			StringBuilder sb = new StringBuilder();
 			sb.AppendLine("scene=" + scene);
-			if (Estimated)
-			{
-				sb.AppendLine("estimated=yes");
-			}
 			sb.AppendLine("recorded=" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 			sb.AppendLine("hero=" + helper.HeroName
 				+ "  age=" + helper.HeroAge
