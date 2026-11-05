@@ -37,6 +37,13 @@ Current, de-duplicated remainder. The phase sections below keep the history.
   game, flag logged).
 - [x] Replay speed: 20x clock, pages turned in one step, settle checks
   (389 s -> ~100 s for 28 answers).
+- [x] Quick load (estimated save from tree picks, learned from recorded
+  steps) and a faster exact replay (40x, frame delta cap raised): see FINDINGS
+  5 Nov.
+- [ ] Quick load vs replay at a turn's first scene: Will/State/Prosperity came
+  out 5/1/1 lower in the estimate; the replay re-showed that turn's interlude.
+  Check whether a replay from a turn-start snapshot applies the interlude's
+  changes a second time (then the replay, not the estimate, is off).
 - [ ] The epilogue: on the true-death page `FourthDeath_3` the CONTINUE throws
   in `UIManager.SetAchievementInfo` (the true-death pop-up never builds), at
   normal speed too, so the finals do not start in a debug run. Unknown whether

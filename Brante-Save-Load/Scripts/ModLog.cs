@@ -39,7 +39,7 @@ namespace Doorstop
 			{
 				lock (_lock)
 				{
-					File.AppendAllText(Path, "[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "] [" + level + "] " + message + Environment.NewLine);
+					File.AppendAllText(Path, "[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "] [" + level + "] " + message + Environment.NewLine);
 				}
 			}
 			catch

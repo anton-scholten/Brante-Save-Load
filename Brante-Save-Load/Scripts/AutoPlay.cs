@@ -22,7 +22,7 @@ namespace Doorstop
 		public delegate string Picker(string scene);
 
 		public static bool Running { get; private set; }
-		private const float FastScale = 20f;
+		private const float FastScale = 40f;
 		// The driver's own waits were tuned at a 10x clock; they guard game
 		// animations (a fade, a page turn), which run on the scaled clock, so
 		// they shrink with it.
@@ -33,6 +33,7 @@ namespace Doorstop
 		private static float _sceneSince;
 		private static bool _fast;
 		private static float _lastPress;
+		private static bool _lastWasAnswerScreen;
 		private static readonly Dictionary<int, float> _alphaSeen = new Dictionary<int, float>();
 		private static readonly System.Reflection.FieldInfo PageIndex = typeof(_Scripts.AMVCC.Controllers.TextController)
 			.GetField("_pageIndex", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
@@ -153,8 +154,18 @@ namespace Doorstop
 			float oldVolume = AudioListener.volume;
 			float oldFixed = Time.fixedDeltaTime;
 			float oldMaxDelta = Time.maximumDeltaTime;
+			ThreadPriority oldLoading = Application.backgroundLoadingPriority;
+			int oldVSync = QualitySettings.vSyncCount;
+			int oldFrameRate = Application.targetFrameRate;
 			if (fast)
 			{
+				// Unity's own pace, not the game's logic: async scene loads get
+				// more of each frame (BelowNormal gives them ~4 ms), and frames
+				// are not held to the screen's refresh, so the scaled clock and
+				// the driver both get more steps a second
+				Application.backgroundLoadingPriority = ThreadPriority.High;
+				QualitySettings.vSyncCount = 0;
+				Application.targetFrameRate = 240;
 				Time.timeScale = FastScale;
 				AudioListener.volume = 0f;
 				// The fixed step grows with the clock, so a frame still runs
@@ -162,7 +173,11 @@ namespace Doorstop
 				// year interlude) asks for ten times as many, which makes the
 				// next frame slower still - the game sank to 1 fps there.
 				Time.fixedDeltaTime = oldFixed * FastScale;
-				Time.maximumDeltaTime = Math.Min(oldMaxDelta, 0.1f);
+				// A frame may move the scaled clock by up to half a second: with
+				// the old 0.1 s cap a 60 fps frame moved it 0.1 s instead of
+				// 0.33, so the 20x clock ran at 6x. The scaled fixed step keeps
+				// that to one or two FixedUpdates a frame.
+				Time.maximumDeltaTime = 0.5f;
 			}
 			string answered = "";
 			string seen = "";
@@ -171,6 +186,9 @@ namespace Doorstop
 			float fpsSince = Time.realtimeSinceStartup;
 			int fpsFrames = Time.frameCount;
 			ModLog.Info("AUTOPLAY: started at " + Story());
+			float runSince = Time.realtimeSinceStartup;
+			int runFrames = Time.frameCount;
+			System.Diagnostics.Stopwatch driver = new System.Diagnostics.Stopwatch();
 			while (true)
 			{
 				string scene = Story();
@@ -203,6 +221,7 @@ namespace Doorstop
 				// One step, guarded: an exception inside a coroutine would end
 				// it without a word (seen right after a scene opened twice).
 				bool failed = false;
+				driver.Start();
 				try
 				{
 					moved = Step(pick, onScene, scene, ref answered, ref seen, out stopWhy);
@@ -212,6 +231,7 @@ namespace Doorstop
 					ModLog.Error("AUTOPLAY: step failed at " + scene + " (retrying):\n" + e);
 					failed = true;
 				}
+				driver.Stop();
 				if (stopWhy != null)
 				{
 					ModLog.Info("AUTOPLAY: " + stopWhy);
@@ -255,13 +275,19 @@ namespace Doorstop
 			}
 			if (fast)
 			{
+				Application.backgroundLoadingPriority = oldLoading;
+				QualitySettings.vSyncCount = oldVSync;
+				Application.targetFrameRate = oldFrameRate;
 				Time.timeScale = oldScale;
 				AudioListener.volume = oldVolume;
 				Time.fixedDeltaTime = oldFixed;
 				Time.maximumDeltaTime = oldMaxDelta;
 			}
 			Running = false;
-			ModLog.Info("AUTOPLAY: finished at " + Story());
+			float runTime = Time.realtimeSinceStartup - runSince;
+			ModLog.Info("AUTOPLAY: finished at " + Story() + " (" + runTime.ToString("0") + " s, "
+				+ ((Time.frameCount - runFrames) / Math.Max(runTime, 0.01f)).ToString("0") + " fps, driver "
+				+ (driver.ElapsedMilliseconds / 1000f).ToString("0.0") + " s)");
 		}
 
 		// One move: answer, or press the next continue button. Returns whether
@@ -333,16 +359,19 @@ namespace Doorstop
 					float at;
 					if (next != null && _pressedAt.TryGetValue(next.GetInstanceID(), out at)
 						&& Time.realtimeSinceStartup - at
-							< (next.gameObject.name == "Next" || next.gameObject.name == "RightArrow" ? 0.3f : 0.6f) * Guard)
+							< (next.gameObject.name == "Next" || next.gameObject.name == "RightArrow" ? 0.3f : 0.3f) * Guard)
 					{
 						next = null;
 					}
 					bool pager = next != null && (next.gameObject.name == "Next" || next.gameObject.name == "RightArrow");
-					if (next != null && !pager && Time.realtimeSinceStartup - _lastPress < 0.5f * Guard)
+					if (next != null && !pager
+						&& Time.realtimeSinceStartup - _lastPress < (_lastWasAnswerScreen ? 0.25f : 0.12f * Guard))
 					{
 						// two presses that each start a scene change in quick
 						// succession (an answer screen's continue, then an event
-						// pop-up's) crashed the game in native code at 20x
+						// pop-up's) crashed the game in native code at 20x: after
+						// an answer screen's continue the next press waits 0.25 s
+						// of real time (scene loading does not follow the clock)
 						next = null;
 					}
 					if (next != null)
@@ -350,6 +379,7 @@ namespace Doorstop
 						if (!pager)
 						{
 							_lastPress = Time.realtimeSinceStartup;
+							_lastWasAnswerScreen = PathOf(next.transform).IndexOf("AnswerSelectionControlPanel", StringComparison.Ordinal) >= 0;
 						}
 						_pressedAt[next.GetInstanceID()] = Time.realtimeSinceStartup;
 						if (next.gameObject.name == "Next" || next.gameObject.name == "RightArrow")

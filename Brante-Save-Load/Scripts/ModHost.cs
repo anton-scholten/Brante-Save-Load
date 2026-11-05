@@ -40,6 +40,10 @@ namespace Doorstop
 		private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
 		{
 			Recorder.Trace("scene", scene.name, mode.ToString());
+			if (AutoPlay.Running)
+			{
+				ModLog.Info("AUTOPLAY: scene loaded " + scene.name);
+			}
 			StartCoroutine(BookTabSoon());
 		}
 
@@ -77,6 +81,22 @@ namespace Doorstop
 			Recorder.DedupeSidecars();
 			StartCoroutine(DevAutoload());
 			StartCoroutine(DevStatTrail());
+			StartCoroutine(DevAccuracy());
+		}
+
+		// Dev (dev-accuracy.txt: run folders or "all"): Accuracy.Run.
+		private System.Collections.IEnumerator DevAccuracy()
+		{
+			string marker = Path.Combine(Recorder.SnapshotDir, "dev-accuracy.txt");
+			if (!File.Exists(marker))
+			{
+				yield break;
+			}
+			string spec = File.ReadAllText(marker);
+			try { File.Delete(marker); }
+			catch (Exception) { }
+			yield return new WaitForSeconds(8f);
+			Accuracy.Run(spec);
 		}
 
 		// Dev (dev-stattrail.txt: "<run folder> <stat> [<stat> ...]"): the

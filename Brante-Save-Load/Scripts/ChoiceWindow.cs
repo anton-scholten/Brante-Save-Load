@@ -492,6 +492,9 @@ namespace Doorstop
 		private static TextMeshProUGUI _confirmLoadLabel;
 		private static Button _confirmLoadBtn;
 		private static Pending _pendingAction;
+		private static Button _confirmQuickBtn, _confirmCancelBtn;
+		private static SaveLoadHelper _quick;   // the estimated state for the pending Load scene
+		private static string _quickNote;
 		private static string _pendingPath;
 		private static string _pendingTitle;
 		private static List<string> _pendingCopies;
@@ -1851,7 +1854,151 @@ namespace Doorstop
 			}
 			HidePopup();
 			_pendingPlan = plan;
+			int recorded = 0, total = 0;
+			_quick = plan.StartScene != plan.Target ? Estimate(plan, out recorded, out total) : null;
+			_quickNote = _quick != null ? string.Format(Loc.T(Loc.K.QuickNote), recorded, total) : null;
 			Ask(Pending.LoadPath, plan.StartPath, plan.TargetTitle, null);
+		}
+
+		// The state at the plan's target, estimated instead of played: from
+		// the start save, each step to the next choice scene is what the game
+		// did there in a recorded run (Transitions), else what the tables say
+		// (a Sim through the scenes in between). Null when it cannot be
+		// estimated: the start is not a choice point of the first scene, the
+		// path leaves the chapter, or a step by the tables leads elsewhere.
+		private static SaveLoadHelper Estimate(LoadPlan plan, out int recorded, out int total)
+		{
+			recorded = 0;
+			total = plan.Order.Count - 1;
+			try
+			{
+				SaveLoadHelper h = Recorder.ReadHelper(plan.StartPath);
+				if (h == null || h.LastOpenScene != plan.Order[0] || h.ShowedScenesList == null)
+				{
+					ModLog.Info("ChoiceWindow: quick load not offered - the start save is not a choice point of "
+						+ plan.Order[0] + " (" + (h != null ? h.LastOpenScene : "unreadable") + ")");
+					return null;
+				}
+				// within one chapter: the game writes Chapter_N.dat as a chapter
+				// starts, and Restart chapter needs it - a jump past a chapter's
+				// start is played instead
+				int startChapter = SceneFlow.ChapterOf(plan.Order[0]);
+				if (plan.Order.Exists(o => SceneFlow.ChapterOf(o) != 0 && SceneFlow.ChapterOf(o) != startChapter))
+				{
+					ModLog.Info("ChoiceWindow: quick load not offered - the path leaves chapter " + startChapter);
+					return null;
+				}
+				for (int i = 0; i + 1 < plan.Order.Count; i++)
+				{
+					string from = plan.Order[i], to = plan.Order[i + 1], pick;
+					plan.Picks.TryGetValue(from, out pick);
+					Transitions.Step step = Transitions.Find(from, pick, to);
+					if (step != null)
+					{
+						Transitions.Apply(h, step);
+						recorded++;
+						continue;
+					}
+					// by the tables
+					SceneEffects.Hero hero = new SceneEffects.Hero { Stats = h.ModelParameters, Characters = h.CharacterModel };
+					hero = hero.Clone();
+					hero.Objectives = new HashSet<_Scripts.AMVCC.Views.Windows.ObjectiveEnum>();
+					if (h.AllGameObjectives != null && h.AllGameObjectives.Objectives != null)
+					{
+						foreach (ObjectiveStatuses os in h.AllGameObjectives.Objectives)
+						{
+							if (os != null && os.Status)
+							{
+								hero.Objectives.Add(os.Name);
+							}
+						}
+					}
+					List<ShowedScenes> list = new List<ShowedScenes>();
+					foreach (ShowedScenes sc in h.ShowedScenesList)
+					{
+						if (sc != null)
+						{
+							list.Add(new ShowedScenes { SceneName = sc.SceneName, IsShowed = sc.IsShowed || sc.SceneName == from });
+						}
+					}
+					int chapter = SceneFlow.ChapterOf(from);
+					Sim sim = new Sim(hero, SceneParams.FromSave(h), list, chapter, h.Turn, h.Season);
+					sim.Answer(from, pick);
+					List<string> between = new List<string>();
+					string reached = null;
+					for (int guard = 0; guard < 100 && reached == null; guard++)
+					{
+						SceneFlow.Ahead a = sim.Advance();
+						if (a == null || sim.Chapter != chapter)
+						{
+							break;
+						}
+						if (VisibleChoices(SceneCol(a.Row.Scene)).Count == 0)
+						{
+							between.Add(a.Row.Scene);
+							sim.Answer(a.Row.Scene, "");
+							continue;
+						}
+						reached = a.Row.Scene;
+					}
+					if (reached != to)
+					{
+						ModLog.Info("ChoiceWindow: quick load not offered - by the tables " + from + " leads to "
+							+ (reached ?? "another chapter") + ", not " + to);
+						return null;
+					}
+					int years = sim.Turn - h.Turn;
+					h.ModelParameters = sim.Hero.Stats;
+					h.CharacterModel = sim.Hero.Characters;
+					Transitions.SetObjectives(h, sim.Hero.Objectives);
+					Transitions.SetKeys(h, sim.Keys);
+					Transitions.MoveOn(h, from, between, to);
+					h.Turn = sim.Turn;
+					h.Season = sim.Season;
+					h.PreviousYear = years > 0 ? h.Year + years - 1 : h.PreviousYear;
+					h.Year += years;
+					h.HeroAge += years;
+				}
+				ModLog.Info("ChoiceWindow: quick load estimate for " + plan.Target + ": " + recorded + " of " + total
+					+ " step(s) recorded, the rest by the tables");
+				return h;
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: quick load estimate failed:\n" + e);
+				return null;
+			}
+		}
+
+		// The confirm dialog's Quick load: the estimate is written next to the
+		// run's stores (Runs/<run>/Estimated/, not in the save table) and
+		// loaded like any save; what follows it is marked estimated.
+		private static void QuickLoadNow()
+		{
+			SaveLoadHelper h = _quick;
+			LoadPlan plan = _pendingPlan;
+			CancelConfirm();
+			if (h == null || plan == null)
+			{
+				return;
+			}
+			try
+			{
+				string run = Path.GetDirectoryName(Path.GetDirectoryName(plan.StartPath));
+				string dir = Path.Combine(run, "Estimated");
+				Directory.CreateDirectory(dir);
+				string path = Path.Combine(dir, plan.Target + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".dat");
+				using (FileStream fs = File.Create(path))
+				{
+					new BinaryFormatter().Serialize(fs, h);
+				}
+				ModLog.Info("ChoiceWindow: quick load " + plan.Target + " from the estimate " + path);
+				LoadSnapshot(path);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: quick load failed:\n" + e);
+			}
 		}
 
 		// Loads the plan's start and lets AutoPlay give the picked answers
@@ -2493,6 +2640,14 @@ namespace Doorstop
 			_focusCol = pendingCol >= 0 ? pendingCol : cols.Count - 1;
 			long tHistory = st.ElapsedMilliseconds;
 			ResolveTimeline(cols, _focusCol);
+			_recordedAnswers.Clear();
+			foreach (TreeCol c in cols)
+			{
+				if (!string.IsNullOrEmpty(c.PlayedChoice))
+				{
+					_recordedAnswers[c.Scene] = c.PlayedChoice;
+				}
+			}
 			long tTimeline = st.ElapsedMilliseconds;
 			_played = all;
 			// The picks decide the branch of the scenes ahead; work out the
@@ -2511,6 +2666,7 @@ namespace Doorstop
 		}
 
 		private static List<History.Entry> _played = new List<History.Entry>();
+		private static readonly Dictionary<string, string> _recordedAnswers = new Dictionary<string, string>();
 
 		// After a pick in a scene ahead: the played columns stay, the scenes
 		// ahead are stepped through again from the scene on screen (the pick
@@ -2834,7 +2990,10 @@ namespace Doorstop
 			// answer was changed, else the scene on screen.
 			int curIndex = cols.FindIndex(c => c.Current);
 			int at = curIndex;
-			for (int i = 0; i < curIndex; i++)
+			// (after a changed answer the columns past it - the scene on screen
+			// among them - are predicted ones: a re-prediction has no current
+			// column and looks through every played one)
+			for (int i = 0; i < (curIndex >= 0 ? curIndex : cols.Count); i++)
 			{
 				string pk;
 				if (_overrides.TryGetValue(cols[i].Scene, out pk) && pk != cols[i].PlayedChoice)
@@ -2853,7 +3012,10 @@ namespace Doorstop
 			System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
 			// the answers played on the old path: kept where the new path meets
 			// the same scene and the answer is still open
-			Dictionary<string, string> playedAnswer = new Dictionary<string, string>();
+			// the answers recorded on the played path (kept from the full build:
+			// a re-prediction after a pick ahead no longer has those columns, and
+			// without them the path before the pick changed under it)
+			Dictionary<string, string> playedAnswer = new Dictionary<string, string>(_recordedAnswers);
 			for (int i = at + 1; i < cols.Count; i++)
 			{
 				if (!string.IsNullOrEmpty(cols[i].PlayedChoice))
@@ -3725,8 +3887,12 @@ namespace Doorstop
 			_confirmLoadBtn = AddButton(box.transform, "Load", new Vector2(0f, 0f), new Vector2(30f, 26f),
 				new Vector2(250f, 56f), Palette.Accent, Loc.T(Loc.K.Load), 24f, delegate { RunPending(); });
 			_confirmLoadLabel = _confirmLoadBtn.GetComponentInChildren<TextMeshProUGUI>();
-			AddButton(box.transform, "Cancel", new Vector2(1f, 0f), new Vector2(-30f, 26f),
+			_confirmCancelBtn = AddButton(box.transform, "Cancel", new Vector2(1f, 0f), new Vector2(-30f, 26f),
 				new Vector2(250f, 56f), Palette.Grey, Loc.T(Loc.K.Cancel), 24f, CancelConfirm);
+			// Load scene only: the estimated state instead of the replay
+			_confirmQuickBtn = AddButton(box.transform, "Quick", new Vector2(0.5f, 0f), new Vector2(0f, 26f),
+				new Vector2(180f, 56f), Palette.Dark, Loc.T(Loc.K.QuickLoad), 22f, QuickLoadNow);
+			_confirmQuickBtn.gameObject.SetActive(false);
 
 			_confirmPanel.SetActive(false);
 		}
@@ -3771,6 +3937,18 @@ namespace Doorstop
 			if (row != null)
 			{
 				MarkRow(row);
+			}
+			bool quick = action == Pending.LoadPath && _quick != null && _confirmQuickBtn != null;
+			if (_confirmQuickBtn != null)
+			{
+				_confirmQuickBtn.gameObject.SetActive(quick);
+				float w = quick ? 180f : 250f;
+				((RectTransform)_confirmLoadBtn.transform).sizeDelta = new Vector2(w, 56f);
+				((RectTransform)_confirmCancelBtn.transform).sizeDelta = new Vector2(w, 56f);
+			}
+			if (quick && _confirmText != null)
+			{
+				_confirmText.text = body + "\n\n" + _quickNote;
 			}
 			if (_confirmPanel != null)
 			{
@@ -4576,6 +4754,7 @@ namespace Doorstop
 
 		private static IEnumerator LoadFlow(string datPath)
 		{
+			Recorder.Estimated = datPath != NewGameStart && Recorder.IsEstimated(datPath);
 			// Read the save first: if it fails, the window stays open
 			// and the player can pick another one.
 			SaveLoadHelper helper = null;
@@ -5094,6 +5273,113 @@ namespace Doorstop
 			{
 				ModLog.Error("DEV TABLE failed:\n" + e);
 			}
+		}
+
+		private static IEnumerator DevQuickCheck(int k)
+		{
+			TreeCol at = null;
+			History.Choice other = null;
+			for (int j = k; j >= 0 && j > k - 8 && other == null; j--)   // the nearest scene with another open answer
+			{
+				TreeCol col = _tree[j];
+				at = col;
+				other = col.Choices.Find(c => c.Name != col.PlayedChoice && !col.Blocked.Contains(c.Name)
+					&& VisibleChoices(col).Contains(col.Choices.IndexOf(c)));
+			}
+			if (other == null)
+			{
+				ModLog.Info("ChoiceWindow: dev quick: no other open answer in " + at.Scene);
+				yield break;
+			}
+			_overrides.Clear();
+			SelectChoice(at.Scene, other.Name);
+			yield return null;
+			string last = at.Scene;
+			for (int step = 0; step < 2; step++)
+			{
+				// each pick rebuilds the tree: the next column is found again
+				int li = _tree.FindIndex(c => c.Scene == last);
+				if (li < 0 || li + 1 >= _tree.Count)
+				{
+					StringBuilder tb = new StringBuilder();
+					foreach (TreeCol c in _tree)
+					{
+						tb.Append(" " + c.Scene + (c.Upcoming ? "^" : "") + (c.Current ? "*" : ""));
+					}
+					ModLog.Info("ChoiceWindow: dev quick: tree" + tb);
+					ModLog.Info("ChoiceWindow: dev quick: no scene after " + last);
+					yield break;
+				}
+				TreeCol col = _tree[li + 1];
+				last = col.Scene;
+				string pick = !string.IsNullOrEmpty(col.PlayedChoice) && !col.Blocked.Contains(col.PlayedChoice)
+					? col.PlayedChoice : FirstOpen(col);
+				if (pick == null)
+				{
+					ModLog.Info("ChoiceWindow: dev quick: no open answer in " + col.Scene);
+					yield break;
+				}
+				SelectChoice(col.Scene, pick);
+				yield return null;
+			}
+			string target = last;
+			string pw;
+			if (PlanLoad(out pw) == null)
+			{
+				ModLog.Info("ChoiceWindow: dev quick: no plan to " + target + " (selected " + _selScene + "): " + pw);
+				yield break;
+			}
+			_pendingPlan = null;
+			LoadSelected();
+			LoadPlan qp = _pendingPlan;
+			ModLog.Info("ChoiceWindow: dev quick: '" + other.Name + "' in " + at.Scene + " to " + target
+				+ ", estimate " + (_quick != null ? "offered - " + _quickNote : "NOT offered"));
+			if (_quick == null || qp == null)
+			{
+				CancelConfirm();
+				yield break;
+			}
+			float qt = Time.realtimeSinceStartup;
+			QuickLoadNow();
+			yield return new WaitForSeconds(2f);
+			yield return AutoPlay.WaitForLoad();
+			while (!AutoPlay.AnswerReady() && Time.realtimeSinceStartup - qt < 60f)
+			{
+				yield return new WaitForSeconds(0.5f);
+			}
+			ModLog.Info("ChoiceWindow: dev quick: now at " + AutoPlay.Story() + " after "
+				+ (Time.realtimeSinceStartup - qt).ToString("0.0") + " s"
+				+ (AutoPlay.Story() == target ? " (the selected scene)" : " (NOT the selected scene)"));
+			yield return new WaitForSeconds(2f);
+			string estimated = NewestSnapshotOf(target);
+			float rt = Time.realtimeSinceStartup;
+			ModHost.Current.StartCoroutine(ReplayTo(qp));
+			yield return new WaitForSeconds(5f);
+			while (AutoPlay.Running && Time.realtimeSinceStartup - rt < 400f)
+			{
+				yield return new WaitForSeconds(1f);
+			}
+			yield return new WaitForSeconds(2f);
+			ModLog.Info("ChoiceWindow: dev quick: the replay reached " + AutoPlay.Story() + " after "
+				+ (Time.realtimeSinceStartup - rt).ToString("0.0") + " s");
+			string real = NewestSnapshotOf(target);
+			ModLog.Info("ChoiceWindow: dev quick vs replay: "
+				+ (estimated == real ? "(no new snapshot)" : Accuracy.Diff(Recorder.ReadHelper(estimated), Recorder.ReadHelper(real))));
+		}
+
+		private static string NewestSnapshotOf(string scene)
+		{
+			string best = null;
+			DateTime t = DateTime.MinValue;
+			foreach (string f in Directory.GetFiles(Recorder.RunsDir, scene + "_*.dat", SearchOption.AllDirectories))
+			{
+				if (f.Replace('\\', '/').IndexOf("/Choice/", StringComparison.Ordinal) >= 0 && File.GetLastWriteTimeUtc(f) > t)
+				{
+					t = File.GetLastWriteTimeUtc(f);
+					best = f;
+				}
+			}
+			return best;
 		}
 
 		private static int RowCount()
@@ -5698,6 +5984,16 @@ namespace Doorstop
 				int back;
 				// "back N": another answer N scenes back, then on to the scene on
 				// screen - a replay across several scenes (and years)
+				// "quick N": another answer N scenes back, the scene two columns
+				// later on the new path as the target; Quick load there, then the
+				// exact replay of the same plan, and the two states compared
+				int qn;
+				if (lpArgs.StartsWith("quick ", StringComparison.Ordinal) && int.TryParse(lpArgs.Substring(6), out qn)
+					&& ci - qn >= 0)
+				{
+					yield return DevQuickCheck(ci - qn);
+					yield break;
+				}
 				if (lpArgs.StartsWith("back ", StringComparison.Ordinal) && int.TryParse(lpArgs.Substring(5), out back)
 					&& ci - back >= 0)
 				{
@@ -5715,13 +6011,24 @@ namespace Doorstop
 							}
 							_overrides.Clear();
 							SelectChoice(_tree[k].Scene, c.Name);
-							History.Choice open = cur.Choices.Find(x => !cur.Blocked.Contains(x.Name));
+							// a frame after every pick, before any `continue`: each
+							// pick rebuilds the tree, and the old one is destroyed only
+							// when the frame ends (dozens of rebuilds in one frame kept
+							// ~100k objects alive and made each draw take 30 s)
+							yield return null;
+							// the change re-predicts the path: it must still reach
+							// the scene on screen
+							TreeCol curNow = _tree.Find(x => x.Scene == cur.Scene);
+							History.Choice open = curNow != null ? curNow.Choices.Find(x => !curNow.Blocked.Contains(x.Name)) : null;
 							if (open == null)
 							{
 								continue;
 							}
 							SelectChoice(cur.Scene, open.Name);
-							if (FirstConflict() == null)
+							string w;
+							bool fits = FirstConflict() == null && PlanLoad(out w) != null;
+							yield return null;
+							if (fits)
 							{
 								from = _tree[k];
 								other = c;

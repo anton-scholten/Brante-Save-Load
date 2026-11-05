@@ -175,6 +175,7 @@ namespace Doorstop
 		// game): any slot repair for the previous save no longer applies.
 		public static void MarkGameSave(bool newGame)
 		{
+			Estimated = false;
 			string live = LiveRealIdOf(GameSaveManager());
 			_runId = RealOrEmpty(live);
 			_runKnown = true;
@@ -2261,10 +2262,36 @@ namespace Doorstop
 			return keep.ToArray();
 		}
 
+		// True while the game plays a state a quick load estimated (or one
+		// grown from it): its choice points are marked estimated=yes, so they
+		// never teach Transitions what the game does.
+		public static bool Estimated;
+
+		public static bool IsEstimated(string datPath)
+		{
+			try
+			{
+				if (datPath.Replace('\\', '/').IndexOf("/Estimated/", StringComparison.OrdinalIgnoreCase) >= 0)
+				{
+					return true;
+				}
+				string meta = Path.ChangeExtension(datPath, ".meta.txt");
+				return File.Exists(meta) && File.ReadAllText(meta).IndexOf("estimated=yes", StringComparison.Ordinal) >= 0;
+			}
+			catch (Exception)
+			{
+				return false;
+			}
+		}
+
 		private static void WriteSidecar(string dir, string baseName, string scene, SaveLoadHelper helper)
 		{
 			StringBuilder sb = new StringBuilder();
 			sb.AppendLine("scene=" + scene);
+			if (Estimated)
+			{
+				sb.AppendLine("estimated=yes");
+			}
 			sb.AppendLine("recorded=" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 			sb.AppendLine("hero=" + helper.HeroName
 				+ "  age=" + helper.HeroAge

@@ -1235,3 +1235,49 @@ checkpoint is still not driven end to end.
   waiting for fading pop-ups (a `CanvasGroup` whose alpha still moves) stopped
   it in the following runs. The game's own logs are `output_log.txt` in the
   persistent data folder.
+
+## Estimated saves, and the replay's real limit (5 Nov 2026)
+
+- **How well the tables predict the game.** Over 1325 consecutive choice-point
+  pairs from 19 recorded runs (`dev-accuracy.txt all`), the tables' prediction
+  (answer effects, objectives, key parameters, the scenes in between) matched
+  every story field at the next choice point in 536 (40%). Misses: world stats
+  (State, Order, Prosperity, Church) changed on consequence pages, the chapter-4
+  track flag `PeaceTree` switched by the story scripts, relations drifting,
+  chapter-start conversions (Valor, Diplomacy, ... from 0 to their new values),
+  Will drains. Character `IsUnlocked` (met or not) differs often but only the
+  relations window reads it. Key parameters must be compared without the next
+  scene's opening changes: its snapshot is taken as its controller wakes.
+- **What the game did, learned.** The same comparison with the recorded change
+  for that scene, answer and next scene (from the other runs only) matched 1169
+  of 1300 (90%). Left: Will (the debug runs' values sit at caps), the
+  chapter-start conversions (a function of earlier stats, so a recorded change
+  does not carry over) and a few conditional relation changes.
+- **Quick load against the exact replay.** Milanid (another answer) -> Witness
+  -> RebelSentence: the estimate and the replayed state differed in Will 25/30,
+  State 1/2, Prosperity 3/4 and nothing else, with one step recorded and one by
+  the tables, and again with both steps recorded. The replay paged through
+  that turn's interlude pop-up first (stat conversions); whether loading a
+  turn-start snapshot applies the interlude once more is open.
+- **The replay was capped by the frame delta, not the clock.** With
+  `Time.maximumDeltaTime` at 0.1 s a frame moved the scaled clock 0.1 s at most:
+  at 60 fps that is 6x however high `timeScale` is. Raising vsync/frame rate and
+  `Application.backgroundLoadingPriority` alone changed nothing (the game ran at
+  150 fps, the driver used 5.8 s of 96); with the cap at 0.5 s, 40x took the
+  28-answer replay to 78 s and a whole debug playthrough to ~4.5 minutes with
+  no crash. Per scene at 40x: ~0.8 s loading the next scene, ~0.7 s to the
+  answer, ~0.5 s of answer-screen pages.
+- **No unscaled animation.** All 149 Animators use the normal update mode and
+  the Bolt graphs have no wait units; the game's own coroutines use scaled
+  `WaitForSeconds`.
+- **A pick ahead could change the path before it.** After a changed past
+  answer the columns after it are predicted, the scene on screen among them; a
+  later pick in one of those re-predicted from scratch without a current column
+  and fell back to the plain listing, so the picked scene vanished. The start
+  search now looks through every played column, and recorded answers are kept
+  across re-predictions.
+- **Dozens of tree rebuilds in one frame look like a leak.** A dev loop that
+  picked without yielding kept every old tree alive until the frame ended
+  (~100k GameObjects, 30 s draws). One pick per frame - all a player can do -
+  has none of it.
+

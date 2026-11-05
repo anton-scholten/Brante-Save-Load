@@ -43,6 +43,7 @@ The scrollbar also works as a progress bar showing how far you are in the story.
 - **Hover a choice** to see its full text, what it changes and what it requires (green if your hero meets it, red if not).
 - **Click choices to build a path.** Click a picked choice again to undo it, or use the reset arrow next to the × to undo them all. Choices your hero can't take at that point are greyed out. If an earlier pick makes a later choice impossible, that choice turns red.
 - **Your stats** are shown at the bottom, grouped like the game's tabs. They show your hero after your last pick (green if higher than now, red if lower). Hover a stat to see the game's own description of it. Tabs not unlocked yet at that chapter are greyed out.
+- **Quick load** (in Load scene's confirm box, within one chapter) skips the replay: it builds the scene's state from what the game did in your recorded playthroughs, falling back to the game's tables, and loads it at once. It's an estimate, so the box says how much of the path was recorded; the normal Load scene stays exact.
 - **Load scene** takes you to the scene with the red dashed outline, your furthest pick. Every scene before it needs a choice, and hovering the button tells you if something is missing or conflicting. The mod then plays through your choices by itself at ten times speed until it reaches that scene, starting from its own save or, before the mod was installed, from the start of the chapter. A death caused by one of your picked choices is accepted and it carries on (it never restarts the chapter). If the story goes somewhere your path doesn't cover, it stops there and opens the tree to tell you why.
 
 ## Install
@@ -82,7 +83,7 @@ Two extra flags:
 - Load scene needs a starting point before your first changed choice: a mod save, the start of that chapter, or the very start of the story (built from the game's own new-game defaults if no chapter 1 save exists at all). For scenes played before the mod was installed, you need to pick every choice from that starting point.
 - The scenes ahead are a prediction: the mod plays your picks (or the first open choice) forward through the story's own rules, but a few stat changes the game makes between scenes aren't in its tables, so far-off scenes and greyed-out choices are a close estimate.
   When Load scene meets a scene the prediction didn't have, it stops there so you can pick its choice and load again.
-- Load scene takes about 3 to 4 seconds per scene to replay.
+- Load scene takes about 2 to 3 seconds per scene to replay (most of it the game loading each scene).
 - The list keeps the newest 100 autosaves and 100 pre-rewind snapshots per playthrough; older ones are dropped. Manual saves, choice points and the backup of your original save are never removed.
 - The list shows 120 rows at a time; the **"Show more"** row loads the rest.
 - Some stats (Love, Rule, Volition, Tolerance, Wrath, Control, Cruelty, Weight, Contention) have no description in the game itself.
