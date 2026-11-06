@@ -292,6 +292,14 @@ community event sheet (`data/events.json`).
   is four shade rectangles around it (`ShadeAround`), the panel's own image
   stays the clear click target. A sorting canvas on the row did not lift it
   out of the table's masked scroll view.
+- **The stat panel shows live stats only, at a readable size.** The Destiny
+  tab and the stats the game never changes or reads (`StatPanel.Dead`: Volition,
+  Love, Rule, Tolerance, GWrath, Control, Cruelty, Weight, Сontention - Cyrillic
+  С) are left out; FINDINGS ("Dead stats") has the evidence. `LayoutTreeArea`
+  gives the stats `StatPanel.PreferredHeight` (rows at about 0.7 of the game's
+  size) as long as the tree keeps four answers in view; a taller tree column
+  scrolls. Column widths are measured on what a row draws (icon to slider end),
+  not its 375-unit box.
 - **Changers off the answer buttons apply with any answer.** In
   `scene-params.tsv` button `-1` is a `KeyChapterParametersChanger` on a
   button every answer passes - the text pages' `NextButton/Image`

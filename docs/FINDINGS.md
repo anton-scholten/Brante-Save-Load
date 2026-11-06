@@ -597,6 +597,22 @@ Cruelty, Weight and Сontention (WarParameter; the first letter of
 "Сontention" is Cyrillic). The asset "Emperor" is a stray copy of Will with
 no icon. The values of a locked tab's stats exist in the save all along.
 
+**Dead stats (checked 6 Nov 2026).** Volition, Love, Rule (the whole Destiny
+tab) and Tolerance, GWrath, Control, Cruelty, Weight, Сontention are never
+changed or read: no answer effect or answer condition (`scene-effects.tsv`),
+no flow gate (`@Parameter'...'` in `scene-flow.tsv`), no key parameter or
+objective row, no Bolt graph, no logged interlude names them, and 2998 saves
+(live, mirrors, checkpoints, choice snapshots, baselines) hold each at its
+start value - Love 3, Tolerance 8, the rest 0. Tolerance is not Toleration
+("Religious Tolerance", 44 answer effects, ~800 gate uses). The save's
+`ModelParameters` also has 22 fields with no asset use at all, always 0:
+FamilyReputation, RuleDegree, Blood, Honor, Sister, Brother, Father, Nobles,
+Tax, Trust, SocialTension, Class, Profession, Confession, Employ, Work, Pray,
+Spirit, ConspiracyBrother, ConspiracySister, Character, Support, Duel. The
+tree's stat panel leaves the Destiny tab out and skips the dead stats by
+name (`StatPanel.Dead`), since Tolerance/GWrath would otherwise join the
+Province tab and the WarParameter four the Revolt tab by category.
+
 `book_new` (the open book, `Back/Panel`) is drawn with `preserveAspect`: its
 sprite is 1.61:1, so on a 16:9 screen it is narrower than its rect. Mapping
 screen points onto it must use the fitted rect. The settings tab button

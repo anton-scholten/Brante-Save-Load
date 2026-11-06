@@ -2735,9 +2735,16 @@ namespace Doorstop
 			{
 				return;
 			}
+			// The stats get the room they need to be read (StatPanel.PreferredHeight),
+			// as long as the tree keeps four answers in view; the tree has
+			// the rest and scrolls a taller column.
 			float box = _historyBox.rect.height;
-			float treeH = Mathf.Clamp(contentHeight + 22f, 200f,
-				Mathf.Max(200f, box - TreeAreaTop - TreeAreaBottom - 180f));
+			float both = box - TreeAreaTop - TreeAreaBottom - 12f;
+			float treeWants = contentHeight + 22f;
+			float treeFloor = Mathf.Min(treeWants, TreeTop + 4 * TreeRowH + 72f + 22f);
+			float statsH = Mathf.Max(168f,
+				StatPanel.PreferredHeight(_historyBox.rect.width - 64f, both - Mathf.Max(200f, treeFloor)));
+			float treeH = Mathf.Clamp(treeWants, 200f, Mathf.Max(200f, both - statsH));
 			_historyScrollRt.anchorMin = new Vector2(0f, 1f);
 			_historyScrollRt.anchorMax = new Vector2(1f, 1f);
 			_historyScrollRt.pivot = new Vector2(0.5f, 1f);
