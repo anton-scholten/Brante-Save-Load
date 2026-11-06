@@ -3526,9 +3526,11 @@ namespace Doorstop
 			}
 			else
 			{
-				// Top pivot: the bar hangs down from the upper end.
-				rt.anchoredPosition = new Vector2(x1 - thickness * 0.5f, -Mathf.Min(y1, y2));
-				rt.sizeDelta = new Vector2(thickness, Mathf.Abs(y2 - y1));
+				// Top pivot: the bar hangs down from the upper end. Square caps:
+				// half the thickness past each end, so a horizontal line ending
+				// on this one's centre meets it with the outer corner filled.
+				rt.anchoredPosition = new Vector2(x1 - thickness * 0.5f, -Mathf.Min(y1, y2) + thickness * 0.5f);
+				rt.sizeDelta = new Vector2(thickness, Mathf.Abs(y2 - y1) + thickness);
 			}
 			Image img = go.AddComponent<Image>();
 			img.color = color;
