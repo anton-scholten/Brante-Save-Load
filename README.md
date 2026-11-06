@@ -26,6 +26,8 @@ It also features a "tree view" visual of your playthrough so you can see your mi
 
 - **Achievements still count.** Loading through the mod leaves Steam achievements switched on, as the game's own Continue does.
 
+- **The true death's CONTINUE works.** In the game as shipped, the CONTINUE button on the third to sixth pages after the hero's final death does nothing (an error inside the game), so the story never reaches its ending. The mod makes those pages go on to the next one, as the other pages do, through to the credits.
+
 - **Iron Man included.** The game disables its own save/load menu in Iron Man but the mod's window keeps working there, so a permadeath run can still be rewound (cheater!).
 
 - **A tree view of the whole story.** See below.
@@ -43,7 +45,7 @@ The scrollbar also works as a progress bar showing how far you are in the story.
 - **Hover a choice** to see its full text, what it changes and what it requires (green if your hero meets it, red if not).
 - **Click choices to build a path.** Click a picked choice again to undo it, or use the reset arrow next to the × to undo them all. Choices your hero can't take at that point are greyed out. If an earlier pick makes a later choice impossible, that choice turns red.
 - **Your stats** are shown at the bottom, grouped like the game's tabs. They show your hero after your last pick (green if higher than now, red if lower). Hover a stat to see the game's own description of it. Tabs not unlocked yet at that chapter are greyed out.
-- **Load scene** takes you to the scene with the red dashed outline, your furthest pick. Every scene before it needs a choice, and hovering the button tells you if something is missing or conflicting. The mod then plays through your choices by itself at ten times speed until it reaches that scene, starting from its own save or, before the mod was installed, from the start of the chapter. A death caused by one of your picked choices is accepted and it carries on (it never restarts the chapter). If the story goes somewhere your path doesn't cover, it stops there and opens the tree to tell you why.
+- **Load scene** takes you to the scene with the red dashed outline, your furthest pick. Every scene before it needs a choice, and hovering the button tells you if something is missing or conflicting. The mod then plays through your choices by itself at forty times speed until it reaches that scene, starting from its own save or, before the mod was installed, from the start of the chapter. A death caused by one of your picked choices is accepted and it carries on (it never restarts the chapter). If the story goes somewhere your path doesn't cover, it stops there and opens the tree to tell you why.
 
 ## Install
 

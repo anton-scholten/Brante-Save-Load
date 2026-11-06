@@ -552,6 +552,10 @@ namespace Doorstop
 							}
 							yield return AutoPlay.DebugRun(want.ToArray());
 						}
+						else if (spec == "on")
+						{
+							yield return AutoPlay.PlayOn();
+						}
 						else
 						{
 							yield return AutoPlay.Probe(80f);

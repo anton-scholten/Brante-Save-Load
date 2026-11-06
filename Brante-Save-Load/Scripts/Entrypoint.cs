@@ -98,6 +98,56 @@ namespace Doorstop
 			}
 			PatchSaveRepair(harmony);
 			PatchInterlude(harmony);
+			PatchTrueDeath(harmony);
+		}
+
+		// The game's own bug: on the true-death pages FourthDeath_3..6 the
+		// CONTINUE button calls FourthDeathContinueButtonController.Button_Click,
+		// whose DeathObjective is empty in the shipped scenes, so the objective
+		// pop-up throws in UIManager.SetAchievementInfo, the button stays
+		// disabled and the story stops there. FourthDeath_1, _2, _7 and _8 call
+		// SceneButton_Click instead: mark the page shown, go on to the next one
+		// in the GameFinals flow. Filling the objective in does not help - the
+		// pop-up's close sets GoToFinals and reruns GameFinals, which reopens the
+		// page it never marked shown, forever. So a CONTINUE with no objective
+		// does what the other pages' CONTINUE does.
+		private static void PatchTrueDeath(Harmony harmony)
+		{
+			try
+			{
+				MethodInfo m = typeof(FourthDeathContinueButtonController).GetMethod("Button_Click");
+				if (m == null)
+				{
+					ModLog.Error("FourthDeathContinueButtonController.Button_Click not found");
+					return;
+				}
+				harmony.Patch(m, prefix: new HarmonyMethod(typeof(Entrypoint), "TrueDeathPrefix"));
+				ModLog.Info("Patched FourthDeathContinueButtonController.Button_Click (true-death pages without an objective)");
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("True-death patch failed:\n" + e);
+			}
+		}
+
+		private static bool TrueDeathPrefix(FourthDeathContinueButtonController __instance, UnityEngine.UI.Button button)
+		{
+			try
+			{
+				if (__instance.DeathObjective != null || __instance.DeathWindow == null)
+				{
+					return true;
+				}
+				ModLog.Info("True death: CONTINUE in " + _Scripts.Managers.GameManager.Instance.OpenedSceneName
+					+ " has no objective - going on to the next page, as the other true-death pages do");
+				__instance.SceneButton_Click(button);
+				return false;
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("True death prefix failed:\n" + e);
+				return true;
+			}
 		}
 
 		// The interlude pop-up (a scene's state-machine event) applies its

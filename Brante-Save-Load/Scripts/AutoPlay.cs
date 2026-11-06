@@ -203,7 +203,7 @@ namespace Doorstop
 				if (DeathOnScreen())
 				{
 					int deaths = Deaths();
-					if (deaths <= _deathsAtAnswer || (deaths >= 4 && !_throughLastDeath))
+					if (deaths >= 4 ? !_throughLastDeath : deaths <= _deathsAtAnswer)
 					{
 						LastStop = Stop.Death;
 						ModLog.Info("AUTOPLAY: " + (deaths >= 4 ? "the hero's last death" : "a death no answer explains")
@@ -450,6 +450,16 @@ namespace Doorstop
 				return chapter <= last && saved.Count < chapters.Length || chapter < last;
 			}, 90f, true);
 			_throughLastDeath = false;
+		}
+
+		// Dev (`dev-autoplay.txt` = `on`): play on from the scene on screen with
+		// the survival picker, through the hero's last death, to the story's end.
+		public static IEnumerator PlayOn()
+		{
+			_throughLastDeath = true;
+			yield return Run(SafePick, delegate(string scene) { return true; }, 90f, true);
+			_throughLastDeath = false;
+			ModLog.Info("AUTOPLAY: play-on stopped at " + Story() + " (" + LastStop + ")");
 		}
 
 		// After LoadSnapshot: the loading screen has come and gone.

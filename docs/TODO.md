@@ -47,10 +47,10 @@ Current, de-duplicated remainder. The phase sections below keep the history.
 - [x] Quick load built, measured and removed (5 Nov): exact but only ~2x
   faster on long paths, barely on short ones. Crash on a second chapter end in
   one session fixed (Bolt `Once` reset).
-- [ ] The epilogue: on the true-death page `FourthDeath_3` the CONTINUE throws
-  in `UIManager.SetAchievementInfo` (the true-death pop-up never builds), at
-  normal speed too, so the finals do not start in a debug run. Unknown whether
-  a player sees the same; worth checking by hand once.
+- [x] The epilogue: the true-death CONTINUE on `FourthDeath_3`..`_6` threw
+  in `UIManager.SetAchievementInfo`. A game bug (the button's `DeathObjective`
+  is empty in the shipped scenes), so every player hit it; the mod now goes on
+  to the next page there, and a debug run plays through to the credits (6 Nov).
 - [ ] Stats the game changes outside answer effects (e.g. `Carier`) are not in
   the extracted tables, so a long simulated path can drift; the replay stays
   authoritative.

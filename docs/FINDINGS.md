@@ -1209,12 +1209,21 @@ checkpoint is still not driven end to end.
   survived chapter 4 and played chapter 5 to `060.010.200_TheFinal4`. Online
   sources had no route; a Steam thread only confirms that a lesser death spends
   a life.
-- **The true-death page's CONTINUE throws.** `FourthDeathContinueButtonController.Button_Click`
-  -> `UIManager.ShowObjectivePopupEvent` -> `SetAchievementInfo` throws a
-  NullReference on `FourthDeath_3` (rebel, chapter 5), at 20x and at the normal
-  clock, so the `ИстиннаяСмерть` pop-up never builds and nothing sets
-  `GoToFinals`. Setting it and clicking the talisman flow from the mod did not
-  start the finals either.
+- **The true-death page's CONTINUE throws - in the game itself.** In the
+  shipped scenes (read with UnityPy, 6 Nov 2026) `FourthDeath_1`, `_2`, `_7` and
+  `_8` wire CONTINUE to `FourthDeathContinueButtonController.SceneButton_Click`
+  (mark the page shown, `Click` the flow: `GameFinals` opens the next page),
+  while `FourthDeath_3`..`_6` wire it to `Button_Click`, which opens the
+  objective pop-up for `DeathObjective` - a reference that is empty in all
+  eight scenes, and no Bolt graph or script sets it. `SetAchievementInfo`
+  throws a NullReference, the button has already been made non-interactable,
+  and the story stops at the third page. Filling the objective in (the only
+  `ИстиннаяСмерть`, chapter 4) builds the pop-up, but its close sets
+  `GoToFinals` and reruns `GameFinals`, whose `TrueDeath_3` macro reopens
+  `FourthDeath_3` because nothing marked it shown - an endless loop. The mod's
+  prefix calls `SceneButton_Click` when `DeathObjective` is empty: the pages
+  run `_3`, `_4`, `_5`, `_6`, `_7`, `_8`, then `LiveTimeline`,
+  `Credits_GameOver` and the main menu.
 - **Where a replay's time went.** At 10x a scene cost ~14 s: ~3.5 s of text
   pages (5-56 per scene, one "Next" press each behind a 0.3 s wait), ~1.5 s per
   answer-screen page behind the double-load guard, the rest animation. All of
