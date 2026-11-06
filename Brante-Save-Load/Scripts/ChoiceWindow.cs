@@ -5642,6 +5642,20 @@ namespace Doorstop
 					{
 						continue;   // ModHost opens the table and calls DevConfirmFirst
 					}
+					else if (l == "load")
+					{
+						// Load scene, confirmed: replays the picked path
+						LoadSelected();
+						if (_pendingAction == Pending.LoadPath && _confirmPanel != null && _confirmPanel.activeSelf)
+						{
+							RunPending();
+						}
+						else
+						{
+							ModLog.Info("DEV PICK: Load scene did not ask to load: " + LoadBlockedReason());
+						}
+						break;
+					}
 					else
 					{
 						int eq = l.IndexOf('=');

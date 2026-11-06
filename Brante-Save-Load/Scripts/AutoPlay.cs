@@ -59,6 +59,7 @@ namespace Doorstop
 				{
 					continue;
 				}
+				FireChildChangers(nextButton);
 				int turned = 0;
 				while (turned < 100)
 				{
@@ -887,12 +888,39 @@ namespace Doorstop
 
 		// A real pointer click (enter, down, up, click), so the game's own
 		// handlers and animations run as for the mouse.
+		// A mouse press lands on the deepest graphic under the pointer - often
+		// a button's child image - and bubbles up. A key chapter parameter
+		// changer on such a child (KeyChapterParametersChanger.OnPointerDown:
+		// 02.10.01's NextButton/Image sets TriggerBlock=true) fires for a
+		// player but not for an event sent to the button itself, nor for
+		// pages turned through TextController.NextPage. Fire them as a press
+		// would; they only set a value, so once more is harmless.
+		private static void FireChildChangers(GameObject go)
+		{
+			if (go == null)
+			{
+				return;
+			}
+			foreach (_Scripts.AMVCC.Models.Static.KeyChapterParametersChanger c in
+				go.GetComponentsInChildren<_Scripts.AMVCC.Models.Static.KeyChapterParametersChanger>(true))
+			{
+				if (c == null || c.gameObject == go || c.Parameter == null)
+				{
+					continue;
+				}
+				c.OnPointerDown(null);
+				ModLog.Info("AUTOPLAY: " + c.Parameter.Name + "=" + c.Parameter.Value + " (the parameter changer under "
+					+ go.name + ", as a press on it sets it)");
+			}
+		}
+
 		public static void Click(GameObject go)
 		{
 			UnityEngine.EventSystems.EventSystem es = UnityEngine.EventSystems.EventSystem.current;
 			UnityEngine.EventSystems.PointerEventData d = new UnityEngine.EventSystems.PointerEventData(es);
 			UnityEngine.EventSystems.ExecuteEvents.Execute(go, d, UnityEngine.EventSystems.ExecuteEvents.pointerEnterHandler);
 			UnityEngine.EventSystems.ExecuteEvents.Execute(go, d, UnityEngine.EventSystems.ExecuteEvents.pointerDownHandler);
+			FireChildChangers(go);
 			UnityEngine.EventSystems.ExecuteEvents.Execute(go, d, UnityEngine.EventSystems.ExecuteEvents.pointerUpHandler);
 			UnityEngine.EventSystems.ExecuteEvents.Execute(go, d, UnityEngine.EventSystems.ExecuteEvents.pointerClickHandler);
 			UnityEngine.EventSystems.ExecuteEvents.Execute(go, d, UnityEngine.EventSystems.ExecuteEvents.pointerExitHandler);

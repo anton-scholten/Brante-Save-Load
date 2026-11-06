@@ -121,7 +121,10 @@ namespace Doorstop
 			}
 			foreach (Change c in list)
 			{
-				if (c.Button == button)
+				// -1: a changer on a button every answer passes (the text
+				// pages' Next, each answer's continue): it applies with any
+				// answer
+				if (c.Button == button || (c.Button == -1 && button > 0))
 				{
 					values[c.Name] = c.Value;
 				}
