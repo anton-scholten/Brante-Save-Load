@@ -247,6 +247,30 @@ community event sheet (`data/events.json`).
   `SceneFlow.FirstCore` sorts candidates by the final order before evaluating
   any condition and stops at the first that passes: the whole story simulates
   in ~60 ms of flow time, and the tree builds in about 0.5 s.
+- **A pick or Reset path is a re-prediction, not a rebuild (~60 ms).** The
+  window keeps the played columns of the last full build (`_playedCols`) and
+  `ResimulateAhead` predicts from them again, for a played or an upcoming pick
+  alike; the history and snapshots are read only when the tree opens.
+  `SceneCol` caches each scene's title, snapshot and answers per build
+  (`History.SnapshotFor` touches the disk: ~2 ms a scene under Wine). The
+  drawing is per column (`DrawColumn`, one container each): a column whose
+  `ColDrawKey` (scene, flags, visible answers, chapter rule, "Upcoming" foot)
+  is unchanged is kept - slid to its new index when a scene before it came or
+  went - and its `NodeRef`s are re-pointed at the new column and choice
+  objects before `StyleNode`. Restyling boxes that still pointed at the old
+  prediction was why a pick in a predicted scene showed nothing.
+- **Picks ahead are told apart from assumptions.** A predicted scene that the
+  old path played keeps that answer by default (`PlayedChoice`); it is drawn
+  pale yellow, a real pick full yellow. The "Pick an answer here to go on"
+  note (`Loc.K.PickNext`, drawn in `DrawPath`) sits under the first scene
+  before the dashed answer that has no answer - the one Load scene's
+  `MissingPick` names - or else under the scene after the dashed answer.
+- **The load/delete dialog.** The question centred on top, the save's time
+  and choice in a `Palette.Card` box, a note (delete, save now) under it. The
+  row it is about keeps its colours and gets the red dashed outline: the dim
+  is four shade rectangles around it (`ShadeAround`), the panel's own image
+  stays the clear click target. A sorting canvas on the row did not lift it
+  out of the table's masked scroll view.
 - **Objectives unlocked by an answer or a scene are simulated too.**
   `scene-objectives.tsv` (from `tools/scene_objectives.py`) lists every
   `KeyChapterParametersController.EarnObjective` target by scene and button
@@ -384,6 +408,7 @@ on use) and must be paired with `dev-autoload.txt`:
 | `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
 | `dev-table.txt` | open the save table, cycle the type filter through every category, log row counts, show/hide a type pop-up, page with "Show more" (a 10-row first page when the run has fewer rows) and check the Original row has no delete cell; with `dev-table-load.txt` also click the Original row and confirm its load; with `dev-table-open.txt` leave the table open afterwards (screenshots) |
 | `dev-restart.txt` | with `dev-autoload.txt` (and `dev-load.txt`): make the game's chapter restart call (`LoadChapterState`, as its Restart button does) and log the checkpoint and run state |
+| `dev-pick.txt` | with `dev-autoload.txt`: open the tree, apply `scene=ButtonDescriptionN` per line (`reset` = Reset path), log every column after each step (drawn colours, Load scene target, where the pick note is) and leave it open; `confirm`: then open the save table and click its first row, leaving the load dialog open |
 | `dev-book.txt` | the book tabs (tree view, then save table), the save table, then the tree view: wheel, pop-ups, stat pop-up, a conflicting pick, chapter rule, a pick + its load plan, undo |
 | `dev-loadpath.txt` | with `dev-book.txt`: Load scene end to end; `back N` replays from another answer N scenes back, `chapter` from the chapter's start save, `start` from chapter 1 with an early change, `ahead` into the next chapter, `death` through a death, `offpath` a stop off the path, `first` the story's first scenes from a stand-in start (another run's chapter 1 save), `new` the same from a start built from the game's defaults, `file <name>` load that mod save as the table does (`file <name> norun`: with no run active) |
 | `dev-history.txt` | log the save's scene path (`ShowedScenesList`) |

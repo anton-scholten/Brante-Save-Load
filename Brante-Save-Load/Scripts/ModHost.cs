@@ -599,6 +599,24 @@ namespace Doorstop
 						yield return new WaitForSeconds(3f);
 						ChoiceWindow.DevBook();
 					}
+					// Tree picks: "scene=answer" per line (or "reset"); logs every
+					// column after them and leaves the tree open.
+					string pickFile = Path.Combine(Recorder.SnapshotDir, "dev-pick.txt");
+					if (File.Exists(pickFile))
+					{
+						string[] picks = new string[0];
+						try { picks = File.ReadAllLines(pickFile); File.Delete(pickFile); }
+						catch (Exception) { }
+						yield return new WaitForSeconds(3f);
+						ChoiceWindow.DevPick(picks);
+						if (Array.IndexOf(picks, "confirm") >= 0)
+						{
+							ChoiceWindow.Close();
+							ChoiceWindow.OpenSaveLoad();
+							yield return new WaitForSeconds(2f);
+							ChoiceWindow.DevConfirmFirst();
+						}
+					}
 					yield break;
 				}
 			}
