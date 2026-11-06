@@ -26,10 +26,8 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 ### Save / Load
 
-<p>
-<img src="Screenshot_2a.jpg" width="49%" alt="The save / load screen: a table of saves (game autosaves and snapshots taken before each load), with the save type, date saved, chapter, age, year, season, turn, scene and choice of each, and a button to delete the save.">
-<img src="Screenshot_2b.jpg" width="49%" alt="The same screen showing the confirmation dialogue after clicking a save to load it. The clicked row stays bright with a red dashed outline while the rest is dimmed.">
-</p>
+![The save / load screen: a table of saves (game autosaves and snapshots taken before each load), with the save type, date saved, chapter, age, year, season, turn, scene and choice of each, and a button to delete the save.](Screenshot_2a.jpg)
+![The same screen showing the confirmation dialogue after clicking a save to load it. The clicked row stays bright with a red dashed outline while the rest is dimmed.](Screenshot_2b.jpg)
 
 - Click a save to load it; the bin deletes it. **Save now** adds a save of your own.
 - **Save type** (first header) filters: game autosaves, saves made before each load, your own saves, and the backup of your original save. Other headers sort.
@@ -42,7 +40,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 - Columns are scenes, boxes are choices; your path is in red, with each cchoice made highlighted in yellow. Future scenes are predicted so only those that can happen are shown and your stats automatically lists the choices you can take.
 - **Hover** a choice to see what it changes and requires; the stats it changes light up below (green up, red down).
 - **Click** choices to build a new path. Click again to undo; the arrow by the × resets all. Greyed choices can't be taken; red ones conflict with an earlier pick.
-- **Load scene** plays your path by itself (at 40× speed) up to the dashed choice. Every scene before it needs a choice; "Pick an answer here to go on" shows which one is missing.
+- **Load scene** plays your path by itself (at 40× speed) up to the dashed choice, with a progress bar and time left; the game can't be clicked meanwhile. Every scene before it needs a choice; "Pick an answer here to go on" shows which one is missing.
 
 ## Good to know
 

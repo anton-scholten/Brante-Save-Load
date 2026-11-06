@@ -18,7 +18,7 @@ namespace Doorstop
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, Current, NothingYet,
 			KindAll, KindAutosave, KindCheckpoint, KindOriginal, ShowMore,
-			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath, PickNext, OnThisScene,
+			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath, PickNext, OnThisScene, ReplayLoading, ReplayProgress,
 			PickConflict, NothingToLoad,
 			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick, ReplayOffPath, ReplayDeath, ReplayStopped,
 			ReplaySkipped, StartNotOnPath,
@@ -182,6 +182,17 @@ namespace Doorstop
 			AddOnThisScene(_ja, "今このシーンにいます。ゲーム内でこの答えを選ぶか、後のシーンで答えを選んでさらに先をロードしてください。");
 			AddOnThisScene(_ko, "지금 이 장면에 있습니다. 게임에서 이 답을 고르거나, 더 나아가려면 이후 장면에서 답을 고르세요.");
 			AddOnThisScene(_zh, "你正处于这个场景：请在游戏中给出这个回答，或在之后的场景中选择回答以加载更远处。");
+			AddReplayTexts(_en, "Loading \u201c{0}\u201d", "Scene {0} of {1}");
+			AddReplayTexts(_ru, "Загрузка \u00ab{0}\u00bb", "Сцена {0} из {1}");
+			AddReplayTexts(_de, "Lade \u201e{0}\u201c", "Szene {0} von {1}");
+			AddReplayTexts(_fr, "Chargement de \u00ab {0} \u00bb", "Scène {0} sur {1}");
+			AddReplayTexts(_es, "Cargando \u00ab{0}\u00bb", "Escena {0} de {1}");
+			AddReplayTexts(_it, "Caricamento di \u00ab{0}\u00bb", "Scena {0} di {1}");
+			AddReplayTexts(_pl, "Wczytywanie \u201e{0}\u201d", "Scena {0} z {1}");
+			AddReplayTexts(_tr, "\u201c{0}\u201d yükleniyor", "Sahne {0} / {1}");
+			AddReplayTexts(_ja, "\u300c{0}\u300dを読み込み中", "シーン {0} / {1}");
+			AddReplayTexts(_ko, "\u201c{0}\u201d 불러오는 중", "장면 {0} / {1}");
+			AddReplayTexts(_zh, "正在加载\u201c{0}\u201d", "场景 {0} / {1}");
 			AddPossibleOn(_en, "Possible depending on {0}", "stats", "relationships", "characters' fates", "story events", "and");
 			AddPossibleOn(_ru, "Возможно в зависимости от: {0}", "характеристик", "отношений", "судеб персонажей", "событий сюжета", "и");
 			AddPossibleOn(_de, "Möglich, je nach {0}", "Werten", "Beziehungen", "Schicksalen der Figuren", "Ereignissen der Geschichte", "und");
@@ -352,6 +363,12 @@ namespace Doorstop
 		{
 			d[K.PickConflict] = conflict;
 			d[K.NothingToLoad] = nothing;
+		}
+
+		private static void AddReplayTexts(Dictionary<K, string> d, string loading, string progress)
+		{
+			d[K.ReplayLoading] = loading;
+			d[K.ReplayProgress] = progress;
 		}
 
 		private static void AddOnThisScene(Dictionary<K, string> d, string text)

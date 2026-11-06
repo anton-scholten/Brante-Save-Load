@@ -275,6 +275,13 @@ community event sheet (`data/events.json`).
   (`StatPanel.HighlightChanges`: the hero at that scene before and after the
   answer's effects; `Palette.Good`/`Bad` at 28%, the game's consequence-row
   green and red); leaving the answer clears them.
+- **Load scene shows its progress and blocks the player.** `ReplayTo` puts
+  up a box on its own canvas (sorting order 9000, `DontDestroyOnLoad`) over a
+  dim that catches every click; `AutoPlay` clicks through `ExecuteEvents`, not
+  the pointer, so it is not blocked. "Scene N of M" counts the plan's choice
+  scenes; the bar creeps within a scene and the time left is the pace so far
+  (2.5 s a scene before the first is reached) times the scenes to go, on the
+  real clock. It is removed in a `finally`, before the tree opens on a stop.
 - **The load/delete dialog.** The question centred on top, the save's time
   and choice in a `Palette.Card` box, a note (delete, save now) under it. The
   row it is about keeps its colours and gets the red dashed outline: the dim

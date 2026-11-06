@@ -1864,8 +1864,165 @@ namespace Doorstop
 		// Whether the last ReplayTo reached its target along the whole path.
 		private static bool LastReplayReached;
 
+		// ------------------------------------------------------------------
+		// The replay's progress: a box in the middle of the screen over a dim
+		// that catches every click (the replay itself clicks by sending
+		// events to the buttons, not through the pointer, so it is not
+		// blocked). Its own canvas, above the game and the mod's window,
+		// kept across the scene loads of the replay.
+		// ------------------------------------------------------------------
+		private static GameObject _progress;
+		private static RectTransform _progressFill;
+		private static TextMeshProUGUI _progressTitle;
+		private static TextMeshProUGUI _progressText;
+		private static int _progressDone, _progressTotal;
+		private static float _progressStart, _progressStepAt;
+		private const float GuessSecondsPerScene = 2.5f;   // before the first scene is reached
+
+		private static void ShowProgress(string target, int total)
+		{
+			HideProgress();
+			_progress = CreateUiObject("BranteSaveLoad_ReplayProgress", null);
+			UnityEngine.Object.DontDestroyOnLoad(_progress);
+			Canvas canvas = _progress.AddComponent<Canvas>();
+			canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+			canvas.sortingOrder = 9000;   // above the game and the mod's window
+			CanvasScaler scaler = _progress.AddComponent<CanvasScaler>();
+			scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+			scaler.referenceResolution = new Vector2(1920f, 1080f);
+			scaler.matchWidthOrHeight = 1f;
+			_progress.AddComponent<GraphicRaycaster>();
+
+			GameObject dim = CreateUiObject("Dim", _progress.transform);
+			Stretch(dim.GetComponent<RectTransform>());
+			Image dimImg = dim.AddComponent<Image>();
+			dimImg.color = new Color(0f, 0f, 0f, 0.35f);
+			dimImg.raycastTarget = true;   // the player's clicks stop here
+
+			GameObject box = CreateUiObject("Box", _progress.transform);
+			RectTransform brt = box.GetComponent<RectTransform>();
+			brt.anchorMin = brt.anchorMax = brt.pivot = new Vector2(0.5f, 0.5f);
+			brt.sizeDelta = new Vector2(640f, 190f);
+			Image bimg = box.AddComponent<Image>();
+			bimg.color = Palette.PaperLight;
+			bimg.raycastTarget = false;
+
+			_progressTitle = AddLabel(box.transform, "Title", string.Format(Loc.T(Loc.K.ReplayLoading), target),
+				26f, Palette.Ink, true);
+			TopStrip(_progressTitle.rectTransform, 24f, 40f);
+
+			GameObject track = CreateUiObject("Track", box.transform);
+			TopStrip(track.GetComponent<RectTransform>(), 86f, 22f);
+			Image timg = track.AddComponent<Image>();
+			timg.color = Palette.Card;
+			timg.raycastTarget = false;
+			GameObject fill = CreateUiObject("Fill", track.transform);
+			_progressFill = fill.GetComponent<RectTransform>();
+			_progressFill.anchorMin = Vector2.zero;
+			_progressFill.anchorMax = new Vector2(0f, 1f);
+			_progressFill.offsetMin = _progressFill.offsetMax = Vector2.zero;
+			Image fimg = fill.AddComponent<Image>();
+			fimg.color = Palette.Accent;
+			fimg.raycastTarget = false;
+
+			_progressText = AddLabel(box.transform, "Text", "", 20f, Palette.Muted, true);
+			TopStrip(_progressText.rectTransform, 126f, 36f);
+
+			_progressDone = 0;
+			_progressTotal = Math.Max(1, total);
+			_progressStart = _progressStepAt = Time.realtimeSinceStartup;
+			UpdateProgress();
+			if (ModHost.Current != null)
+			{
+				ModHost.Current.StartCoroutine(TickProgress());
+			}
+		}
+
+		// A scene of the path was reached (`done` of the total).
+		private static void StepProgress(int done)
+		{
+			if (_progress == null || done <= _progressDone)
+			{
+				return;
+			}
+			_progressDone = Math.Min(done, _progressTotal);
+			_progressStepAt = Time.realtimeSinceStartup;
+			UpdateProgress();
+		}
+
+		private static IEnumerator TickProgress()
+		{
+			while (_progress != null)
+			{
+				UpdateProgress();
+				yield return new WaitForSecondsRealtime(0.1f);   // real time: the replay runs the clock fast
+			}
+		}
+
+		// The bar moves on within a scene too (up to just short of the next
+		// step), at the pace of the scenes so far; the time left is that pace
+		// times the scenes still to go.
+		private static void UpdateProgress()
+		{
+			if (_progress == null || _progressFill == null)
+			{
+				return;
+			}
+			float now = Time.realtimeSinceStartup;
+			float perScene = _progressDone > 0 ? (_progressStepAt - _progressStart) / _progressDone : GuessSecondsPerScene;
+			perScene = Mathf.Max(0.5f, perScene);
+			float inScene = Mathf.Min(0.9f, (now - _progressStepAt) / perScene);
+			float fraction = Mathf.Clamp01((_progressDone + inScene) / _progressTotal);
+			float left = Mathf.Max(0f, (_progressTotal - _progressDone) * perScene - (now - _progressStepAt));
+			_progressFill.anchorMax = new Vector2(fraction, 1f);
+			int secs = Mathf.CeilToInt(left);
+			_progressText.text = string.Format(Loc.T(Loc.K.ReplayProgress), Math.Min(_progressDone + 1, _progressTotal), _progressTotal)
+				+ "  \u00b7  " + Mathf.FloorToInt(fraction * 100f) + "%  \u00b7  ~" + (secs / 60) + ":" + (secs % 60).ToString("00");
+		}
+
+		private static void HideProgress()
+		{
+			if (_progress != null)
+			{
+				_progress.SetActive(false);
+				UnityEngine.Object.Destroy(_progress);
+			}
+			_progress = null;
+			_progressFill = null;
+		}
+
 		private static IEnumerator ReplayTo(LoadPlan plan)
 		{
+			if (plan.StartScene != plan.Target)
+			{
+				ShowProgress(string.IsNullOrEmpty(plan.TargetTitle) ? SceneLabel(plan.Target) : plan.TargetTitle,
+					plan.Order.Count - 1);
+			}
+			try
+			{
+				IEnumerator run = ReplayToCore(plan);
+				while (run.MoveNext())
+				{
+					yield return run.Current;
+				}
+			}
+			finally
+			{
+				HideProgress();
+			}
+			if (!LastReplayReached && _replayStopWhy != null)
+			{
+				// the tree, on the scene the replay stopped at, saying why
+				OpenTreeView();
+				SetHistoryInfo(_replayStopWhy, true);
+			}
+		}
+
+		private static string _replayStopWhy;
+
+		private static IEnumerator ReplayToCore(LoadPlan plan)
+		{
+			_replayStopWhy = null;
 			LastReplayReached = false;
 			ModLog.Info("ChoiceWindow: load scene " + plan.Target + " from " + plan.StartScene
 				+ " with " + plan.Picks.Count + " answer(s) to give");
@@ -1911,6 +2068,7 @@ namespace Doorstop
 				{
 					return true;   // a repeat of a scene already handled
 				}
+				StepProgress(at);
 				if (scene == plan.Target)
 				{
 					return false;
@@ -1937,9 +2095,7 @@ namespace Doorstop
 						string.IsNullOrEmpty(plan.TargetTitle) ? SceneLabel(plan.Target) : plan.TargetTitle);
 				ModLog.Info("ChoiceWindow: load scene stopped at " + at + " - " + why
 					+ (skipped != null ? " (skipped " + skipped + ")" : ""));
-				// the tree, on the scene the replay stopped at, saying why
-				OpenTreeView();
-				SetHistoryInfo(why, true);
+				_replayStopWhy = why;   // shown in the tree once the progress box is gone
 			}
 		}
 
