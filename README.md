@@ -2,19 +2,21 @@
 
 <img src="Thumbnail.png" alt="thumbnail" width="200" align="right">
 
-A mod for [The Life and Suffering of Sir Brante](https://store.steampowered.com/app/1272160/): save and load anywhere, go back to any choice you have made, and see your whole playthrough as a tree.
+A mod for [The Life and Suffering of Sir Brante](https://store.steampowered.com/app/1272160/) that lets you save scum.
+It also features a "tree view" visual of your playthrough so you can see your mistakes and poor life decisions (in the game, that is).
 
 <br clear="right">
 
-![The game's main UI (a book) with the mod's two tabs on top of its left page, right of the year and chapter tabs: a medallion with a download and upload arrows (illustrating saving and loading) and the other with linked boxes (illustrating the tree view).](Screenshot_1_annotated.jpg)
+![The game's main UI (a book) with the mod's two tabs on top of its left page: the save/load and tree view buttons.](Screenshot_1_annotated.jpg)
 
 ## Install
 
 ```sh
-./tools/install.sh              # finds the game in your Steam libraries
+./tools/install.sh
 ```
 
-Set `BRANTE_DIR` if the game isn't found. No .NET SDK needed: the built DLL is in the repo.
+Set `BRANTE_DIR` if the game isn't found.
+No .NET SDK needed: the built DLL is in the repo.
 On Windows without bash, copy `Brante-Save-Load/`, `doorstop/doorstop_config.ini` and `vendor/doorstop/winhttp.dll` next to the game's `.exe`.
 If the mod doesn't start under Proton, set the Steam launch option to `WINEDLLOVERRIDES=winhttp=n,b %command%`.
 
@@ -35,9 +37,9 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 ### Tree view
 
-![The tree view: scenes are shown as columns of available choices, the player's path is shown in red and yellow highlighted choices, a picked choice is shown by a red dashed outline and can be loaded using the "load scene" button at the top, and "Pick an answer here to go on" marks the next scene to pick in. Hovering a choice shows what it changes and requires; the stats it changes are marked in the stat rows at the bottom, green for a rise and red for a fall. Stats not yet unlocked remain greyed out.](Screenshot_3.jpg)
+![The tree view: each scene is shown as a column with its available choices underneath it. The player's path is shown in red with yellow highlighted choices. A choice picked is shown by a red dashed outline and can be loaded using the "load scene" button at the top (if there is a path of choices leading up to that scene). Hovering a choice shows what stats it changes or requires.](Screenshot_3.jpg)
 
-- Columns are scenes, boxes are choices; your path is yellow and red. Scenes after the one you're on are predicted.
+- Columns are scenes, boxes are choices; your path is in red, with each cchoice made highlighted in yellow. Future scenes are predicted so only those that can happen are shown and your stats automatically lists the choices you can take.
 - **Hover** a choice to see what it changes and requires; the stats it changes light up below (green up, red down).
 - **Click** choices to build a new path. Click again to undo; the arrow by the × resets all. Greyed choices can't be taken; red ones conflict with an earlier pick.
 - **Load scene** plays your path by itself (at 40× speed) up to the dashed choice. Every scene before it needs a choice; "Pick an answer here to go on" shows which one is missing.
@@ -46,7 +48,6 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 - Your original save is backed up once to `Brante-Save-Load/Backups/`; the game's own saves keep working as normal.
 - Achievements stay on. Works in Iron Man. In all eleven of the game's languages.
-- Fixes a game bug: the CONTINUE button on the true-death pages no longer gets stuck before the ending.
 - The predicted scenes are close but not exact (a few stat changes aren't in the game's tables). If Load scene meets a scene it didn't expect, it stops there so you can pick and load again.
 - Load scene takes about 2-3 s per scene.
 
