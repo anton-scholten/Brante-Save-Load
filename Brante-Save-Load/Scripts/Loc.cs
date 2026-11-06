@@ -18,7 +18,7 @@ namespace Doorstop
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, Current, NothingYet,
 			KindAll, KindAutosave, KindCheckpoint, KindOriginal, ShowMore,
-			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath, PickNext, OnThisScene, ReplayLoading, ReplayProgress,
+			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath, PickNext, OnThisScene, ReplayLoading, ReplayProgress, ReplayLeft, ReplayStop, UnitSec, UnitMin,
 			PickConflict, NothingToLoad,
 			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick, ReplayOffPath, ReplayDeath, ReplayStopped,
 			ReplaySkipped, StartNotOnPath,
@@ -193,6 +193,17 @@ namespace Doorstop
 			AddReplayTexts(_ja, "\u300c{0}\u300dを読み込み中", "シーン {0} / {1}");
 			AddReplayTexts(_ko, "\u201c{0}\u201d 불러오는 중", "장면 {0} / {1}");
 			AddReplayTexts(_zh, "正在加载\u201c{0}\u201d", "场景 {0} / {1}");
+			AddReplayTime(_en, "{0} left", "Stop", "s", "min");
+			AddReplayTime(_ru, "осталось {0}", "Стоп", "с", "мин");
+			AddReplayTime(_de, "noch {0}", "Stopp", "s", "min");
+			AddReplayTime(_fr, "{0} restantes", "Arrêter", "s", "min");
+			AddReplayTime(_es, "quedan {0}", "Detener", "s", "min");
+			AddReplayTime(_it, "{0} rimanenti", "Ferma", "s", "min");
+			AddReplayTime(_pl, "pozostało {0}", "Zatrzymaj", "s", "min");
+			AddReplayTime(_tr, "{0} kaldı", "Durdur", "sn", "dk");
+			AddReplayTime(_ja, "残り {0}", "停止", "秒", "分");
+			AddReplayTime(_ko, "{0} 남음", "중지", "초", "분");
+			AddReplayTime(_zh, "剩余 {0}", "停止", "秒", "分");
 			AddPossibleOn(_en, "Possible depending on {0}", "stats", "relationships", "characters' fates", "story events", "and");
 			AddPossibleOn(_ru, "Возможно в зависимости от: {0}", "характеристик", "отношений", "судеб персонажей", "событий сюжета", "и");
 			AddPossibleOn(_de, "Möglich, je nach {0}", "Werten", "Beziehungen", "Schicksalen der Figuren", "Ereignissen der Geschichte", "und");
@@ -363,6 +374,14 @@ namespace Doorstop
 		{
 			d[K.PickConflict] = conflict;
 			d[K.NothingToLoad] = nothing;
+		}
+
+		private static void AddReplayTime(Dictionary<K, string> d, string left, string stop, string sec, string min)
+		{
+			d[K.ReplayLeft] = left;
+			d[K.ReplayStop] = stop;
+			d[K.UnitSec] = sec;
+			d[K.UnitMin] = min;
 		}
 
 		private static void AddReplayTexts(Dictionary<K, string> d, string loading, string progress)

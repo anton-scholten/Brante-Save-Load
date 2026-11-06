@@ -40,7 +40,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 - Columns are scenes, boxes are choices; your path is in red, with each cchoice made highlighted in yellow. Future scenes are predicted so only those that can happen are shown and your stats automatically lists the choices you can take.
 - **Hover** a choice to see what it changes and requires; the stats it changes light up below (green up, red down).
 - **Click** choices to build a new path. Click again to undo; the arrow by the × resets all. Greyed choices can't be taken; red ones conflict with an earlier pick.
-- **Load scene** plays your path by itself (at 40× speed) up to the dashed choice, with a progress bar and time left; the game can't be clicked meanwhile. Every scene before it needs a choice; "Pick an answer here to go on" shows which one is missing.
+- **Load scene** plays your path by itself (at 40× speed) up to the dashed choice, with a progress bar and time left; the game can't be clicked meanwhile, and **Stop** ends it on the scene it has reached. Every scene before it needs a choice; "Pick an answer here to go on" shows which one is missing.
 
 ## Good to know
 

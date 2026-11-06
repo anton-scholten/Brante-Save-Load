@@ -141,6 +141,7 @@ namespace Doorstop
 		{
 			Running = true;
 			LastStop = Stop.None;
+			StopRequested = false;
 			_deathsAtAnswer = Deaths();
 			_pressedAt.Clear();
 			_unlocked.Clear();
@@ -192,6 +193,13 @@ namespace Doorstop
 			System.Diagnostics.Stopwatch driver = new System.Diagnostics.Stopwatch();
 			while (true)
 			{
+				if (StopRequested)
+				{
+					StopRequested = false;
+					LastStop = Stop.User;
+					ModLog.Info("AUTOPLAY: stopped by the player at " + Story());
+					break;
+				}
 				string scene = Story();
 				bool moved = false;
 				string stopWhy = null;
@@ -561,7 +569,11 @@ namespace Doorstop
 			}
 		}
 
-		public enum Stop { None, Blocked, Death }
+		public enum Stop { None, Blocked, Death, User }
+
+		// Set by the progress box's Stop button: the run ends at its next step,
+		// leaving the game on whatever scene it has reached.
+		public static bool StopRequested;
 
 		// Why the last run stopped early, when it is one of these.
 		public static Stop LastStop { get; private set; }

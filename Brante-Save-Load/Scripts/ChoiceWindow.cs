@@ -1875,9 +1875,10 @@ namespace Doorstop
 		private static RectTransform _progressFill;
 		private static TextMeshProUGUI _progressTitle;
 		private static TextMeshProUGUI _progressText;
+		private static Button _progressStop;
 		private static int _progressDone, _progressTotal;
 		private static float _progressStart, _progressStepAt;
-		private const float GuessSecondsPerScene = 2.5f;   // before the first scene is reached
+		private const float GuessSecondsPerScene = 5f;     // before the first scene is reached
 
 		private static void ShowProgress(string target, int total)
 		{
@@ -1902,7 +1903,7 @@ namespace Doorstop
 			GameObject box = CreateUiObject("Box", _progress.transform);
 			RectTransform brt = box.GetComponent<RectTransform>();
 			brt.anchorMin = brt.anchorMax = brt.pivot = new Vector2(0.5f, 0.5f);
-			brt.sizeDelta = new Vector2(640f, 190f);
+			brt.sizeDelta = new Vector2(640f, 260f);
 			Image bimg = box.AddComponent<Image>();
 			bimg.color = Palette.PaperLight;
 			bimg.raycastTarget = false;
@@ -1927,6 +1928,16 @@ namespace Doorstop
 
 			_progressText = AddLabel(box.transform, "Text", "", 20f, Palette.Muted, true);
 			TopStrip(_progressText.rectTransform, 126f, 36f);
+
+			// Stop: the replay ends at its next step, on the scene it reached
+			_progressStop = AddButton(box.transform, "Stop", new Vector2(0.5f, 0f), new Vector2(0f, 24f),
+				new Vector2(220f, 52f), Palette.Accent, Loc.T(Loc.K.ReplayStop), 22f, delegate
+				{
+					AutoPlay.StopRequested = true;
+					_progressStop.interactable = false;
+					_progressStop.GetComponent<Image>().color = Palette.Grey;
+					ModLog.Info("ChoiceWindow: Stop pressed during Load scene");
+				});
 
 			_progressDone = 0;
 			_progressTotal = Math.Max(1, total);
@@ -1976,8 +1987,12 @@ namespace Doorstop
 			float left = Mathf.Max(0f, (_progressTotal - _progressDone) * perScene - (now - _progressStepAt));
 			_progressFill.anchorMax = new Vector2(fraction, 1f);
 			int secs = Mathf.CeilToInt(left);
+			string time = secs < 60
+				? secs + "\u00a0" + Loc.T(Loc.K.UnitSec)
+				: (secs / 60) + "\u00a0" + Loc.T(Loc.K.UnitMin) + " " + (secs % 60) + "\u00a0" + Loc.T(Loc.K.UnitSec);
 			_progressText.text = string.Format(Loc.T(Loc.K.ReplayProgress), Math.Min(_progressDone + 1, _progressTotal), _progressTotal)
-				+ "  \u00b7  " + Mathf.FloorToInt(fraction * 100f) + "%  \u00b7  ~" + (secs / 60) + ":" + (secs % 60).ToString("00");
+				+ "  \u00b7  " + Mathf.FloorToInt(fraction * 100f) + "%  \u00b7  "
+				+ string.Format(Loc.T(Loc.K.ReplayLeft), "~" + time);
 		}
 
 		private static void HideProgress()
@@ -2080,6 +2095,11 @@ namespace Doorstop
 			// mirror is suppressed while AutoPlay runs).
 			Recorder.MirrorGameAutosave();
 			string at = AutoPlay.Story();
+			if (AutoPlay.LastStop == AutoPlay.Stop.User)
+			{
+				ModLog.Info("ChoiceWindow: load scene stopped by the player at " + at);
+				yield break;   // the game stays on the scene reached; nothing to explain
+			}
 			// a skipped scene can stop the replay on the target itself: the
 			// target is on screen, but an answer of the path was never given
 			LastReplayReached = at == plan.Target && skipped == null && offPath == null;
@@ -5928,6 +5948,15 @@ namespace Doorstop
 			ModLog.Info("DEV PICK: load dialog open for the first row: '" + _confirmText.text + "' / '"
 				+ _confirmDetail.text.Replace("\n", " | ") + "' / note '" + _confirmNote.text
 				+ "', shade pieces " + _shadePieces.Count + ", row marked " + (_markObj != null));
+		}
+
+		public static void DevPressStop()
+		{
+			ModLog.Info("DEV PICK: progress box " + (_progressStop != null ? "'" + _progressText.text + "', pressing Stop" : "not shown"));
+			if (_progressStop != null)
+			{
+				_progressStop.onClick.Invoke();
+			}
 		}
 
 		public static void DevBook()

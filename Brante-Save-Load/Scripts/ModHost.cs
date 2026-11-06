@@ -609,6 +609,17 @@ namespace Doorstop
 						catch (Exception) { }
 						yield return new WaitForSeconds(3f);
 						ChoiceWindow.DevPick(picks);
+						foreach (string pl in picks)
+						{
+							// "stopafter N": press the progress box's Stop N s into the replay
+							float wait;
+							if (pl.StartsWith("stopafter ", StringComparison.Ordinal)
+								&& float.TryParse(pl.Substring(10).Trim(), out wait))
+							{
+								yield return new WaitForSecondsRealtime(wait);
+								ChoiceWindow.DevPressStop();
+							}
+						}
 						if (Array.IndexOf(picks, "confirm") >= 0)
 						{
 							ChoiceWindow.Close();
