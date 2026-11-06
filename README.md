@@ -12,7 +12,12 @@ It also features a "tree view" visual of your playthrough so you can see your mi
 ## What it does
 
 - **Load any past scene (when you had to make a choice).** The mod records the exact game state at every scene, so you can go back to any choice you already reached: click the tree view tab at the top of the book (the medallion with linked boxes) and pick the choice. The save / load tab next to it (the medallion with a down and an up arrow) opens the list of saves.
-![The save / load screen.](Screenshot_2.jpg)
+<p>
+<img src="Screenshot_2a.jpg" width="49%" alt="The save / load screen: a table of saves (game autosaves and snapshots taken before each load), with the save type, date saved, chapter, age, year, season, turn, scene and choice of each, and a bin to delete it.">
+<img src="Screenshot_2b.jpg" width="49%" alt="The same screen after clicking a save: the clicked row stays bright with a red dashed outline while the rest is dimmed, and a box asks &quot;Load this save?&quot; showing the save's time and choice, with Load and Cancel buttons.">
+</p>
+<em>Left: the list of saves. Right: clicking a save marks its row and asks to load it.</em>
+
 
 - **A backup of your original save, and the game's saves keep working.** The first time you start the game with this version the mod copies your game save folder once to `Brante-Save-Load/Backups/<save>/` (with a `README.txt` saying how to put it back) and never touches that copy again. Your game saves then work normally: the game keeps its one rolling autosave in the same save folder, exactly as it would after loading an older save from its own menu, and a chapter restart after a death continues *your* timeline. A game from an old version that has no save ID gets one, named the way the game names a new game, the first time you load it through the mod.
 
@@ -34,7 +39,7 @@ It also features a "tree view" visual of your playthrough so you can see your mi
 
 ## Tree view
 
-![The tree view: scenes are shown as columns of available choices, the player's path is shown in red and yellow highlighted choices, a picked choice is shown by a red dashed outline and can be loaded using the "load scene" button at the top. Player stats are given at the bottom with stats not yet unlocked remaining greyed out.](Screenshot_3.jpg)
+![The tree view: scenes are shown as columns of available choices, the player's path is shown in red and yellow highlighted choices, a picked choice is shown by a red dashed outline and can be loaded using the "load scene" button at the top, and "Pick an answer here to go on" marks the next scene to pick in. Hovering a choice shows what it changes and requires; the stats it changes are marked in the stat rows at the bottom, green for a rise and red for a fall. Stats not yet unlocked remain greyed out.](Screenshot_3.jpg)
 
 Click the tree view tab on top of the book (the medallion with linked boxes) to see the whole story as a tree, from left to right.
 Scroll sideways with the mouse wheel.
