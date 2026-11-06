@@ -2430,10 +2430,19 @@ namespace Doorstop
 					// the hero at that scene as of now (it changes with the picks;
 					// a kept node follows the newest column)
 					ShowPopup(nrt, c.Text, "", effects, n.Col.Hero);
+					// and the stats this answer changes, marked in the stat rows
+					SceneEffects.Hero before = n.Col.Hero ?? SceneEffects.Now();
+					if (before != null)
+					{
+						SceneEffects.Hero after = before.Clone();
+						after.Apply(effects);
+						StatPanel.HighlightChanges(before, after);
+					}
 				}
 				else
 				{
 					HidePopup();
+					StatPanel.ClearHighlight();
 				}
 			};
 			StyleNode(n);
@@ -2632,6 +2641,13 @@ namespace Doorstop
 					continue;   // no answer here (yet): nothing joins it to the next scene
 				}
 				float fromY = RowCentre(fromRow);
+				// an answer lower than the next scene's last one: its spine
+				// (grey, as drawn) reaches down to meet the path
+				float spineEnd = RowCentre(_visible[i + 1].Count - 1);
+				if (fromY > spineEnd + 0.5f)
+				{
+					AddLine(_pathLayer, nextSpine, spineEnd, nextSpine, fromY, Palette.Fade(Palette.Muted, 0.55f), 3f);
+				}
 				AddLine(_pathLayer, x + TreeNodeX + TreeNodeW, fromY, nextSpine, fromY, Palette.Accent, 5f);
 				int toRow = ChosenRow(cols[i + 1], _visible[i + 1]);
 				if (toRow >= 0 && Mathf.Abs(RowCentre(toRow) - fromY) > 0.5f)
@@ -5636,6 +5652,29 @@ namespace Doorstop
 							ModLog.Info("DEV PICK: walk " + col.Scene + "=" + pick + " -> "
 								+ (w == null ? "loadable" : "NOT loadable: " + w));
 						}
+						continue;
+					}
+					else if (l.StartsWith("hover ", StringComparison.Ordinal))
+					{
+						// scroll the tree to that answer and hold its hover
+						string[] sc = l.Substring(6).Split('=');
+						NodeRef hit = _nodes.Find(n => n.Col.Scene == sc[0].Trim() && n.Choice.Name == sc[1].Trim());
+						if (hit == null)
+						{
+							ModLog.Info("DEV PICK: no drawn answer " + l.Substring(6));
+							continue;
+						}
+						int ci = _tree.FindIndex(c => c.Scene == hit.Col.Scene);
+						RectTransform content = _historyList as RectTransform;
+						float vw = _historyScroll.viewport != null ? _historyScroll.viewport.rect.width : 1000f;
+						float range = content.rect.width - vw;
+						if (range > 1f)
+						{
+							_historyScroll.horizontalNormalizedPosition = Mathf.Clamp01((30f + (ci - 1) * TreeColW) / range);
+						}
+						Canvas.ForceUpdateCanvases();
+						hit.Img.GetComponent<TreeHover>().OnHover(true);
+						ModLog.Info("DEV PICK: hovering " + l.Substring(6));
 						continue;
 					}
 					else if (l == "confirm")

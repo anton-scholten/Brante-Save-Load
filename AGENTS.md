@@ -268,6 +268,13 @@ community event sheet (`data/events.json`).
   scene after the dashed answer. A dashed answer in the scene on screen has
   nothing to load (the game is there): the button's hint says so
   (`Loc.K.OnThisScene`) instead of "nothing to load".
+- **Path lines and stat marks.** A picked answer lower than the next
+  scene's last answer gets that scene's grey spine extended down to it
+  (`DrawPath`, the spine's colour and width), so the red path never ends in
+  the air. Hovering an answer marks the stat rows it changes
+  (`StatPanel.HighlightChanges`: the hero at that scene before and after the
+  answer's effects; `Palette.Good`/`Bad` at 28%, the game's consequence-row
+  green and red); leaving the answer clears them.
 - **The load/delete dialog.** The question centred on top, the save's time
   and choice in a `Palette.Card` box, a note (delete, save now) under it. The
   row it is about keeps its colours and gets the red dashed outline: the dim
@@ -421,7 +428,7 @@ on use) and must be paired with `dev-autoload.txt`:
 | `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
 | `dev-table.txt` | open the save table, cycle the type filter through every category, log row counts, show/hide a type pop-up, page with "Show more" (a 10-row first page when the run has fewer rows) and check the Original row has no delete cell; with `dev-table-load.txt` also click the Original row and confirm its load; with `dev-table-open.txt` leave the table open afterwards (screenshots) |
 | `dev-restart.txt` | with `dev-autoload.txt` (and `dev-load.txt`): make the game's chapter restart call (`LoadChapterState`, as its Restart button does) and log the checkpoint and run state |
-| `dev-pick.txt` | with `dev-autoload.txt`: open the tree, apply `scene=ButtonDescriptionN` per line (`reset` = Reset path), log every column after each step (drawn colours, Load scene target, where the pick note is) and leave it open; `walk N`: pick the first open answer in each of the next N scenes, logging after each whether Load scene runs and why not; `load`: press Load scene and confirm (replays the path); `confirm`: then open the save table and click its first row, leaving the load dialog open |
+| `dev-pick.txt` | with `dev-autoload.txt`: open the tree, apply `scene=ButtonDescriptionN` per line (`reset` = Reset path), log every column after each step (drawn colours, Load scene target, where the pick note is) and leave it open; `walk N`: pick the first open answer in each of the next N scenes, logging after each whether Load scene runs and why not; `hover scene=answer`: scroll to that answer and hold its hover (pop-up and stat marks); `load`: press Load scene and confirm (replays the path); `confirm`: then open the save table and click its first row, leaving the load dialog open |
 | `dev-book.txt` | the book tabs (tree view, then save table), the save table, then the tree view: wheel, pop-ups, stat pop-up, a conflicting pick, chapter rule, a pick + its load plan, undo |
 | `dev-loadpath.txt` | with `dev-book.txt`: Load scene end to end; `back N` replays from another answer N scenes back, `chapter` from the chapter's start save, `start` from chapter 1 with an early change, `ahead` into the next chapter, `death` through a death, `offpath` a stop off the path, `first` the story's first scenes from a stand-in start (another run's chapter 1 save), `new` the same from a start built from the game's defaults, `file <name>` load that mod save as the table does (`file <name> norun`: with no run active) |
 | `dev-history.txt` | log the save's scene path (`ShowedScenesList`) |

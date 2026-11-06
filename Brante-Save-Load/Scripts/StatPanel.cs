@@ -30,6 +30,7 @@ namespace Doorstop
 			public Tab Tab;
 			public TextMeshProUGUI Name;
 			public float NameSize, ValueSize;   // before any fitting
+			public Image Mark;                  // behind the row while a hovered answer changes it
 		}
 
 		private static float _fitLimit;   // the row's drawn width, for FitText
@@ -537,6 +538,51 @@ namespace Doorstop
 				}
 				FitText(row, _fitLimit);
 			}
+		}
+
+		// While an answer is hovered in the tree: the stats it changes get a
+		// background, green for a rise and red for a fall (the colours of the
+		// game's own consequence rows), over what the row shows.
+		public static void HighlightChanges(SceneEffects.Hero before, SceneEffects.Hero after)
+		{
+			foreach (Row row in _rows)
+			{
+				int d = before != null && after != null ? after.Value(row.Param) - before.Value(row.Param) : 0;
+				if (d == 0)
+				{
+					if (row.Mark != null)
+					{
+						row.Mark.enabled = false;
+					}
+					continue;
+				}
+				RectTransform root = RowRoot(row);
+				if (root == null)
+				{
+					continue;
+				}
+				if (row.Mark == null)
+				{
+					GameObject go = new GameObject("ChangeMark", typeof(RectTransform));
+					go.transform.SetParent(root, false);
+					go.transform.SetAsFirstSibling();   // behind the icon and the text
+					RectTransform rt = go.GetComponent<RectTransform>();
+					rt.anchorMin = Vector2.zero;
+					rt.anchorMax = Vector2.one;
+					rt.offsetMin = new Vector2(-4f, _hoverInset.y);
+					rt.offsetMax = new Vector2(4f, -_hoverInset.x);
+					go.AddComponent<LayoutElement>().ignoreLayout = true;
+					row.Mark = go.AddComponent<Image>();
+					row.Mark.raycastTarget = false;
+				}
+				row.Mark.color = Palette.Fade(d > 0 ? Palette.Good : Palette.Bad, 0.28f);
+				row.Mark.enabled = true;
+			}
+		}
+
+		public static void ClearHighlight()
+		{
+			HighlightChanges(null, null);
 		}
 
 		// A light vertical rule between two categories, in the colour of the
