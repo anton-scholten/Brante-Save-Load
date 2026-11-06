@@ -1808,7 +1808,10 @@ namespace Doorstop
 			}
 			if (!PathChanged())
 			{
-				return Loc.T(Loc.K.NothingToLoad);
+				// the dashed answer is in the scene on screen: the game is
+				// already there, so there is nothing to load
+				TreeCol sel = string.IsNullOrEmpty(_selScene) ? null : _tree.Find(c => c.Scene == _selScene);
+				return Loc.T(sel != null && sel.Current ? Loc.K.OnThisScene : Loc.K.NothingToLoad);
 			}
 			string why;
 			return PlanLoad(out why) == null ? why : null;   // a scene with no answer, no save to start from
@@ -2589,7 +2592,7 @@ namespace Doorstop
 			for (int i = 0; i < sel; i++)
 			{
 				string pk;
-				if (cols[i].Upcoming && !_overrides.TryGetValue(cols[i].Scene, out pk)
+				if ((cols[i].Upcoming || cols[i].Current) && !_overrides.TryGetValue(cols[i].Scene, out pk)
 					&& string.IsNullOrEmpty(cols[i].PlayedChoice) && _visible[i].Count > 0)
 				{
 					needs = i;
@@ -5598,6 +5601,43 @@ namespace Doorstop
 					{
 						UndoSelections();
 					}
+					else if (l.StartsWith("walk", StringComparison.Ordinal))
+					{
+						// pick the first open answer in each scene after the
+						// furthest pick (or the scene on screen), N times,
+						// logging whether Load scene would run after each
+						int n = 10;
+						int.TryParse(l.Substring(4).Trim(), out n);
+						for (int step = 0; step < n; step++)
+						{
+							int from = string.IsNullOrEmpty(_selScene) ? _tree.FindIndex(c => c.Current)
+								: _tree.FindIndex(c => c.Scene == _selScene);
+							if (from < 0 || from + 1 >= _tree.Count)
+							{
+								break;
+							}
+							TreeCol col = _tree[from + 1];
+							string pick = null;
+							foreach (int k in VisibleChoices(col))
+							{
+								if (!col.Blocked.Contains(col.Choices[k].Name))
+								{
+									pick = col.Choices[k].Name;
+									break;
+								}
+							}
+							if (pick == null)
+							{
+								ModLog.Info("DEV PICK: walk: no open answer in " + col.Scene);
+								break;
+							}
+							SelectChoice(col.Scene, pick);
+							string w = LoadBlockedReason();
+							ModLog.Info("DEV PICK: walk " + col.Scene + "=" + pick + " -> "
+								+ (w == null ? "loadable" : "NOT loadable: " + w));
+						}
+						continue;
+					}
 					else if (l == "confirm")
 					{
 						continue;   // ModHost opens the table and calls DevConfirmFirst
@@ -5622,11 +5662,11 @@ namespace Doorstop
 
 		private static void DevDumpTree(string after)
 		{
-			string why;
-			LoadPlan plan = string.IsNullOrEmpty(_selScene) ? null : PlanLoad(out why);
+			string why = string.IsNullOrEmpty(_selScene) ? null : LoadBlockedReason();
+			bool plan = why == null;
 			ModLog.Info("DEV PICK: tree after '" + after + "' (" + _tree.Count + " column(s)), Load scene target "
 				+ (_selScene ?? "-") + ", pick note at " + (_pickNextScene ?? "-")
-				+ (string.IsNullOrEmpty(_selScene) ? "" : plan != null ? ", loadable" : ", not loadable"));
+				+ (string.IsNullOrEmpty(_selScene) ? "" : plan ? ", loadable" : ", not loadable: " + why));
 			for (int i = 0; i < _tree.Count; i++)
 			{
 				TreeCol c = _tree[i];

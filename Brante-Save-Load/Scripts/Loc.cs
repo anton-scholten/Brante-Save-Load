@@ -18,7 +18,7 @@ namespace Doorstop
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, Current, NothingYet,
 			KindAll, KindAutosave, KindCheckpoint, KindOriginal, ShowMore,
-			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath, PickNext,
+			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath, PickNext, OnThisScene,
 			PickConflict, NothingToLoad,
 			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick, ReplayOffPath, ReplayDeath, ReplayStopped,
 			ReplaySkipped, StartNotOnPath,
@@ -171,6 +171,17 @@ namespace Doorstop
 			AddPickNext(_ja, "先へ進むにはここで答えを選択");
 			AddPickNext(_ko, "계속하려면 여기서 답을 고르세요");
 			AddPickNext(_zh, "在此选择一个回答以继续");
+			AddOnThisScene(_en, "You are on this scene now: give this answer in the game, or pick answers in later scenes to load further.");
+			AddOnThisScene(_ru, "Вы сейчас в этой сцене: дайте этот ответ в игре или выберите ответы в следующих сценах, чтобы загрузить дальше.");
+			AddOnThisScene(_de, "Du bist gerade in dieser Szene: Gib diese Antwort im Spiel oder wähle Antworten in späteren Szenen, um weiter zu laden.");
+			AddOnThisScene(_fr, "Vous êtes dans cette scène : donnez cette réponse dans le jeu, ou choisissez des réponses dans les scènes suivantes pour charger plus loin.");
+			AddOnThisScene(_es, "Estás en esta escena: da esta respuesta en el juego o elige respuestas en escenas posteriores para cargar más adelante.");
+			AddOnThisScene(_it, "Sei in questa scena: dai questa risposta nel gioco, o scegli risposte nelle scene successive per caricare più avanti.");
+			AddOnThisScene(_pl, "Jesteś teraz w tej scenie: udziel tej odpowiedzi w grze albo wybierz odpowiedzi w dalszych scenach, aby wczytać dalej.");
+			AddOnThisScene(_tr, "Şu an bu sahnedesin: bu cevabı oyunda ver ya da daha ileri yüklemek için sonraki sahnelerde cevap seç.");
+			AddOnThisScene(_ja, "今このシーンにいます。ゲーム内でこの答えを選ぶか、後のシーンで答えを選んでさらに先をロードしてください。");
+			AddOnThisScene(_ko, "지금 이 장면에 있습니다. 게임에서 이 답을 고르거나, 더 나아가려면 이후 장면에서 답을 고르세요.");
+			AddOnThisScene(_zh, "你正处于这个场景：请在游戏中给出这个回答，或在之后的场景中选择回答以加载更远处。");
 			AddPossibleOn(_en, "Possible depending on {0}", "stats", "relationships", "characters' fates", "story events", "and");
 			AddPossibleOn(_ru, "Возможно в зависимости от: {0}", "характеристик", "отношений", "судеб персонажей", "событий сюжета", "и");
 			AddPossibleOn(_de, "Möglich, je nach {0}", "Werten", "Beziehungen", "Schicksalen der Figuren", "Ereignissen der Geschichte", "und");
@@ -341,6 +352,11 @@ namespace Doorstop
 		{
 			d[K.PickConflict] = conflict;
 			d[K.NothingToLoad] = nothing;
+		}
+
+		private static void AddOnThisScene(Dictionary<K, string> d, string text)
+		{
+			d[K.OnThisScene] = text;
 		}
 
 		private static void AddPickNext(Dictionary<K, string> d, string text)
