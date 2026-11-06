@@ -2,112 +2,65 @@
 
 <img src="Thumbnail.png" alt="thumbnail" width="200" align="right">
 
-A mod for [The Life and Suffering of Sir Brante](https://store.steampowered.com/app/1272160/) that lets you save scum.\
-It also features a "tree view" visual of your playthrough so you can see your mistakes and poor life decisions (in the game, that is).
+A mod for [The Life and Suffering of Sir Brante](https://store.steampowered.com/app/1272160/): save and load anywhere, go back to any choice you have made, and see your whole playthrough as a tree.
 
 <br clear="right">
 
 ![The game's main UI (a book) with the mod's two tabs on top of its left page, right of the year and chapter tabs: a medallion with a download and upload arrows (illustrating saving and loading) and the other with linked boxes (illustrating the tree view).](Screenshot_1_annotated.jpg)
 
-## What it does
-
-- **Load any past scene (when you had to make a choice).** The mod records the exact game state at every scene, so you can go back to any choice you already reached: click the tree view tab at the top of the book (the medallion with linked boxes) and pick the choice. The save / load tab next to it (the medallion with a down and an up arrow) opens the list of saves.
-<p>
-<img src="Screenshot_2a.jpg" width="49%" alt="The save / load screen: a table of saves (game autosaves and snapshots taken before each load), with the save type, date saved, chapter, age, year, season, turn, scene and choice of each, and a bin to delete it.">
-<img src="Screenshot_2b.jpg" width="49%" alt="The same screen after clicking a save: the clicked row stays bright with a red dashed outline while the rest is dimmed, and a box asks &quot;Load this save?&quot; showing the save's time and choice, with Load and Cancel buttons.">
-</p>
-<em>Left: the list of saves. Right: clicking a save marks its row and asks to load it.</em>
-
-
-- **A backup of your original save, and the game's saves keep working.** The first time you start the game with this version the mod copies your game save folder once to `Brante-Save-Load/Backups/<save>/` (with a `README.txt` saying how to put it back) and never touches that copy again. Your game saves then work normally: the game keeps its one rolling autosave in the same save folder, exactly as it would after loading an older save from its own menu, and a chapter restart after a death continues *your* timeline. A game from an old version that has no save ID gets one, named the way the game names a new game, the first time you load it through the mod.
-
-- **You can save whenever you want.** Use the **"Save now"** button at the bottom of the window. These saves are kept in `Brante-Save-Load/Runs/<main save ID>/`, separate from the game's saves so they never overwrite them.
-
-- **Everything you can go back to, in one list.** The window lists the game's own autosaves (copied as the game writes them), a snapshot taken before every rewind, your manual saves, and the backup of your original save. Click the **"Save type"** header to cycle between them; the other headers sort. Past choice points are not in this list - they are what the tree view is for.
-
-- **Nothing is lost by a rewind.** Before the mod loads an older save (or the game loads one from its own menu, or you restart a chapter after a death) it keeps the state you had, so the rewind can be undone from the same list.
-
-- **In your language.** The mod is translated into all eleven languages the game ships (English, Russian, German, French, Spanish, Italian, Polish, Turkish, Japanese, Korean, Simplified Chinese).
-
-- **Achievements still count.** Loading through the mod leaves Steam achievements switched on, as the game's own Continue does.
-
-- **The true death's CONTINUE works.** In the game as shipped, the CONTINUE button on the third to sixth pages after the hero's final death does nothing (an error inside the game), so the story never reaches its ending. The mod makes those pages go on to the next one, as the other pages do, through to the credits.
-
-- **Iron Man included.** The game disables its own save/load menu in Iron Man but the mod's window keeps working there, so a permadeath run can still be rewound (cheater!).
-
-- **A tree view of the whole story.** See below.
-
-## Tree view
-
-![The tree view: scenes are shown as columns of available choices, the player's path is shown in red and yellow highlighted choices, a picked choice is shown by a red dashed outline and can be loaded using the "load scene" button at the top, and "Pick an answer here to go on" marks the next scene to pick in. Hovering a choice shows what it changes and requires; the stats it changes are marked in the stat rows at the bottom, green for a rise and red for a fall. Stats not yet unlocked remain greyed out.](Screenshot_3.jpg)
-
-Click the tree view tab on top of the book (the medallion with linked boxes) to see the whole story as a tree, from left to right.
-Scroll sideways with the mouse wheel.
-The scrollbar also works as a progress bar showing how far you are in the story.
-
-- **Columns are scenes, boxes are choices.** It shows every scene you went through, then the scenes your picks lead to, until the end of the story. Change a choice and everything after it is worked out again. "Current" and "Upcoming" mark where you are, and scenes that may not happen say what they depend on (stats, relationships, characters' fates or story events).
-- **Your path is highlighted.** Your choices are in yellow, joined by a red line. Scenes played before the mod was installed have no recorded choice and say so.
-- **Hover a choice** to see its full text, what it changes and what it requires (green if your hero meets it, red if not). The stats it changes are also marked in the stat rows below, green for a rise and red for a fall.
-- **Click choices to build a path.** Click a picked choice again to undo it, or use the reset arrow next to the × to undo them all. Picks show at once. In a scene ahead, the answer you gave there before is kept as a pale yellow assumption until you pick; "Pick an answer here to go on" marks the scene that still needs a pick. Choices your hero can't take at that point are greyed out. If an earlier pick makes a later choice impossible, that choice turns red.
-- **Your stats** are shown at the bottom, grouped like the game's tabs. They show your hero after your last pick (green if higher than now, red if lower). Hover a stat to see the game's own description of it. Tabs not unlocked yet at that chapter are greyed out.
-- **Load scene** takes you to the scene with the red dashed outline, your furthest pick. Every scene before it needs a choice, and hovering the button tells you if something is missing or conflicting. The mod then plays through your choices by itself at forty times speed until it reaches that scene, starting from its own save or, before the mod was installed, from the start of the chapter. A death caused by one of your picked choices is accepted and it carries on (it never restarts the chapter). If the story goes somewhere your path doesn't cover, it stops there and opens the tree to tell you why.
-
 ## Install
 
 ```sh
-./tools/install.sh              # symlink into the game folder
-./tools/install.sh --copy       # copy instead
-./tools/install.sh --uninstall  # remove the mod, keep your saves
+./tools/install.sh              # finds the game in your Steam libraries
 ```
 
-The installer finds the game in your Steam libraries (distro package, Flatpak or Snap). Set `BRANTE_DIR` if your install isn't found automatically.
-No .NET SDK is needed: the built DLL is in the repo. If you have one (≥ 6), the installer rebuilds it first.
-Check that it worked by looking at `Brante-Save-Load/Brante-Save-Load.log` in the game folder after starting the game.
+Set `BRANTE_DIR` if the game isn't found. No .NET SDK needed: the built DLL is in the repo.
+On Windows without bash, copy `Brante-Save-Load/`, `doorstop/doorstop_config.ini` and `vendor/doorstop/winhttp.dll` next to the game's `.exe`.
+If the mod doesn't start under Proton, set the Steam launch option to `WINEDLLOVERRIDES=winhttp=n,b %command%`.
 
-On Windows without bash, copy these into the game folder (next to `The Life and Suffering of Sir Brante.exe`):
+## Use
 
-1. the `Brante-Save-Load/` folder,
-2. `doorstop/doorstop_config.ini`,
-3. `vendor/doorstop/winhttp.dll`.
+Two tabs appear on top of the book: **save / load** (the arrows) and **tree view** (the linked boxes).
 
-Under Proton (Linux / Steam Deck) the installer sets everything up. If the mod doesn't start, set the game's launch option in Steam to:
+### Save / Load
 
-```
-WINEDLLOVERRIDES=winhttp=n,b %command%
-```
+<p>
+<img src="Screenshot_2a.jpg" width="49%" alt="The save / load screen: a table of saves (game autosaves and snapshots taken before each load), with the save type, date saved, chapter, age, year, season, turn, scene and choice of each, and a button to delete the save.">
+<img src="Screenshot_2b.jpg" width="49%" alt="The same screen showing the confirmation dialogue after clicking a save to load it. The clicked row stays bright with a red dashed outline while the rest is dimmed.">
+</p>
 
-### Uninstall
+- Click a save to load it; the bin deletes it. **Save now** adds a save of your own.
+- **Save type** (first header) filters: game autosaves, saves made before each load, your own saves, and the backup of your original save. Other headers sort.
+- Every load first saves where you were, so any load can be undone.
 
-`--uninstall` only removes what the mod added to the game folder. Your game saves, the mod's saves and the backup all stay.
-Two extra flags:
+### Tree view
 
-- `--restore-backup` puts the backup of your original save back (the current one is moved to `Brante-Save-Load/PreRestore/` first, so nothing is lost).
-- `--purge` deletes all of the mod's saves and backups.
+![The tree view: scenes are shown as columns of available choices, the player's path is shown in red and yellow highlighted choices, a picked choice is shown by a red dashed outline and can be loaded using the "load scene" button at the top, and "Pick an answer here to go on" marks the next scene to pick in. Hovering a choice shows what it changes and requires; the stats it changes are marked in the stat rows at the bottom, green for a rise and red for a fall. Stats not yet unlocked remain greyed out.](Screenshot_3.jpg)
 
-## Known limitations
+- Columns are scenes, boxes are choices; your path is yellow and red. Scenes after the one you're on are predicted.
+- **Hover** a choice to see what it changes and requires; the stats it changes light up below (green up, red down).
+- **Click** choices to build a new path. Click again to undo; the arrow by the × resets all. Greyed choices can't be taken; red ones conflict with an earlier pick.
+- **Load scene** plays your path by itself (at 40× speed) up to the dashed choice. Every scene before it needs a choice; "Pick an answer here to go on" shows which one is missing.
 
-- Load scene needs a starting point before your first changed choice: a mod save, the start of that chapter, or the very start of the story (built from the game's own new-game defaults if no chapter 1 save exists at all). For scenes played before the mod was installed, you need to pick every choice from that starting point.
-- The scenes ahead are a prediction: the mod plays your picks (or the first open choice) forward through the story's own rules, but a few stat changes the game makes between scenes aren't in its tables, so far-off scenes and greyed-out choices are a close estimate.
-  When Load scene meets a scene the prediction didn't have, it stops there so you can pick its choice and load again.
-- Load scene takes about 2 to 3 seconds per scene to replay (most of it the game loading each scene).
-- The list keeps the newest 100 autosaves and 100 pre-rewind snapshots per playthrough; older ones are dropped. Manual saves, choice points and the backup of your original save are never removed.
-- The list shows 120 rows at a time; the **"Show more"** row loads the rest.
-- Some stats (Love, Rule, Volition, Tolerance, Wrath, Control, Cruelty, Weight, Contention) have no description in the game itself.
-- The game's saves don't sync with Steam Cloud (the developer has it turned off). Copy the `Saves` folder by hand to move them between computers.
+## Good to know
 
-## How it works
+- Your original save is backed up once to `Brante-Save-Load/Backups/`; the game's own saves keep working as normal.
+- Achievements stay on. Works in Iron Man. In all eleven of the game's languages.
+- Fixes a game bug: the CONTINUE button on the true-death pages no longer gets stuck before the ending.
+- The predicted scenes are close but not exact (a few stat changes aren't in the game's tables). If Load scene meets a scene it didn't expect, it stops there so you can pick and load again.
+- Load scene takes about 2-3 s per scene.
 
-The game keeps its whole state in one object and has a public method to restore it.
-The mod saves that object whenever a choice is on screen and loads it back later. It's exact, randomness included, since the dice have already been rolled by the time you see the choice.
-It also copies the game's own autosave as the game writes it, and keeps a snapshot of the live state before every rewind, so a rewind can itself be undone.
-The tree view uses five tables extracted from the game (`scene-flow.tsv`, `scene-texts.tsv`, `scene-effects.tsv`, `scene-objectives.tsv` and `scene-params.tsv`). After a game update, regenerate them with the scripts in `tools/` (see `docs/BRANCHES.md`).
-More details in [docs/FINDINGS.md](docs/FINDINGS.md), [MODDING.md](MODDING.md) for a compact how-to, and [AGENTS.md](AGENTS.md) for working on the mod.
-
-## Building
+## Uninstall
 
 ```sh
-./tools/build.sh        # compiles against the game's own DLLs
+./tools/install.sh --uninstall                    # keeps all saves
+./tools/install.sh --uninstall --restore-backup   # also puts your original save back
+./tools/install.sh --uninstall --purge            # also deletes the mod's saves
 ```
+
+## More
+
+[docs/FINDINGS.md](docs/FINDINGS.md) explains how the game and the mod work, [MODDING.md](MODDING.md) is a compact how-to, and [AGENTS.md](AGENTS.md) covers working on the mod (build with `./tools/build.sh`).
 
 ## Licence
 
