@@ -139,11 +139,12 @@ namespace Doorstop
 		}
 	}
 
-	// The history tree is wide, not tall: while it fits vertically, the mouse
-	// wheel scrolls it sideways (wheel down = towards the newest column).
-	// Unity's ScrollRect only does that when vertical scrolling is switched
-	// off, and then the wrong way round. Sits on the viewport, so it gets the
-	// event before the ScrollRect above it.
+	// The history tree is wide, not tall: it never scrolls vertically (the
+	// tree area is as tall as its tallest column), and the mouse wheel
+	// scrolls it sideways (wheel down = towards the newest column). Unity's
+	// ScrollRect does that by itself with vertical scrolling off, but the
+	// wrong way round. Sits on the viewport, so it gets the event before the
+	// ScrollRect above it.
 	public sealed class TreeWheel : MonoBehaviour, IScrollHandler
 	{
 		public ScrollRect Scroll;
@@ -155,8 +156,7 @@ namespace Doorstop
 			{
 				return;
 			}
-			bool fitsVertically = Scroll.content.rect.height <= Scroll.viewport.rect.height + 0.5f;
-			if (fitsVertically && Mathf.Abs(eventData.scrollDelta.y) > Mathf.Abs(eventData.scrollDelta.x))
+			if (Mathf.Abs(eventData.scrollDelta.y) > Mathf.Abs(eventData.scrollDelta.x))
 			{
 				// Columns are 360 wide: a notch moves a third of one.
 				eventData.scrollDelta = new Vector2(eventData.scrollDelta.y * WheelColumns, 0f);
@@ -1005,7 +1005,7 @@ namespace Doorstop
 			_historyScrollRt = srt;
 			ScrollRect sc = scroll.AddComponent<ScrollRect>();
 			sc.horizontal = true;
-			sc.vertical = true;
+			sc.vertical = false;   // as tall as the tallest column (LayoutTreeArea)
 			sc.movementType = ScrollRect.MovementType.Clamped;
 			sc.scrollSensitivity = 30f;
 
@@ -2176,8 +2176,11 @@ namespace Doorstop
 		// opens its pop-up; clicking picks it for the path (SelectChoice).
 		private const float TreeColW = 360f;
 		private const float TreeNodeW = 290f;
-		private const float TreeNodeH = 48f;
-		private const float TreeRowH = 58f;
+		// An answer box is one line of 17-unit text with a little air (it was
+		// 48 in 58-unit rows): the tree's tallest column must fit without
+		// vertical scrolling and leave the stats room.
+		private const float TreeNodeH = 34f;
+		private const float TreeRowH = 40f;
 		private const float TreeNodeX = 46f;
 		private const float TreeTop = 102f;     // first answer row
 		private const float TreeHeadY = 34f;    // column titles (chapter names above)
@@ -2735,16 +2738,11 @@ namespace Doorstop
 			{
 				return;
 			}
-			// The stats get the room they need to be read (StatPanel.PreferredHeight),
-			// as long as the tree keeps four answers in view; the tree has
-			// the rest and scrolls a taller column.
+			// The tree never scrolls vertically: it is as tall as its tallest
+			// column, and the stats have the rest (laid out as large as fits).
 			float box = _historyBox.rect.height;
 			float both = box - TreeAreaTop - TreeAreaBottom - 12f;
-			float treeWants = contentHeight + 22f;
-			float treeFloor = Mathf.Min(treeWants, TreeTop + 4 * TreeRowH + 72f + 22f);
-			float statsH = Mathf.Max(168f,
-				StatPanel.PreferredHeight(_historyBox.rect.width - 64f, both - Mathf.Max(200f, treeFloor)));
-			float treeH = Mathf.Clamp(treeWants, 200f, Mathf.Max(200f, both - statsH));
+			float treeH = Mathf.Clamp(contentHeight + 22f, 200f, Mathf.Max(200f, both - 168f));
 			_historyScrollRt.anchorMin = new Vector2(0f, 1f);
 			_historyScrollRt.anchorMax = new Vector2(1f, 1f);
 			_historyScrollRt.pivot = new Vector2(0.5f, 1f);

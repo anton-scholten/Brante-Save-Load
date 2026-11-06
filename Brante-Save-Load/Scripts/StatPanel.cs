@@ -306,9 +306,6 @@ namespace Doorstop
 
 		private const float Header = 50f;     // a tab's title, and a locked tab's note under it
 		private const float ColumnGap = 20f;  // between two columns' drawn rows
-		// The scale the stats ask room for: about 70% of the game's own row
-		// (the old fit-in-what-is-left gave 0.58 and smaller, hard to read).
-		private const float ReadableScale = 0.7f;
 
 		// The game's row as the panel lays it out: its box, the part of it that
 		// draws (icon to slider end, text top to slider foot) and the distance
@@ -356,42 +353,6 @@ namespace Doorstop
 				columns += Mathf.CeilToInt(t.Stats.Count / (float)rows);
 			}
 			return (m.Right - m.Left) * scale <= width / Mathf.Max(1, columns) - ColumnGap;
-		}
-
-		// The height the stats want in an area `width` wide: the fewest rows
-		// to a column that let the columns fit at ReadableScale (or the
-		// largest scale below it that fits in `max`). The tree view gives
-		// them this much and scrolls its own taller columns.
-		public static float PreferredHeight(float width, float max)
-		{
-			GameObject template = Template();
-			if (template == null)
-			{
-				return max;
-			}
-			List<Tab> tabs = Tabs();
-			int most = 1;
-			foreach (Tab t in tabs)
-			{
-				most = Mathf.Max(most, t.Stats.Count);
-			}
-			Metrics m = Measure(template);
-			for (float s = ReadableScale; s >= 0.3f; s -= 0.02f)
-			{
-				for (int rows = 1; rows <= most; rows++)
-				{
-					if (FitsWidth(tabs, m, s, rows, width))
-					{
-						float h = Header + rows * m.Pitch * s + 10f;
-						if (h <= max)
-						{
-							return h;
-						}
-						break;
-					}
-				}
-			}
-			return max;
 		}
 
 		// From the top of the row's box, where what it draws starts and ends:
