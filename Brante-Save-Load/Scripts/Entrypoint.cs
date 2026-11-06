@@ -308,14 +308,36 @@ namespace Doorstop
 			Recorder.RecoverId(__result, __0);
 		}
 
-		private static void GameLoadPrefix(object __instance, int __0)
+		// The menu's save slot (SaveSlotBehaviour.OnPointerClick) calls
+		// LoadGame(int) on every click and nothing stops a second one: a double
+		// click loaded the save twice, the scene opened twice per load (four
+		// copies), and the game sat on the timeline screen. The game's own load
+		// screen needs seconds anyway, so a second call within LoadGuardSeconds
+		// of the first is dropped.
+		private const float LoadGuardSeconds = 3f;
+		private static float _lastMenuLoad = -100f;
+
+		private static bool GameLoadPrefix(object __instance, int __0, out bool __state)
 		{
+			float now = Time.realtimeSinceStartup;
+			__state = now - _lastMenuLoad < LoadGuardSeconds;
+			if (__state)
+			{
+				ModLog.Info("LoadGame(" + __0 + ") again " + (now - _lastMenuLoad).ToString("0.00")
+					+ " s after the last one (a double click) - ignored");
+				return false;
+			}
+			_lastMenuLoad = now;
 			Recorder.BeforeGameMenuLoad(__instance, __0);
+			return true;
 		}
 
-		private static void GameLoadPostfix()
+		private static void GameLoadPostfix(bool __state)
 		{
-			Recorder.MarkGameSave(false);
+			if (!__state)
+			{
+				Recorder.MarkGameSave(false);
+			}
 		}
 
 		private static void ChapterLoadPrefix(int __1)

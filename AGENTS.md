@@ -266,6 +266,12 @@ community event sheet (`data/events.json`).
   when the start save cannot be simulated. Stats the game changes outside answer
   effects are not simulated, so this is a prediction: the ordered replay is
   still the final check.
+- **A double click on a menu save loads once.** The game's save slot
+  (`SaveSlotBehaviour.OnPointerClick`) calls `LoadGame(int)` on every click
+  with no guard; two clicks 0.14 s apart loaded the save twice, opened the
+  scene four times and left the game on the timeline screen. `GameLoadPrefix`
+  drops a second `LoadGame(int)` within 3 s of the first (logged "a double
+  click").
 - **The true-death pages are fixed (a game bug).** `FourthDeath_3`..`_6`
   wire CONTINUE to `FourthDeathContinueButtonController.Button_Click`, whose
   `DeathObjective` is empty in the shipped scenes: `SetAchievementInfo` throws,
