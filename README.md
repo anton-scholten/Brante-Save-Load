@@ -42,6 +42,13 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 - **Click** choices to build a new path. Click again to undo; the arrow by the × resets all. Greyed choices can't be taken; red ones conflict with an earlier pick.
 - **Load scene** plays your path by itself (at 40× speed) up to the dashed choice, with a progress bar and time left; the game can't be clicked meanwhile, and **Stop** ends it on the scene it has reached. Every scene before it needs a choice; "Pick an answer here to go on" shows which one is missing.
 
+### Fast-forward
+
+![Loading a path of different choices selected using the tree view will show this loading screen as the game is fast-forwarded in the background. A progress bar and time estimate is given, as well as a stop button.](Screenshot_4.jpg)
+
+- Progress and time estimates given during a fast-forward when you load a path using the tree view.
+- A **Stop** button is available to drop you into the current scene.
+
 ## Good to know
 
 - Your original save is backed up once to `Brante-Save-Load/Backups/`; the game's own saves keep working as normal.
