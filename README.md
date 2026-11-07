@@ -11,14 +11,56 @@ It also features a "tree view" visual of your playthrough so you can see your mi
 
 ## Install
 
+The mod is already built (the DLL is in the repo), so no .NET SDK is needed.
+
+### 1. Get the repo
+
 ```sh
+git clone https://github.com/anton-scholten/Brante-Save-Load.git
+```
+
+Without git, use **Code → Download ZIP** on GitHub and unzip it.
+
+### 2a. Linux (Steam / Proton)
+
+```sh
+cd Brante-Save-Load
 ./tools/install.sh
 ```
 
+The script finds the game, links the mod folder into it and sets up Proton so the game starts with the mod.
+Keep the repo where it is: the game folder links to it.
 Set `BRANTE_DIR` if the game isn't found.
-No .NET SDK needed: the built DLL is in the repo.
-On Windows without bash, copy `Brante-Save-Load/`, `doorstop/doorstop_config.ini` and `vendor/doorstop/winhttp.dll` next to the game's `.exe`.
-If the mod doesn't start under Proton, set the Steam launch option to `WINEDLLOVERRIDES=winhttp=n,b %command%`.
+If the mod doesn't start, set the Steam launch option to `WINEDLLOVERRIDES=winhttp=n,b %command%`.
+
+### 2b. Windows
+
+Open the game's folder: in Steam, right-click the game → **Manage** → **Browse local files**.
+It holds `The Life and Suffering of Sir Brante.exe`.
+
+Copy these three things from the repo into that folder, next to the `.exe`:
+
+| From the repo | What it is |
+|---|---|
+| `Brante-Save-Load\` | the **folder**, copied whole |
+| `doorstop\doorstop_config.ini` | **just the file**, not the `doorstop` folder |
+| `vendor\doorstop\winhttp.dll` | **just the file**, not the `vendor` folder |
+
+The game folder should then look like this:
+
+```
+The Life and Suffering of Sir Brante\
+  The Life and Suffering of Sir Brante.exe
+  Brante-Save-Load\
+  doorstop_config.ini
+  winhttp.dll
+  ...the game's own files
+```
+
+The two files only work loose next to the `.exe`: inside a subfolder the mod won't load.
+Use `doorstop\doorstop_config.ini`, not the one in `vendor\doorstop\`.
+
+Start the game as usual. Two new tabs on top of the book mean the mod is running.
 
 ## Use
 
