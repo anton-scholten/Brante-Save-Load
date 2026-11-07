@@ -281,9 +281,10 @@ fi
 if [[ "$MODE" == "copy" ]]; then
     rm -rf "$DEST"
     mkdir -p "$DEST"
-    cp -f "$SRC/$MOD_NAME.dll" "$SRC/0Harmony.dll" "$DEST/"
-    [[ -f "$SRC/$MOD_NAME.log" ]] && rm -f "$DEST/$MOD_NAME.log"
-    echo "Copied mod to $DEST"
+    # the DLLs and the game data the mod reads next to its DLL (scene
+    # texts, flow, effects, params, objectives); not the source or the log
+    cp -f "$SRC/$MOD_NAME.dll" "$SRC/0Harmony.dll" "$SRC"/*.tsv "$DEST/"
+    echo "Copied mod to $DEST ($(ls "$DEST" | wc -l) files)"
 else
     [[ -L "$DEST" ]] && rm "$DEST"
     [[ -d "$DEST" ]] && rm -rf "$DEST"
