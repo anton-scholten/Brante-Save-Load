@@ -11,15 +11,13 @@ It also features a "tree view" visual of your playthrough so you can see your mi
 
 ## Install
 
-The mod is already built (the DLL is in the repo), so no .NET SDK is needed.
-
 ### 1. Get the repo
+
+Use **Code → Download ZIP** on GitHub and unzip it or if you have `git`:
 
 ```sh
 git clone https://github.com/anton-scholten/Brante-Save-Load.git
 ```
-
-Without git, use **Code → Download ZIP** on GitHub and unzip it.
 
 ### 2a. Linux (Steam / Proton)
 
@@ -29,22 +27,22 @@ cd Brante-Save-Load
 ```
 
 The script finds the game, links the mod folder into it and sets up Proton so the game starts with the mod.
-Keep the repo where it is: the game folder links to it.
+Keep the repo where it is since the game's folder links to it.
 Set `BRANTE_DIR` if the game isn't found.
 If the mod doesn't start, set the Steam launch option to `WINEDLLOVERRIDES=winhttp=n,b %command%`.
 
 ### 2b. Windows
 
 Open the game's folder: in Steam, right-click the game → **Manage** → **Browse local files**.
-It holds `The Life and Suffering of Sir Brante.exe`.
+Go into the folder with `The Life and Suffering of Sir Brante.exe`.
 
 Copy these three things from the repo into that folder, next to the `.exe`:
 
-| From the repo | What it is |
+| From the repo | What you do |
 |---|---|
-| `Brante-Save-Load\` | the **folder**, copied whole |
-| `doorstop\doorstop_config.ini` | **just the file**, not the `doorstop` folder |
-| `vendor\doorstop\winhttp.dll` | **just the file**, not the `vendor` folder |
+| `Brante-Save-Load\` | copy the whole folder |
+| `doorstop\doorstop_config.ini` | copy just the file |
+| `vendor\doorstop\winhttp.dll` | copy just the file |
 
 The game folder should then look like this:
 
@@ -54,13 +52,13 @@ The Life and Suffering of Sir Brante\
   Brante-Save-Load\
   doorstop_config.ini
   winhttp.dll
-  ...the game's own files
+  ... other game files
 ```
 
-The two files only work loose next to the `.exe`: inside a subfolder the mod won't load.
-Use `doorstop\doorstop_config.ini`, not the one in `vendor\doorstop\`.
+### Play the game
 
-Start the game as usual. Two new tabs on top of the book mean the mod is running.
+Start the game as usual.
+Two new tabs on top of the book mean the mod is running.
 
 ## Use
 
@@ -79,7 +77,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 ![The tree view: each scene is shown as a column with its available choices underneath it. The player's path is shown in red with yellow highlighted choices. A choice picked is shown by a red dashed outline and can be loaded using the "load scene" button at the top (if there is a path of choices leading up to that scene). Hovering a choice shows what stats it changes or requires.](Screenshot_3.jpg)
 
-- Columns are scenes, boxes are choices; your path is in red, with each cchoice made highlighted in yellow. Future scenes are predicted so only those that can happen are shown and your stats automatically lists the choices you can take.
+- Columns are scenes, boxes are choices; your path is in red, with each choice made highlighted in yellow. Future scenes are predicted so only those that can happen are shown and your stats automatically lists the choices you can take.
 - **Hover** a choice to see what it changes and requires; the stats it changes light up below (green up, red down).
 - **Click** choices to build a new path. Click again to undo; the arrow by the × resets all. Greyed choices can't be taken; red ones conflict with an earlier pick.
 - **Load scene** plays your path by itself (at 40× speed) up to the dashed choice, with a progress bar and time left; the game can't be clicked meanwhile, and **Stop** ends it on the scene it has reached. Every scene before it needs a choice; "Pick an answer here to go on" shows which one is missing.
