@@ -96,14 +96,13 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 ![The Family tab under the tree: the Brante family laid out as a family tree (Gregor; Robert and Lydia; Stephan, Nathan and Gloria), each with portrait, relation and status. Hovering a choice marks the relations it changes.](Screenshot_3b.jpg)
 ![The Relations tab under the tree: everyone else the hero has met, in three columns by estate (Nobles, Clergy, Common Folk), with relation and status.](Screenshot_3c.jpg)
 
-- Columns are scenes, boxes are choices; your path is in red, with each choice made highlighted in yellow. Scenes ahead are predicted from your path, so only those that can happen are shown, with the choices your stats will allow.
-- **Hover** a choice to see what it changes and requires; the stats it changes light up below (green up, red down).
-- **Hover** a scene's name to read the text beside its choices. On the Family and Relations tabs, a pale "ghost" row shows someone you would meet by the scene or choice you hover.
-- Events that happen without a choice but change your stats (Family Strife, the revolt's incidents, the finals, …) get a column of their own where they happen, played or predicted, with one box named after the event; hover it to read how it opens and what it changes, click it to load up to the moment it happens.
-- Under the tree, **Stats**, **Family** and **Relations** tabs show your stats or your relations with each character along the path (portrait, -5 to +5, and their status: dead, exiled, …): the family as its family tree, everyone else by estate (nobles, clergy, common folk).
-- In chapters 1 and 2 the chapter-3 skills (Diplomacy, Valor, …) are shown faded with the values your stats would give them when chapter 3 starts, so you can see what an early choice does there.
-- **Click** choices to build a new path. Click again to undo; the arrow by the × resets all. Greyed choices can't be taken; red ones conflict with an earlier pick.
-- **Load scene** plays your path by itself (at 40× speed) up to the dashed choice or event, with a progress bar and time left; the game can't be clicked meanwhile, and **Stop** ends it on the scene it has reached. Every scene before it needs a choice; "Pick an answer here to go on" shows which one is missing.
+- Columns are scenes, boxes are choices. Your path is red, your choices yellow. Scenes ahead are predicted.
+- **Hover** a choice or scene name to see its text and what it changes.
+- **Click** choices to make a new path (click again to undo, the arrow resets). **Load scene** plays it for you.
+- Events (scenes without a choice) have their own column; click one to load it.
+- **Stats / Family / Relations** tabs show where you stand at the end of the path. Pale rows are people you would meet.
+- Greyed choices aren't open to you; red ones clash with an earlier pick.
+- In chapters 1–2, the faded chapter-3 skills show what your stats will turn into.
 
 ### Fast-forward
 
