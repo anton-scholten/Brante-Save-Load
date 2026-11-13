@@ -216,6 +216,7 @@ namespace Doorstop
 			Vector2 natural = m.Natural;
 			float contentTop = m.Top, contentLeft = m.Left, contentRight = m.Right;
 			_hoverInset = new Vector2(m.Top, natural.y - m.Bottom);
+			_drawnX = new Vector2(contentLeft, contentRight);
 			float pitch = m.Pitch;
 
 			float width = area.rect.width;
@@ -408,6 +409,19 @@ namespace Doorstop
 		}
 
 		private static Vector2 _hoverInset;   // (top, bottom) of the row box left out of its hover area
+		// (left, right) of what a row draws (icon to slider end) in its box:
+		// the box is wider, and reaches into the next column
+		private static Vector2 _drawnX;
+
+		// Fits `rt` (a child of a row) over what the row draws, `pad` wider on
+		// each side, from the row box's left edge.
+		private static void OverDrawn(RectTransform rt, float pad)
+		{
+			rt.anchorMin = Vector2.zero;
+			rt.anchorMax = new Vector2(0f, 1f);
+			rt.offsetMin = new Vector2(_drawnX.x - pad, _hoverInset.y);
+			rt.offsetMax = new Vector2(_drawnX.y + pad, -_hoverInset.x);
+		}
 
 		private static readonly Dictionary<Row, RectTransform> _roots = new Dictionary<Row, RectTransform>();
 
@@ -639,10 +653,7 @@ namespace Doorstop
 					go.transform.SetParent(root, false);
 					go.transform.SetAsFirstSibling();   // behind the icon and the text
 					RectTransform rt = go.GetComponent<RectTransform>();
-					rt.anchorMin = Vector2.zero;
-					rt.anchorMax = Vector2.one;
-					rt.offsetMin = new Vector2(-4f, _hoverInset.y);
-					rt.offsetMax = new Vector2(4f, -_hoverInset.x);
+					OverDrawn(rt, 4f);   // the stat only, not the rest of its box
 					go.AddComponent<LayoutElement>().ignoreLayout = true;
 					row.Mark = go.AddComponent<Image>();
 					row.Mark.raycastTarget = false;
@@ -681,11 +692,9 @@ namespace Doorstop
 			GameObject go = new GameObject("Hover", typeof(RectTransform));
 			go.transform.SetParent(root, false);
 			RectTransform rt = go.GetComponent<RectTransform>();
-			rt.anchorMin = Vector2.zero;
-			rt.anchorMax = Vector2.one;
-			// over what the row shows only: the boxes of stacked rows overlap
-			rt.offsetMin = new Vector2(0f, _hoverInset.y);
-			rt.offsetMax = new Vector2(0f, -_hoverInset.x);
+			// over what the row shows only: the boxes of stacked rows overlap,
+			// and a box reaches into the next column
+			OverDrawn(rt, 0f);
 			// the row lays its children out in a row: keep this one out of it,
 			// or it is squeezed to nothing and never hovered
 			go.AddComponent<LayoutElement>().ignoreLayout = true;

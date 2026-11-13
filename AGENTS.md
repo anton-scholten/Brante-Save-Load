@@ -274,7 +274,9 @@ community event sheet (`data/events.json`).
   the air. Hovering an answer marks the stat rows it changes
   (`StatPanel.HighlightChanges`: the hero at that scene before and after the
   answer's effects; `Palette.Good`/`Bad` at 28%, the game's consequence-row
-  green and red); leaving the answer clears them.
+  green and red); leaving the answer clears them. The mark and a row's
+  hover area cover what the row draws (`StatPanel.OverDrawn`: icon to
+  slider end), not its 375-unit box, which reaches into the next column.
 - **Load scene shows its progress and blocks the player.** `ReplayTo` puts
   up a box on its own canvas (sorting order 9000, `DontDestroyOnLoad`) over a
   dim that catches every click; `AutoPlay` clicks through `ExecuteEvents`, not
