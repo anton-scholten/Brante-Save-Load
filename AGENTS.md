@@ -336,6 +336,16 @@ community event sheet (`data/events.json`).
   (list all 24 characters any scene unlocks: the layout's worst case; one
   playthrough meets at most 19 - 3014 saves agree - and all 24 fit at
   0.83 at 1080p, more than the stat rows' 0.7).
+- **Hovers show what is ahead.** A column title's hover (`TreeHover` on the
+  "Head" label, the column looked up in `_drawCols` by scene, as a kept
+  column outlives its `TreeCol`) shows `SceneText`: the scene's last
+  `<scene>_Text_N` page - the left page beside the answers ("Who will you
+  spend your last few hours at home with?" in `02.12.01`) - cut near 600
+  characters, an answer-less scene's `EventText`, and its opening changes.
+  Hovering a title or an answer also lists, on the Family/Relations tab,
+  the characters met by then that the panel does not list as pale ghost
+  rows (`StatPanel.Ghosts`, alpha 0.3, values from that hero); leaving
+  clears them (`ClearHighlight`). `dev-pick.txt` takes `hoverhead <scene>`.
 - **The tree never scrolls vertically.** `LayoutTreeArea` makes it as tall as
   its tallest column (answer boxes `TreeNodeH` 34 in `TreeRowH` 40 rows, the
   17-unit text unchanged) and gives the stats the rest (~0.7 of the game's row

@@ -34,6 +34,7 @@ namespace Doorstop
 			public Character Person;            // a Family/Relations row: the character (Param null)
 			public Image Icon;
 			public CharacterStatus Status;      // the status on display
+			public bool Ghost;                  // met only at the hovered answer or scene
 		}
 
 		// What the panel under the tree shows: the stats, the family or the
@@ -48,6 +49,11 @@ namespace Doorstop
 		private static SceneEffects.Hero _lastShown, _lastNow;
 		private static int _lastChapter;
 		private static string _peopleKey;
+		// While an answer or a scene title is hovered: the characters the hero
+		// would have met by then and has not at the scene shown, drawn as
+		// pale "ghost" rows (values from _ghostFrom).
+		private static SceneEffects.Hero _ghostFrom;
+		private static readonly List<CharacterList> _ghostList = new List<CharacterList>();
 		private static float _statScale = 0.7f;   // the stat rows' scale, the last time they were laid out     // the characters the content was built for
 
 		private static float _fitLimit;   // the row's drawn width, for FitText
@@ -598,12 +604,48 @@ namespace Doorstop
 				int d = string.CompareOrdinal(a.Key, b.Key);
 				return d != 0 ? d : found.IndexOf(a) - found.IndexOf(b);
 			});
-			return sorted.ConvertAll(kv => kv.Value);
+			List<Character> list = sorted.ConvertAll(kv => kv.Value);
+			foreach (CharacterList g in _ghostList)
+			{
+				Character c = PersonAsset(g);
+				if (c != null && !list.Contains(c))
+				{
+					list.Add(c);
+				}
+			}
+			return list;
+		}
+
+		// The ghost rows for a hovered answer or scene: who `at` has met that
+		// the panel does not list. Rebuilds the rows when that changes.
+		public static void Ghosts(SceneEffects.Hero at)
+		{
+			if (Showing == Mode.Stats || _lastShown == null || at == null || at.Characters == null)
+			{
+				return;
+			}
+			List<CharacterList> before = new List<CharacterList>(_ghostList);
+			_ghostList.Clear();
+			List<Character> listed = People(_lastShown, _lastNow);
+			foreach (CharacterModel m in at.Characters)
+			{
+				Character c = m != null && m.IsUnlocked && m.Character != CharacterList.Hero ? PersonAsset(m.Character) : null;
+				if (c != null && c.IsFamily == (Showing == Mode.Family) && !listed.Contains(c))
+				{
+					_ghostList.Add(m.Character);
+				}
+			}
+			_ghostFrom = at;
+			if (_ghostList.Count > 0 || before.Count > 0)
+			{
+				ShowPeople(_lastShown, _lastNow, _lastChapter);
+			}
 		}
 
 		private static string PeopleKey(List<Character> people)
 		{
-			return Showing + ":" + string.Join(",", people.ConvertAll(c => c.Name.ToString()).ToArray());
+			return Showing + ":" + string.Join(",", people.ConvertAll(c => c.Name.ToString()).ToArray())
+				+ (_ghostList.Count > 0 ? " ghosts:" + string.Join(",", _ghostList.ConvertAll(g => g.ToString()).ToArray()) : "");
 		}
 
 		// The family as the game's family tree (grandfather; father and
@@ -1202,7 +1244,8 @@ namespace Doorstop
 				{
 					continue;
 				}
-				CharacterModel m = ModelOf(shown, row.Person.Name);
+				row.Ghost = _ghostList.Contains(row.Person.Name);
+				CharacterModel m = ModelOf(row.Ghost ? _ghostFrom : shown, row.Person.Name);
 				CharacterModel t = ModelOf(now, row.Person.Name);
 				int value = m != null ? m.Relation : 0;
 				int today = t != null ? t.Relation : value;
@@ -1216,12 +1259,13 @@ namespace Doorstop
 				CanvasGroup cg = RowRoot(row) != null ? RowRoot(row).GetComponent<CanvasGroup>() : null;
 				if (cg != null)
 				{
-					cg.alpha = !met || Gone(row.Status) ? 0.4f : 1f;
+					cg.alpha = row.Ghost ? 0.3f : !met || Gone(row.Status) ? 0.4f : 1f;
 				}
 				if (row.Value != null)
 				{
 					row.Value.text = (value > 0 ? "+" : "") + value;
-					row.Value.color = value > today ? Palette.Good : value < today ? Palette.Bad : Palette.Ink;
+					row.Value.color = row.Ghost ? Palette.Muted
+						: value > today ? Palette.Good : value < today ? Palette.Bad : Palette.Ink;
 				}
 				if (row.Slider != null)
 				{
@@ -1302,6 +1346,15 @@ namespace Doorstop
 		public static void ClearHighlight()
 		{
 			HighlightChanges(null, null);
+			if (_ghostList.Count > 0)
+			{
+				_ghostList.Clear();
+				_ghostFrom = null;
+				if (Showing != Mode.Stats && _lastShown != null)
+				{
+					ShowPeople(_lastShown, _lastNow, _lastChapter);
+				}
+			}
 		}
 
 		// A light vertical rule between two categories, in the colour of the

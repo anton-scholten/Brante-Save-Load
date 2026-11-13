@@ -486,7 +486,7 @@ namespace Doorstop
 		}
 
 		// "English", "Russian", ... (I2's language name), "" if not up yet.
-		private static string Language()
+		public static string Language()
 		{
 			try
 			{

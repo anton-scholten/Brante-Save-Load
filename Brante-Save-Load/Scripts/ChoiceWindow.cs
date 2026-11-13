@@ -2536,6 +2536,33 @@ namespace Doorstop
 			Wrap(head, x + 14f, TreeHeadY, TreeNodeW + TreeNodeX - 14f, 44f);
 			head.enableWordWrapping = true;
 			head.overflowMode = TextOverflowModes.Ellipsis;
+			// hovering the title: the scene's text beside its answers (its last
+			// page), what the scene changes when it opens, and the characters
+			// it introduces as ghost rows
+			head.raycastTarget = true;
+			string headScene = e.Scene;
+			RectTransform headRt = head.rectTransform;
+			TreeHover headHover = head.gameObject.AddComponent<TreeHover>();
+			_headHovers[headScene] = headHover;
+			headHover.OnHover = delegate(bool on)
+			{
+				if (on)
+				{
+					// the column drawn now (a kept column outlives its TreeCol)
+					TreeCol now = _drawCols != null ? _drawCols.Find(c => c.Scene == headScene) : null;
+					SceneEffects.Hero at = now != null ? now.Hero : null;
+					ShowPopup(headRt, SceneText(headScene), "", SceneEffects.SceneChanges(headScene), at);
+					if (at != null)
+					{
+						StatPanel.Ghosts(at);
+					}
+				}
+				else
+				{
+					HidePopup();
+					StatPanel.ClearHighlight();
+				}
+			};
 
 			// The spine joins the node centres of this column.
 			if (shown.Count > 1)
@@ -2555,6 +2582,7 @@ namespace Doorstop
 		}
 
 		private static readonly List<GameObject> _colRoots = new List<GameObject>();
+		private static readonly Dictionary<string, TreeHover> _headHovers = new Dictionary<string, TreeHover>();   // dev-pick "hoverhead"
 		private static readonly List<List<NodeRef>> _colNodes = new List<List<NodeRef>>();
 		private static readonly List<string> _drawnKeys = new List<string>();
 		private static int _drawnRows = -1;
@@ -2632,6 +2660,7 @@ namespace Doorstop
 					{
 						SceneEffects.Hero after = before.Clone();
 						after.Apply(effects);
+						StatPanel.Ghosts(after);   // characters met by then, not yet listed
 						StatPanel.HighlightChanges(before, after);
 					}
 				}
@@ -2951,6 +2980,64 @@ namespace Doorstop
 		}
 
 		private const string EventChoice = "Event";
+
+		// The text on the left page beside a scene's answers: its last text
+		// page (`<scene>_Text_N`, highest N), in the game's language, cut at a
+		// sentence near 600 characters. An answer-less scene: its first page
+		// (EventText).
+		private static readonly Dictionary<string, string> _sceneTexts = new Dictionary<string, string>();
+
+		private static string SceneText(string scene)
+		{
+			string cached;
+			if (_sceneTexts.TryGetValue(scene + "|" + Loc.Language(), out cached))
+			{
+				return cached;
+			}
+			List<string> prefixes = new List<string> { scene };
+			string key = SceneEffects.TitleKey(scene);
+			if (!string.IsNullOrEmpty(key) && key.EndsWith("_Title", StringComparison.Ordinal))
+			{
+				prefixes.Add(key.Substring(0, key.Length - "_Title".Length));
+			}
+			string text = "";
+			foreach (string prefix in prefixes)
+			{
+				int misses = 0;
+				for (int i = 1; i <= 150 && misses < 8; i++)
+				{
+					string k = prefix + "_Text_" + i;
+					string t = Loc.Game(k, "");
+					if (t == k || t.Trim().Length == 0 || t.IndexOf("need translation", StringComparison.OrdinalIgnoreCase) >= 0)
+					{
+						misses++;
+						continue;
+					}
+					misses = 0;
+					text = t.Trim();
+				}
+				if (text.Length > 0)
+				{
+					break;
+				}
+			}
+			if (SceneTexts.Buttons(scene).Count == 0 || text.Length == 0)
+			{
+				text = EventText(scene);   // no answers: how it opens
+			}
+			else
+			{
+				string hero = ParametersManager.Instance != null ? ParametersManager.Instance.HeroName : null;
+				text = text.Replace("<username>", string.IsNullOrEmpty(hero) ? "Brante" : hero);
+				if (text.Length > 600)
+				{
+					int cut = text.LastIndexOfAny(new[] { '.', '!', '?', '\u2026' }, 600);
+					text = cut > 150 ? text.Substring(0, cut + 1) : text.Substring(0, 600) + "\u2026";
+				}
+			}
+			_sceneTexts[scene + "|" + Loc.Language()] = text;
+			return text;
+		}
 
 		// What an event says when it opens, for its box's pop-up: its first
 		// text page in the game's language (the key prefix is the scene's, or
@@ -6055,6 +6142,29 @@ namespace Doorstop
 						Canvas.ForceUpdateCanvases();
 						hit.Img.GetComponent<TreeHover>().OnHover(true);
 						ModLog.Info("DEV PICK: hovering " + l.Substring(6));
+						continue;
+					}
+					else if (l.StartsWith("hoverhead ", StringComparison.Ordinal))
+					{
+						// scroll to that scene's column and hold its title's hover
+						string sc = l.Substring(10).Trim();
+						TreeHover th;
+						if (!_headHovers.TryGetValue(sc, out th) || th == null)
+						{
+							ModLog.Info("DEV PICK: no drawn title " + sc);
+							continue;
+						}
+						int ci = _drawCols.FindIndex(c => c.Scene == sc);
+						RectTransform content = _historyList as RectTransform;
+						float vw = _historyScroll.viewport != null ? _historyScroll.viewport.rect.width : 1000f;
+						float range = content.rect.width - vw;
+						if (range > 1f)
+						{
+							_historyScroll.horizontalNormalizedPosition = Mathf.Clamp01((30f + (ci - 1) * TreeColW) / range);
+						}
+						Canvas.ForceUpdateCanvases();
+						th.OnHover(true);
+						ModLog.Info("DEV PICK: hovering title of " + sc);
 						continue;
 					}
 					else if (l == "allpeople")
