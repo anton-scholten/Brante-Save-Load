@@ -452,6 +452,7 @@ namespace Doorstop
 			public string Implied = "";        // ahead and unpicked: the answer the checks assume (first open)
 			public SceneEffects.Hero Hero;     // the hero at this scene along the path (null: unknown)
 			public SceneEffects.Hero AfterHero; // and after the answer taken/picked here
+			public List<string> Between;       // ahead: the answer-less scenes simulated just before it
 			public HashSet<string> Blocked = new HashSet<string>();   // answers he could not take
 			public bool Upcoming;   // ahead of the current scene, from scene-flow.tsv
 			public bool Possible;   // upcoming, but its conditions are not decided yet
@@ -3109,6 +3110,18 @@ namespace Doorstop
 				if (at == null)
 				{
 					at = carry;
+					if (at != null && col.Upcoming && col.Between != null && col.Between.Count > 0)
+					{
+						// the scenes with no answer the simulation passed on the
+						// way here change the hero too (an event scene's own
+						// stat changes, the objectives it earns)
+						at = at.Clone();
+						foreach (string s in col.Between)
+						{
+							at.Apply(SceneEffects.ForScene(s));
+							at.ApplyObjectives(s, 0);
+						}
+					}
 				}
 				if (at == null && !col.Upcoming)
 				{
@@ -3168,6 +3181,7 @@ namespace Doorstop
 				{
 					carry = afterBase.Clone();
 					carry.Apply(SceneEffects.For(col.Scene, taken));
+					carry.Apply(SceneEffects.ForScene(col.Scene));
 					// The objectives this answer and the scene itself earn
 					// (the game unlocks them before the next scene loads).
 					carry.ApplyObjectives(col.Scene, SceneEffects.ButtonIndex(taken));
@@ -3179,6 +3193,7 @@ namespace Doorstop
 					// A scene with no answers earns its own objectives when it
 					// ends, so the next scene's checks see them.
 					carry = afterBase.Clone();
+					carry.Apply(SceneEffects.ForScene(col.Scene));
 					carry.ApplyObjectives(col.Scene, 0);
 					col.AfterHero = carry;
 				}
@@ -3377,6 +3392,7 @@ namespace Doorstop
 			System.Diagnostics.Stopwatch tCol = new System.Diagnostics.Stopwatch();
 			System.Diagnostics.Stopwatch tPick = new System.Diagnostics.Stopwatch();
 			System.Diagnostics.Stopwatch tAns = new System.Diagnostics.Stopwatch();
+			List<string> between = new List<string>();
 			while (steps < 400 && sw.ElapsedMilliseconds < 1500)
 			{
 				tAdv.Start();
@@ -3429,7 +3445,13 @@ namespace Doorstop
 				tAns.Stop();
 				if (VisibleChoices(col).Count > 0)
 				{
+					col.Between = between;
+					between = new List<string>();
 					cols.Add(col);
+				}
+				else
+				{
+					between.Add(scene);   // no column: its changes go to the next one
 				}
 			}
 			ModLog.Info("ChoiceWindow: simulated " + steps + " scene(s) ahead in " + sw.ElapsedMilliseconds + " ms (setup "
@@ -3511,6 +3533,7 @@ namespace Doorstop
 					Hero.ApplyObjectives(scene, button);
 					SceneParams.Apply(scene, button, Keys);
 				}
+				Hero.Apply(SceneEffects.ForScene(scene));   // an answer-less scene's own changes
 				Hero.ApplyObjectives(scene, 0);   // what the scene itself earns, once it ends
 			}
 		}
@@ -5928,8 +5951,42 @@ namespace Doorstop
 				}
 				ModLog.Info("  " + i + " " + c.Scene + " drawn=" + drawn + (c.Current ? " CURRENT" : "") + (c.Upcoming ? " upcoming" : " played")
 					+ (c.Possible ? " possible" : "") + " played=" + c.PlayedChoice + " implied=" + c.Implied
-					+ " [" + string.Join(" ", ch.ToArray()) + "]");
+					+ " [" + string.Join(" ", ch.ToArray()) + "] hero=" + DevStats(c.Hero) + " after=" + DevStats(c.AfterHero)
+					+ DevBetween(i > 0 ? _tree[i - 1] : null, c));
 			}
+			ModLog.Info("  stat panel: " + DevStats(StatsHero()));
+		}
+
+		// The answer-less scenes simulated before an upcoming column and, for
+		// every stat they change, its value after the column before -> here.
+		private static string DevBetween(TreeCol prev, TreeCol c)
+		{
+			if (!c.Upcoming || c.Between == null || c.Between.Count == 0)
+			{
+				return "";
+			}
+			string text = " between=" + string.Join(",", c.Between.ToArray());
+			foreach (string scene in c.Between)
+			{
+				foreach (SceneEffects.Effect e in SceneEffects.ForScene(scene))
+				{
+					_Scripts.AMVCC.Models.Static.Parameter p = e.Kind == 'P' ? SceneEffects.ParameterAsset(e.Name) : null;
+					if (p != null && prev != null && prev.AfterHero != null && c.Hero != null)
+					{
+						text += " " + e.Name + (e.Value >= 0 ? "+" : "") + e.Value + ":" + prev.AfterHero.Value(p) + "->" + c.Hero.Value(p);
+					}
+				}
+			}
+			return text;
+		}
+
+		private static string DevStats(SceneEffects.Hero h)
+		{
+			if (h == null || h.Stats == null)
+			{
+				return "-";
+			}
+			return "N" + h.Stats.Discipline + "/C" + h.Stats.Cunning + "/S" + h.Stats.Spirituality + "/W" + h.Stats.Will;
 		}
 
 		// Dev: the first table row clicked; the load dialog stays open.

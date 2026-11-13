@@ -1393,3 +1393,52 @@ checkpoint is still not driven end to end.
   The code is in git history (commit b0c88c2: `Transitions.cs`,
   `Accuracy.cs`, `ChoiceWindow.QuickChain`).
 
+
+## Answer-less scenes change the hero too; trigger gates (13 Nov 2026)
+
+Two player reports: "special events appear incorrectly (the chapter-2
+Stephan event with 3 Nobility instead of 4)" and "independent events don't
+change stats".
+
+- **Trigger gates, read from the game.** `SceneConditionsCollector`
+  (persistent scene, level 2) holds one `SceneCondition` per trigger scene:
+  `Condition` [{`ParametersList`, `Operations`, `SecondValue`}],
+  `ConditionsByStatus` [{`CharacterList`, bool `Not`, `CharacterStatus`}],
+  `ConditionsByRelation` [{`CharacterList`, `Operations`, int}],
+  `ConditionsByObjective` [{bool `Not`, `ObjectiveEnum`}], all ANDed by
+  `GetConditionBySceneName`, which reads the live `ParametersManager`
+  (so the flow's swapped-in simulated hero is what it tests). Chapter 2:
+  `02.N.01` Spirituality >= 4, **`02.N.02` (Forbidden Love, Stephan)
+  Discipline (= Nobility) >= 4**, `02.N.03` Cunning >= 4. Every recorded
+  `02.N.02` snapshot opened with Discipline 4.
+- **The tree agrees with the game there.** From `02.08.01` with Nobility 3
+  (`dev-pick`, 13 Nov): answer 1 or 3 - no `02.N.02`; answer 2 (+1
+  Nobility) - `02.N.02` next. With Cunning 4 the predicted `02.N.03` comes
+  first, and its first answer (the default for an unpicked scene, +1
+  Nobility) opens `02.N.02` after it - the flow restarts at the top after
+  every scene. The stat panel shows the hero after the last *pick*, not at
+  the event, so this looks like "the event at 3". Not reproduced as a bug.
+- **Answer-less scenes' own changes were missing.** `tools/scene_effects.py`
+  read only `ParameterButtonChanger`. 52 scenes with no answers change the
+  hero through `ConsequenceSceneController` (`ParameterValue`,
+  `RelationValue`, `StatusValue`: each {PPtr, int}, applied by
+  `CalculateParams` when the scene is shown): `Insurrection_Incident_1`..`13`
+  (+2..3 Insurrection, Army, the three Mans stats, Sofja's status),
+  `051.090.010_FamilyQuarrel` (Will -10, -2 with five relatives),
+  `052.N5.010_Trigger5` (+3 Authority), `052.N11`, `053.100.050/110/140`,
+  `054.080.030/050/080`, the chapter-4 finals (`05x.*_FinalN`: State, Order,
+  Church, Prosperity, fates), the `030.080.010_Departure_*` relations.
+  `ConsequenceScript` (same lists, on `Start`) exists but carries nothing in
+  the shipped scenes. The incidents were also skipped by name (not a digit).
+- They are now button `0` in `scene-effects.tsv` (`SceneEffects.ForScene`).
+  `Sim.Answer` applies them when a scene ends (Load scene's `SimulatePlan`
+  and the forward simulation), and the tree's hero chain applies them for
+  the answer-less scenes the simulation stepped over before a column
+  (`TreeCol.Between`). Verified from `053.010.010_FirstSteps`: Will 0 -> -10
+  after `FamilyQuarrel`, `Final1`'s State/Order/Prosperity/Church, and
+  Insurrection 3 -> 6 after `Insurrection_Incident_13` - which moves the
+  predicted ending from `060.010.160_TheFinalHour2` to
+  `060.010.200_TheFinal4` (Insurrection >= 6) before it.
+- Still not simulated: interlude and case-of-year pop-ups
+  (`InterludePopupController`, `CaseOfYearPopupController`) change stats
+  from their own assets when closed.

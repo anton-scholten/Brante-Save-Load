@@ -51,8 +51,11 @@ Current, de-duplicated remainder. The phase sections below keep the history.
   in `UIManager.SetAchievementInfo`. A game bug (the button's `DeathObjective`
   is empty in the shipped scenes), so every player hit it; the mod now goes on
   to the next page there, and a debug run plays through to the credits (6 Nov).
-- [ ] Stats the game changes outside answer effects (e.g. `Carier`) are not in
-  the extracted tables, so a long simulated path can drift; the replay stays
+- [x] Answer-less scenes' own stat changes (`ConsequenceSceneController`:
+  the chapter-5 incidents, `FamilyQuarrel`, triggers, finals) are extracted
+  as button 0 and simulated (13 Nov).
+- [ ] Interlude and case-of-year pop-ups still change stats the simulation
+  does not see, so a long simulated path can drift; the replay stays
   authoritative.
 
 ## Phase 0 — repo scaffold (done)

@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "source": "ParameterButtonChanger in the scene files (tools/scene_effects.py)",
+ "source": "ParameterButtonChanger (button 0: ConsequenceSceneController/ConsequenceScript) in the scene files (tools/scene_effects.py)",
  "scenes": {
   "01.01.01": {
    "1": {
@@ -3087,6 +3087,36 @@
     ]
    }
   },
+  "030.080.010_Departure_Bourgeois": {
+   "0": {
+    "R": [
+     [
+      "Gloria",
+      1
+     ]
+    ]
+   }
+  },
+  "030.080.010_Departure_Cleric": {
+   "0": {
+    "R": [
+     [
+      "Natan",
+      1
+     ]
+    ]
+   }
+  },
+  "030.080.010_Departure_Noble": {
+   "0": {
+    "R": [
+     [
+      "Stefan",
+      1
+     ]
+    ]
+   }
+  },
   "051.000.020_Arrive_Inquisitor": {
    "1": {
     "R": [
@@ -4716,6 +4746,38 @@
     ]
    }
   },
+  "051.070.025_GloriaFromBrante": {
+   "0": {
+    "P": [
+     [
+      "Reputation",
+      -10
+     ]
+    ],
+    "R": [
+     [
+      "Gloria",
+      2
+     ]
+    ]
+   }
+  },
+  "051.070.026_GloriaFromBrante": {
+   "0": {
+    "P": [
+     [
+      "Reputation",
+      -10
+     ]
+    ],
+    "R": [
+     [
+      "Gloria",
+      2
+     ]
+    ]
+   }
+  },
   "051.070.030_GoldenCage": {
    "1": {
     "P": [
@@ -4971,6 +5033,36 @@
      [
       "Death",
       4
+     ]
+    ]
+   }
+  },
+  "051.070.040_InterruptedWedding": {
+   "0": {
+    "P": [
+     [
+      "Reputation",
+      -2
+     ],
+     [
+      "Unity",
+      -2
+     ]
+    ],
+    "R": [
+     [
+      "Stefan",
+      -1
+     ]
+    ],
+    "S": [
+     [
+      "Gloria",
+      4
+     ],
+     [
+      "Stefan",
+      52
      ]
     ]
    }
@@ -5355,6 +5447,100 @@
     ]
    }
   },
+  "051.090.010_FamilyQuarrel": {
+   "0": {
+    "P": [
+     [
+      "Will",
+      -10
+     ]
+    ],
+    "R": [
+     [
+      "Stefan",
+      -2
+     ],
+     [
+      "Lidia",
+      -2
+     ],
+     [
+      "Robert",
+      -2
+     ],
+     [
+      "Natan",
+      -2
+     ],
+     [
+      "Gloria",
+      -2
+     ]
+    ]
+   }
+  },
+  "051.090.020_Devastation": {
+   "0": {
+    "P": [
+     [
+      "Reputation",
+      -1
+     ]
+    ]
+   }
+  },
+  "051.090.030_StigmaOfShame": {
+   "0": {
+    "P": [
+     [
+      "Money",
+      -1
+     ],
+     [
+      "Unity",
+      -1
+     ]
+    ],
+    "R": [
+     [
+      "Robert",
+      -1
+     ]
+    ]
+   }
+  },
+  "051.090.040_MinuteOfRest": {
+   "0": {
+    "P": [
+     [
+      "Will",
+      10
+     ]
+    ],
+    "R": [
+     [
+      "Stefan",
+      1
+     ],
+     [
+      "Robert",
+      1
+     ],
+     [
+      "Lidia",
+      1
+     ],
+     [
+      "Natan",
+      1
+     ],
+     [
+      "Gloria",
+      1
+     ]
+    ]
+   }
+  },
   "051.090.050_RichFamily": {
    "1": {
     "P": [
@@ -5446,6 +5632,20 @@
      [
       "Money",
       -1
+     ]
+    ]
+   }
+  },
+  "051.090.060_GloriousFamily": {
+   "0": {
+    "P": [
+     [
+      "Diplomacy",
+      1
+     ],
+     [
+      "Valor",
+      1
      ]
     ]
    }
@@ -7088,6 +7288,156 @@
     ]
    }
   },
+  "052.210.010_Final1": {
+   "0": {
+    "P": [
+     [
+      "Church",
+      -1
+     ],
+     [
+      "Order",
+      -1
+     ],
+     [
+      "State",
+      -1
+     ]
+    ],
+    "S": [
+     [
+      "Ulrikh",
+      1
+     ],
+     [
+      "Kassiy",
+      1
+     ]
+    ]
+   }
+  },
+  "052.210.020_Final2": {
+   "0": {
+    "P": [
+     [
+      "Church",
+      1
+     ],
+     [
+      "Order",
+      -1
+     ],
+     [
+      "Prosperity",
+      -1
+     ],
+     [
+      "State",
+      1
+     ]
+    ],
+    "S": [
+     [
+      "Kassiy",
+      1
+     ],
+     [
+      "СильванСамоста",
+      1
+     ]
+    ]
+   }
+  },
+  "052.210.030_Final3": {
+   "0": {
+    "P": [
+     [
+      "Church",
+      -2
+     ],
+     [
+      "State",
+      -2
+     ],
+     [
+      "Order",
+      1
+     ]
+    ],
+    "R": [
+     [
+      "Jeanne",
+      1
+     ]
+    ],
+    "S": [
+     [
+      "Kassiy",
+      1
+     ]
+    ]
+   }
+  },
+  "052.210.040_Final4": {
+   "0": {
+    "P": [
+     [
+      "Church",
+      1
+     ],
+     [
+      "State",
+      1
+     ]
+    ],
+    "R": [
+     [
+      "Jeanne",
+      -2
+     ]
+    ],
+    "S": [
+     [
+      "Kassiy",
+      1
+     ]
+    ]
+   }
+  },
+  "052.210.050_Final5": {
+   "0": {
+    "P": [
+     [
+      "Death",
+      4
+     ]
+    ]
+   }
+  },
+  "052.210.060_Final6": {
+   "0": {
+    "P": [
+     [
+      "Church",
+      -1
+     ],
+     [
+      "Order",
+      -1
+     ]
+    ],
+    "S": [
+     [
+      "Ulrikh",
+      1
+     ],
+     [
+      "Kassiy",
+      1
+     ]
+    ]
+   }
+  },
   "052.210.065_Final7": {
    "1": {
     "P": [
@@ -7292,6 +7642,20 @@
     ]
    }
   },
+  "052.N11.010_Trigger11": {
+   "0": {
+    "P": [
+     [
+      "Toleration",
+      3
+     ],
+     [
+      "Order",
+      -1
+     ]
+    ]
+   }
+  },
   "052.N12.010_Trigger12": {
    "1": {
     "P": [
@@ -7378,6 +7742,16 @@
       10,
       3,
       "and"
+     ]
+    ]
+   }
+  },
+  "052.N13.010_Heretic": {
+   "0": {
+    "S": [
+     [
+      "Ulrikh",
+      4
      ]
     ]
    }
@@ -7603,6 +7977,16 @@
       12,
       3,
       "and"
+     ]
+    ]
+   }
+  },
+  "052.N5.010_Trigger5": {
+   "0": {
+    "P": [
+     [
+      "Authority",
+      3
      ]
     ]
    }
@@ -9860,6 +10244,206 @@
     ]
    }
   },
+  "053.090.010_Final1": {
+   "0": {
+    "P": [
+     [
+      "State",
+      1
+     ],
+     [
+      "Order",
+      -1
+     ],
+     [
+      "Prosperity",
+      -1
+     ],
+     [
+      "Church",
+      1
+     ]
+    ],
+    "S": [
+     [
+      "Egmond",
+      1
+     ],
+     [
+      "Remi",
+      1
+     ]
+    ]
+   }
+  },
+  "053.090.020_Final2": {
+   "0": {
+    "P": [
+     [
+      "State",
+      -2
+     ],
+     [
+      "Order",
+      -1
+     ]
+    ],
+    "S": [
+     [
+      "Felippe",
+      1
+     ],
+     [
+      "Egmond",
+      1
+     ],
+     [
+      "Sofja",
+      49
+     ]
+    ]
+   }
+  },
+  "053.090.030_Final3": {
+   "0": {
+    "P": [
+     [
+      "State",
+      1
+     ],
+     [
+      "Order",
+      -1
+     ],
+     [
+      "Church",
+      1
+     ]
+    ],
+    "R": [
+     [
+      "Felippe",
+      -4
+     ]
+    ],
+    "S": [
+     [
+      "Egmond",
+      1
+     ],
+     [
+      "Sofja",
+      50
+     ],
+     [
+      "Felippe",
+      45
+     ]
+    ]
+   }
+  },
+  "053.090.040_Final4": {
+   "0": {
+    "P": [
+     [
+      "State",
+      -2
+     ],
+     [
+      "Order",
+      -1
+     ]
+    ],
+    "R": [
+     [
+      "Felippe",
+      -4
+     ]
+    ],
+    "S": [
+     [
+      "Egmond",
+      1
+     ],
+     [
+      "Remi",
+      1
+     ],
+     [
+      "Sofja",
+      51
+     ],
+     [
+      "Felippe",
+      45
+     ]
+    ]
+   }
+  },
+  "053.090.050_Final5": {
+   "0": {
+    "P": [
+     [
+      "Order",
+      -1
+     ],
+     [
+      "State",
+      1
+     ],
+     [
+      "Prosperity",
+      -1
+     ]
+    ],
+    "S": [
+     [
+      "Egmond",
+      1
+     ],
+     [
+      "Felippe",
+      1
+     ],
+     [
+      "Sofja",
+      51
+     ]
+    ]
+   }
+  },
+  "053.090.060_Final6": {
+   "0": {
+    "P": [
+     [
+      "Order",
+      5
+     ],
+     [
+      "State",
+      -3
+     ],
+     [
+      "Church",
+      -2
+     ],
+     [
+      "Prosperity",
+      3
+     ]
+    ],
+    "S": [
+     [
+      "Egmond",
+      1
+     ],
+     [
+      "Lennart",
+      55
+     ]
+    ]
+   }
+  },
   "053.090.070_Revolution": {
    "3": {
     "P": [
@@ -10187,6 +10771,26 @@
      [
       "Repression",
       -1
+     ]
+    ]
+   }
+  },
+  "053.100.050_Aftermath": {
+   "0": {
+    "P": [
+     [
+      "Protest",
+      2
+     ],
+     [
+      "State",
+      1
+     ]
+    ],
+    "S": [
+     [
+      "Remi",
+      1
      ]
     ]
    }
@@ -10560,6 +11164,24 @@
     ]
    }
   },
+  "053.100.110_Aftermath2": {
+   "0": {
+    "P": [
+     [
+      "State",
+      -1
+     ],
+     [
+      "Order",
+      1
+     ],
+     [
+      "Repression",
+      2
+     ]
+    ]
+   }
+  },
   "053.100.120_Disclosure": {
    "2": {
     "S": [
@@ -10782,6 +11404,16 @@
       16,
       3,
       "and"
+     ]
+    ]
+   }
+  },
+  "053.100.140_ProfitableYear": {
+   "0": {
+    "P": [
+     [
+      "Money",
+      3
      ]
     ]
    }
@@ -12916,6 +13548,86 @@
     ]
    }
   },
+  "054.080.010_Final1": {
+   "0": {
+    "P": [
+     [
+      "State",
+      1
+     ],
+     [
+      "Order",
+      -1
+     ],
+     [
+      "Prosperity",
+      -1
+     ],
+     [
+      "Church",
+      1
+     ]
+    ],
+    "S": [
+     [
+      "Egmond",
+      1
+     ]
+    ]
+   }
+  },
+  "054.080.020_Final2": {
+   "0": {
+    "P": [
+     [
+      "State",
+      -3
+     ],
+     [
+      "Prosperity",
+      -1
+     ],
+     [
+      "Order",
+      -1
+     ],
+     [
+      "Church",
+      -1
+     ]
+    ],
+    "R": [
+     [
+      "Robert",
+      -2
+     ],
+     [
+      "DOtton",
+      1
+     ]
+    ],
+    "S": [
+     [
+      "Egmond",
+      1
+     ]
+    ]
+   }
+  },
+  "054.080.030_Aftermath": {
+   "0": {
+    "P": [
+     [
+      "Justice",
+      3
+     ],
+     [
+      "Order",
+      -1
+     ]
+    ]
+   }
+  },
   "054.080.040_Arrest": {
    "2": {
     "P": [
@@ -12986,6 +13698,20 @@
      [
       "Egmond",
       1
+     ]
+    ]
+   }
+  },
+  "054.080.050_Duty": {
+   "0": {
+    "P": [
+     [
+      "Carier",
+      3
+     ],
+     [
+      "State",
+      -1
      ]
     ]
    }
@@ -13133,6 +13859,28 @@
      [
       "Will",
       5
+     ]
+    ]
+   }
+  },
+  "054.080.080_Miserable": {
+   "0": {
+    "P": [
+     [
+      "Carier",
+      -3
+     ]
+    ],
+    "R": [
+     [
+      "Remi",
+      -4
+     ]
+    ],
+    "S": [
+     [
+      "Remi",
+      49
      ]
     ]
    }
@@ -13305,6 +14053,112 @@
       0,
       1,
       "and"
+     ]
+    ]
+   }
+  },
+  "054.080.100_Final5": {
+   "0": {
+    "P": [
+     [
+      "Death",
+      4
+     ]
+    ]
+   }
+  },
+  "054.080.110_Final4": {
+   "0": {
+    "P": [
+     [
+      "State",
+      -2
+     ],
+     [
+      "Church",
+      -1
+     ]
+    ],
+    "R": [
+     [
+      "GuyTempest",
+      1
+     ],
+     [
+      "DOtton",
+      -4
+     ]
+    ]
+   }
+  },
+  "054.080.120_Final3": {
+   "0": {
+    "P": [
+     [
+      "State",
+      -3
+     ],
+     [
+      "Prosperity",
+      -1
+     ],
+     [
+      "Order",
+      -1
+     ],
+     [
+      "Death",
+      1
+     ],
+     [
+      "Church",
+      -1
+     ]
+    ],
+    "R": [
+     [
+      "Robert",
+      1
+     ]
+    ],
+    "S": [
+     [
+      "Remi",
+      1
+     ],
+     [
+      "Egmond",
+      1
+     ]
+    ]
+   }
+  },
+  "054.080.130_Final6": {
+   "0": {
+    "P": [
+     [
+      "Prosperity",
+      1
+     ],
+     [
+      "Order",
+      2
+     ]
+    ],
+    "R": [
+     [
+      "DOtton",
+      -4
+     ]
+    ]
+   }
+  },
+  "054.080.140_Final_JudgeFall": {
+   "0": {
+    "P": [
+     [
+      "Death",
+      4
      ]
     ]
    }
@@ -13992,6 +14846,16 @@
       24,
       0,
       "and"
+     ]
+    ]
+   }
+  },
+  "060.010.005_ToArms_Revolt": {
+   "0": {
+    "P": [
+     [
+      "Army",
+      1
      ]
     ]
    }
@@ -18328,6 +19192,368 @@
       0,
       0,
       "and"
+     ]
+    ]
+   }
+  },
+  "Insurrection_Incident_1": {
+   "0": {
+    "P": [
+     [
+      "Insurrection",
+      3
+     ],
+     [
+      "CommonerMans",
+      2
+     ],
+     [
+      "Army",
+      1
+     ]
+    ],
+    "S": [
+     [
+      "Sofja",
+      46
+     ],
+     [
+      "Remi",
+      1
+     ]
+    ]
+   }
+  },
+  "Insurrection_Incident_10": {
+   "0": {
+    "P": [
+     [
+      "Insurrection",
+      3
+     ],
+     [
+      "CommonerMans",
+      1
+     ],
+     [
+      "Will",
+      10
+     ]
+    ]
+   }
+  },
+  "Insurrection_Incident_11": {
+   "0": {
+    "P": [
+     [
+      "Insurrection",
+      3
+     ],
+     [
+      "CommonerMans",
+      1
+     ],
+     [
+      "Army",
+      1
+     ],
+     [
+      "Will",
+      10
+     ]
+    ]
+   }
+  },
+  "Insurrection_Incident_12": {
+   "0": {
+    "P": [
+     [
+      "Insurrection",
+      3
+     ],
+     [
+      "NoblesMans",
+      1
+     ],
+     [
+      "CommonerMans",
+      1
+     ],
+     [
+      "Will",
+      10
+     ]
+    ]
+   }
+  },
+  "Insurrection_Incident_13": {
+   "0": {
+    "P": [
+     [
+      "Insurrection",
+      3
+     ],
+     [
+      "Army",
+      2
+     ],
+     [
+      "CommonerMans",
+      2
+     ]
+    ]
+   }
+  },
+  "Insurrection_Incident_2": {
+   "0": {
+    "P": [
+     [
+      "Insurrection",
+      3
+     ],
+     [
+      "NoblesMans",
+      1
+     ],
+     [
+      "Army",
+      1
+     ]
+    ],
+    "S": [
+     [
+      "Sofja",
+      46
+     ],
+     [
+      "Remi",
+      1
+     ]
+    ]
+   }
+  },
+  "Insurrection_Incident_2_2": {
+   "0": {
+    "P": [
+     [
+      "Will",
+      10
+     ],
+     [
+      "Insurrection",
+      3
+     ]
+    ],
+    "S": [
+     [
+      "Sofja",
+      46
+     ]
+    ]
+   }
+  },
+  "Insurrection_Incident_3": {
+   "0": {
+    "P": [
+     [
+      "Insurrection",
+      2
+     ],
+     [
+      "CommonerMans",
+      2
+     ],
+     [
+      "NoblesMans",
+      1
+     ],
+     [
+      "PriestsMans",
+      1
+     ],
+     [
+      "Army",
+      1
+     ]
+    ],
+    "S": [
+     [
+      "Sofja",
+      46
+     ],
+     [
+      "Remi",
+      1
+     ]
+    ]
+   }
+  },
+  "Insurrection_Incident_4": {
+   "0": {
+    "P": [
+     [
+      "Insurrection",
+      2
+     ],
+     [
+      "Army",
+      2
+     ],
+     [
+      "NoblesMans",
+      2
+     ],
+     [
+      "PriestsMans",
+      1
+     ]
+    ],
+    "S": [
+     [
+      "Sofja",
+      46
+     ],
+     [
+      "Remi",
+      1
+     ]
+    ]
+   }
+  },
+  "Insurrection_Incident_5": {
+   "0": {
+    "P": [
+     [
+      "Insurrection",
+      3
+     ],
+     [
+      "NoblesMans",
+      1
+     ],
+     [
+      "PriestsMans",
+      1
+     ]
+    ],
+    "S": [
+     [
+      "Sofja",
+      46
+     ]
+    ]
+   }
+  },
+  "Insurrection_Incident_6": {
+   "0": {
+    "P": [
+     [
+      "Insurrection",
+      2
+     ],
+     [
+      "Army",
+      1
+     ],
+     [
+      "PriestsMans",
+      1
+     ],
+     [
+      "CommonerMans",
+      2
+     ]
+    ],
+    "S": [
+     [
+      "Sofja",
+      46
+     ]
+    ]
+   }
+  },
+  "Insurrection_Incident_7": {
+   "0": {
+    "P": [
+     [
+      "Insurrection",
+      3
+     ],
+     [
+      "Army",
+      1
+     ],
+     [
+      "CommonerMans",
+      1
+     ],
+     [
+      "PriestsMans",
+      1
+     ]
+    ],
+    "S": [
+     [
+      "Sofja",
+      46
+     ]
+    ]
+   }
+  },
+  "Insurrection_Incident_8": {
+   "0": {
+    "P": [
+     [
+      "Insurrection",
+      2
+     ],
+     [
+      "Army",
+      1
+     ],
+     [
+      "NoblesMans",
+      1
+     ],
+     [
+      "PriestsMans",
+      1
+     ],
+     [
+      "CommonerMans",
+      1
+     ]
+    ],
+    "S": [
+     [
+      "Sofja",
+      46
+     ]
+    ]
+   }
+  },
+  "Insurrection_Incident_9": {
+   "0": {
+    "P": [
+     [
+      "Insurrection",
+      3
+     ],
+     [
+      "Army",
+      1
+     ],
+     [
+      "PriestsMans",
+      1
+     ],
+     [
+      "NoblesMans",
+      1
+     ],
+     [
+      "CommonerMans",
+      2
      ]
     ]
    }

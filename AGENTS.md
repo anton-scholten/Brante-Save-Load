@@ -21,7 +21,7 @@ Brante-Save-Load/            the folder that gets installed into the game dir
   0Harmony.dll               vendored Harmony (copied by the build from vendor/)
   scene-texts.tsv            every scene's title and answers (from the game; see data/)
   scene-flow.tsv             every chapter's scene gates: flow row(s) per scene + conditions (from the game)
-  scene-effects.tsv          every answer's stat/relation/status changes (from the game)
+  scene-effects.tsv          every answer's (and answer-less scene's) stat/relation/status changes
   scene-params.tsv           key chapter parameter changes by scenes/answers (from the game)
   scene-objectives.tsv       the story objectives scenes/answers unlock (from the game)
   Scripts/*.cs               the source
@@ -312,6 +312,15 @@ community event sheet (`data/events.json`).
   under `TriggerBlock=false`) before Last Respects, and Load scene stopped
   there. `AutoPlay.Click`/`TurnPages` also fire changers on a pressed
   button's children, as a mouse press bubbling up from the child would.
+- **Answer-less scenes change the hero too.** 52 scenes with no answers
+  (`Insurrection_Incident_N`, `051.090.010_FamilyQuarrel`, trigger events
+  such as `052.N5.010_Trigger5`, the chapter finals) apply stat, relation and
+  status changes from their `ConsequenceSceneController`.
+  `tools/scene_effects.py` writes them as button `0` (`SceneEffects.ForScene`);
+  `Sim.Answer` applies them when the scene ends, and `WorkOutOpenAnswers`
+  applies those of the scenes stepped over before an upcoming column
+  (`TreeCol.Between`), so the stat panel and answer checks see them.
+  Interlude and case-of-year pop-ups are still not simulated.
 - **Objectives unlocked by an answer or a scene are simulated too.**
   `scene-objectives.tsv` (from `tools/scene_objectives.py`) lists every
   `KeyChapterParametersController.EarnObjective` target by scene and button
@@ -328,9 +337,9 @@ community event sheet (`data/events.json`).
   the start save through the plan's answers, checking that each choice scene the
   game would open next is the plan's next one, and logs the first difference
   (`plan.Speculative`); the label-only `SceneParams.Simulate` is the fallback
-  when the start save cannot be simulated. Stats the game changes outside answer
-  effects are not simulated, so this is a prediction: the ordered replay is
-  still the final check.
+  when the start save cannot be simulated. Stats the game changes outside
+  answers and answer-less scenes (interludes) are not simulated, so this is a
+  prediction: the ordered replay is still the final check.
 - **A double click on a menu save loads once.** The game's save slot
   (`SaveSlotBehaviour.OnPointerClick`) calls `LoadGame(int)` on every click
   with no guard; two clicks 0.14 s apart loaded the save twice, opened the
@@ -479,5 +488,5 @@ work here (black/`BadMatch` on the X1 root).
   restart, the game-autosave mirror, the unified table with paging and the
   Original row) and id minting for id-less loads.
 - Remaining: the full playthrough pass on a clean run, the README screenshot
-  refresh, and the stat changes outside answer effects that the simulation
+  refresh, and the stat changes from interlude pop-ups that the simulation
   cannot see.

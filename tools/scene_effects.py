@@ -40,6 +40,13 @@ runtime for their icon and localised name.
 
   python3 tools/scene_effects.py      # -> data/scene-effects.json + mod TSV
 
+A scene with no answers can change the hero too: its
+`ConsequenceSceneController` (the answer-less event and final scenes - trigger
+events such as `052.N5.010_Trigger5`, `Insurrection_Incident_N`, the chapter
+finals) applies `ParameterValue`/`RelationValue`/`StatusValue` lists, each
+item {PPtr, int}, when the scene is shown (`CalculateParams`); a
+`ConsequenceScript` does the same on `Start`. Both are written as button 0.
+
 TSV shipped with the mod (one line per effect or requirement):
     <scene>\\t<button>\\t<kind>\\t<object name>\\t<value>[\\t<op>\\t<group>]
 Effects: P = stat change, R = relation change, S = status change (value is
@@ -121,13 +128,17 @@ def main():
     scenes = [o.read_typetree() for o in gg.objects if o.type.name == "BuildSettings"][0]["scenes"]
     scripts = UnityPy.load(str(data_dir / "globalgamemanagers.assets"))
     button_script = None
+    scene_scripts = set()               # stat changes of the scene itself (button 0)
     for o in scripts.objects:
         if o.type.name == "MonoScript":
             try:
-                if o.read().m_ClassName == "ParameterButtonChanger":
-                    button_script = o.path_id
+                name = o.read().m_ClassName
             except Exception:
-                pass
+                continue
+            if name == "ParameterButtonChanger":
+                button_script = o.path_id
+            elif name in ("ConsequenceSceneController", "ConsequenceScript"):
+                scene_scripts.add(o.path_id)
     if button_script is None:
         print("ParameterButtonChanger script not found", file=sys.stderr)
         return 1
@@ -137,8 +148,9 @@ def main():
     effects = {}
     for index, path in enumerate(scenes):
         scene = path.rsplit("/", 1)[-1].rsplit(".", 1)[0]
-        if not scene[:1].isdigit():
-            continue                    # story scenes only (01.05.01, 051.0...)
+        if not scene[:1].isdigit() and not scene.startswith("Insurrection_Incident"):
+            continue                    # story scenes only (01.05.01, 051.0...,
+                                        # the chapter-5 incidents)
         level = data_dir / ("level%d" % index)
         if not level.is_file():
             continue
@@ -160,8 +172,29 @@ def main():
                 continue
             data = o.get_raw_data()
             fid, pid = struct.unpack_from("<iq", data, 16)
-            if fid <= 0 or not externals[fid - 1].endswith("globalgamemanagers.assets") \
-                    or pid != button_script:
+            if fid <= 0 or not externals[fid - 1].endswith("globalgamemanagers.assets"):
+                continue
+            if pid in scene_scripts:
+                try:
+                    rd = Reader(data, 28)
+                    rd.string()                     # m_Name
+                    lists = []
+                    for _ in range(3):              # parameters, relations, statuses
+                        items = []
+                        for _ in range(rd.count()):
+                            f2, p2 = rd.pptr()
+                            items.append((ref(f2, p2), rd.i32()))
+                        lists.append(items)
+                except (struct.error, ValueError, IndexError) as exc:
+                    print("  %s: unreadable scene changes (%s)" % (scene, exc))
+                    continue
+                if any(lists):
+                    entry = effects.setdefault(scene, {}).setdefault("0", {})
+                    for kind, items in zip(("P", "R", "S"), lists):
+                        if items:
+                            entry.setdefault(kind, []).extend(items)
+                continue
+            if pid != button_script:
                 continue
             try:
                 rd = Reader(data, 28)
@@ -248,7 +281,8 @@ def main():
                 entry["requires"] = [list(r) for r in reqs]
 
     doc = {"schema": 1,
-           "source": "ParameterButtonChanger in the scene files (tools/scene_effects.py)",
+           "source": "ParameterButtonChanger (button 0: ConsequenceSceneController/"
+                     "ConsequenceScript) in the scene files (tools/scene_effects.py)",
            "scenes": dict(sorted(effects.items()))}
     out = ROOT / "data" / "scene-effects.json"
     out.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")

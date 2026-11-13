@@ -114,6 +114,22 @@ namespace Doorstop
 			return new List<Effect>();
 		}
 
+		// What a scene changes by itself, with no answer (button 0): the
+		// ConsequenceSceneController of the answer-less event and final
+		// scenes (052.N5.010_Trigger5, Insurrection_Incident_N, ...), applied
+		// when the scene is shown.
+		public static List<Effect> ForScene(string scene)
+		{
+			Load();
+			Dictionary<int, List<Effect>> byButton;
+			List<Effect> list;
+			if (scene != null && _effects.TryGetValue(scene, out byButton) && byButton.TryGetValue(0, out list))
+			{
+				return list;
+			}
+			return new List<Effect>();
+		}
+
 		public static int ButtonIndex(string name)
 		{
 			if (string.IsNullOrEmpty(name))
