@@ -57,6 +57,10 @@ A scene can change the hero by itself when it opens, before any answer
   (`ParametersManager.CalculateChapterParams`) if they are all still 0: a
   `C Convert 0` row.
 
+An `N <key> 0` row gives the key of an answer's name (the button's short
+text, `ParameterButtonChanger.ButtonTextKey`) where it is not
+`<scene>_Button_<N>` (13 of 661: another scene's key, or `Button4`).
+
 A `K <key> 0` row (button 0) gives the title key of an answer-less event
 scene whose `ConsequenceSceneController.TitleKey` is not `<scene>_Title`
 (an alternative version showing another scene's title).
@@ -243,6 +247,7 @@ def main():
 
     effects = {}
     title_keys = {}
+    name_keys = {}
     for index, path in enumerate(scenes):
         scene = path.rsplit("/", 1)[-1].rsplit(".", 1)[0]
         # answers: story scenes only (01.05.01, 051.0...); a scene's own
@@ -317,7 +322,7 @@ def main():
                 rd = Reader(data, 28)
                 rd.string()                         # m_Name
                 rd.pptr()                           # MainContainer
-                rd.string()                         # ButtonTextKey
+                text_key = rd.string()              # ButtonTextKey: the answer's name
                 button = rd.i32()
                 # The serialized ButtonIndex is 0 on a few buttons whose
                 # ButtonDescriptionN name still has the right number (nine
@@ -383,6 +388,8 @@ def main():
             except (struct.error, ValueError, IndexError) as exc:
                 print("  %s: unreadable button (%s)" % (scene, exc))
                 continue
+            if text_key:
+                name_keys[(scene, button)] = text_key
             reqs = []
             if need_check:
                 reqs = [r + ("and",) for r in ands]
@@ -404,6 +411,13 @@ def main():
         if any(own.get(k) for k in ("P", "R", "S")):
             own["K"] = [(key, 0)]
 
+    # an answer's name (the button's short text) whose key is not
+    # <scene>_Button_<N>: another scene's, or "Button4" without the "_"
+    odd = sorted((k, v) for k, v in name_keys.items() if v != "%s_Button_%d" % k)
+    for (scene, button), key in odd:
+        effects.setdefault(scene, {}).setdefault(str(button), {})["N"] = [(key, 0)]
+    print("answer name keys: %d, %d not <scene>_Button_N" % (len(name_keys), len(odd)))
+
     doc = {"schema": 1,
            "source": "ParameterButtonChanger (button 0: ConsequenceSceneController/"
                      "ConsequenceScript) in the scene files (tools/scene_effects.py)",
@@ -413,7 +427,7 @@ def main():
     lines = []
     for scene, buttons in sorted(effects.items()):
         for button, kinds in sorted(buttons.items(), key=lambda kv: int(kv[0])):
-            for kind in ("P", "R", "S", "C", "K"):
+            for kind in ("P", "R", "S", "C", "K", "N"):
                 for name, value in kinds.get(kind, []):
                     lines.append("%s\t%s\t%s\t%s\t%d\n" % (scene, button, kind, name, value))
             for kind, name, value, op, group in kinds.get("requires", []):

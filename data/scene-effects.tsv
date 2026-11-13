@@ -771,6 +771,7 @@
 051.070.035_Mortally	1	P	Valor	1
 051.070.035_Mortally	1	P	Heir	0
 051.070.035_Mortally	1	S	Stefan	55
+051.070.035_Mortally	1	N	051.060.030_Mortally_Button_1	0
 051.070.035_Mortally	1	Q	Valor	18	3	and
 051.070.035_Mortally	2	P	Unity	-2
 051.070.035_Mortally	2	P	Sabotage	1
@@ -778,14 +779,17 @@
 051.070.035_Mortally	2	P	Will	-5
 051.070.035_Mortally	2	P	Heir	0
 051.070.035_Mortally	2	S	Stefan	55
+051.070.035_Mortally	2	N	051.060.030_Mortally_Button_2	0
 051.070.035_Mortally	2	Q	Sabotage	12	3	and
 051.070.035_Mortally	2	W	Stefan	2	3	and
 051.070.035_Mortally	3	P	Death	4
+051.070.035_Mortally	3	N	051.060.030_Mortally_Button_3	0
 051.070.035_Mortally	4	P	Will	-20
 051.070.035_Mortally	4	P	Unity	-2
 051.070.035_Mortally	4	P	Valor	1
 051.070.035_Mortally	4	P	Heir	0
 051.070.035_Mortally	4	S	Stefan	55
+051.070.035_Mortally	4	N	051.060.030_Mortally_Button_4	0
 051.070.035_Mortally	4	Q	Valor	15	3	and
 051.070.035_Mortally	4	Q	Valor	18	1	and
 051.070.035_Mortally	4	Q	Will	10	3	and
@@ -884,6 +888,7 @@
 051.090.050_RichFamily	4	P	Valor	1
 051.090.050_RichFamily	4	P	Sabotage	1
 051.090.050_RichFamily	4	P	Money	-1
+051.090.050_RichFamily	4	N	051.090.050_RichFamily_Button_3	0
 051.090.060_GloriousFamily	0	P	Diplomacy	1
 051.090.060_GloriousFamily	0	P	Valor	1
 052.010.001_Guidance	1	R	Jeanne	1
@@ -953,6 +958,7 @@
 052.030.010_Case4	4	P	Authority	-1
 052.030.010_Case4	4	P	Toleration	-1
 052.030.010_Case4	4	P	Money	2
+052.030.010_Case4	4	N	052.030.010_Case4_Button4	0
 052.030.010_Case4	4	W	Ulrikh	2	3	and
 052.040.010_Case5	0	P	Prosperity	-1
 052.040.010_Case5	1	P	Preaching	1
@@ -1056,6 +1062,7 @@
 052.050.026_PatriarchPreaching	5	P	Will	-5
 052.050.026_PatriarchPreaching	5	R	Jeanne	1
 052.050.026_PatriarchPreaching	5	S	Jeanne	33
+052.050.026_PatriarchPreaching	5	N	052.050.025_Confession_Button_5	0
 052.050.026_PatriarchPreaching	5	Q	Will	5	3	and
 052.050.026_PatriarchPreaching	5	T	Jeanne	19	0	and
 052.050.030_Case8	0	P	Prosperity	1
@@ -1083,8 +1090,10 @@
 052.050.030_Case8	3	O	Spirituality	0	0	and
 052.050.030_Case8	4	P	Authority	-1
 052.050.030_Case8	4	P	Toleration	1
+052.050.030_Case8	4	N	052.050.030_Case8_Button4	0
 052.050.030_Case8	5	P	Will	-5
 052.050.030_Case8	5	R	Jeanne	1
+052.050.030_Case8	5	N	052.050.030_Case8_Button5	0
 052.050.030_Case8	5	Q	Will	5	3	and
 052.050.030_Case8	5	T	Jeanne	19	0	and
 052.060.010_Case9	1	P	Authority	-2
@@ -1983,15 +1992,19 @@
 054.040.040_OctaviaDate	4	T	OMilanid	23	0	and
 054.040.050_OctaviaDate	1	P	Preaching	2
 054.040.050_OctaviaDate	1	P	Will	5
+054.040.050_OctaviaDate	1	N	054.040.040_OctaviaDate_Button_1	0
 054.040.050_OctaviaDate	1	Q	Death	1	3	or
 054.040.050_OctaviaDate	1	O	Curiosity	0	0	or
 054.040.050_OctaviaDate	2	P	Theology	2
 054.040.050_OctaviaDate	2	P	Will	5
 054.040.050_OctaviaDate	2	R	OMilanid	1
+054.040.050_OctaviaDate	2	N	054.040.040_OctaviaDate_Button_2	0
 054.040.050_OctaviaDate	2	T	OMilanid	33	0	and
 054.040.050_OctaviaDate	3	P	Will	10
+054.040.050_OctaviaDate	3	N	054.040.040_OctaviaDate_Button_3	0
 054.040.050_OctaviaDate	4	P	Carier	1
 054.040.050_OctaviaDate	4	P	Reputation	1
+054.040.050_OctaviaDate	4	N	054.040.040_OctaviaDate_Button_4	0
 054.040.050_OctaviaDate	4	T	OMilanid	23	0	and
 054.050.010_HuntForEvidence	0	P	State	-1
 054.050.010_HuntForEvidence	0	P	Prosperity	-1

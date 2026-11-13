@@ -41,6 +41,7 @@ namespace Doorstop
 
 		private static Dictionary<string, Dictionary<int, List<Effect>>> _effects;
 		private static readonly Dictionary<string, string> _titleKeys = new Dictionary<string, string>();
+		private static readonly Dictionary<string, string> _nameKeys = new Dictionary<string, string>();
 		private static Dictionary<string, Parameter> _parameters;
 		private static Dictionary<string, Character> _characters;
 
@@ -85,6 +86,11 @@ namespace Doorstop
 					if (p[2] == "K")
 					{
 						_titleKeys[p[0]] = p[3];   // an event scene's title key, not an effect
+						continue;
+					}
+					if (p[2] == "N")
+					{
+						_nameKeys[p[0] + "#" + button] = p[3];   // an answer's name key, not an effect
 						continue;
 					}
 					Effect fx = new Effect { Kind = p[2][0], Name = p[3], Value = value };
@@ -143,6 +149,21 @@ namespace Doorstop
 		public static List<Effect> SceneChanges(string scene)
 		{
 			return ForScene(scene).FindAll(e => e.Kind == 'P' || e.Kind == 'R' || e.Kind == 'S');
+		}
+
+		// The localisation key of an answer's name (the button's short text,
+		// ParameterButtonChanger.ButtonTextKey): "<scene>_Button_<N>" but for
+		// the 13 buttons the TSV lists. Null for a name that is no answer.
+		public static string AnswerNameKey(string scene, string choiceName)
+		{
+			Load();
+			int button = ButtonIndex(choiceName);
+			if (scene == null || button <= 0)
+			{
+				return null;
+			}
+			string key;
+			return _nameKeys.TryGetValue(scene + "#" + button, out key) ? key : scene + "_Button_" + button;
 		}
 
 		// The localisation key of an event scene's title when it is not

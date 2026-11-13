@@ -101,6 +101,19 @@ namespace Doorstop
 			return _scenes != null && _scenes.TryGetValue(scene, out s) ? s.Title : "";
 		}
 
+		// An answer's name, as its button shows it ("Charge the attackers"), in
+		// the game's language; "" when the game has none.
+		public static string Name(string scene, string choiceName)
+		{
+			string key = SceneEffects.AnswerNameKey(scene, choiceName);
+			if (key == null)
+			{
+				return "";
+			}
+			string t = Loc.Game(key, "");
+			return t == key ? "" : t;
+		}
+
 		// The game's text for a key of this scene, else the table's.
 		private static string Live(string scene, string key, string tableText)
 		{

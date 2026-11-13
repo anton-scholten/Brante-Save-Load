@@ -2601,7 +2601,11 @@ namespace Doorstop
 				n.Btn.onClick.AddListener(delegate { SelectChoice(sceneId, choiceName); });
 			}
 
-			n.Label = AddLabel(node.transform, "Text", SceneEffects.NobleParticle(c.Text), 17f, Palette.Ink, false);
+			// the answer's name, as its button in the game shows it; the full
+			// text is in the hover pop-up
+			string name = col.Event ? "" : SceneTexts.Name(col.Scene, c.Name);
+			n.Label = AddLabel(node.transform, "Text",
+				SceneEffects.NobleParticle(string.IsNullOrEmpty(name) ? c.Text : name), 17f, Palette.Ink, false);
 			RectTransform lrt = n.Label.rectTransform;
 			lrt.anchorMin = Vector2.zero;
 			lrt.anchorMax = Vector2.one;

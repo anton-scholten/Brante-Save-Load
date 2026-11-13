@@ -329,6 +329,13 @@ community event sheet (`data/events.json`).
   that of the answer-less scenes stepped over before it (`TreeCol.Between`).
   The "case of the year" window (`Case` assets) is opened by nothing but the
   game's developer window, so there is nothing of it to simulate.
+- **Answer boxes show the answer's name.** The tree's box has the button's
+  short text ("Charge the attackers", `SceneTexts.Name`: the live
+  translation of `ParameterButtonChanger.ButtonTextKey`), the hover pop-up
+  the full description (`ButtonDescriptionN`). The key is
+  `<scene>_Button_<N>` except for 13 buttons, listed as `N` rows in
+  scene-effects.tsv; with no translation the box falls back to the
+  description.
 - **Events are drawn as columns, outside the logic.** An answer-less scene
   whose opening changes stats, relations or fates (`IsEventScene`: a
   trigger event, an incident, `FamilyQuarrel`, a final; ~60 scenes; the
