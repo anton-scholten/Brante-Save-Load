@@ -1216,6 +1216,68 @@ namespace Doorstop
 				+ sw.ElapsedMilliseconds + " ms" + (_redrawAhead ? " (columns changed)" : ""));
 		}
 
+		// An event's box (an answer-less scene drawn as a column) is a load
+		// target too: Load scene replays the path to the answer before it
+		// and stops when the event opens. It is the selection until the next
+		// pick (SelectChoice re-selects the furthest pick) or a second click.
+		private static void SelectEvent(string scene)
+		{
+			if (_selScene == scene && _selChoice == EventChoice)
+			{
+				_selScene = null;
+				_selChoice = null;
+				string had;
+				for (int i = _tree.Count - 1; i >= 0; i--)
+				{
+					if (_overrides.TryGetValue(_tree[i].Scene, out had))
+					{
+						_selScene = _tree[i].Scene;
+						_selChoice = had;
+						break;
+					}
+				}
+			}
+			else
+			{
+				_selScene = scene;
+				_selChoice = EventChoice;
+			}
+			RefreshKeepingScroll(false);
+			ModLog.Info("ChoiceWindow: event " + scene + (_selChoice == EventChoice ? " selected" : " unselected"));
+		}
+
+		private static bool EventSelected()
+		{
+			return _selChoice == EventChoice && !string.IsNullOrEmpty(_selScene);
+		}
+
+		// The _tree index of the column an event comes just before (its
+		// Between or PlayedBetween), _tree.Count for one after the last
+		// column, -1 when it is not on the tree.
+		private static int EventColumn(string scene)
+		{
+			for (int i = 0; i < _tree.Count; i++)
+			{
+				if ((_tree[i].Between != null && _tree[i].Between.Contains(scene))
+					|| (_tree[i].PlayedBetween != null && _tree[i].PlayedBetween.Contains(scene)))
+				{
+					return i;
+				}
+			}
+			return _tailBetween != null && _tailBetween.Contains(scene) ? _tree.Count : -1;
+		}
+
+		// The last _tree column the selection's path goes through: the
+		// selected scene's, or for an event the one before it.
+		private static int SelIndex()
+		{
+			if (EventSelected())
+			{
+				return EventColumn(_selScene) - 1;
+			}
+			return string.IsNullOrEmpty(_selScene) ? -1 : _tree.FindIndex(c => c.Scene == _selScene);
+		}
+
 		// Rebuilds the tree without moving the view.
 		private static void RefreshKeepingScroll(bool rebuild = false)
 		{
@@ -1248,6 +1310,9 @@ namespace Doorstop
 			// An intermediate scene is still ahead (a conditional scene): the
 			// path is a guess beyond the played part.
 			public bool Speculative;
+			// The target is an event (an answer-less scene): the replay gives
+			// the answers of Order and stops when Target opens.
+			public bool ToEvent;
 		}
 
 		private static LoadPlan PlanLoad(out string why)
@@ -1255,6 +1320,7 @@ namespace Doorstop
 			why = "";
 			int target = -1;
 			int current = -1;
+			bool toEvent = EventSelected();
 			for (int i = 0; i < _tree.Count; i++)
 			{
 				if (_tree[i].Scene == _selScene)
@@ -1266,11 +1332,21 @@ namespace Doorstop
 					current = i;
 				}
 			}
-			if (target < 0)
+			if (toEvent)
 			{
+				// the column after the event: the path goes up to the answer
+				// before it, and the replay stops when the event opens
+				target = EventColumn(_selScene);
+			}
+			if (target < 0 || (toEvent && target == 0))
+			{
+				if (toEvent && target == 0)
+				{
+					why = Loc.T(Loc.K.NoSaveBefore);
+				}
 				return null;
 			}
-			int diverge = target;
+			int diverge = toEvent ? target - 1 : target;
 			if (current >= 0 && current < diverge)
 			{
 				diverge = current;   // scenes ahead have to be played to
@@ -1326,8 +1402,9 @@ namespace Doorstop
 			LoadPlan plan = new LoadPlan();
 			plan.StartPath = startPath;
 			plan.StartScene = _tree[start].Scene;
-			plan.Target = _tree[target].Scene;
-			plan.TargetTitle = _tree[target].Title;
+			plan.Target = toEvent ? _selScene : _tree[target].Scene;
+			plan.TargetTitle = toEvent ? EventTitle(_selScene) : _tree[target].Title;
+			plan.ToEvent = toEvent;
 			for (int i = start; i < target; i++)
 			{
 				string pick;
@@ -1363,7 +1440,7 @@ namespace Doorstop
 				}
 				plan.Picks[_tree[i].Scene] = pick;
 			}
-			for (int i = start; i <= target; i++)
+			for (int i = start; i <= (toEvent ? target - 1 : target); i++)
 			{
 				plan.Order.Add(_tree[i].Scene);
 			}
@@ -1734,6 +1811,10 @@ namespace Doorstop
 			{
 				return false;
 			}
+			if (EventSelected())
+			{
+				return EventColumn(_selScene) >= 0;   // the game is never on an event while the tree is open
+			}
 			TreeCol target = _tree.Find(c => c.Scene == _selScene);
 			if (target == null)
 			{
@@ -1791,7 +1872,7 @@ namespace Doorstop
 			// an answer you picked counts wherever it is; a played one you
 			// kept, up to the furthest pick (past it, the path is not replayed)
 			int at = _tree.IndexOf(col);
-			int furthest = _tree.FindIndex(c => c.Scene == _selScene);
+			int furthest = SelIndex();
 			for (int k = _tree.Count - 1; k > furthest; k--)
 			{
 				if (_overrides.ContainsKey(_tree[k].Scene))
@@ -2062,6 +2143,7 @@ namespace Doorstop
 			string offPath = null;
 			string skipped = null;
 			int next = 0;
+			AutoPlay.StopAtScene = plan.ToEvent ? plan.Target : null;
 			yield return AutoPlay.Run(delegate(string scene)
 			{
 				string pick;
@@ -2096,6 +2178,7 @@ namespace Doorstop
 				next = at + 1;
 				return true;
 			}, 60f, !File.Exists(Path.Combine(Recorder.SnapshotDir, "dev-slow.txt")));   // dev-slow.txt: at 1x
+			AutoPlay.StopAtScene = null;
 			// One autosave for the scene the replay reached (the per-scene
 			// mirror is suppressed while AutoPlay runs).
 			Recorder.MirrorGameAutosave();
@@ -2628,6 +2711,10 @@ namespace Doorstop
 			{
 				n.Btn.onClick.AddListener(delegate { SelectChoice(sceneId, choiceName); });
 			}
+			else
+			{
+				n.Btn.onClick.AddListener(delegate { SelectEvent(sceneId); });   // load up to the event
+			}
 
 			// the answer's name, as its button in the game shows it; the full
 			// text is in the hover pop-up
@@ -2713,7 +2800,16 @@ namespace Doorstop
 		// he is now - which is also what Undo brings back.
 		private static SceneEffects.Hero StatsHero()
 		{
-			if (!string.IsNullOrEmpty(_selScene))
+			if (EventSelected())
+			{
+				// the hero after the event's own changes
+				TreeCol ev = _drawCols != null ? _drawCols.Find(c => c.Event && c.Scene == _selScene) : null;
+				if (ev != null && (ev.AfterHero ?? ev.Hero) != null)
+				{
+					return ev.AfterHero ?? ev.Hero;
+				}
+			}
+			else if (!string.IsNullOrEmpty(_selScene))
 			{
 				TreeCol col = _tree.Find(c => c.Scene == _selScene);
 				if (col != null && col.Hero != null)
@@ -6166,6 +6262,10 @@ namespace Doorstop
 						th.OnHover(true);
 						ModLog.Info("DEV PICK: hovering title of " + sc);
 						continue;
+					}
+					else if (l.StartsWith("event ", StringComparison.Ordinal))
+					{
+						SelectEvent(l.Substring(6).Trim());   // an event box clicked: the load target
 					}
 					else if (l == "allpeople")
 					{

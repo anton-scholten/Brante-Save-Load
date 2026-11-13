@@ -399,6 +399,19 @@ community event sheet (`data/events.json`).
   positions by column index on screen uses `_drawCols` / `_focusDraw`. A
   title key that is not `<scene>_Title` is a `K` row in scene-effects.tsv;
   a chapter start uses the chapter's name.
+- **An event box is a load target.** Clicking it (`SelectEvent`) makes the
+  event the selection (`_selScene` = the event, `_selChoice` = `"Event"`,
+  until the next pick or a second click). `PlanLoad` then plans to the
+  `_tree` column after it (`EventColumn`: whose `Between`/`PlayedBetween`
+  holds it), gives the answers up to the one before it (`Order` ends
+  there; the start is at or before that column, never past the event),
+  and `plan.ToEvent` makes the replay set `AutoPlay.StopAtScene`: the run
+  stops 0.5 s after `Story()` is the event, pressing nothing in it, so
+  the game shows its opening (a year-news pop-up first, where the game
+  has one). `SelIndex` is the last column such a path goes through;
+  `StatsHero` is the event's `AfterHero`. Verified: 12 answers from
+  `02.12.01` to `030.080.010_Departure_Noble` in 38 s. `dev-pick.txt`
+  takes `event <scene>`.
 - **The chapter-3 skills are projected in chapters 1-2.** They are 0 until
   the chapter-3 start converts the earlier stats. While the stats shown are
   from chapter 1 or 2, `StatPanel.Show` draws the six skill rows faded with

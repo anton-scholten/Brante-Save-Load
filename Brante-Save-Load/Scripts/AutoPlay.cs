@@ -183,6 +183,7 @@ namespace Doorstop
 			}
 			string answered = "";
 			string seen = "";
+			float stopSeen = -1f;
 			float lastMove = Time.realtimeSinceStartup;
 			string lastButtons = "";
 			float fpsSince = Time.realtimeSinceStartup;
@@ -201,6 +202,22 @@ namespace Doorstop
 					break;
 				}
 				string scene = Story();
+				if (!string.IsNullOrEmpty(StopAtScene) && scene == StopAtScene)
+				{
+					// the event is open: leave it to the player, after a moment
+					// for its page to come up
+					if (stopSeen < 0f)
+					{
+						stopSeen = Time.realtimeSinceStartup;
+						ModLog.Info("AUTOPLAY: reached " + scene + " - stopping there");
+					}
+					if (Time.realtimeSinceStartup - stopSeen > 0.5f)
+					{
+						break;
+					}
+					yield return new WaitForSecondsRealtime(0.05f);
+					continue;
+				}
 				bool moved = false;
 				string stopWhy = null;
 				// A death comes from an answer (the Deaths stat it raises is in
@@ -570,6 +587,10 @@ namespace Doorstop
 		}
 
 		public enum Stop { None, Blocked, Death, User }
+
+		// A scene to stop on as soon as it opens, without pressing anything
+		// in it (Load scene to an event): set before Run, cleared after.
+		public static string StopAtScene;
 
 		// Set by the progress box's Stop button: the run ends at its next step,
 		// leaving the game on whatever scene it has reached.

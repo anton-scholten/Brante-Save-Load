@@ -99,7 +99,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 - Columns are scenes, boxes are choices; your path is in red, with each choice made highlighted in yellow. Future scenes are predicted so only those that can happen are shown and your stats automatically lists the choices you can take.
 - **Hover** a choice to see what it changes and requires; the stats it changes light up below (green up, red down).
 - **Hover** a scene's name to read the text beside its choices. On the Family and Relations tabs, a pale "ghost" row shows someone you would meet by the scene or choice you hover.
-- Events that happen without a choice but change your stats (Family Strife, the revolt's incidents, the finals, …) get a column of their own where they happen, played or predicted, with one box named after the event; hover it to read how it opens and what it changes.
+- Events that happen without a choice but change your stats (Family Strife, the revolt's incidents, the finals, …) get a column of their own where they happen, played or predicted, with one box named after the event; hover it to read how it opens and what it changes, click it to load up to the moment it happens.
 - Under the tree, **Stats**, **Family** and **Relations** tabs show your stats or your relations with each character along the path (portrait, -5 to +5, and their status: dead, exiled, …): the family as its family tree, everyone else by estate (nobles, clergy, common folk).
 - In chapters 1 and 2 the chapter-3 skills (Diplomacy, Valor, …) are shown faded with the values your stats would give them when chapter 3 starts, so you can see what an early choice does there.
 - **Click** choices to build a new path. Click again to undo; the arrow by the × resets all. Greyed choices can't be taken; red ones conflict with an earlier pick.
@@ -122,6 +122,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
   - Chapter-3 skills are projected in chapters 1-2.
   - Characters appear once met; hovering shows those you would meet as pale rows.
   - Hovering a scene's name shows the text beside its choices.
+  - Events can be loaded like choices.
 - **7 Nov 2026:** clearer install steps; `install.sh --copy` copies the game data too.
 - **6 Nov 2026:**
   - Load scene shows progress, time left and a Stop button.
