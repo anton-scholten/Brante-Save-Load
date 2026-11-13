@@ -332,7 +332,10 @@ community event sheet (`data/events.json`).
   spare height equally above, between and below them. Both are scaled up to
   `PeopleMaxScale` (1.25), larger than the stat rows. A tab under the
   pointer turns accent-coloured on a `Palette.Card` back. `dev-pick.txt`
-  takes `mode stats|family|relations` and `tabhover <mode>`.
+  takes `mode stats|family|relations`, `tabhover <mode>` and `allpeople`
+  (list all 24 characters any scene unlocks: the layout's worst case; one
+  playthrough meets at most 19 - 3014 saves agree - and all 24 fit at
+  0.83 at 1080p, more than the stat rows' 0.7).
 - **The tree never scrolls vertically.** `LayoutTreeArea` makes it as tall as
   its tallest column (answer boxes `TreeNodeH` 34 in `TreeRowH` 40 rows, the
   17-unit text unchanged) and gives the stats the rest (~0.7 of the game's row

@@ -42,6 +42,7 @@ namespace Doorstop
 		public enum Mode { Stats, Family, Relations }
 
 		public static Mode Showing = Mode.Stats;
+		public static bool DevAllPeople;   // dev-pick "allpeople": list everyone a scene can unlock (layout test)
 		private const float TabStrip = 40f;   // the tabs' height
 		private static RectTransform _area, _content;
 		private static SceneEffects.Hero _lastShown, _lastNow;
@@ -575,12 +576,13 @@ namespace Doorstop
 				}
 				foreach (CharacterModel m in h.Characters)
 				{
-					if (m == null || m.Character == CharacterList.Hero || seen.Contains(m.Character) || !m.IsUnlocked)
+					Character c = PersonAsset(m == null ? CharacterList.Hero : m.Character);
+					bool forced = DevAllPeople && c != null && SceneEffects.AllUnlockable().Contains(c.name);
+					if (m == null || m.Character == CharacterList.Hero || seen.Contains(m.Character) || !(m.IsUnlocked || forced))
 					{
 						continue;
 					}
-					Character c = PersonAsset(m.Character);
-					if (c == null || c.IsFamily != (Showing == Mode.Family) || (h == now && ModelOf(shown, m.Character) != null
+					if (c == null || c.IsFamily != (Showing == Mode.Family) || (h == now && !forced && ModelOf(shown, m.Character) != null
 						&& !ModelOf(shown, m.Character).IsUnlocked))
 					{
 						continue;   // the hero shown has not met them yet

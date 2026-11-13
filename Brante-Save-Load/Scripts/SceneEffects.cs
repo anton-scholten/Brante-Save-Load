@@ -132,6 +132,29 @@ namespace Doorstop
 		// and the interludes its SceneStateMachine shows in PREGAME
 		// (TeenagerInterlude1 in 02.03.01, ...); a "C Convert" row is the
 		// chapter-3 start's skill conversion.
+		// Every character some scene unlocks (U rows): the most the
+		// Relations tab could ever list (dev-pick "allpeople").
+		public static HashSet<string> AllUnlockable()
+		{
+			Load();
+			HashSet<string> all = new HashSet<string>();
+			foreach (Dictionary<int, List<Effect>> scene in _effects.Values)
+			{
+				List<Effect> fx;
+				if (scene.TryGetValue(0, out fx))
+				{
+					foreach (Effect e in fx)
+					{
+						if (e.Kind == 'U')
+						{
+							all.Add(e.Name);
+						}
+					}
+				}
+			}
+			return all;
+		}
+
 		public static List<Effect> ForScene(string scene)
 		{
 			Load();

@@ -6057,6 +6057,11 @@ namespace Doorstop
 						ModLog.Info("DEV PICK: hovering " + l.Substring(6));
 						continue;
 					}
+					else if (l == "allpeople")
+					{
+						StatPanel.DevAllPeople = true;
+						continue;
+					}
 					else if (l.StartsWith("tabhover ", StringComparison.Ordinal))
 					{
 						string m = l.Substring(9).Trim();
