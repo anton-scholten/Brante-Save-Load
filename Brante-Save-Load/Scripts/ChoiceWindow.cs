@@ -2603,7 +2603,8 @@ namespace Doorstop
 
 			// the answer's name, as its button in the game shows it; the full
 			// text is in the hover pop-up
-			string name = col.Event ? "" : SceneTexts.Name(col.Scene, c.Name);
+			// an event's box: the event's name (its column title)
+			string name = col.Event ? col.Title : SceneTexts.Name(col.Scene, c.Name);
 			n.Label = AddLabel(node.transform, "Text",
 				SceneEffects.NobleParticle(string.IsNullOrEmpty(name) ? c.Text : name), 17f, Palette.Ink, false);
 			RectTransform lrt = n.Label.rectTransform;
@@ -2942,7 +2943,7 @@ namespace Doorstop
 			History.Choice c = new History.Choice();
 			c.Index = 1;
 			c.Name = EventChoice;
-			c.Text = Loc.T(Loc.K.EventHappens);
+			c.Text = EventText(scene);
 			c.Chosen = true;     // it happens: the path goes through it
 			e.Choices.Add(c);
 			e.PlayedChoice = EventChoice;
@@ -2950,6 +2951,52 @@ namespace Doorstop
 		}
 
 		private const string EventChoice = "Event";
+
+		// What an event says when it opens, for its box's pop-up: its first
+		// text page in the game's language (the key prefix is the scene's, or
+		// that of its title key: `053.100.140_Profitableyear_Text_1` for
+		// `053.100.140_ProfitableYear`), cut at a sentence near 420
+		// characters, then "Happens on its own" in italics.
+		private static string EventText(string scene)
+		{
+			string happens = "<i>" + Loc.T(Loc.K.EventHappens) + "</i>";
+			List<string> prefixes = new List<string> { scene };
+			string key = SceneEffects.TitleKey(scene);
+			if (!string.IsNullOrEmpty(key) && key.EndsWith("_Title", StringComparison.Ordinal))
+			{
+				prefixes.Add(key.Substring(0, key.Length - "_Title".Length));
+			}
+			string text = "";
+			foreach (string prefix in prefixes)
+			{
+				for (int i = 1; i <= 3 && text.Length == 0; i++)
+				{
+					string k = prefix + "_Text_" + i;
+					string t = Loc.Game(k, "");
+					if (t != k && t.IndexOf("need translation", StringComparison.OrdinalIgnoreCase) < 0)
+					{
+						text = t.Trim();
+					}
+				}
+				if (text.Length > 0)
+				{
+					break;
+				}
+			}
+			if (text.Length == 0)
+			{
+				return happens;
+			}
+			string hero = ParametersManager.Instance != null ? ParametersManager.Instance.HeroName : null;
+			text = text.Replace("<username>", string.IsNullOrEmpty(hero) ? "Brante" : hero);
+			text = SceneEffects.NobleParticle(text);
+			if (text.Length > 420)
+			{
+				int cut = text.LastIndexOfAny(new[] { '.', '!', '?', '\u2026' }, 420);
+				text = cut > 120 ? text.Substring(0, cut + 1) : text.Substring(0, 420) + "\u2026";
+			}
+			return text + "\n" + happens;
+		}
 
 		// Every played scene with a known answer list becomes a column, then
 		// every scene still ahead (AddUpcoming).
@@ -6008,6 +6055,14 @@ namespace Doorstop
 						Canvas.ForceUpdateCanvases();
 						hit.Img.GetComponent<TreeHover>().OnHover(true);
 						ModLog.Info("DEV PICK: hovering " + l.Substring(6));
+						continue;
+					}
+					else if (l.StartsWith("mode ", StringComparison.Ordinal))
+					{
+						// the panel under the tree: stats, family or relations
+						string m = l.Substring(5).Trim();
+						StatPanel.SetMode(m == "family" ? StatPanel.Mode.Family
+							: m == "relations" ? StatPanel.Mode.Relations : StatPanel.Mode.Stats);
 						continue;
 					}
 					else if (l == "confirm")

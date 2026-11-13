@@ -40,10 +40,13 @@ Copy these three things from the repo into that folder, next to the `.exe`:
 
 | From the repo | What you do |
 |---|---|
-| `Brante-Save-Load\` | copy the whole folder |
+| `Brante-Save-Load\` | copy the whole folder (the one *inside* the repo, with `Brante-Save-Load.dll` in it) |
 | `doorstop\doorstop_config.ini` | copy just the file |
 | `vendor\doorstop\winhttp.dll` | copy just the file |
 
+The ZIP unpacks to `Brante-Save-Load-main\`: that is the repo, not the mod
+folder. Copy the `Brante-Save-Load\` folder from inside it; the game folder
+must not hold `Brante-Save-Load-main\` instead.
 The game folder should then look like this:
 
 ```
@@ -93,7 +96,8 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 - Columns are scenes, boxes are choices; your path is in red, with each choice made highlighted in yellow. Future scenes are predicted so only those that can happen are shown and your stats automatically lists the choices you can take.
 - **Hover** a choice to see what it changes and requires; the stats it changes light up below (green up, red down).
-- Events that happen without a choice but change your stats (Family Strife, the revolt's incidents, the finals, …) get a column of their own where they happen, played or predicted, with one "Happens on its own" box; hover it to see what it changes.
+- Events that happen without a choice but change your stats (Family Strife, the revolt's incidents, the finals, …) get a column of their own where they happen, played or predicted, with one box named after the event; hover it to read how it opens and what it changes.
+- Under the tree, **Stats**, **Family** and **Relations** tabs show your stats or your relations with each character along the path (portrait, -5 to +5, and their status: dead, exiled, …).
 - In chapters 1 and 2 the chapter-3 skills (Diplomacy, Valor, …) are shown faded with the values your stats would give them when chapter 3 starts, so you can see what an early choice does there.
 - **Click** choices to build a new path. Click again to undo; the arrow by the × resets all. Greyed choices can't be taken; red ones conflict with an earlier pick.
 - **Load scene** plays your path by itself (at 40× speed) up to the dashed choice, with a progress bar and time left; the game can't be clicked meanwhile, and **Stop** ends it on the scene it has reached. Every scene before it needs a choice; "Pick an answer here to go on" shows which one is missing.

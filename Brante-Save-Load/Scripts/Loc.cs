@@ -24,6 +24,7 @@ namespace Doorstop
 			ReplaySkipped, StartNotOnPath,
 			HelpAutosave, HelpCheckpoint, HelpManual, HelpOriginal,
 			EventHappens,
+			StatsTab,
 			
 		}
 
@@ -172,6 +173,17 @@ namespace Doorstop
 			_ja[K.EventHappens] = "選択なしで起こる";
 			_ko[K.EventHappens] = "저절로 일어남";
 			_zh[K.EventHappens] = "自然发生";
+			_en[K.StatsTab] = "Stats";
+			_ru[K.StatsTab] = "Характеристики";
+			_de[K.StatsTab] = "Werte";
+			_fr[K.StatsTab] = "Caractéristiques";
+			_es[K.StatsTab] = "Atributos";
+			_it[K.StatsTab] = "Statistiche";
+			_pl[K.StatsTab] = "Statystyki";
+			_tr[K.StatsTab] = "İstatistikler";
+			_ja[K.StatsTab] = "能力値";
+			_ko[K.StatsTab] = "능력치";
+			_zh[K.StatsTab] = "属性";
 			AddPickNext(_en, "Pick an answer here to go on");
 			AddPickNext(_ru, "Выберите здесь ответ, чтобы продолжить");
 			AddPickNext(_de, "Wähle hier eine Antwort, um weiterzugehen");

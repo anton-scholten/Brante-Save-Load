@@ -299,6 +299,24 @@ community event sheet (`data/events.json`).
   Love, Rule, Tolerance, GWrath, Control, Cruelty, Weight, Сontention - Cyrillic
   С) are left out; FINDINGS ("Dead stats") has the evidence. Column widths are
   measured on what a row draws (icon to slider end), not its 375-unit box.
+  Heir is left out too (`StatPanel.LeftOut`: only Stephan or the hero).
+  Personality is laid out in groups that a column never splits
+  (`StatPanel.Place`, `|` in `Tab.Order`): Willpower + Deaths + Perception +
+  Determination, then each occupation stat with the two chapter-3 skills it
+  feeds (Nobility - Diplomacy, Valor; Ingenuity - Manipulation, Scheming;
+  Spirituality - Theology, Eloquence).
+- **Stats / Family / Relations tabs.** Three tabs at the top of the panel
+  (`StatPanel.Mode`, `ModeTabs`) switch it between the stats and the
+  characters as the same cloned stat row: portrait (the chapter's sprite),
+  `GetCharacterTrueName`, relation -5..+5 on the two-sided slider, the game's
+  relation word or, when the status is not `Good`/`Not`, the status
+  (`<Character>.<Status>`). Family = `Character.IsFamily` without the hero,
+  Relations = everyone else the hero shown has met (`IsUnlocked`, or a
+  relation already changed), ordered by `UnlockDate` as the game's windows;
+  the rows are rebuilt when that set changes. Dead/left/exiled rows are
+  faded. A hovered answer marks relation and status changes like stats.
+  Never larger than the stat rows (`_statScale`). `dev-pick.txt` takes
+  `mode stats|family|relations`.
 - **The tree never scrolls vertically.** `LayoutTreeArea` makes it as tall as
   its tallest column (answer boxes `TreeNodeH` 34 in `TreeRowH` 40 rows, the
   17-unit text unchanged) and gives the stats the rest (~0.7 of the game's row
@@ -340,8 +358,10 @@ community event sheet (`data/events.json`).
   whose opening changes stats, relations or fates (`IsEventScene`: a
   trigger event, an incident, `FamilyQuarrel`, a final; ~60 scenes; the
   no-change epilogue pages are left out) gets a column of its own with one
-  box, "Happens on its own" (`Loc.K.EventHappens`), not clickable; hovering
-  it lists `SceneEffects.SceneChanges` and marks the stats. Only the drawn
+  box named after the event (its title), not clickable; hovering
+  it shows the event's first text page (`EventText`: `<scene>_Text_1..3`
+  or the title key's prefix, cut near 420 characters, then "Happens on its
+  own") and lists `SceneEffects.SceneChanges`, and marks the stats. Only the drawn
   list has them: `WithEvents` inserts them before each column from
   `TreeCol.PlayedBetween` (the save's scene list, `BuildColumns`) or
   `TreeCol.Between` (the simulation; `_tailBetween` after the last column),
