@@ -93,6 +93,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 - Columns are scenes, boxes are choices; your path is in red, with each choice made highlighted in yellow. Future scenes are predicted so only those that can happen are shown and your stats automatically lists the choices you can take.
 - **Hover** a choice to see what it changes and requires; the stats it changes light up below (green up, red down).
+- In chapters 1 and 2 the chapter-3 skills (Diplomacy, Valor, …) are shown faded with the values your stats would give them when chapter 3 starts, so you can see what an early choice does there.
 - **Click** choices to build a new path. Click again to undo; the arrow by the × resets all. Greyed choices can't be taken; red ones conflict with an earlier pick.
 - **Load scene** plays your path by itself (at 40× speed) up to the dashed choice, with a progress bar and time left; the game can't be clicked meanwhile, and **Stop** ends it on the scene it has reached. Every scene before it needs a choice; "Pick an answer here to go on" shows which one is missing.
 

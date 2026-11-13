@@ -552,13 +552,19 @@ namespace Doorstop
 		}
 
 		// The values of `shown` (the hero along the path); a value above
-		// `now` (the hero today) is green, below red.
+		// `now` (the hero today) is green, below red. Before chapter 3 the
+		// six skills are 0; their rows show what the chapter-3 start would
+		// make of the stats shown (faded, "Will unlock in Chapter III"), so a
+		// pick in chapters 1-2 shows its effect there.
 		public static void Show(SceneEffects.Hero shown, SceneEffects.Hero now, int chapter)
 		{
 			if (shown == null || now == null)
 			{
 				return;
 			}
+			bool early = chapter > 0 && chapter < 3;
+			shown = SceneEffects.WithSkillsProjected(shown);
+			now = SceneEffects.WithSkillsProjected(now);
 			// tabs the game has not opened yet at that chapter: greyed, with
 			// the game's own "opens in chapter N" under the title
 			foreach (Tab tab in _tabs)
@@ -576,10 +582,11 @@ namespace Doorstop
 			}
 			foreach (Row row in _rows)
 			{
+				bool projected = early && SceneEffects.IsSkill(row.Param.ParameterName);
 				CanvasGroup cg = RowRoot(row) != null ? RowRoot(row).GetComponent<CanvasGroup>() : null;
 				if (cg != null)
 				{
-					cg.alpha = chapter > 0 && row.Tab != null && row.Tab.Chapter > chapter ? 0.35f : 1f;
+					cg.alpha = projected || (chapter > 0 && row.Tab != null && row.Tab.Chapter > chapter) ? 0.35f : 1f;
 				}
 				int value = shown.Value(row.Param);
 				int today = now.Value(row.Param);
@@ -596,7 +603,7 @@ namespace Doorstop
 				}
 				if (row.Descr != null)
 				{
-					row.Descr.text = Segment(row.Param, value);
+					row.Descr.text = projected ? Loc.Game("HUD.WillOpen3", Segment(row.Param, value)) : Segment(row.Param, value);
 				}
 				FitText(row, _fitLimit);
 			}
@@ -607,6 +614,9 @@ namespace Doorstop
 		// game's own consequence rows), over what the row shows.
 		public static void HighlightChanges(SceneEffects.Hero before, SceneEffects.Hero after)
 		{
+			// in chapters 1-2 the skills the answer will feed are marked too
+			before = SceneEffects.WithSkillsProjected(before);
+			after = SceneEffects.WithSkillsProjected(after);
 			foreach (Row row in _rows)
 			{
 				int d = before != null && after != null ? after.Value(row.Param) - before.Value(row.Param) : 0;

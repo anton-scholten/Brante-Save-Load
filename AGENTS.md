@@ -327,6 +327,13 @@ community event sheet (`data/events.json`).
   that of the answer-less scenes stepped over before it (`TreeCol.Between`).
   The "case of the year" window (`Case` assets) is opened by nothing but the
   game's developer window, so there is nothing of it to simulate.
+- **The chapter-3 skills are projected in chapters 1-2.** They are 0 until
+  the chapter-3 start converts the earlier stats. While the stats shown are
+  from chapter 1 or 2, `StatPanel.Show` draws the six skill rows faded with
+  the game's "Will unlock in Chapter III" (`HUD.WillOpen3`) and the values
+  `SceneEffects.WithSkillsProjected` gives (the game's own
+  `CalculateChapterParams` on a copy), and `HighlightChanges` marks the
+  skills an answer feeds. So a pick there shows what it does in chapter 3.
 - **Snapshots know whether the interludes ran.** A choice snapshot is taken
   at `SceneController.Awake`, before the scene's PREGAME interludes; a save
   of the live answer screen is after them. `Recorder.LiveSceneState` writes

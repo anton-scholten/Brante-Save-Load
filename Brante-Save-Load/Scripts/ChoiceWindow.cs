@@ -5960,7 +5960,8 @@ namespace Doorstop
 					+ " [" + string.Join(" ", ch.ToArray()) + "] hero=" + DevStats(c.Hero) + " after=" + DevStats(c.AfterHero)
 					+ DevBetween(i > 0 ? _tree[i - 1] : null, c));
 			}
-			ModLog.Info("  stat panel: " + DevStats(StatsHero()));
+			ModLog.Info("  stat panel: " + DevStats(StatsHero()) + " (skills as drawn: "
+				+ DevStats(SceneEffects.WithSkillsProjected(StatsHero())) + ")");
 		}
 
 		// The answer-less scenes simulated before an upcoming column and, for

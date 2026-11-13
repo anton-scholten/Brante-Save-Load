@@ -132,6 +132,29 @@ namespace Doorstop
 			return new List<Effect>();
 		}
 
+		// The six chapter-3 skills, which the chapter-3 start's interlude
+		// fills from the earlier stats (CalculateChapterParams).
+		public static bool IsSkill(ParametersList p)
+		{
+			return p == ParametersList.Diplomacy || p == ParametersList.Valor || p == ParametersList.Manipulation
+				|| p == ParametersList.Sabotage || p == ParametersList.Theology || p == ParametersList.Preaching;
+		}
+
+		// `h` with the chapter-3 skills it would get if chapter 3 started now:
+		// a copy with the conversion applied while they are all still 0
+		// (chapters 1-2), else `h` itself.
+		public static Hero WithSkillsProjected(Hero h)
+		{
+			if (h == null || h.Stats == null || h.Stats.Valor != 0 || h.Stats.Diplomacy != 0 || h.Stats.Manipulation != 0
+				|| h.Stats.Sabotage != 0 || h.Stats.Preaching != 0 || h.Stats.Theology != 0)
+			{
+				return h;
+			}
+			Hero p = h.Clone();
+			p.Apply(new List<Effect> { new Effect { Kind = 'C', Name = "Convert" } });
+			return p;
+		}
+
 		// The hero as `scene` shows its answers: `h` with the scene's opening
 		// changes applied unless they are in already (h.Opened). A copy.
 		public static Hero AtOpen(Hero h, string scene)
