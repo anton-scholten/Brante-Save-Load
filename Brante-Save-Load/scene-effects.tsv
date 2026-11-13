@@ -22,6 +22,8 @@
 01.04.01	3	S	Gloria	9
 01.04.01	3	Q	Will	0	3	and
 01.04.01	4	P	Will	10
+01.05.01	0	P	Unity	-1
+01.05.01	0	R	Stefan	-1
 01.05.01	1	P	Curiosity	1
 01.05.01	2	P	Activity	1
 01.05.01	3	P	Will	-5
@@ -123,6 +125,8 @@
 02.02.01	1	Q	Will	0	3	and
 02.02.01	2	S	Sofja	7
 02.02.01	3	P	Will	10
+02.03.01	0	P	Order	-1
+02.03.01	0	P	Prosperity	1
 02.03.01	1	P	Cunning	1
 02.03.01	1	R	Stefan	-1
 02.03.01	1	R	Gloria	1
@@ -137,6 +141,7 @@
 02.04.01	2	P	Will	5
 02.04.01	2	R	Tommas	1
 02.04.01	3	P	Will	10
+02.05.01	0	P	State	1
 02.05.01	1	P	Discipline	1
 02.05.01	1	R	Robert	1
 02.05.01	2	P	Cunning	1
@@ -174,6 +179,7 @@
 02.07.02	3	P	Will	5
 02.07.02	3	R	Lidia	-1
 02.07.02	4	S	Jeanne	12
+02.08.01	0	R	Tommas	1
 02.08.01	1	R	Stefan	2
 02.08.01	1	S	Stefan	8
 02.08.01	2	P	Discipline	1
@@ -243,6 +249,8 @@
 02.11.01	4	P	Will	5
 02.11.01	4	R	Sofja	-1
 02.11.01	4	S	Sofja	15
+02.12.01	0	P	Church	1
+02.12.01	0	P	Order	-1
 02.12.01	1	P	Discipline	2
 02.12.01	1	R	Robert	1
 02.12.01	1	W	Robert	4	3	or
@@ -282,9 +290,12 @@
 030.010.015_LukaPreach	1	P	Theology	1
 030.010.015_LukaPreach	2	P	Preaching	1
 030.010.015_LukaPreach	3	P	Diplomacy	1
+030.010.020_OppositeEtern	0	P	Church	2
+030.010.020_OppositeEtern	0	P	Order	-1
 030.010.020_OppositeEtern	1	P	Valor	1
 030.010.020_OppositeEtern	2	P	Sabotage	1
 030.010.020_OppositeEtern	3	P	Theology	1
+030.010.030_MeetSofia	0	P	State	2
 030.010.030_MeetSofia	1	P	Sabotage	1
 030.010.030_MeetSofia	1	P	Valor	1
 030.010.030_MeetSofia	1	R	Sofja	1
@@ -313,6 +324,9 @@
 030.020.020_TommasPath	4	R	Tommas	-2
 030.020.020_TommasPath	4	S	Tommas	30
 030.020.020_TommasPath	4	O	Noble	0	1	and
+030.030.010_StudBrothers	0	R	Robert	1
+030.030.010_StudBrothers	0	R	Stefan	1
+030.030.010_StudBrothers	0	R	Gloria	-1
 030.030.010_StudBrothers	1	P	Manipulation	1
 030.030.010_StudBrothers	1	R	DOtton	1
 030.030.010_StudBrothers	1	Q	Diplomacy	10	3	and
@@ -325,6 +339,9 @@
 030.030.010_StudBrothers	3	R	OMilanid	1
 030.030.010_StudBrothers	3	R	Tommas	-1
 030.030.010_StudBrothers	3	S	OMilanid	11
+030.030.020_ReligiousDisput	0	R	Lidia	1
+030.030.020_ReligiousDisput	0	R	Natan	1
+030.030.020_ReligiousDisput	0	R	Robert	-1
 030.030.020_ReligiousDisput	1	P	Theology	1
 030.030.020_ReligiousDisput	1	P	Manipulation	1
 030.030.020_ReligiousDisput	1	Q	Theology	10	3	and
@@ -333,6 +350,9 @@
 030.030.020_ReligiousDisput	2	P	Will	-5
 030.030.020_ReligiousDisput	2	Q	Will	0	3	and
 030.030.020_ReligiousDisput	3	P	Will	10
+030.030.030_Recruitment	0	R	Robert	-1
+030.030.030_Recruitment	0	R	Stefan	-1
+030.030.030_Recruitment	0	R	Gloria	1
 030.030.030_Recruitment	1	P	Manipulation	1
 030.030.030_Recruitment	1	P	Diplomacy	1
 030.030.030_Recruitment	1	Q	Manipulation	10	3	and
@@ -341,12 +361,16 @@
 030.030.030_Recruitment	2	P	Will	-5
 030.030.030_Recruitment	2	Q	Will	0	3	and
 030.030.030_Recruitment	3	P	Will	10
+030.040.010_OfficersClub	0	P	State	-1
+030.040.010_OfficersClub	0	P	Order	1
 030.040.010_OfficersClub	1	P	Valor	1
 030.040.010_OfficersClub	1	P	Theology	1
 030.040.010_OfficersClub	2	P	Valor	1
 030.040.010_OfficersClub	2	P	Preaching	1
 030.040.010_OfficersClub	3	P	Valor	1
 030.040.010_OfficersClub	3	P	Sabotage	1
+030.040.020_LegacyOfTheEvilAges	0	P	State	-1
+030.040.020_LegacyOfTheEvilAges	0	P	Order	1
 030.040.020_LegacyOfTheEvilAges	1	P	Sabotage	1
 030.040.020_LegacyOfTheEvilAges	1	S	Jeanne	18
 030.040.020_LegacyOfTheEvilAges	1	S	Arianna	41
@@ -356,11 +380,16 @@
 030.040.020_LegacyOfTheEvilAges	3	P	Manipulation	1
 030.040.020_LegacyOfTheEvilAges	3	S	Jeanne	17
 030.040.020_LegacyOfTheEvilAges	3	T	Jeanne	12	0	and
+030.040.030_Preparation	0	P	State	-1
+030.040.030_Preparation	0	P	Order	1
 030.040.030_Preparation	1	P	Manipulation	1
 030.040.030_Preparation	2	P	Diplomacy	1
 030.040.030_Preparation	2	P	Theology	1
 030.040.030_Preparation	3	P	Will	5
 030.040.030_Preparation	3	R	Sofja	1
+030.050.010_FirstCase	0	R	Stefan	-1
+030.050.010_FirstCase	0	R	Gloria	-1
+030.050.010_FirstCase	0	R	Natan	-1
 030.050.010_FirstCase	1	P	Diplomacy	1
 030.050.010_FirstCase	2	P	Manipulation	1
 030.050.010_FirstCase	2	P	Theology	1
@@ -368,6 +397,10 @@
 030.050.010_FirstCase	2	S	Arianna	1
 030.050.010_FirstCase	2	Q	Will	0	3	and
 030.050.010_FirstCase	3	P	Will	10
+030.050.020_Sermon	0	P	State	-1
+030.050.020_Sermon	0	R	Stefan	-1
+030.050.020_Sermon	0	R	Gloria	-1
+030.050.020_Sermon	0	R	Natan	-1
 030.050.020_Sermon	1	P	Theology	1
 030.050.020_Sermon	1	R	Jeanne	1
 030.050.020_Sermon	2	P	Will	10
@@ -375,6 +408,10 @@
 030.050.020_Sermon	3	P	Sabotage	1
 030.050.020_Sermon	3	P	Will	-5
 030.050.020_Sermon	3	Q	Will	0	3	and
+030.050.030_Action	0	P	State	-1
+030.050.030_Action	0	R	Stefan	-1
+030.050.030_Action	0	R	Gloria	-1
+030.050.030_Action	0	R	Natan	-1
 030.050.030_Action	1	P	Valor	1
 030.050.030_Action	1	S	Arianna	1
 030.050.030_Action	2	P	Preaching	1
@@ -383,6 +420,8 @@
 030.050.030_Action	3	P	Sabotage	1
 030.050.030_Action	3	R	Sofja	1
 030.050.030_Action	3	Q	Sabotage	10	3	and
+030.060.010_GreatArkns	0	P	State	1
+030.060.010_GreatArkns	0	P	Order	1
 030.060.010_GreatArkns	1	P	Diplomacy	1
 030.060.010_GreatArkns	1	P	State	-1
 030.060.010_GreatArkns	1	P	Order	1
@@ -391,6 +430,8 @@
 030.060.010_GreatArkns	2	Q	Valor	12	3	and
 030.060.010_GreatArkns	3	P	Will	10
 030.060.010_GreatArkns	3	P	State	-1
+030.060.020_PatriarchUnius	0	P	State	1
+030.060.020_PatriarchUnius	0	P	Order	1
 030.060.020_PatriarchUnius	1	P	Valor	1
 030.060.020_PatriarchUnius	1	P	Theology	1
 030.060.020_PatriarchUnius	1	R	Jeanne	-1
@@ -399,6 +440,8 @@
 030.060.020_PatriarchUnius	2	Q	Preaching	12	3	and
 030.060.020_PatriarchUnius	3	P	Will	10
 030.060.020_PatriarchUnius	3	R	Jeanne	1
+030.060.030_HiddenRevealed	0	P	State	1
+030.060.030_HiddenRevealed	0	P	Order	1
 030.060.030_HiddenRevealed	1	P	Valor	1
 030.060.030_HiddenRevealed	1	P	Preaching	1
 030.060.030_HiddenRevealed	1	P	Will	-5
@@ -435,8 +478,11 @@
 030.070.030_RecruitForReal	3	R	Sofja	-2
 030.070.030_RecruitForReal	4	P	Death	4
 030.070.030_RecruitForReal	4	P	Reputation	-10
+030.080.010_Departure_Bourgeois	0	P	Church	-1
 030.080.010_Departure_Bourgeois	0	R	Gloria	1
+030.080.010_Departure_Cleric	0	P	Church	-1
 030.080.010_Departure_Cleric	0	R	Natan	1
+030.080.010_Departure_Noble	0	P	Church	-1
 030.080.010_Departure_Noble	0	R	Stefan	1
 051.000.020_Arrive_Inquisitor	1	R	Lidia	1
 051.000.020_Arrive_Inquisitor	2	R	Stefan	-1
@@ -495,6 +541,9 @@
 051.010.020_Scene_2	4	R	Natan	1
 051.010.020_Scene_2	4	Q	Theology	11	3	and
 051.010.020_Scene_2	4	W	Natan	2	3	and
+051.020.010_Scene_3	0	P	Prosperity	-1
+051.020.010_Scene_3	0	P	Order	-1
+051.020.010_Scene_3	0	P	State	1
 051.020.010_Scene_3	1	P	Reputation	2
 051.020.010_Scene_3	1	P	Diplomacy	1
 051.020.010_Scene_3	1	P	Sabotage	1
@@ -559,6 +608,7 @@
 051.030.010_Scene_4	5	P	Will	5
 051.030.010_Scene_4	5	R	Stefan	-1
 051.030.010_Scene_4	5	R	Natan	-1
+051.040.010_Scene_7	0	P	Church	1
 051.040.010_Scene_7	1	P	Unity	-1
 051.040.010_Scene_7	1	R	Gloria	1
 051.040.010_Scene_7	1	R	Stefan	-1
@@ -767,6 +817,7 @@
 051.070.060_Repentance	3	S	Natan	31
 051.070.060_Repentance	3	W	Natan	3	3	and
 051.070.060_Repentance	3	O	ВыздоровлениеМатери	0	0	and
+051.070.070_FamilyCouncil	0	P	Church	2
 051.070.070_FamilyCouncil	1	P	Will	5
 051.070.070_FamilyCouncil	1	R	Ded	2
 051.070.070_FamilyCouncil	1	Q	Reputation	8	3	and
@@ -876,6 +927,9 @@
 052.020.010_Case3	3	P	Preaching	1
 052.020.010_Case3	3	Q	Preaching	12	3	and
 052.020.010_Case3	3	O	OldFaithDefend	0	0	and
+052.030.010_Case4	0	P	State	1
+052.030.010_Case4	0	P	Order	-1
+052.030.010_Case4	0	P	Prosperity	-1
 052.030.010_Case4	1	P	Authority	1
 052.030.010_Case4	1	P	Toleration	-1
 052.030.010_Case4	1	P	Reputation	1
@@ -899,6 +953,7 @@
 052.030.010_Case4	4	P	Toleration	-1
 052.030.010_Case4	4	P	Money	2
 052.030.010_Case4	4	W	Ulrikh	2	3	and
+052.040.010_Case5	0	P	Prosperity	-1
 052.040.010_Case5	1	P	Preaching	1
 052.040.010_Case5	1	P	Authority	1
 052.040.010_Case5	1	P	Toleration	-1
@@ -938,6 +993,8 @@
 052.050.010_Case6	4	P	Preaching	1
 052.050.010_Case6	4	P	Reputation	-1
 052.050.010_Case6	4	P	Unity	-1
+052.050.020_Case7	0	P	State	-1
+052.050.020_Case7	0	P	Prosperity	-1
 052.050.020_Case7	1	P	Authority	1
 052.050.020_Case7	1	R	Jeanne	1
 052.050.020_Case7	1	T	Jeanne	17	1	and
@@ -971,6 +1028,9 @@
 052.050.025_Confession	5	Q	Preaching	15	3	and
 052.050.025_Confession	5	W	Jeanne	4	3	and
 052.050.025_Confession	5	T	Jeanne	19	0	and
+052.050.026_PatriarchPreaching	0	P	Order	-1
+052.050.026_PatriarchPreaching	0	P	State	1
+052.050.026_PatriarchPreaching	0	P	Prosperity	-1
 052.050.026_PatriarchPreaching	1	P	Toleration	-2
 052.050.026_PatriarchPreaching	1	P	Authority	-2
 052.050.026_PatriarchPreaching	1	P	Church	-1
@@ -997,6 +1057,8 @@
 052.050.026_PatriarchPreaching	5	S	Jeanne	33
 052.050.026_PatriarchPreaching	5	Q	Will	5	3	and
 052.050.026_PatriarchPreaching	5	T	Jeanne	19	0	and
+052.050.030_Case8	0	P	Prosperity	1
+052.050.030_Case8	0	P	State	1
 052.050.030_Case8	1	P	Authority	2
 052.050.030_Case8	1	P	Toleration	-2
 052.050.030_Case8	1	P	Unity	-1
@@ -1118,7 +1180,16 @@
 052.210.065_Final7	1	Q	Theology	20	2	and
 052.210.065_Final7	1	Q	Will	30	2	and
 052.210.065_Final7	2	P	Death	4
+052.220.010_FinalRoyal	0	P	State	1
+052.220.010_FinalRoyal	0	P	Church	1
+052.220.010_FinalRoyal	0	P	Prosperity	-2
 052.220.010_FinalRoyal	3	P	Will	10
+052.220.020_FinalRebel	0	P	State	1
+052.220.020_FinalRebel	0	P	Church	1
+052.220.020_FinalRebel	0	P	Prosperity	-2
+052.220.030_FinalEnd	0	P	State	1
+052.220.030_FinalEnd	0	P	Church	1
+052.220.030_FinalEnd	0	P	Prosperity	-2
 052.N1.010_Trigger1	1	P	Toleration	-2
 052.N1.010_Trigger1	1	Q	Valor	12	3	and
 052.N1.010_Trigger1	2	P	Money	-2
@@ -1322,6 +1393,7 @@
 053.030.010_Case2	4	P	Reputation	1
 053.030.010_Case2	4	P	Unity	1
 053.030.010_Case2	4	W	Robert	2	3	and
+053.040.010_Case3	0	P	Prosperity	-1
 053.040.010_Case3	1	P	Protest	1
 053.040.010_Case3	1	P	Repression	-1
 053.040.010_Case3	1	P	Death	1
@@ -1372,6 +1444,9 @@
 053.050.011_YouthMistakes	3	Q	Will	0	3	and
 053.050.011_YouthMistakes	3	O	BezudelSafe	0	0	and
 053.050.011_YouthMistakes	4	P	Repression	-1
+053.050.012_VisitingTheBurgomaster	0	P	State	1
+053.050.012_VisitingTheBurgomaster	0	P	Order	-1
+053.050.012_VisitingTheBurgomaster	0	P	Prosperity	-1
 053.050.012_VisitingTheBurgomaster	1	P	Reputation	1
 053.050.012_VisitingTheBurgomaster	1	R	Remi	1
 053.050.012_VisitingTheBurgomaster	1	S	Remi	25
@@ -1390,6 +1465,8 @@
 053.050.012_VisitingTheBurgomaster	5	R	Sofja	1
 053.050.012_VisitingTheBurgomaster	5	Q	Will	5	3	and
 053.050.012_VisitingTheBurgomaster	5	T	Sofja	13	1	and
+053.050.020_SmallVictory	0	P	State	-1
+053.050.020_SmallVictory	0	P	Prosperity	-1
 053.050.020_SmallVictory	1	P	Will	5
 053.050.020_SmallVictory	1	P	Protest	1
 053.050.020_SmallVictory	1	P	Unity	1
@@ -1430,6 +1507,9 @@
 053.050.021_DoriyOtton	4	R	Sofja	-1
 053.050.021_DoriyOtton	4	Q	Sabotage	12	3	and
 053.050.021_DoriyOtton	4	Q	Will	0	3	and
+053.050.030_SecondDate	0	P	Order	-1
+053.050.030_SecondDate	0	P	State	1
+053.050.030_SecondDate	0	P	Prosperity	-1
 053.050.030_SecondDate	1	P	Will	5
 053.050.030_SecondDate	1	R	Sofja	-1
 053.050.030_SecondDate	2	P	Will	-5
@@ -1492,6 +1572,8 @@
 053.060.020_IronPhilippe	4	P	Theology	1
 053.060.020_IronPhilippe	4	P	Church	-1
 053.060.020_IronPhilippe	4	Q	Theology	12	3	and
+053.060.030_DangerousCargo	0	P	Prosperity	1
+053.060.030_DangerousCargo	0	P	State	1
 053.060.030_DangerousCargo	1	P	Protest	-1
 053.060.030_DangerousCargo	1	P	Repression	1
 053.060.030_DangerousCargo	1	P	State	-1
@@ -1792,6 +1874,9 @@
 054.020.020_Case2	4	R	ElBorn	-2
 054.020.020_Case2	4	Q	Sabotage	10	3	and
 054.020.020_Case2	4	W	ElBorn	2	3	and
+054.030.010_Call	0	P	State	1
+054.030.010_Call	0	P	Order	-1
+054.030.010_Call	0	P	Prosperity	-1
 054.030.010_Call	1	R	OMilanid	-1
 054.030.010_Call	1	R	GuyTempest	1
 054.030.010_Call	1	R	ElBorn	1
@@ -1842,6 +1927,7 @@
 054.030.030_Case3	4	P	Preaching	1
 054.030.030_Case3	4	P	Church	-1
 054.030.030_Case3	4	Q	Theology	10	3	and
+054.040.010_FriendInTrouble	0	P	Prosperity	-1
 054.040.010_FriendInTrouble	1	R	Tommas	1
 054.040.010_FriendInTrouble	1	R	ElBorn	-1
 054.040.010_FriendInTrouble	1	S	Tommas	2
@@ -1906,6 +1992,8 @@
 054.040.050_OctaviaDate	4	P	Carier	1
 054.040.050_OctaviaDate	4	P	Reputation	1
 054.040.050_OctaviaDate	4	T	OMilanid	23	0	and
+054.050.010_HuntForEvidence	0	P	State	-1
+054.050.010_HuntForEvidence	0	P	Prosperity	-1
 054.050.010_HuntForEvidence	1	R	Tommas	-1
 054.050.010_HuntForEvidence	1	S	Tommas	2
 054.050.010_HuntForEvidence	1	W	Tommas	2	3	and
@@ -1943,6 +2031,9 @@
 054.050.020_SmallVictory	4	Q	Will	0	3	and
 054.050.020_SmallVictory	4	Q	Diplomacy	15	3	or
 054.050.020_SmallVictory	4	O	ПокровительствоВластей	0	0	or
+054.060.010_ThreatsAndPromises	0	P	Order	-1
+054.060.010_ThreatsAndPromises	0	P	State	1
+054.060.010_ThreatsAndPromises	0	P	Prosperity	-1
 054.060.010_ThreatsAndPromises	1	P	Manipulation	1
 054.060.010_ThreatsAndPromises	1	R	DOtton	1
 054.060.010_ThreatsAndPromises	1	Q	Manipulation	12	3	or
@@ -2024,6 +2115,8 @@
 054.060.040_RebelSentence	4	R	Gloria	1
 054.060.040_RebelSentence	4	Q	Manipulation	10	3	and
 054.060.040_RebelSentence	4	O	Cunning	0	0	and
+054.070.010_Case6	0	P	Prosperity	1
+054.070.010_Case6	0	P	State	1
 054.070.010_Case6	1	P	Carier	2
 054.070.010_Case6	1	P	Justice	1
 054.070.010_Case6	1	P	Reputation	1
@@ -2943,6 +3036,11 @@
 060.010.200_TheFinal4	5	Q	Sabotage	12	3	and
 060.010.210_TheFinal5	1	T	Natan	47	0	and
 060.010.210_TheFinal5	5	O	РезняВАнизотти	0	0	and
+Final_Characters_Octavia	0	P	Church	2
+Final_Characters_Octavia	0	P	Order	-1
+Final_Characters_Sofja	0	P	Church	2
+Final_Characters_Sofja	0	P	Order	-1
+InsurrectionChapterStart	0	P	Insurrection	2
 Insurrection_Incident_1	0	P	Insurrection	3
 Insurrection_Incident_1	0	P	CommonerMans	2
 Insurrection_Incident_1	0	P	Army	1
@@ -3008,3 +3106,4 @@ Insurrection_Incident_9	0	P	Army	1
 Insurrection_Incident_9	0	P	PriestsMans	1
 Insurrection_Incident_9	0	P	NoblesMans	1
 Insurrection_Incident_9	0	P	CommonerMans	2
+YouthChapterStart	0	C	Convert	0

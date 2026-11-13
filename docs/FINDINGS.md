@@ -1442,3 +1442,56 @@ change stats".
 - Still not simulated: interlude and case-of-year pop-ups
   (`InterludePopupController`, `CaseOfYearPopupController`) change stats
   from their own assets when closed.
+
+## Interludes, the chapter-3 skills, the case of the year (13 Nov 2026)
+
+- **Where interludes come from.** Each story scene has a `SceneStateMachine`
+  with six event lists (SHOW_ANIMATION, PREGAME, GAME_SETUP, GAME_RESOLVE,
+  POSTGAME, HIDE_ANIMATION) of `EventModel` {6 bools, `PopupType`,
+  Character, NewPortret, SceneAudioClip PPtrs, `Action` UnityEvent}. An
+  interlude is an event whose persistent call is `PopupEvent.ShowPopup` with
+  an `Interlude` asset as the object argument. All 62 such references
+  (59 scenes, from `01.05.01` to `054.070.010_Case6`, the chapter starts and
+  `Final_Characters_*`) are in PREGAME: they open with the scene, before the
+  answers, and apply their lists when the player closes them. A scene can
+  show two (`030.050.030_Action`: `YouthInterlude3_5`, then `YouthInterlude3`).
+- **`Interlude` assets** (resources.assets): TitleKey, TextBlocks
+  [{Character, SpeechByKey, bool, `TextBlockSpecialSceneries` (13 bools /
+  PPtrs / a string)}], Image, IsOpened, AudioClip, then the same
+  `ParameterValue`/`RelationValue`/`StatusValue` lists as a consequence
+  scene, then `EnableConvertationParams`. Read exactly (no bytes left over)
+  for all 47; their values match every "Interlude X applied" line the mod
+  logged in play (`Peace_Interlude8` Church +2, `YouthInterlude1_5` State +2,
+  ...). Mostly world stats (State, Order, Church, Prosperity, Army, Control,
+  Unity) and family relations.
+- **The chapter-3 skills.** `YouthInterlude0Intro` (YouthChapterStart) has
+  no lists but `EnableConvertationParams`: when it closes with Valor,
+  Diplomacy, Manipulation, Sabotage, Preaching and Theology all 0 it opens
+  `ParametersConvertationPanelComponent`, whose `Start` calls
+  `ParametersManager.CalculateChapterParams`: Diplomacy = Curiosity +
+  Discipline, Valor = Activity + Discipline, Manipulation = Curiosity +
+  Cunning, Sabotage = Activity + Cunning, Theology = Curiosity +
+  Spirituality, Preaching = Activity + Spirituality. A simulation crossing
+  from chapter 2 into 3 used to keep all six at 0. Verified (13 Nov) from
+  the `02.12.01` autosave: Curiosity 8, Nobility 8, Cunning 5, Spirituality 6
+  became Diplomacy 16, Valor 8, Manipulation 13, Sabotage 5, Theology 14,
+  Preaching 6 at `030.010.010_CulturalShock`; real chapter-3 saves of the
+  run have Diplomacy 17 = 8 + 7 + an answer's +2.
+- **Snapshot timing.** The mod's choice snapshot is taken at
+  `SceneController.Awake`, before PREGAME: `02.12.01` snapshots have
+  Church -4 / Order 7, the game's autosave of the same scene (written at
+  GAME_SETUP, `_sceneState` 2) -3 / 6. `BuildHelper` always wrote
+  `SHOW_ANIMATION`, which replays PREGAME on load - so a mod save of a
+  scene whose interludes had already run (a checkpoint or "Save now" on the
+  answer screen, a snapshot taken right after loading a GAME_SETUP save)
+  applied them twice when loaded. `Recorder.LiveSceneState` now writes
+  GAME_SETUP for those. Verified: the `02.12.01` autosave loaded, its new
+  snapshot has `_sceneState` 2 and Church -3, and loading that snapshot
+  logs no interlude and keeps Church -3.
+- **The case of the year is unreachable.** `Case` assets (29) carry stat
+  lists, applied by `CaseOfYearPopupController`, but the window that offers
+  them (`Window_CaseForYear`) is only opened by `UIManager.OpenCaseOfYearWindow`
+  from `DevWindow`; no scene, prefab or Bolt graph references it or
+  `CaseOfYearPopupInvoker`. Nothing to simulate.
+- Event pop-ups (`GameEvent`, e.g. `MarchCollars_EP` in POSTGAME) change no
+  stats (`EventPopupController` has no parameter calls).

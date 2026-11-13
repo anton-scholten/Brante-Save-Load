@@ -114,10 +114,12 @@ namespace Doorstop
 			return new List<Effect>();
 		}
 
-		// What a scene changes by itself, with no answer (button 0): the
-		// ConsequenceSceneController of the answer-less event and final
-		// scenes (052.N5.010_Trigger5, Insurrection_Incident_N, ...), applied
-		// when the scene is shown.
+		// What a scene changes by itself when it opens, before any answer
+		// (button 0): the ConsequenceSceneController of the answer-less event
+		// and final scenes (052.N5.010_Trigger5, Insurrection_Incident_N, ...)
+		// and the interludes its SceneStateMachine shows in PREGAME
+		// (TeenagerInterlude1 in 02.03.01, ...); a "C Convert" row is the
+		// chapter-3 start's skill conversion.
 		public static List<Effect> ForScene(string scene)
 		{
 			Load();
@@ -128,6 +130,20 @@ namespace Doorstop
 				return list;
 			}
 			return new List<Effect>();
+		}
+
+		// The hero as `scene` shows its answers: `h` with the scene's opening
+		// changes applied unless they are in already (h.Opened). A copy.
+		public static Hero AtOpen(Hero h, string scene)
+		{
+			if (h == null || h.Opened)
+			{
+				return h;
+			}
+			Hero o = h.Clone();
+			o.Apply(ForScene(scene));
+			o.Opened = true;
+			return o;
 		}
 
 		public static int ButtonIndex(string name)
@@ -159,6 +175,10 @@ namespace Doorstop
 			public ModelParameters Stats;
 			public List<CharacterModel> Characters;
 			public bool Live;        // the hero right now (objectives can be checked)
+			// the scene's opening changes (ForScene: its interludes) are in:
+			// the live game and a save past PREGAME; a choice snapshot is taken
+			// when the scene appears, before them
+			public bool Opened;
 			// the story objectives set, as a save recorded them (null: not known;
 			// carried on past a changed answer, since answers do not set them)
 			public HashSet<_Scripts.AMVCC.Views.Windows.ObjectiveEnum> Objectives;
@@ -175,6 +195,7 @@ namespace Doorstop
 					h.Characters.Add(c == null ? null : (CharacterModel)ShallowCopy(c));
 				}
 				h.Live = false;
+				h.Opened = Opened;
 				h.Objectives = Objectives == null ? null
 					: new HashSet<_Scripts.AMVCC.Views.Windows.ObjectiveEnum>(Objectives);
 				return h;
@@ -196,7 +217,18 @@ namespace Doorstop
 					{
 						try
 						{
-							if (e.Kind == 'P')
+							if (e.Kind == 'C')
+							{
+								// the chapter-3 start's interlude: the earlier stats
+								// become the chapter-3 skills, if those are all 0
+								// (InterludePopupController.ClosePopupButton_Click)
+								if (Stats.Valor == 0 && Stats.Diplomacy == 0 && Stats.Manipulation == 0
+									&& Stats.Sabotage == 0 && Stats.Preaching == 0 && Stats.Theology == 0)
+								{
+									pm.CalculateChapterParams();
+								}
+							}
+							else if (e.Kind == 'P')
 							{
 								Parameter p = ParameterAsset(e.Name);
 								if (p != null)
@@ -440,7 +472,8 @@ namespace Doorstop
 				try
 				{
 					SaveLoadHelper helper = Recorder.ReadHelper(path);
-					h = new Hero { Stats = helper.ModelParameters, Characters = helper.CharacterModel };
+					h = new Hero { Stats = helper.ModelParameters, Characters = helper.CharacterModel,
+						Opened = helper.SceneState >= Assets._Scripts.AMVCC.Core.SceneStateMachine.SceneStates.SceneState_GAME_SETUP };
 					if (helper.AllGameObjectives != null && helper.AllGameObjectives.Objectives != null)
 					{
 						h.Objectives = new HashSet<_Scripts.AMVCC.Views.Windows.ObjectiveEnum>();
@@ -473,6 +506,7 @@ namespace Doorstop
 			}
 			Hero h = new Hero { Stats = pm.Parameters, Characters = csh.Characters }.Clone();
 			h.Live = true;
+			h.Opened = true;
 			ObjectiveAsset("");   // fills the cache
 			h.Objectives = new HashSet<_Scripts.AMVCC.Views.Windows.ObjectiveEnum>();
 			foreach (Objective o in _objectives.Values)

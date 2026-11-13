@@ -60,6 +60,20 @@ The Life and Suffering of Sir Brante\
 Start the game as usual.
 Two new tabs on top of the book mean the mod is running.
 
+### Update to a newer version
+
+Your saves are not in the mod's folder, so updating never touches them: the
+mod keeps them with the game's own saves (on Windows in
+`%USERPROFILE%\AppData\LocalLow\SEVER\The Life and Suffering of Sir Brante\Brante-Save-Load\`).
+Close the game first.
+
+- **Linux:** in the repo, `git pull` (or replace the repo folder with the new
+  download, in the same place), then run `./tools/install.sh` again.
+- **Windows:** delete the old `Brante-Save-Load\` folder from the game's folder
+  and copy the new one in (copying over it could leave old files behind).
+  Copy `doorstop_config.ini` and `winhttp.dll` again too, overwriting them;
+  they rarely change, but that keeps everything from one version.
+
 ## Use
 
 Two tabs appear on top of the book: **save / load** (the arrows) and **tree view** (the linked boxes).
@@ -93,7 +107,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 - Your original save is backed up once to `Brante-Save-Load/Backups/`; the game's own saves keep working as normal.
 - Achievements stay on. Works in Iron Man. In all eleven of the game's languages.
-- The predicted scenes are close but not exact (a few stat changes aren't in the game's tables). If Load scene meets a scene it didn't expect, it stops there so you can pick and load again.
+- The predicted scenes are a forecast: choices you haven't picked count as the first one open. If Load scene meets a scene it didn't expect, it stops there so you can pick and load again.
 - Load scene takes about 2-3 s per scene.
 
 ## Uninstall

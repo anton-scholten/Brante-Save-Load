@@ -2013,6 +2013,40 @@ namespace Doorstop
 			ModLog.Info("Manual save " + baseName + " written to " + dir + " (" + blob.Length + " bytes, scene " + scene + ")");
 		}
 
+		// The scene state a save of the live game gets. SHOW_ANIMATION reopens
+		// the scene from the start, and its PREGAME events run again - the
+		// interludes, whose stat changes are already in the live state once
+		// the answers are up. So a state on the answer screen (GAME_SETUP:
+		// the scene's state machine, or, before it has started - the capture
+		// at SceneController.Awake - the state a loaded save brought in) is
+		// kept as GAME_SETUP, as the game's own autosave there does; anything
+		// earlier, or later (a consequence on screen), stays SHOW_ANIMATION.
+		private static SceneStates LiveSceneState(GameManager gm)
+		{
+			SceneStates state = SceneStates.SceneState_SHOW_ANIMATION;
+			try
+			{
+				string scene = gm.OpenedSceneName;
+				foreach (SceneStateMachine m in UnityEngine.Object.FindObjectsOfType<SceneStateMachine>())
+				{
+					if (m != null && m.gameObject.scene.name == scene)
+					{
+						state = m.GetCurrentState();
+						break;
+					}
+				}
+				if (state == SceneStates.SceneState_SHOW_ANIMATION)
+				{
+					state = gm.CurrentState;
+				}
+			}
+			catch (Exception)
+			{
+				state = SceneStates.SceneState_SHOW_ANIMATION;
+			}
+			return state == SceneStates.SceneState_GAME_SETUP ? state : SceneStates.SceneState_SHOW_ANIMATION;
+		}
+
 		// Mirrors SaveLoadManager.SaveData(int, int, SceneStates) field by
 		// field, minus every bit of file I/O. Names below match the game's
 		// own code (including its "CurrentConsequene" typo).
@@ -2044,7 +2078,7 @@ namespace Doorstop
 			helper.ModelParameters = pm.Parameters;
 			helper.CharacterModel = csh.Characters;
 			helper.ChapterParameters = kpc.AllKeyParameters;
-			helper.SceneState = SceneStates.SceneState_SHOW_ANIMATION;
+			helper.SceneState = LiveSceneState(gm);
 			helper.GodMode = gm.GodMode;
 			helper.CurrentConsequence = gm.CurrentConsequene;
 			helper.LastOpenScene = gm.OpenedSceneName;

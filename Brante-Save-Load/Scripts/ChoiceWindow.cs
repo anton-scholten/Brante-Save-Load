@@ -1433,7 +1433,9 @@ namespace Doorstop
 			try
 			{
 				h = Recorder.ReadHelper(startPath);
-				hero = SceneEffects.FromSnapshot(startPath);
+				// the start scene's opening changes are in unless the save is
+				// from before them (a choice snapshot)
+				hero = SceneEffects.AtOpen(SceneEffects.FromSnapshot(startPath), plan.Order[0]);
 			}
 			catch
 			{
@@ -3033,7 +3035,7 @@ namespace Doorstop
 						}
 						foreach (string answer in answers)
 						{
-							SceneEffects.Hero h = SceneEffects.FromSnapshot(path);
+							SceneEffects.Hero h = SceneEffects.AtOpen(SceneEffects.FromSnapshot(path), col.Scene);
 							if (h == null)
 							{
 								break;
@@ -3097,7 +3099,7 @@ namespace Doorstop
 				SceneEffects.Hero at = null;
 				if (!col.Upcoming && !changed && col.HasSnapshot)
 				{
-					at = SceneEffects.FromSnapshot(col.SnapshotPath);
+					at = SceneEffects.AtOpen(SceneEffects.FromSnapshot(col.SnapshotPath), col.Scene);
 				}
 				if (at == null && col.Current && !changed)
 				{
@@ -3110,17 +3112,23 @@ namespace Doorstop
 				if (at == null)
 				{
 					at = carry;
-					if (at != null && col.Upcoming && col.Between != null && col.Between.Count > 0)
+					if (at != null)
 					{
 						// the scenes with no answer the simulation passed on the
 						// way here change the hero too (an event scene's own
-						// stat changes, the objectives it earns)
+						// stat changes, the objectives it earns), then this
+						// scene's opening changes (its interludes)
 						at = at.Clone();
-						foreach (string s in col.Between)
+						if (col.Upcoming && col.Between != null)
 						{
-							at.Apply(SceneEffects.ForScene(s));
-							at.ApplyObjectives(s, 0);
+							foreach (string s in col.Between)
+							{
+								at.Apply(SceneEffects.ForScene(s));
+								at.ApplyObjectives(s, 0);
+							}
 						}
+						at.Apply(SceneEffects.ForScene(col.Scene));
+						at.Opened = true;
 					}
 				}
 				if (at == null && !col.Upcoming)
@@ -3170,7 +3178,7 @@ namespace Doorstop
 					// The live state may already include the answer (the
 					// consequence is on screen); the snapshot is the state the
 					// scene opened with, before it.
-					SceneEffects.Hero snap = SceneEffects.FromSnapshot(col.SnapshotPath);
+					SceneEffects.Hero snap = SceneEffects.AtOpen(SceneEffects.FromSnapshot(col.SnapshotPath), col.Scene);
 					if (snap != null)
 					{
 						afterBase = snap;
@@ -3181,7 +3189,6 @@ namespace Doorstop
 				{
 					carry = afterBase.Clone();
 					carry.Apply(SceneEffects.For(col.Scene, taken));
-					carry.Apply(SceneEffects.ForScene(col.Scene));
 					// The objectives this answer and the scene itself earn
 					// (the game unlocks them before the next scene loads).
 					carry.ApplyObjectives(col.Scene, SceneEffects.ButtonIndex(taken));
@@ -3193,7 +3200,6 @@ namespace Doorstop
 					// A scene with no answers earns its own objectives when it
 					// ends, so the next scene's checks see them.
 					carry = afterBase.Clone();
-					carry.Apply(SceneEffects.ForScene(col.Scene));
 					carry.ApplyObjectives(col.Scene, 0);
 					col.AfterHero = carry;
 				}
@@ -3520,6 +3526,7 @@ namespace Doorstop
 					}
 					Shown.Add(new ShowedScenes { SceneName = a.Row.Scene, IsShowed = true });
 					SceneParams.Apply(a.Row.Scene, 0, Keys);
+					Hero.Apply(SceneEffects.ForScene(a.Row.Scene));   // its opening changes (interludes, an event's own)
 					return a;
 				}
 			}
@@ -3533,7 +3540,6 @@ namespace Doorstop
 					Hero.ApplyObjectives(scene, button);
 					SceneParams.Apply(scene, button, Keys);
 				}
-				Hero.Apply(SceneEffects.ForScene(scene));   // an answer-less scene's own changes
 				Hero.ApplyObjectives(scene, 0);   // what the scene itself earns, once it ends
 			}
 		}
@@ -5986,7 +5992,10 @@ namespace Doorstop
 			{
 				return "-";
 			}
-			return "N" + h.Stats.Discipline + "/C" + h.Stats.Cunning + "/S" + h.Stats.Spirituality + "/W" + h.Stats.Will;
+			return "N" + h.Stats.Discipline + "/C" + h.Stats.Cunning + "/S" + h.Stats.Spirituality + "/W" + h.Stats.Will
+				+ " Ch" + h.Stats.Church + "/O" + h.Stats.Order + "/St" + h.Stats.State + "/Pr" + h.Stats.Prosperity
+				+ " Dip" + h.Stats.Diplomacy + "/Val" + h.Stats.Valor + "/Man" + h.Stats.Manipulation
+				+ "/Sab" + h.Stats.Sabotage + "/The" + h.Stats.Theology + "/Pre" + h.Stats.Preaching;
 		}
 
 		// Dev: the first table row clicked; the load dialog stays open.

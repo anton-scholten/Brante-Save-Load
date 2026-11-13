@@ -40,12 +40,25 @@ runtime for their icon and localised name.
 
   python3 tools/scene_effects.py      # -> data/scene-effects.json + mod TSV
 
-A scene with no answers can change the hero too: its
-`ConsequenceSceneController` (the answer-less event and final scenes - trigger
-events such as `052.N5.010_Trigger5`, `Insurrection_Incident_N`, the chapter
-finals) applies `ParameterValue`/`RelationValue`/`StatusValue` lists, each
-item {PPtr, int}, when the scene is shown (`CalculateParams`); a
-`ConsequenceScript` does the same on `Start`. Both are written as button 0.
+A scene can change the hero by itself when it opens, before any answer
+(button 0 in the TSV):
+
+- its `ConsequenceSceneController` (the answer-less event and final scenes:
+  trigger events such as `052.N5.010_Trigger5`, `Insurrection_Incident_N`,
+  the chapter finals) applies `ParameterValue`/`RelationValue`/`StatusValue`
+  lists, each item {PPtr, int}, when the scene is shown (`CalculateParams`);
+  a `ConsequenceScript` does the same on `Start`;
+- an interlude: the scene's `SceneStateMachine` has events whose UnityEvent
+  calls `PopupEvent.ShowPopup(<Interlude asset>)` (all of them in the
+  PREGAME list, i.e. before the answers). The `Interlude` ScriptableObject
+  (resources.assets) carries the same three lists, applied when the pop-up
+  is closed. One with `EnableConvertationParams` and no lists (the chapter-3
+  start's) converts the earlier stats into the chapter-3 skills
+  (`ParametersManager.CalculateChapterParams`) if they are all still 0: a
+  `C Convert 0` row.
+
+`Case` assets (the "case of the year" window) also carry such lists, but
+nothing in the shipped game opens that window (only the developer window).
 
 TSV shipped with the mod (one line per effect or requirement):
     <scene>\\t<button>\\t<kind>\\t<object name>\\t<value>[\\t<op>\\t<group>]
@@ -112,6 +125,76 @@ def string_at(data, pos):
     return text, pos
 
 
+def read_interludes(data_dir, script_id, names):
+    """path id -> (asset name, [params, relations, statuses], convert) for
+    every Interlude asset in resources.assets."""
+    import UnityPy
+    env = UnityPy.load(str(data_dir / "resources.assets"))
+    out = {}
+    for o in env.objects:
+        if o.type.name != "MonoBehaviour":
+            continue
+        data = o.get_raw_data()
+        if struct.unpack_from("<iq", data, 16)[1] != script_id:
+            continue
+        rd = Reader(data, 28)
+        name = rd.string()
+        rd.string()                             # TitleKey
+        for _ in range(rd.count()):             # TextBlocks
+            rd.pptr()                           # Character
+            rd.string()                         # SpeechByKey
+            rd.boolean()                        # UseTextBlockSpecialSceneries
+            # TextBlockSpecialSceneries: IsDeathTrigger, IsShowed, UseSFX + SFX,
+            # ChangeSceneMusic + Music, ChangePicture + ScenePicture,
+            # ContainAPoem, ShowChangeHUD + HudVisualEffect, HideChangeHUD,
+            # ShowParameter + Parameter, ChangeTitle + Key, ShowCharacter + Character
+            rd.boolean(); rd.boolean(); rd.boolean(); rd.pptr()
+            rd.boolean(); rd.pptr(); rd.boolean(); rd.pptr()
+            rd.boolean(); rd.boolean(); rd.pptr(); rd.boolean()
+            rd.boolean(); rd.pptr(); rd.boolean(); rd.string(); rd.boolean(); rd.pptr()
+        rd.pptr()                               # Image
+        rd.boolean()                            # IsOpened
+        rd.pptr()                               # InterludeAudioClip
+        lists = []
+        for _ in range(3):
+            items = []
+            for _ in range(rd.count()):
+                f2, p2 = rd.pptr()
+                items.append((names.get(p2, str(p2)) if f2 == 0 else str(p2), rd.i32()))
+            lists.append(items)
+        convert = rd.boolean()                  # EnableConvertationParams
+        if rd.p != len(data):
+            print("  interlude %s: %d byte(s) left over" % (name, len(data) - rd.p))
+        out[o.path_id] = (name, lists, convert)
+    return out
+
+
+def interludes_shown(data, externals, interludes):
+    """The interludes a SceneStateMachine shows: every event of its six state
+    lists whose UnityEvent calls ShowPopup with an Interlude asset."""
+    rd = Reader(data, 28)
+    rd.string()                                 # m_Name
+    shown = []
+    for _ in range(6):                          # ShowAnimation ... HideAnimation
+        for _ in range(rd.count()):
+            for _ in range(6):
+                rd.boolean()                    # ItsPopupEvent ... ItsCustomEvent
+            rd.i32()                            # PopupType
+            rd.pptr(); rd.pptr(); rd.pptr()     # Character, NewPortret, SceneAudioClip
+            for _ in range(rd.count()):         # Action.m_PersistentCalls.m_Calls
+                rd.pptr()                       # m_Target
+                method = rd.string()
+                rd.i32()                        # m_Mode
+                af, ap = rd.pptr()              # m_ObjectArgument
+                rd.string(); rd.i32(); rd.i32(); rd.string(); rd.boolean()
+                rd.i32()                        # m_CallState
+                if method == "ShowPopup" and af > 0 \
+                        and externals[af - 1].endswith("resources.assets") and ap in interludes:
+                    shown.append(interludes[ap])
+            rd.string()                         # m_TypeName
+    return shown
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -129,6 +212,8 @@ def main():
     scripts = UnityPy.load(str(data_dir / "globalgamemanagers.assets"))
     button_script = None
     scene_scripts = set()               # stat changes of the scene itself (button 0)
+    state_machine = None                # SceneStateMachine: the interludes it shows
+    interlude_script = None
     for o in scripts.objects:
         if o.type.name == "MonoScript":
             try:
@@ -139,18 +224,23 @@ def main():
                 button_script = o.path_id
             elif name in ("ConsequenceSceneController", "ConsequenceScript"):
                 scene_scripts.add(o.path_id)
+            elif name == "SceneStateMachine":
+                state_machine = o.path_id
+            elif name == "Interlude":
+                interlude_script = o.path_id
     if button_script is None:
         print("ParameterButtonChanger script not found", file=sys.stderr)
         return 1
     names = {}
     bg.load_objects(data_dir / "resources.assets", names)
+    interludes = read_interludes(data_dir, interlude_script, names)
 
     effects = {}
     for index, path in enumerate(scenes):
         scene = path.rsplit("/", 1)[-1].rsplit(".", 1)[0]
-        if not scene[:1].isdigit() and not scene.startswith("Insurrection_Incident"):
-            continue                    # story scenes only (01.05.01, 051.0...,
-                                        # the chapter-5 incidents)
+        # answers: story scenes only (01.05.01, 051.0...); a scene's own
+        # changes: any scene (chapter starts, incidents, finals)
+        story = scene[:1].isdigit()
         level = data_dir / ("level%d" % index)
         if not level.is_file():
             continue
@@ -174,6 +264,20 @@ def main():
             fid, pid = struct.unpack_from("<iq", data, 16)
             if fid <= 0 or not externals[fid - 1].endswith("globalgamemanagers.assets"):
                 continue
+            if pid == state_machine:
+                try:
+                    shown = interludes_shown(data, externals, interludes)
+                except (struct.error, ValueError, IndexError) as exc:
+                    print("  %s: unreadable scene state machine (%s)" % (scene, exc))
+                    continue
+                for name, lists, convert in shown:
+                    entry = effects.setdefault(scene, {}).setdefault("0", {})
+                    for kind, items in zip(("P", "R", "S"), lists):
+                        if items:
+                            entry.setdefault(kind, []).extend(items)
+                    if convert and not any(lists):
+                        entry["C"] = [("Convert", 0)]
+                continue
             if pid in scene_scripts:
                 try:
                     rd = Reader(data, 28)
@@ -194,7 +298,7 @@ def main():
                         if items:
                             entry.setdefault(kind, []).extend(items)
                 continue
-            if pid != button_script:
+            if pid != button_script or not story:
                 continue
             try:
                 rd = Reader(data, 28)
@@ -289,7 +393,7 @@ def main():
     lines = []
     for scene, buttons in sorted(effects.items()):
         for button, kinds in sorted(buttons.items(), key=lambda kv: int(kv[0])):
-            for kind in ("P", "R", "S"):
+            for kind in ("P", "R", "S", "C"):
                 for name, value in kinds.get(kind, []):
                     lines.append("%s\t%s\t%s\t%s\t%d\n" % (scene, button, kind, name, value))
             for kind, name, value, op, group in kinds.get("requires", []):

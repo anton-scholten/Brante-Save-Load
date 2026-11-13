@@ -54,9 +54,10 @@ Current, de-duplicated remainder. The phase sections below keep the history.
 - [x] Answer-less scenes' own stat changes (`ConsequenceSceneController`:
   the chapter-5 incidents, `FamilyQuarrel`, triggers, finals) are extracted
   as button 0 and simulated (13 Nov).
-- [ ] Interlude and case-of-year pop-ups still change stats the simulation
-  does not see, so a long simulated path can drift; the replay stays
-  authoritative.
+- [x] Interludes (the scenes' PREGAME pop-ups) and the chapter-3 skill
+  conversion are simulated as the scene's opening changes; snapshots of the
+  answer screen are saved as GAME_SETUP so a load does not run them twice
+  (13 Nov). The case-of-year window is unreachable in the shipped game.
 
 ## Phase 0 — repo scaffold (done)
 
