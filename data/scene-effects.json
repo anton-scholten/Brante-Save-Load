@@ -5075,6 +5075,12 @@
       "Gloria",
       2
      ]
+    ],
+    "K": [
+     [
+      "051.070.025_GloriaFromBrante_Title",
+      0
+     ]
     ]
    }
   },
@@ -19765,6 +19771,12 @@
       "Order",
       -1
      ]
+    ],
+    "K": [
+     [
+      "Insurrection_Default_Title",
+      0
+     ]
     ]
    }
   },
@@ -19778,6 +19790,12 @@
      [
       "Order",
       -1
+     ]
+    ],
+    "K": [
+     [
+      "Insurrection_Default_Title",
+      0
      ]
     ]
    }
@@ -19944,6 +19962,12 @@
      [
       "Sofja",
       46
+     ]
+    ],
+    "K": [
+     [
+      "Insurrection_Incident_2_Title",
+      0
      ]
     ]
    }

@@ -40,6 +40,7 @@ namespace Doorstop
 		}
 
 		private static Dictionary<string, Dictionary<int, List<Effect>>> _effects;
+		private static readonly Dictionary<string, string> _titleKeys = new Dictionary<string, string>();
 		private static Dictionary<string, Parameter> _parameters;
 		private static Dictionary<string, Character> _characters;
 
@@ -80,6 +81,11 @@ namespace Doorstop
 					{
 						list = new List<Effect>();
 						scene[button] = list;
+					}
+					if (p[2] == "K")
+					{
+						_titleKeys[p[0]] = p[3];   // an event scene's title key, not an effect
+						continue;
 					}
 					Effect fx = new Effect { Kind = p[2][0], Name = p[3], Value = value };
 					if (p.Length >= 7)
@@ -130,6 +136,22 @@ namespace Doorstop
 				return list;
 			}
 			return new List<Effect>();
+		}
+
+		// The stat, relation and fate changes of a scene's opening (ForScene
+		// without the skill conversion): what an event scene does.
+		public static List<Effect> SceneChanges(string scene)
+		{
+			return ForScene(scene).FindAll(e => e.Kind == 'P' || e.Kind == 'R' || e.Kind == 'S');
+		}
+
+		// The localisation key of an event scene's title when it is not
+		// "<scene>_Title" (an alternative version shows another's), else null.
+		public static string TitleKey(string scene)
+		{
+			Load();
+			string key;
+			return scene != null && _titleKeys.TryGetValue(scene, out key) ? key : null;
 		}
 
 		// The six chapter-3 skills, which the chapter-3 start's interlude

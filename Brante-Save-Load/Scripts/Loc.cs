@@ -23,6 +23,7 @@ namespace Doorstop
 			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick, ReplayOffPath, ReplayDeath, ReplayStopped,
 			ReplaySkipped, StartNotOnPath,
 			HelpAutosave, HelpCheckpoint, HelpManual, HelpOriginal,
+			EventHappens,
 			
 		}
 
@@ -160,6 +161,17 @@ namespace Doorstop
 			AddResetPath(_ja, "道筋をリセット");
 			AddResetPath(_ko, "경로 초기화");
 			AddResetPath(_zh, "重置路径");
+			_en[K.EventHappens] = "Happens on its own";
+			_ru[K.EventHappens] = "Происходит само собой";
+			_de[K.EventHappens] = "Geschieht von selbst";
+			_fr[K.EventHappens] = "Arrive de lui-même";
+			_es[K.EventHappens] = "Ocurre por sí solo";
+			_it[K.EventHappens] = "Accade da sé";
+			_pl[K.EventHappens] = "Dzieje się samo";
+			_tr[K.EventHappens] = "Kendiliğinden olur";
+			_ja[K.EventHappens] = "選択なしで起こる";
+			_ko[K.EventHappens] = "저절로 일어남";
+			_zh[K.EventHappens] = "自然发生";
 			AddPickNext(_en, "Pick an answer here to go on");
 			AddPickNext(_ru, "Выберите здесь ответ, чтобы продолжить");
 			AddPickNext(_de, "Wähle hier eine Antwort, um weiterzugehen");

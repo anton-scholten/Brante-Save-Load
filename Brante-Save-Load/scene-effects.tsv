@@ -746,6 +746,7 @@
 051.070.025_GloriaFromBrante	0	R	Gloria	2
 051.070.026_GloriaFromBrante	0	P	Reputation	-10
 051.070.026_GloriaFromBrante	0	R	Gloria	2
+051.070.026_GloriaFromBrante	0	K	051.070.025_GloriaFromBrante_Title	0
 051.070.030_GoldenCage	1	P	Reputation	1
 051.070.030_GoldenCage	1	P	Unity	-1
 051.070.030_GoldenCage	1	R	Stefan	2
@@ -3038,8 +3039,10 @@
 060.010.210_TheFinal5	5	O	РезняВАнизотти	0	0	and
 Final_Characters_Octavia	0	P	Church	2
 Final_Characters_Octavia	0	P	Order	-1
+Final_Characters_Octavia	0	K	Insurrection_Default_Title	0
 Final_Characters_Sofja	0	P	Church	2
 Final_Characters_Sofja	0	P	Order	-1
+Final_Characters_Sofja	0	K	Insurrection_Default_Title	0
 InsurrectionChapterStart	0	P	Insurrection	2
 Insurrection_Incident_1	0	P	Insurrection	3
 Insurrection_Incident_1	0	P	CommonerMans	2
@@ -3068,6 +3071,7 @@ Insurrection_Incident_2	0	S	Remi	1
 Insurrection_Incident_2_2	0	P	Will	10
 Insurrection_Incident_2_2	0	P	Insurrection	3
 Insurrection_Incident_2_2	0	S	Sofja	46
+Insurrection_Incident_2_2	0	K	Insurrection_Incident_2_Title	0
 Insurrection_Incident_3	0	P	Insurrection	2
 Insurrection_Incident_3	0	P	CommonerMans	2
 Insurrection_Incident_3	0	P	NoblesMans	1

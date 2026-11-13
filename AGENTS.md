@@ -329,6 +329,20 @@ community event sheet (`data/events.json`).
   that of the answer-less scenes stepped over before it (`TreeCol.Between`).
   The "case of the year" window (`Case` assets) is opened by nothing but the
   game's developer window, so there is nothing of it to simulate.
+- **Events are drawn as columns, outside the logic.** An answer-less scene
+  whose opening changes stats, relations or fates (`IsEventScene`: a
+  trigger event, an incident, `FamilyQuarrel`, a final; ~60 scenes; the
+  no-change epilogue pages are left out) gets a column of its own with one
+  box, "Happens on its own" (`Loc.K.EventHappens`), not clickable; hovering
+  it lists `SceneEffects.SceneChanges` and marks the stats. Only the drawn
+  list has them: `WithEvents` inserts them before each column from
+  `TreeCol.PlayedBetween` (the save's scene list, `BuildColumns`) or
+  `TreeCol.Between` (the simulation; `_tailBetween` after the last column),
+  with the hero carried through the answer-less scenes in order. `_tree`
+  (picks, Load scene, plans, replay) never contains them, so anything that
+  positions by column index on screen uses `_drawCols` / `_focusDraw`. A
+  title key that is not `<scene>_Title` is a `K` row in scene-effects.tsv;
+  a chapter start uses the chapter's name.
 - **The chapter-3 skills are projected in chapters 1-2.** They are 0 until
   the chapter-3 start converts the earlier stats. While the stats shown are
   from chapter 1 or 2, `StatPanel.Show` draws the six skill rows faded with

@@ -57,6 +57,10 @@ A scene can change the hero by itself when it opens, before any answer
   (`ParametersManager.CalculateChapterParams`) if they are all still 0: a
   `C Convert 0` row.
 
+A `K <key> 0` row (button 0) gives the title key of an answer-less event
+scene whose `ConsequenceSceneController.TitleKey` is not `<scene>_Title`
+(an alternative version showing another scene's title).
+
 `Case` assets (the "case of the year" window) also carry such lists, but
 nothing in the shipped game opens that window (only the developer window).
 
@@ -212,6 +216,7 @@ def main():
     scripts = UnityPy.load(str(data_dir / "globalgamemanagers.assets"))
     button_script = None
     scene_scripts = set()               # stat changes of the scene itself (button 0)
+    scripts_names = {}
     state_machine = None                # SceneStateMachine: the interludes it shows
     interlude_script = None
     for o in scripts.objects:
@@ -224,6 +229,7 @@ def main():
                 button_script = o.path_id
             elif name in ("ConsequenceSceneController", "ConsequenceScript"):
                 scene_scripts.add(o.path_id)
+                scripts_names[o.path_id] = name
             elif name == "SceneStateMachine":
                 state_machine = o.path_id
             elif name == "Interlude":
@@ -236,6 +242,7 @@ def main():
     interludes = read_interludes(data_dir, interlude_script, names)
 
     effects = {}
+    title_keys = {}
     for index, path in enumerate(scenes):
         scene = path.rsplit("/", 1)[-1].rsplit(".", 1)[0]
         # answers: story scenes only (01.05.01, 051.0...); a scene's own
@@ -289,9 +296,15 @@ def main():
                             f2, p2 = rd.pptr()
                             items.append((ref(f2, p2), rd.i32()))
                         lists.append(items)
+                    title_key = ""
+                    if scripts_names.get(pid) == "ConsequenceSceneController":
+                        rd.pptr()                   # ParamsGenerator
+                        title_key = rd.string()     # TitleKey
                 except (struct.error, ValueError, IndexError) as exc:
                     print("  %s: unreadable scene changes (%s)" % (scene, exc))
                     continue
+                if title_key and title_key != scene + "_Title":
+                    title_keys[scene] = title_key
                 if any(lists):
                     entry = effects.setdefault(scene, {}).setdefault("0", {})
                     for kind, items in zip(("P", "R", "S"), lists):
@@ -384,6 +397,13 @@ def main():
             if reqs:
                 entry["requires"] = [list(r) for r in reqs]
 
+    # the title of an event scene that changes something, where it is another
+    # scene's (an alternative version): the tree looks it up by this key
+    for scene, key in title_keys.items():
+        own = effects.get(scene, {}).get("0", {})
+        if any(own.get(k) for k in ("P", "R", "S")):
+            own["K"] = [(key, 0)]
+
     doc = {"schema": 1,
            "source": "ParameterButtonChanger (button 0: ConsequenceSceneController/"
                      "ConsequenceScript) in the scene files (tools/scene_effects.py)",
@@ -393,7 +413,7 @@ def main():
     lines = []
     for scene, buttons in sorted(effects.items()):
         for button, kinds in sorted(buttons.items(), key=lambda kv: int(kv[0])):
-            for kind in ("P", "R", "S", "C"):
+            for kind in ("P", "R", "S", "C", "K"):
                 for name, value in kinds.get(kind, []):
                     lines.append("%s\t%s\t%s\t%s\t%d\n" % (scene, button, kind, name, value))
             for kind, name, value, op, group in kinds.get("requires", []):

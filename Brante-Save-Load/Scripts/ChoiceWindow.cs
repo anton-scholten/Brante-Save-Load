@@ -453,6 +453,8 @@ namespace Doorstop
 			public SceneEffects.Hero Hero;     // the hero at this scene along the path (null: unknown)
 			public SceneEffects.Hero AfterHero; // and after the answer taken/picked here
 			public List<string> Between;       // ahead: the answer-less scenes simulated just before it
+			public List<string> PlayedBetween; // played: the answer-less scenes the save shows just before it
+			public bool Event;                 // drawn only: an answer-less scene that changes the hero
 			public HashSet<string> Blocked = new HashSet<string>();   // answers he could not take
 			public bool Upcoming;   // ahead of the current scene, from scene-flow.tsv
 			public bool Possible;   // upcoming, but its conditions are not decided yet
@@ -2242,13 +2244,16 @@ namespace Doorstop
 				_drawnKeys.Clear();
 			}
 			_redrawAhead = false;
-			DrawTree(cols);
+			List<TreeCol> drawn = WithEvents(cols);
+			_drawCols = drawn;
+			_focusDraw = _focusCol >= 0 && _focusCol < cols.Count ? drawn.IndexOf(cols[_focusCol]) : -1;
+			DrawTree(drawn);
 			foreach (NodeRef n in _nodes)
 			{
 				StyleNode(n);
 			}
 			long tNodes = sw.ElapsedMilliseconds;
-			DrawPath(cols);
+			DrawPath(drawn);
 			long tPath = sw.ElapsedMilliseconds;
 			StatPanel.Show(StatsHero(), SceneEffects.Now(), StatsChapter());
 			long tStats = sw.ElapsedMilliseconds;
@@ -2368,7 +2373,7 @@ namespace Doorstop
 			// Upcoming, Possible depending on ...: up to three lines)
 			float height = TreeTop + rows * TreeRowH + 20f + 52f;
 			SetContentSize(width, height);
-			SetStoryProgress(_focusCol >= 0 ? (30f + (_focusCol + 0.5f) * TreeColW) / width : 0f);
+			SetStoryProgress(_focusDraw >= 0 ? (30f + (_focusDraw + 0.5f) * TreeColW) / width : 0f);
 			if (!reuse)
 			{
 				LayoutTreeArea(height);
@@ -2562,7 +2567,7 @@ namespace Doorstop
 		{
 			System.Text.StringBuilder sb = new System.Text.StringBuilder(c.Scene);
 			sb.Append(c.Upcoming ? "|u" : "|p").Append(c.Current ? "c" : "").Append(c.Possible ? "?" : "")
-				.Append(c.Recorded ? "r" : "").Append(c.HasSnapshot ? "s" : "").Append('|');
+				.Append(c.Recorded ? "r" : "").Append(c.HasSnapshot ? "s" : "").Append(c.Event ? "e" : "").Append('|');
 			foreach (int v in visible)
 			{
 				sb.Append(v).Append(',');
@@ -2591,7 +2596,10 @@ namespace Doorstop
 			n.Btn.colors = cb;
 			string sceneId = col.Scene;
 			string choiceName = c.Name;
-			n.Btn.onClick.AddListener(delegate { SelectChoice(sceneId, choiceName); });
+			if (!col.Event)
+			{
+				n.Btn.onClick.AddListener(delegate { SelectChoice(sceneId, choiceName); });
+			}
 
 			n.Label = AddLabel(node.transform, "Text", SceneEffects.NobleParticle(c.Text), 17f, Palette.Ink, false);
 			RectTransform lrt = n.Label.rectTransform;
@@ -2601,7 +2609,8 @@ namespace Doorstop
 			lrt.offsetMax = new Vector2(-10f, -2f);
 			n.Label.enableWordWrapping = false;
 
-			List<SceneEffects.Effect> effects = SceneEffects.For(col.Scene, c.Name);
+			List<SceneEffects.Effect> effects = col.Event ? SceneEffects.SceneChanges(col.Scene)
+				: SceneEffects.For(col.Scene, c.Name);
 			TreeHover hover = node.AddComponent<TreeHover>();
 			hover.HasEffects = effects.Count > 0;
 			hover.HasChoiceOfRequirements = effects.Exists(f => f.Or) && col.Upcoming;
@@ -2792,9 +2801,14 @@ namespace Doorstop
 					break;
 				}
 			}
-			if (needs < 0 && sel >= 0 && sel + 1 < cols.Count && cols[sel + 1].Upcoming && _visible[sel + 1].Count > 0)
+			int after = sel + 1;
+			while (after > 0 && after < cols.Count && cols[after].Event)
 			{
-				needs = sel + 1;
+				after++;   // an event takes no pick: the note goes to the scene after it
+			}
+			if (needs < 0 && sel >= 0 && after < cols.Count && cols[after].Upcoming && _visible[after].Count > 0)
+			{
+				needs = after;
 			}
 			if (needs >= 0)
 			{
@@ -2842,6 +2856,96 @@ namespace Doorstop
 		}
 
 		private static int _focusCol = -1;     // the column to show on open (the current scene)
+		private static int _focusDraw = -1;    // the same column in the drawn list (events in it)
+		private static List<TreeCol> _drawCols = new List<TreeCol>();   // what is drawn: the columns and the events
+
+		// An answer-less scene that changes the hero (a trigger event, an
+		// incident, a final): drawn as a column of its own, one box that is
+		// not a pick.
+		private static bool IsEventScene(string scene)
+		{
+			return SceneEffects.SceneChanges(scene).Count > 0 && SceneTexts.Buttons(scene).Count == 0;
+		}
+
+		private static string EventTitle(string scene)
+		{
+			string title = SceneTexts.Title(scene);
+			string key = SceneEffects.TitleKey(scene);
+			if (string.IsNullOrEmpty(title) && key != null)
+			{
+				string t = Loc.Game(key, "");
+				title = t == key ? "" : t;
+			}
+			if (string.IsNullOrEmpty(title) && scene.Contains("ChapterStart"))
+			{
+				title = ChapterTitle(SceneFlow.ChapterOf(scene));   // a chapter's opening page
+			}
+			return string.IsNullOrEmpty(title) ? scene : title;
+		}
+
+		// The columns as drawn: each with the events before it, in the order
+		// played (from the save's scene list) or simulated (Between), and
+		// those simulated after the last one. An event's hero is the one
+		// before it: the column before, then the answer-less scenes in order
+		// (their opening changes and objectives, as the simulation applies
+		// them). The logic (_tree: picks, Load scene) never sees them.
+		private static List<TreeCol> WithEvents(List<TreeCol> cols)
+		{
+			List<TreeCol> drawn = new List<TreeCol>(cols.Count + 8);
+			for (int i = 0; i <= cols.Count; i++)
+			{
+				bool tail = i == cols.Count;
+				TreeCol col = tail ? null : cols[i];
+				bool ahead = tail ? cols.Count > 0 && cols[cols.Count - 1].Upcoming : col.Upcoming;
+				List<string> scenes = tail ? (ahead ? _tailBetween : null)
+					: ahead ? col.Between : col.PlayedBetween;
+				if (scenes != null && scenes.Count > 0)
+				{
+					SceneEffects.Hero h = i > 0 ? cols[i - 1].AfterHero : null;
+					foreach (string scene in scenes)
+					{
+						SceneEffects.Hero before = h;
+						if (h != null)
+						{
+							h = h.Clone();
+							h.Apply(SceneEffects.ForScene(scene));
+							h.ApplyObjectives(scene, 0);
+						}
+						if (IsEventScene(scene))
+						{
+							drawn.Add(EventCol(scene, ahead, before, h));
+						}
+					}
+				}
+				if (!tail)
+				{
+					drawn.Add(col);
+				}
+			}
+			return drawn;
+		}
+
+		private static TreeCol EventCol(string scene, bool ahead, SceneEffects.Hero before, SceneEffects.Hero after)
+		{
+			TreeCol e = new TreeCol();
+			e.Scene = scene;
+			e.Title = EventTitle(scene);
+			e.Event = true;
+			e.Upcoming = ahead;
+			e.Recorded = true;   // nothing to record: it has no answer
+			e.Hero = before;
+			e.AfterHero = after;
+			History.Choice c = new History.Choice();
+			c.Index = 1;
+			c.Name = EventChoice;
+			c.Text = Loc.T(Loc.K.EventHappens);
+			c.Chosen = true;     // it happens: the path goes through it
+			e.Choices.Add(c);
+			e.PlayedChoice = EventChoice;
+			return e;
+		}
+
+		private const string EventChoice = "Event";
 
 		// Every played scene with a known answer list becomes a column, then
 		// every scene still ahead (AddUpcoming).
@@ -2856,10 +2960,15 @@ namespace Doorstop
 			}
 			List<TreeCol> cols = new List<TreeCol>();
 			int pendingCol = -1;
+			List<string> between = new List<string>();
 			foreach (History.Entry e in all)
 			{
 				if (e.Choices.Count == 0)
 				{
+					if (e.IsShowed)
+					{
+						between.Add(e.SceneName);   // an event, a cutscene: drawn before the next column
+					}
 					continue;
 				}
 				TreeCol col = new TreeCol();
@@ -2867,6 +2976,8 @@ namespace Doorstop
 				col.Title = e.Title;
 				col.SnapshotPath = e.SnapshotPath;
 				col.Choices = e.Choices;
+				col.PlayedBetween = between;
+				between = new List<string>();
 				if (!e.IsShowed)
 				{
 					pendingCol = cols.Count;
@@ -3257,8 +3368,13 @@ namespace Doorstop
 		// stops early (step or time budget), the rest is listed as before:
 		// every scene that can still come. Scenes without answers (chapter
 		// screens) are stepped through but not shown.
+		// The answer-less scenes the simulation stepped through after its last
+		// column (the end of the story): drawn as events after it.
+		private static List<string> _tailBetween = new List<string>();
+
 		private static void AddUpcoming(List<TreeCol> cols, List<History.Entry> played)
 		{
+			_tailBetween = new List<string>();
 			HashSet<string> shown = new HashSet<string>();
 			string from = "";
 			foreach (History.Entry e in played)
@@ -3399,6 +3515,7 @@ namespace Doorstop
 			System.Diagnostics.Stopwatch tPick = new System.Diagnostics.Stopwatch();
 			System.Diagnostics.Stopwatch tAns = new System.Diagnostics.Stopwatch();
 			List<string> between = new List<string>();
+			_tailBetween = between;
 			while (steps < 400 && sw.ElapsedMilliseconds < 1500)
 			{
 				tAdv.Start();
@@ -3453,6 +3570,7 @@ namespace Doorstop
 				{
 					col.Between = between;
 					between = new List<string>();
+					_tailBetween = between;
 					cols.Add(col);
 				}
 				else
@@ -4016,12 +4134,12 @@ namespace Doorstop
 			}
 			float content = (_historyList as RectTransform).rect.width;
 			float view = _historyScroll.viewport.rect.width;
-			if (content <= view + 0.5f || _focusCol < 0)
+			if (content <= view + 0.5f || _focusDraw < 0)
 			{
 				_historyScroll.horizontalNormalizedPosition = 0f;
 				return;
 			}
-			float left = 30f + Mathf.Max(0, _focusCol - 1) * TreeColW - 10f;
+			float left = 30f + Mathf.Max(0, _focusDraw - 1) * TreeColW - 10f;
 			_historyScroll.horizontalNormalizedPosition = Mathf.Clamp01(left / (content - view));
 		}
 
@@ -5692,7 +5810,8 @@ namespace Doorstop
 								RefreshHistory(false);
 								Canvas.ForceUpdateCanvases();
 								float span = ((RectTransform)_historyList).rect.width - _historyScroll.viewport.rect.width;
-								_historyScroll.horizontalNormalizedPosition = Mathf.Clamp01((30f + (i - 1) * TreeColW) / span);
+								int di = _drawCols.FindIndex(c => c.Scene == cols[i].Scene);   // the drawn column (events in the list)
+								_historyScroll.horizontalNormalizedPosition = Mathf.Clamp01((30f + (di - 1) * TreeColW) / span);
 								ModLog.Info("ChoiceWindow: dev conflict: '" + earlier.Name + "' in " + cols[i].Scene
 									+ " shuts '" + later.Name + "' in " + cj.Scene + " (" + tries + " tries)");
 								return true;
@@ -5874,7 +5993,7 @@ namespace Doorstop
 							ModLog.Info("DEV PICK: no drawn answer " + l.Substring(6));
 							continue;
 						}
-						int ci = _tree.FindIndex(c => c.Scene == hit.Col.Scene);
+						int ci = _drawCols.FindIndex(c => c.Scene == hit.Col.Scene);   // drawn index: events take columns
 						RectTransform content = _historyList as RectTransform;
 						float vw = _historyScroll.viewport != null ? _historyScroll.viewport.rect.width : 1000f;
 						float range = content.rect.width - vw;
@@ -5959,6 +6078,16 @@ namespace Doorstop
 					+ (c.Possible ? " possible" : "") + " played=" + c.PlayedChoice + " implied=" + c.Implied
 					+ " [" + string.Join(" ", ch.ToArray()) + "] hero=" + DevStats(c.Hero) + " after=" + DevStats(c.AfterHero)
 					+ DevBetween(i > 0 ? _tree[i - 1] : null, c));
+			}
+			for (int i = 0; i < _drawCols.Count; i++)
+			{
+				TreeCol e = _drawCols[i];
+				if (e.Event)
+				{
+					ModLog.Info("  event at drawn " + i + ": " + e.Scene + " '" + e.Title + "' " + (e.Upcoming ? "ahead" : "played")
+						+ " before " + (i + 1 < _drawCols.Count ? _drawCols[i + 1].Scene : "-")
+						+ " hero=" + DevStats(e.Hero) + " after=" + DevStats(e.AfterHero));
+				}
 			}
 			ModLog.Info("  stat panel: " + DevStats(StatsHero()) + " (skills as drawn: "
 				+ DevStats(SceneEffects.WithSkillsProjected(StatsHero())) + ")");
@@ -6265,7 +6394,8 @@ namespace Doorstop
 			if (possibleAt >= 0)
 			{
 				float range = contentRt.rect.width - _historyScroll.viewport.rect.width;
-				_historyScroll.horizontalNormalizedPosition = Mathf.Clamp01((30f + (possibleAt - 1) * TreeColW) / range);
+				int drawnAt = _drawCols.IndexOf(_tree[possibleAt]);
+				_historyScroll.horizontalNormalizedPosition = Mathf.Clamp01((30f + (drawnAt - 1) * TreeColW) / range);
 				ModLog.Info("ChoiceWindow: dev possible scene " + _tree[possibleAt].Scene + ": '"
 					+ PossibleReason(_tree[possibleAt].Scene) + "'");
 				yield return new WaitForSeconds(3f);
