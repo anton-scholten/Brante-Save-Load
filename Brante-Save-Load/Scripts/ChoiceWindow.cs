@@ -2825,18 +2825,9 @@ namespace Doorstop
 			{
 				float x = 30f + i * TreeColW;
 				int fromRow = ChosenRow(cols[i], _visible[i]);
-				Color pathColor = Palette.Accent;
-				if (fromRow < 0 && i + 1 < cols.Count && cols[i + 1].Event)
-				{
-					// an event comes after a scene with no answer yet: the
-					// prediction put it there with the scene's first open
-					// answer (Implied), so that answer joins it, pale
-					fromRow = _visible[i].FindIndex(k => cols[i].Choices[k].Name == cols[i].Implied);
-					pathColor = Palette.Fade(Palette.Accent, 0.45f);
-				}
 				if (fromRow >= 0)
 				{
-					AddLine(_pathLayer, x + 16f, RowCentre(fromRow), x + TreeNodeX, RowCentre(fromRow), pathColor, 5f);
+					AddLine(_pathLayer, x + 16f, RowCentre(fromRow), x + TreeNodeX, RowCentre(fromRow), Palette.Accent, 5f);
 				}
 				if (i + 1 >= cols.Count || _visible[i + 1].Count == 0)
 				{
@@ -2855,11 +2846,11 @@ namespace Doorstop
 				{
 					AddLine(_pathLayer, nextSpine, spineEnd, nextSpine, fromY, Palette.Fade(Palette.Muted, 0.55f), 3f);
 				}
-				AddLine(_pathLayer, x + TreeNodeX + TreeNodeW, fromY, nextSpine, fromY, pathColor, 5f);
+				AddLine(_pathLayer, x + TreeNodeX + TreeNodeW, fromY, nextSpine, fromY, Palette.Accent, 5f);
 				int toRow = ChosenRow(cols[i + 1], _visible[i + 1]);
 				if (toRow >= 0 && Mathf.Abs(RowCentre(toRow) - fromY) > 0.5f)
 				{
-					AddLine(_pathLayer, nextSpine, fromY, nextSpine, RowCentre(toRow), pathColor, 5f);
+					AddLine(_pathLayer, nextSpine, fromY, nextSpine, RowCentre(toRow), Palette.Accent, 5f);
 				}
 			}
 		}

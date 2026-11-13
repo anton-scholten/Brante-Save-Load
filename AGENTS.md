@@ -342,9 +342,7 @@ community event sheet (`data/events.json`).
   (picks, Load scene, plans, replay) never contains them, so anything that
   positions by column index on screen uses `_drawCols` / `_focusDraw`. A
   title key that is not `<scene>_Title` is a `K` row in scene-effects.tsv;
-  a chapter start uses the chapter's name. An event after a scene with no
-  answer yet is joined to that scene's `Implied` answer by a pale path line
-  (`DrawPath`): the prediction put the event there with that answer.
+  a chapter start uses the chapter's name.
 - **The chapter-3 skills are projected in chapters 1-2.** They are 0 until
   the chapter-3 start converts the earlier stats. While the stats shown are
   from chapter 1 or 2, `StatPanel.Show` draws the six skill rows faded with
