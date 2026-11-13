@@ -6057,6 +6057,13 @@ namespace Doorstop
 						ModLog.Info("DEV PICK: hovering " + l.Substring(6));
 						continue;
 					}
+					else if (l.StartsWith("tabhover ", StringComparison.Ordinal))
+					{
+						string m = l.Substring(9).Trim();
+						StatPanel.DevHoverTab(m == "family" ? StatPanel.Mode.Family
+							: m == "relations" ? StatPanel.Mode.Relations : StatPanel.Mode.Stats);
+						continue;
+					}
 					else if (l.StartsWith("mode ", StringComparison.Ordinal))
 					{
 						// the panel under the tree: stats, family or relations

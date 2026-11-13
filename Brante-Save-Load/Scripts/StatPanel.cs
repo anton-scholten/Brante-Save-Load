@@ -335,6 +335,8 @@ namespace Doorstop
 		private static void ModeTabs(RectTransform area, GameObject template)
 		{
 			_modeLabels.Clear();
+			_modeBacks.Clear();
+			_hoverMode = null;
 			Mode[] modes = { Mode.Stats, Mode.Family, Mode.Relations };
 			const float w = 220f;
 			float x0 = (area.rect.width - modes.Length * w) * 0.5f;
@@ -355,6 +357,14 @@ namespace Doorstop
 				b.targetGraphic = img;
 				b.transition = Selectable.Transition.None;
 				b.onClick.AddListener(delegate { SetMode(mode); });
+				// lit under the pointer, so it reads as clickable
+				TreeHover th = go.AddComponent<TreeHover>();
+				th.OnHover = delegate(bool on)
+				{
+					_hoverMode = on ? (Mode?)mode : null;
+					StyleModeTabs();
+				};
+				_modeBacks.Add(new KeyValuePair<Mode, Image>(mode, img));
 				TextMeshProUGUI t = Label(go.transform, ModeTitle(mode), template);
 				RectTransform lrt = t.rectTransform;
 				lrt.anchorMin = Vector2.zero;
@@ -377,14 +387,30 @@ namespace Doorstop
 			}
 		}
 
+		private static Mode? _hoverMode;
+		private static readonly List<KeyValuePair<Mode, Image>> _modeBacks = new List<KeyValuePair<Mode, Image>>();
+
 		private static void StyleModeTabs()
 		{
 			foreach (KeyValuePair<Mode, TextMeshProUGUI> kv in _modeLabels)
 			{
 				bool on = kv.Key == Showing;
-				kv.Value.color = on ? Palette.Accent : Palette.Fade(Palette.Ink, 0.6f);
+				bool hover = _hoverMode == kv.Key;
+				kv.Value.color = on || hover ? Palette.Accent : Palette.Fade(Palette.Ink, 0.6f);
 				kv.Value.fontStyle = on ? FontStyles.Underline : FontStyles.Normal;
 			}
+			foreach (KeyValuePair<Mode, Image> kv in _modeBacks)
+			{
+				// the answer boxes' colour behind the tab under the pointer
+				kv.Value.color = _hoverMode == kv.Key && kv.Key != Showing ? Palette.Card : Color.clear;
+			}
+		}
+
+		// dev-pick's "tabhover": hold the pointer's highlight on a tab
+		public static void DevHoverTab(Mode m)
+		{
+			_hoverMode = m;
+			StyleModeTabs();
 		}
 
 		public static void SetMode(Mode m)
@@ -517,9 +543,10 @@ namespace Doorstop
 				_people = new Dictionary<CharacterList, Character>();
 				foreach (Character c in Resources.FindObjectsOfTypeAll<Character>())
 				{
-					if (c != null && !_people.ContainsKey(c.Name))
+					Character had;
+					if (c != null && (!_people.TryGetValue(c.Name, out had) || c.name.Length < had.name.Length))
 					{
-						_people[c.Name] = c;
+						_people[c.Name] = c;   // Gloria, not Gloria2
 					}
 				}
 			}
@@ -578,7 +605,19 @@ namespace Doorstop
 			return Showing + ":" + string.Join(",", people.ConvertAll(c => c.Name.ToString()).ToArray());
 		}
 
-		// The characters as stat rows, column after column, as large as fits.
+		// The family as the game's family tree (grandfather; father and
+		// mother; the children), everyone else in three columns by estate
+		// (nobles and the Arkn, clergy, commoners); rows as large as fits,
+		// larger than the stat rows since there are fewer of them.
+		private static readonly CharacterList[][] FamilyTree =
+		{
+			new[] { CharacterList.GregorBronte },
+			new[] { CharacterList.RobertBronte, CharacterList.LidiaBronte },
+			new[] { CharacterList.StefanElBronte, CharacterList.NatanBronte, CharacterList.GloriaMoretti },
+		};
+
+		private const float PeopleMaxScale = 1.25f;
+
 		private static void BuildPeople(RectTransform area, List<Character> people)
 		{
 			_peopleKey = PeopleKey(people);
@@ -590,65 +629,170 @@ namespace Doorstop
 			Metrics m = Measure(template);
 			_hoverInset = new Vector2(m.Top, m.Natural.y - m.Bottom);
 			_drawnX = new Vector2(m.Left, m.Right);
-			const float top = 10f;
-			float width = area.rect.width;
-			float usable = Mathf.Max(40f, area.rect.height - top);
-			float scale = 0.3f;
-			int rows = 1, columns = 1;
-			// no larger than the stat rows, so the tabs look alike
-			for (float sc = _statScale; sc >= 0.3f; sc -= 0.02f)
+			_fitLimit = m.Right;
+			if (Showing == Mode.Family)
 			{
-				rows = Mathf.Max(1, Mathf.FloorToInt(usable / (m.Pitch * sc)));
-				columns = Mathf.Max(1, Mathf.CeilToInt(people.Count / (float)rows));
+				BuildFamily(area, people, template, m);
+			}
+			else
+			{
+				BuildRelations(area, people, template, m);
+			}
+		}
+
+		// One character's row with what it draws centred on `cx`, its top at `top`.
+		private static void PlacePerson(RectTransform area, Character c, GameObject template, Metrics m,
+			float scale, float cx, float top)
+		{
+			Row row = MakePersonRow(c, template);
+			if (row == null)
+			{
+				return;
+			}
+			RectTransform rrt = RowRoot(row);
+			rrt.SetParent(area, false);
+			rrt.anchorMin = new Vector2(0f, 1f);
+			rrt.anchorMax = new Vector2(0f, 1f);
+			rrt.pivot = new Vector2(0f, 1f);
+			rrt.sizeDelta = m.Natural;
+			rrt.localScale = new Vector3(scale, scale, 1f);
+			rrt.anchoredPosition = new Vector2(cx - (m.Left + m.Right) * 0.5f * scale, -(top - m.Top * scale));
+			rrt.gameObject.SetActive(true);
+			FitText(row, _fitLimit);
+			AddHover(row, rrt);
+			_rows.Add(row);
+		}
+
+		private static void BuildFamily(RectTransform area, List<Character> people, GameObject template, Metrics m)
+		{
+			// the tree's rows, holding only those the hero has; a family member
+			// not in the tree (none today) joins the children
+			List<List<Character>> rows = new List<List<Character>>();
+			List<Character> placed = new List<Character>();
+			foreach (CharacterList[] line in FamilyTree)
+			{
+				List<Character> r = new List<Character>();
+				foreach (CharacterList n in line)
+				{
+					Character c = people.Find(x => x.Name == n);
+					if (c != null)
+					{
+						r.Add(c);
+						placed.Add(c);
+					}
+				}
+				rows.Add(r);
+			}
+			rows[rows.Count - 1].AddRange(people.FindAll(c => !placed.Contains(c)));
+			rows.RemoveAll(r => r.Count == 0);
+			int most = 1;
+			foreach (List<Character> r in rows)
+			{
+				most = Mathf.Max(most, r.Count);
+			}
+			const float top = 6f;
+			float width = area.rect.width;
+			float drawn = m.Right - m.Left;
+			float scale = Mathf.Min(PeopleMaxScale,
+				(area.rect.height - top) / Mathf.Max(1, rows.Count) / m.Pitch,
+				(width / most - ColumnGap * 3f) / drawn);
+			scale = Mathf.Max(0.3f, scale);
+			float cell = drawn * scale + ColumnGap * 3f;
+			// spare height between the generations
+			float gap = Mathf.Clamp((area.rect.height - top - rows.Count * m.Pitch * scale) / rows.Count, 0f, 30f);
+			for (int r = 0; r < rows.Count; r++)
+			{
+				int k = rows[r].Count;
+				for (int i = 0; i < k; i++)
+				{
+					float cx = width * 0.5f + (i - (k - 1) * 0.5f) * cell;
+					PlacePerson(area, rows[r][i], template, m, scale, cx, top + r * (m.Pitch * scale + gap));
+				}
+			}
+			ModLog.Info("StatPanel: Family " + people.Count + " in " + rows.Count + " generation(s), scale "
+				+ scale.ToString("0.00"));
+		}
+
+		// Nobles (sword and mantle) and the Arkn; clergy; commoners and the La-Tari.
+		private static int EstateColumn(Character c)
+		{
+			switch (c.Estates)
+			{
+				case Estates.Cleric: return 1;
+				case Estates.Commoner: case Estates.CommonerWoman: case Estates.LaTari: case Estates.None: return 2;
+				default: return 0;
+			}
+		}
+
+		private static string EstateTitle(int column)
+		{
+			string stat = column == 0 ? "NoblesMans" : column == 1 ? "PriestsMans" : "CommonerMans";
+			string fallback = column == 0 ? "Nobles" : column == 1 ? "Clergy" : "Common folk";
+			Parameter p = SceneEffects.ParameterAsset(stat);
+			return p != null ? Loc.Game(p.ParameterName.ToString(), fallback) : fallback;
+		}
+
+		private static void BuildRelations(RectTransform area, List<Character> people, GameObject template, Metrics m)
+		{
+			List<Character>[] cols = { new List<Character>(), new List<Character>(), new List<Character>() };
+			foreach (Character c in people)
+			{
+				cols[EstateColumn(c)].Add(c);
+			}
+			const float header = 40f;
+			float width = area.rect.width;
+			float usable = Mathf.Max(40f, area.rect.height - header);
+			float drawn = m.Right - m.Left;
+			// the largest scale at which the estates fit side by side, a long
+			// one in several sub-columns, each estate as wide as its columns
+			float scale = 0.3f;
+			int rowsFit = 1;
+			for (float sc = PeopleMaxScale; sc >= 0.3f; sc -= 0.02f)
+			{
 				scale = sc;
-				if ((m.Right - m.Left) * sc <= width / Mathf.Max(columns, 5) - ColumnGap)
+				rowsFit = Mathf.Max(1, Mathf.FloorToInt(usable / (m.Pitch * sc)));
+				int all = 0;
+				foreach (List<Character> l in cols)
+				{
+					all += Mathf.Max(1, Mathf.CeilToInt(l.Count / (float)rowsFit));
+				}
+				if (all * (drawn * sc + ColumnGap) <= width)
 				{
 					break;
 				}
 			}
-			// at least five columns' width each, so a short family list does
-			// not stretch across the panel
-			float subW = width / Mathf.Max(columns, 5);
-			float x0 = (width - subW * columns) * 0.5f;
-			for (int j = 0; j < people.Count; j++)
+			int total = 0;
+			foreach (List<Character> l in cols)
 			{
-				Row row = MakePersonRow(people[j], template);
-				if (row == null)
-				{
-					continue;
-				}
-				RectTransform rrt = RowRoot(row);
-				rrt.SetParent(area, false);
-				rrt.anchorMin = new Vector2(0f, 1f);
-				rrt.anchorMax = new Vector2(0f, 1f);
-				rrt.pivot = new Vector2(0f, 1f);
-				rrt.sizeDelta = m.Natural;
-				rrt.localScale = new Vector3(scale, scale, 1f);
-				int sub = j / rows, r = j % rows;
-				if (sub > 0 && r == 0)
-				{
-					Separator(area, x0 + sub * subW);
-				}
-				rrt.anchoredPosition = new Vector2(
-					x0 + sub * subW + (subW - (m.Right - m.Left) * scale) * 0.5f - m.Left * scale,
-					-(top + r * m.Pitch * scale - m.Top * scale));
-				rrt.gameObject.SetActive(true);
-				_fitLimit = m.Right;
-				FitText(row, _fitLimit);
-				AddHover(row, rrt);
-				_rows.Add(row);
+				total += Mathf.Max(1, Mathf.CeilToInt(l.Count / (float)rowsFit));
 			}
-			if (people.Count == 0)
+			float x = 0f;
+			for (int g = 0; g < 3; g++)
 			{
-				TextMeshProUGUI t = Label(area, "\u2014", template);
-				t.rectTransform.anchorMin = Vector2.zero;
-				t.rectTransform.anchorMax = Vector2.one;
-				t.rectTransform.offsetMin = Vector2.zero;
-				t.rectTransform.offsetMax = Vector2.zero;
-				t.color = Palette.Fade(Palette.Ink, 0.5f);
+				int subs = Mathf.Max(1, Mathf.CeilToInt(cols[g].Count / (float)rowsFit));
+				float third = width * subs / total;
+				if (g > 0)
+				{
+					Separator(area, x);
+				}
+				TextMeshProUGUI title = Label(area, EstateTitle(g), template);
+				RectTransform trt = title.rectTransform;
+				trt.anchorMin = new Vector2(0f, 1f);
+				trt.anchorMax = new Vector2(0f, 1f);
+				trt.pivot = new Vector2(0f, 1f);
+				trt.anchoredPosition = new Vector2(x + 8f, 0f);
+				trt.sizeDelta = new Vector2(third - 16f, header);
+				List<Character> l = cols[g];
+				float subW = third / subs;
+				for (int j = 0; j < l.Count; j++)
+				{
+					PlacePerson(area, l[j], template, m, scale, x + (j / rowsFit + 0.5f) * subW,
+						header + (j % rowsFit) * m.Pitch * scale);
+				}
+				x += third;
 			}
-			ModLog.Info("StatPanel: " + Showing + " " + people.Count + " rows, " + columns + " columns, scale "
-				+ scale.ToString("0.00"));
+			ModLog.Info("StatPanel: Relations " + cols[0].Count + "/" + cols[1].Count + "/" + cols[2].Count
+				+ ", " + rowsFit + " rows, scale " + scale.ToString("0.00"));
 		}
 
 		// The game's stat row for a character: portrait, name, relation

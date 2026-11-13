@@ -315,8 +315,15 @@ community event sheet (`data/events.json`).
   relation already changed), ordered by `UnlockDate` as the game's windows;
   the rows are rebuilt when that set changes. Dead/left/exiled rows are
   faded. A hovered answer marks relation and status changes like stats.
-  Never larger than the stat rows (`_statScale`). `dev-pick.txt` takes
-  `mode stats|family|relations`.
+  Family is drawn as the game's family tree (`FamilyTree`: Gregor; Robert,
+  Lydia; Stephan, Nathan, Gloria; `Gloria2` is a second asset of the same
+  `CharacterList`, the shorter name wins). Relations are three columns by
+  `Character.Estates` (nobles + Arkn, `Cleric`, commoners + La-Tari),
+  titled with the Insurrection stats' names (Nobles / Clergy / Common
+  Folk), each as wide as its sub-columns. Both are scaled up to
+  `PeopleMaxScale` (1.25), larger than the stat rows. A tab under the
+  pointer turns accent-coloured on a `Palette.Card` back. `dev-pick.txt`
+  takes `mode stats|family|relations` and `tabhover <mode>`.
 - **The tree never scrolls vertically.** `LayoutTreeArea` makes it as tall as
   its tallest column (answer boxes `TreeNodeH` 34 in `TreeRowH` 40 rows, the
   17-unit text unchanged) and gives the stats the rest (~0.7 of the game's row
