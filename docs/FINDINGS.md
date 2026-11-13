@@ -1495,3 +1495,25 @@ change stats".
   `CaseOfYearPopupInvoker`. Nothing to simulate.
 - Event pop-ups (`GameEvent`, e.g. `MarchCollars_EP` in POSTGAME) change no
   stats (`EventPopupController` has no parameter calls).
+
+## A community flowchart, checked against the extracted data (13 Nov 2026)
+
+A player-made draw.io chart of the story (250 scene boxes: title, then one
+bullet per answer with its effects and "(cond: ...)", and arrows between
+scenes) was compared with the tables the mod extracts from the game.
+
+- **Answer effects agree.** 187 boxes matched a scene by English title
+  (curly and straight apostrophes folded); of their 608 answers, 589 have
+  exactly the stat changes of `scene-effects.tsv`, in button order. The rest
+  are the chart's wording ("true death" for Death +4, "heir", "all skills
+  +1", "diplo +"), the two first answers of `01.02.01_2` listed in another
+  order, and one chart error: `052.N7.010_Trigger7` answer 3 has two
+  Authority -1 changes in the scene file, -2 in all.
+- **Requirements agree** where sampled (`051.070.060_Repentance`: Theology
+  >= 12 or Natan >= 4; mother recovered and Natan >= 3. `051.060.030_Mortally`
+  answer 4: Valor 15..17 and Will >= 10).
+- 63 boxes did not match: chapter-5 and some chapter-4 titles (the shipped
+  CSV has them in Russian only) and the endings' outcome boxes.
+- Nothing in it is missing from the game-extracted tables, which are also
+  exact where it summarises ("Revolt = 1-5"). It is a good independent check,
+  not a source.
