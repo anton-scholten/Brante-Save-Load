@@ -3637,6 +3637,23 @@ namespace Doorstop
 					break;
 				}
 			}
+			if (at < 0 && curIndex < 0)
+			{
+				// The game is on a scene without answers (an event, a chapter
+				// screen - Load scene to an event leaves it there): no column is
+				// on screen. Step on from the last played answer, as from a
+				// changed one (its snapshot, its answer); with no start the list
+				// fell back to every scene still possible and skipped chapter 4
+				// from the chapter-3 farewell.
+				for (int i = cols.Count - 1; i >= 0; i--)
+				{
+					if (!cols[i].Upcoming && cols[i].HasSnapshot && !string.IsNullOrEmpty(cols[i].PlayedChoice))
+					{
+						at = i;
+						break;
+					}
+				}
+			}
 			TreeCol cur = at >= 0 ? cols[at] : null;
 			int startChapter = cur != null ? SceneFlow.ChapterOf(cur.Scene) : 0;
 			if (cur == null || cur.AfterHero == null || gm == null || kc == null || startChapter <= 0)

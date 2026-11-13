@@ -9,7 +9,14 @@ Two MonoBehaviours do this, both with an inline `KeyChapterParameterModel`
 (`Name`, `Value` strings):
 
   KeyChapterParametersOnEnableChanger   sets the parameter when its object is
-                                        enabled in the scene (button 0 below)
+                                        enabled in the scene: button 0 below,
+                                        or N when the object is (under) the
+                                        answer window's `Consequence<N>` -
+                                        the result page answer N switches on
+                                        (053.070.010_Bridges sets Insomnia to
+                                        KillFellipe / GetStarted / Hide by
+                                        answer; read as button 0, the last of
+                                        them won whatever was answered)
   KeyChapterParametersChanger           sets it when its Button is pressed; the
                                         answer's button index is read from the
                                         ParameterButtonChanger on the same
@@ -31,6 +38,7 @@ ButtonIndex N; -1 = a changer not attached to an answer button.
 
 import argparse
 import json
+import re
 import pathlib
 import struct
 import sys
@@ -128,6 +136,40 @@ def main():
         externals = [e.path for e in f.externals]
         # GameObject path id -> answer ButtonIndex, in this scene file
         buttons = {}
+        # GameObject -> (name, parent GameObject), for the Consequence<N> pages
+        names, parents = {}, {}
+        for obj in env.objects:
+            if obj.type.name in ("Transform", "RectTransform"):
+                try:
+                    t = obj.read_typetree()
+                except Exception:
+                    continue
+                parents[t["m_GameObject"]["m_PathID"]] = t["m_Father"]["m_PathID"]
+        transform_go = {}
+        for obj in env.objects:
+            if obj.type.name in ("Transform", "RectTransform"):
+                try:
+                    transform_go[obj.path_id] = obj.read_typetree()["m_GameObject"]["m_PathID"]
+                except Exception:
+                    continue
+            elif obj.type.name == "GameObject":
+                try:
+                    names[obj.path_id] = obj.read_typetree()["m_Name"]
+                except Exception:
+                    continue
+
+        def consequence_of(go):
+            """N when `go` is Consequence<N> or below one, else None."""
+            for _ in range(64):
+                m = re.match(r"Consequence(\d+)$", names.get(go, "") or "")
+                if m:
+                    return int(m.group(1))
+                father = parents.get(go, 0)
+                if not father:
+                    return None
+                go = transform_go.get(father, 0)
+            return None
+
         for obj in env.objects:
             if obj.type.name != "MonoBehaviour":
                 continue
@@ -157,7 +199,10 @@ def main():
                 name, value = read_change(data)
             except (struct.error, ValueError, IndexError):
                 continue
-            button = 0 if kind == "scene" else buttons.get(go_p, -1)
+            if kind == "scene":
+                button = consequence_of(go_p) or 0
+            else:
+                button = buttons.get(go_p, -1)
             if name and value:
                 rows.append({"scene": scene, "button": button,
                              "name": name, "value": value})

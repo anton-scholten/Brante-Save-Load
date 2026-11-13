@@ -409,7 +409,11 @@ community event sheet (`data/events.json`).
   stops 0.5 s after `Story()` is the event, pressing nothing in it, so
   the game shows its opening (a year-news pop-up first, where the game
   has one). `SelIndex` is the last column such a path goes through;
-  `StatsHero` is the event's `AfterHero`. Verified: 12 answers from
+  `StatsHero` is the event's `AfterHero`. With the game on an event (or any
+  answer-less scene) no column is current: `AddUpcoming` steps on from the
+  last played answer's snapshot, as from a changed answer; with no start
+  it listed every scene still possible and skipped chapter 4 from the
+  chapter-3 farewell. Verified: 12 answers from
   `02.12.01` to `030.080.010_Departure_Noble` in 38 s. `dev-pick.txt`
   takes `event <scene>`.
 - **The chapter-3 skills are projected in chapters 1-2.** They are 0 until
@@ -438,7 +442,14 @@ community event sheet (`data/events.json`).
   unblock its own answers.
 - **Key chapter parameters are extracted per scene/answer.** `scene-params.tsv`
   (from `tools/scene_params.py`) records the `KeyChapterParametersOnEnableChanger`
-  (button 0) and `KeyChapterParametersChanger` (answer button index) values.
+  (button 0, or N when its object is under the answer window's
+  `Consequence<N>`, the result page answer N switches on) and
+  `KeyChapterParametersChanger` (answer button index) values. 187 changers
+  sit on those result pages; read as button 0, all of a scene's values were
+  applied when it opened and the last won, so `053.070.010_Bridges`
+  ("Go into hiding" = `Insomnia=Hide` -> `053.080.010_SecretMeet`) always
+  led to `Final1`, and `052.070.010_Case11` (`LastStep`) and
+  `054.080.090_Court` (`TheHourHasCome`) to one fixed chapter end.
   `SceneParams` loads them. `PlanLoad` runs `SimulatePlan`: the same `Sim` from
   the start save through the plan's answers, checking that each choice scene the
   game would open next is the plan's next one, and logs the first difference

@@ -123,6 +123,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
   - Characters appear once met; hovering shows those you would meet as pale rows.
   - Hovering a scene's name shows the text beside its choices.
   - Events can be loaded like choices.
+  - Fixed: answers that decide a chapter's ending (A Sleepless Night, The Final Step, The Hour Has Come, and others) now lead to the right next scene in the tree.
 - **7 Nov 2026:** clearer install steps; `install.sh --copy` copies the game data too.
 - **6 Nov 2026:**
   - Load scene shows progress, time left and a Stop button.
