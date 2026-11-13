@@ -461,8 +461,11 @@ namespace Doorstop
 			{
 				return "";
 			}
-			string t = Game(scene + "_Title", "");
-			return t == scene + "_Title" ? "" : t;
+			// the key the scene's controller shows, where it is not
+			// <scene>_Title (054.030.010_Call_Titile, a K row)
+			string key = SceneEffects.TitleKey(scene) ?? scene + "_Title";
+			string t = Game(key, "");
+			return t == key ? "" : t;
 		}
 
 		public static string T(K key)

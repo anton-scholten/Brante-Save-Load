@@ -514,6 +514,7 @@
 051.000.030_Arrive_Prefect	3	R	Natan	1
 051.000.030_Arrive_Prefect	4	R	Stefan	1
 051.000.030_Arrive_Prefect	4	R	Gloria	-1
+051.000.040_Arrive_Rebel	0	K	051.000.030_Arrive_Prefect_Title	0
 051.000.040_Arrive_Rebel	1	R	Lidia	1
 051.000.040_Arrive_Rebel	2	R	Stefan	-1
 051.000.040_Arrive_Rebel	2	R	Gloria	1
@@ -788,6 +789,7 @@
 051.070.030_GoldenCage	3	O	Noble	0	0	and
 051.070.030_GoldenCage	3	O	СудЧестиЗапрещен	0	1	and
 051.070.030_GoldenCage	3	O	RiverOfBlood	0	0	and
+051.070.035_Mortally	0	K	051.060.030_Mortally_Title	0
 051.070.035_Mortally	1	P	Will	-10
 051.070.035_Mortally	1	P	Unity	-2
 051.070.035_Mortally	1	P	Valor	1
@@ -1930,6 +1932,7 @@
 054.030.010_Call	0	P	Order	-1
 054.030.010_Call	0	P	Prosperity	-1
 054.030.010_Call	0	U	Remi	0
+054.030.010_Call	0	K	054.030.010_Call_Titile	0
 054.030.010_Call	1	R	OMilanid	-1
 054.030.010_Call	1	R	GuyTempest	1
 054.030.010_Call	1	R	ElBorn	1
@@ -2022,6 +2025,7 @@
 054.040.030_Reckoning	3	P	Reputation	1
 054.040.030_Reckoning	3	S	OMilanid	8
 054.040.030_Reckoning	3	Q	Diplomacy	16	3	and
+054.040.040_OctaviaDate	0	K	054.040.050_OctaviaDate_Title	0
 054.040.040_OctaviaDate	1	P	Preaching	2
 054.040.040_OctaviaDate	1	P	Will	5
 054.040.040_OctaviaDate	1	Q	Death	1	3	or

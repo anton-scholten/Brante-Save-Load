@@ -398,7 +398,10 @@ community event sheet (`data/events.json`).
   (picks, Load scene, plans, replay) never contains them, so anything that
   positions by column index on screen uses `_drawCols` / `_focusDraw`. A
   title key that is not `<scene>_Title` is a `K` row in scene-effects.tsv;
-  a chapter start uses the chapter's name.
+  a chapter start uses the chapter's name. Choice scenes have `K` rows too
+  where `SceneController.TitleKey` differs (4: `054.030.010_Call_Titile`, a
+  typo in the game, and three that reuse another scene's title), and
+  `Loc.SceneTitle` looks every title up by that key.
 - **An event box is a load target.** Clicking it (`SelectEvent`) makes the
   event the selection (`_selScene` = the event, `_selChoice` = `"Event"`,
   until the next pick or a second click). `PlanLoad` then plans to the

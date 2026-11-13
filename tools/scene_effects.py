@@ -63,7 +63,8 @@ text, `ParameterButtonChanger.ButtonTextKey`) where it is not
 
 A `K <key> 0` row (button 0) gives the title key of an answer-less event
 scene whose `ConsequenceSceneController.TitleKey` is not `<scene>_Title`
-(an alternative version showing another scene's title).
+(an alternative version showing another scene's title), or of a choice
+scene whose `SceneController.TitleKey` is not (`054.030.010_Call_Titile`).
 
 A `U <character> 0` row (button 0) is an `UnlockCharacter` in the scene:
 the character is met (`CharacterModel.IsUnlocked`, what the game's Family
@@ -230,6 +231,8 @@ def main():
     state_machine = None                # SceneStateMachine: the interludes it shows
     interlude_script = None
     unlock_script = None                # UnlockCharacter: a character met
+    scene_controller = None             # SceneController: a choice scene's TitleKey
+    choice_title_keys = {}
     for o in scripts.objects:
         if o.type.name == "MonoScript":
             try:
@@ -247,6 +250,8 @@ def main():
                 interlude_script = o.path_id
             elif name == "UnlockCharacter":
                 unlock_script = o.path_id
+            elif name == "SceneController":
+                scene_controller = o.path_id
     if button_script is None:
         print("ParameterButtonChanger script not found", file=sys.stderr)
         return 1
@@ -298,6 +303,17 @@ def main():
                             entry.setdefault(kind, []).extend(items)
                     if convert and not any(lists):
                         entry["C"] = [("Convert", 0)]
+                continue
+            if pid == scene_controller:
+                try:
+                    rd = Reader(data, 28)
+                    rd.string()                     # m_Name
+                    rd.pptr(); rd.pptr(); rd.pptr() # Image, SceneSFX, Title
+                    key = rd.string()               # TitleKey
+                except (struct.error, ValueError, IndexError):
+                    continue
+                if key and key != scene + "_Title":
+                    choice_title_keys[scene] = key
                 continue
             if pid == unlock_script:
                 rd = Reader(data, 28)
@@ -428,6 +444,12 @@ def main():
         own = effects.get(scene, {}).get("0", {})
         if any(own.get(k) for k in ("P", "R", "S")):
             own["K"] = [(key, 0)]
+
+    # a choice scene whose SceneController.TitleKey is not <scene>_Title
+    # (054.030.010_Call has "_Titile"): the title the game shows
+    for scene, key in choice_title_keys.items():
+        effects.setdefault(scene, {}).setdefault("0", {})["K"] = [(key, 0)]
+    print("choice scene title keys not <scene>_Title: %s" % sorted(choice_title_keys.items()))
 
     # an answer's name (the button's short text) whose key is not
     # <scene>_Button_<N>: another scene's, or "Button4" without the "_"
