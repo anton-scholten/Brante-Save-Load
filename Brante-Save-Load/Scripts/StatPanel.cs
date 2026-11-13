@@ -698,15 +698,16 @@ namespace Doorstop
 				(width / most - ColumnGap * 3f) / drawn);
 			scale = Mathf.Max(0.3f, scale);
 			float cell = drawn * scale + ColumnGap * 3f;
-			// spare height between the generations
-			float gap = Mathf.Clamp((area.rect.height - top - rows.Count * m.Pitch * scale) / rows.Count, 0f, 30f);
+			// the spare height shared out equally above, between and below
+			// the generations
+			float gap = Mathf.Max(0f, (area.rect.height - top - rows.Count * m.Pitch * scale) / (rows.Count + 1));
 			for (int r = 0; r < rows.Count; r++)
 			{
 				int k = rows[r].Count;
 				for (int i = 0; i < k; i++)
 				{
 					float cx = width * 0.5f + (i - (k - 1) * 0.5f) * cell;
-					PlacePerson(area, rows[r][i], template, m, scale, cx, top + r * (m.Pitch * scale + gap));
+					PlacePerson(area, rows[r][i], template, m, scale, cx, top + gap + r * (m.Pitch * scale + gap));
 				}
 			}
 			ModLog.Info("StatPanel: Family " + people.Count + " in " + rows.Count + " generation(s), scale "

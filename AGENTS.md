@@ -320,7 +320,8 @@ community event sheet (`data/events.json`).
   `CharacterList`, the shorter name wins). Relations are three columns by
   `Character.Estates` (nobles + Arkn, `Cleric`, commoners + La-Tari),
   titled with the Insurrection stats' names (Nobles / Clergy / Common
-  Folk), each as wide as its sub-columns. Both are scaled up to
+  Folk), each as wide as its sub-columns; the family generations share the
+  spare height equally above, between and below them. Both are scaled up to
   `PeopleMaxScale` (1.25), larger than the stat rows. A tab under the
   pointer turns accent-coloured on a `Palette.Card` back. `dev-pick.txt`
   takes `mode stats|family|relations` and `tabhover <mode>`.
