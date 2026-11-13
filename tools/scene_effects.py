@@ -65,6 +65,12 @@ A `K <key> 0` row (button 0) gives the title key of an answer-less event
 scene whose `ConsequenceSceneController.TitleKey` is not `<scene>_Title`
 (an alternative version showing another scene's title).
 
+A `U <character> 0` row (button 0) is an `UnlockCharacter` in the scene:
+the character is met (`CharacterModel.IsUnlocked`, what the game's Family
+and Relations windows list). All 46 sit on the scene's answer window
+(`Window_Answer_Selection`, active), so they fire when the scene opens,
+whatever is answered; the tree applies them with the opening changes.
+
 `Case` assets (the "case of the year" window) also carry such lists, but
 nothing in the shipped game opens that window (only the developer window).
 
@@ -223,6 +229,7 @@ def main():
     scripts_names = {}
     state_machine = None                # SceneStateMachine: the interludes it shows
     interlude_script = None
+    unlock_script = None                # UnlockCharacter: a character met
     for o in scripts.objects:
         if o.type.name == "MonoScript":
             try:
@@ -238,6 +245,8 @@ def main():
                 state_machine = o.path_id
             elif name == "Interlude":
                 interlude_script = o.path_id
+            elif name == "UnlockCharacter":
+                unlock_script = o.path_id
     if button_script is None:
         print("ParameterButtonChanger script not found", file=sys.stderr)
         return 1
@@ -289,6 +298,15 @@ def main():
                             entry.setdefault(kind, []).extend(items)
                     if convert and not any(lists):
                         entry["C"] = [("Convert", 0)]
+                continue
+            if pid == unlock_script:
+                rd = Reader(data, 28)
+                rd.string()                         # m_Name
+                who = ref(*rd.pptr())               # Character
+                if who and who != "0":
+                    entry = effects.setdefault(scene, {}).setdefault("0", {})
+                    if (who, 0) not in entry.get("U", []):
+                        entry.setdefault("U", []).append((who, 0))
                 continue
             if pid in scene_scripts:
                 try:
@@ -427,7 +445,7 @@ def main():
     lines = []
     for scene, buttons in sorted(effects.items()):
         for button, kinds in sorted(buttons.items(), key=lambda kv: int(kv[0])):
-            for kind in ("P", "R", "S", "C", "K", "N"):
+            for kind in ("P", "R", "S", "C", "U", "K", "N"):
                 for name, value in kinds.get(kind, []):
                     lines.append("%s\t%s\t%s\t%s\t%d\n" % (scene, button, kind, name, value))
             for kind, name, value, op, group in kinds.get("requires", []):

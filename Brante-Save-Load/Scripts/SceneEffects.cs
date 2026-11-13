@@ -302,6 +302,18 @@ namespace Doorstop
 									pm.SetParameterValue(p, e.Value);
 								}
 							}
+							else if (e.Kind == 'U')
+							{
+								// UnlockCharacter in the scene: the hero has met them
+								// (what the game's Family/Relations windows list)
+								Character c = CharacterAsset(e.Name);
+								CharacterModel m = c == null ? null : Characters.Find(x => x != null && x.Character == c.Name);
+								if (m != null && !m.IsUnlocked)
+								{
+									m.IsUnlocked = true;
+									m.UnlockDate = "~";   // after every date the game wrote: met later
+								}
+							}
 							else if (e.Kind == 'R' || e.Kind == 'S')
 							{
 								Character c = CharacterAsset(e.Name);

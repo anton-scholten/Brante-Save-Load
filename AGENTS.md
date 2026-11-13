@@ -305,14 +305,22 @@ community event sheet (`data/events.json`).
   Determination, then each occupation stat with the two chapter-3 skills it
   feeds (Nobility - Diplomacy, Valor; Ingenuity - Manipulation, Scheming;
   Spirituality - Theology, Eloquence).
+- **Characters are met by the scene, not the answer.** The game sets
+  `CharacterModel.IsUnlocked` only through `UnlockCharacter` components;
+  all 46 sit on a scene's `Window_Answer_Selection` and fire when the scene
+  opens, whatever is answered (`02.11.01` unlocks Otton for every answer).
+  `tools/scene_effects.py` writes them as button-0 `U` rows and `Hero.Apply`
+  sets `IsUnlocked` (`UnlockDate` "~": after any date the game wrote).
+  Listing whoever had a changed relation instead made Otton come and go
+  with the Fugitive Girl answer and showed Felipe before he is met.
 - **Stats / Family / Relations tabs.** Three tabs at the top of the panel
   (`StatPanel.Mode`, `ModeTabs`) switch it between the stats and the
   characters as the same cloned stat row: portrait (the chapter's sprite),
   `GetCharacterTrueName`, relation -5..+5 on the two-sided slider, the game's
   relation word or, when the status is not `Good`/`Not`, the status
   (`<Character>.<Status>`). Family = `Character.IsFamily` without the hero,
-  Relations = everyone else the hero shown has met (`IsUnlocked`, or a
-  relation already changed), ordered by `UnlockDate` as the game's windows;
+  Relations = everyone else the hero shown has met (`IsUnlocked` only, as
+  the game's windows), ordered by `UnlockDate`;
   the rows are rebuilt when that set changes. Dead/left/exiled rows are
   faded. A hovered answer marks relation and status changes like stats.
   Family is drawn as the game's family tree (`FamilyTree`: Gregor; Robert,

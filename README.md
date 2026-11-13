@@ -92,7 +92,9 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 ### Tree view
 
-![The tree view: each scene is shown as a column with its available choices underneath it. The player's path is shown in red with yellow highlighted choices. A choice picked is shown by a red dashed outline and can be loaded using the "load scene" button at the top (if there is a path of choices leading up to that scene). Hovering a choice shows what stats it changes or requires.](Screenshot_3.jpg)
+![The tree view on its Stats tab: each scene is a column with its choices under it, the player's path in red with the choices made in yellow. A picked choice has a red dashed outline and can be loaded with the "Load scene" button at the top. Hovering a choice shows what it changes and requires, and the stats it changes are marked green or red below.](Screenshot_3a.jpg)
+![The Family tab under the tree: the Brante family laid out as a family tree (Gregor; Robert and Lydia; Stephan, Nathan and Gloria), each with portrait, relation and status. Hovering a choice marks the relations it changes.](Screenshot_3b.jpg)
+![The Relations tab under the tree: everyone else the hero has met, in three columns by estate (Nobles, Clergy, Common Folk), with relation and status.](Screenshot_3c.jpg)
 
 - Columns are scenes, boxes are choices; your path is in red, with each choice made highlighted in yellow. Future scenes are predicted so only those that can happen are shown and your stats automatically lists the choices you can take.
 - **Hover** a choice to see what it changes and requires; the stats it changes light up below (green up, red down).
@@ -108,6 +110,29 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 - Progress and time estimates given during a fast-forward when you load a path using the tree view.
 - A **Stop** button is available to drop you into the current scene.
+
+## Update notes
+
+- **13 Nov 2026:**
+  - Stats, Family and Relations tabs under the tree.
+  - Events that happen on their own get columns, with their names.
+  - Answers show their short names.
+  - Interludes and events count in the predicted stats.
+  - Chapter-3 skills are projected in chapters 1-2.
+  - Characters appear once met.
+- **7 Nov 2026:** clearer install steps; `install.sh --copy` copies the game data too.
+- **6 Nov 2026:**
+  - Load scene shows progress, time left and a Stop button.
+  - The tree no longer scrolls vertically.
+  - Hovered answers mark the stats they change.
+  - Fixes: the true-death CONTINUE button, and a double click on a menu save.
+- **5 Nov 2026:**
+  - Replays run at 40× speed.
+  - The game's pop-ups are closed before a load.
+  - Quick load was removed.
+- **3 Nov 2026:**
+  - The scenes ahead are simulated.
+  - Achievements stay on.
 
 ## Good to know
 

@@ -560,8 +560,8 @@ namespace Doorstop
 		}
 
 		// The characters the tab shows for these heroes: the family (the
-		// hero left out) or everyone else, as far as the hero has met them
-		// (unlocked, or a relation already changed by a predicted answer),
+		// hero left out) or everyone else the hero has met (IsUnlocked: a
+		// scene's UnlockCharacter, simulated as a `U` row for scenes ahead),
 		// in the order the hero met them, as the game's windows list them.
 		private static List<Character> People(SceneEffects.Hero shown, SceneEffects.Hero now)
 		{
@@ -575,14 +575,13 @@ namespace Doorstop
 				}
 				foreach (CharacterModel m in h.Characters)
 				{
-					if (m == null || m.Character == CharacterList.Hero || seen.Contains(m.Character)
-						|| !(m.IsUnlocked || m.Relation != 0))
+					if (m == null || m.Character == CharacterList.Hero || seen.Contains(m.Character) || !m.IsUnlocked)
 					{
 						continue;
 					}
 					Character c = PersonAsset(m.Character);
 					if (c == null || c.IsFamily != (Showing == Mode.Family) || (h == now && ModelOf(shown, m.Character) != null
-						&& !ModelOf(shown, m.Character).IsUnlocked && ModelOf(shown, m.Character).Relation == 0))
+						&& !ModelOf(shown, m.Character).IsUnlocked))
 					{
 						continue;   // the hero shown has not met them yet
 					}
@@ -792,6 +791,7 @@ namespace Doorstop
 				}
 				x += third;
 			}
+			ModLog.Info("StatPanel: Relations " + _peopleKey);
 			ModLog.Info("StatPanel: Relations " + cols[0].Count + "/" + cols[1].Count + "/" + cols[2].Count
 				+ ", " + rowsFit + " rows, scale " + scale.ToString("0.00"));
 		}
@@ -1206,7 +1206,7 @@ namespace Doorstop
 				int today = t != null ? t.Relation : value;
 				row.Shown = value;
 				row.Status = m != null ? m.Status : CharacterStatus.Good;
-				bool met = m != null && (m.IsUnlocked || m.Relation != 0);
+				bool met = m != null && m.IsUnlocked;
 				if (row.Icon != null)
 				{
 					row.Icon.sprite = Portrait(row.Person, chapter);
