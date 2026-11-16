@@ -1222,6 +1222,10 @@ namespace Doorstop
 		// pick (SelectChoice re-selects the furthest pick) or a second click.
 		private static void SelectEvent(string scene)
 		{
+			if (scene == TrueDeathScene)
+			{
+				return;   // the story's end: nothing to load up to
+			}
 			if (_selScene == scene && _selChoice == EventChoice)
 			{
 				_selScene = null;
@@ -2338,7 +2342,7 @@ namespace Doorstop
 			long tNodes = sw.ElapsedMilliseconds;
 			DrawPath(drawn);
 			long tPath = sw.ElapsedMilliseconds;
-			StatPanel.Show(StatsHero(), SceneEffects.Now(), StatsChapter());
+			ShowStats();
 			long tStats = sw.ElapsedMilliseconds;
 			UpdateLoadButton();
 			ModLog.Info("ChoiceWindow: tree " + (rebuild ? "built" : "restyled") + " in "
@@ -2730,7 +2734,7 @@ namespace Doorstop
 			n.Label.enableWordWrapping = false;
 
 			List<SceneEffects.Effect> effects = col.Event ? SceneEffects.SceneChanges(col.Scene)
-				: SceneEffects.For(col.Scene, c.Name);
+				: SceneEffects.Shown(col.Scene, c.Name);
 			TreeHover hover = node.AddComponent<TreeHover>();
 			hover.HasEffects = effects.Count > 0;
 			hover.HasChoiceOfRequirements = effects.Exists(f => f.Or) && col.Upcoming;
@@ -2794,6 +2798,71 @@ namespace Doorstop
 				n.Mark = null;
 			}
 		}
+
+		// The stat panel for the scene the path is at, with what its Destiny
+		// tab needs: the hero at the path's end, the scenes passed by then
+		// (the selected scene answered; else the ones before the scene on
+		// screen), and the post along the path.
+		private static void ShowStats()
+		{
+			HashSet<string> done = new HashSet<string>();
+			SceneEffects.Hero end = null;
+			if (_tree != null && _tree.Count > 0)
+			{
+				TreeCol last = _tree[_tree.Count - 1];
+				end = _simEnd ?? last.AfterHero ?? last.Hero;
+				string stop = !string.IsNullOrEmpty(_selScene) ? _selScene : null;
+				TreeCol cur = stop == null ? _tree.Find(c => c.Current) : null;
+				foreach (TreeCol c in _tree)
+				{
+					if (cur != null && c == cur)
+					{
+						break;
+					}
+					List<string> between = c.Upcoming ? c.Between : c.PlayedBetween;
+					bool hit = false;
+					if (between != null)
+					{
+						foreach (string sc in between)
+						{
+							done.Add(sc);
+							if (sc == stop)
+							{
+								hit = true;
+								break;
+							}
+						}
+					}
+					if (hit)
+					{
+						break;
+					}
+					if (stop == null && cur == null && c.Upcoming)
+					{
+						break;   // nothing on screen or picked: the played columns
+					}
+					done.Add(c.Scene);
+					if (c.Scene == stop)
+					{
+						break;
+					}
+				}
+			}
+			StatPanel.DestinyDone = done;
+			StatPanel.DestinyEnd = end;
+			string post = _simPost;
+			_Scripts.AMVCC.Models.Static.KeyChapterParametersController kc = _Scripts.AMVCC.Models.Static.KeyChapterParametersController.Initiate;
+			if (string.IsNullOrEmpty(post) && kc != null)
+			{
+				post = kc.GetKeyChapterParameterValue("Post");
+			}
+			StatPanel.DestinyPost = post == "Judge" || post == "Inquisitor" || post == "Rebel" ? post : null;
+			StatPanel.Show(StatsHero(), SceneEffects.Now(), StatsChapter());
+		}
+
+		// The post (key parameter) the simulation reached at the path's end.
+		private static string _simPost;
+		private static SceneEffects.Hero _simEnd;   // and its hero (the events after the last column applied)
 
 		// The hero whose stats the row shows: after the last pick along the
 		// path when there is one (and the tree knows the hero there), else as
@@ -2862,7 +2931,7 @@ namespace Doorstop
 			HidePopup();
 			StatPanel.HideTooltip();
 			LayoutTreeArea(_contentHeight);
-			StatPanel.Show(StatsHero(), SceneEffects.Now(), StatsChapter());
+			ShowStats();
 			UpdateLoadButton();
 			ModLog.Info("ChoiceWindow: tree view laid out again for " + _historyBox.rect.size);
 		}
@@ -2990,15 +3059,31 @@ namespace Doorstop
 		private static List<TreeCol> _drawCols = new List<TreeCol>();   // what is drawn: the columns and the events
 
 		// An answer-less scene that changes the hero (a trigger event, an
-		// incident, a final): drawn as a column of its own, one box that is
-		// not a pick.
+		// incident, a final) or earns a story objective ("Gloria of House
+		// Brante" only earns one): drawn as a column of its own, one box that
+		// is not a pick.
 		private static bool IsEventScene(string scene)
 		{
-			return SceneEffects.SceneChanges(scene).Count > 0 && SceneTexts.Buttons(scene).Count == 0;
+			return scene == TrueDeathScene
+				|| SceneEffects.SceneChanges(scene).Count > 0 && SceneTexts.Buttons(scene).Count == 0;
+		}
+
+		// The end of a path whose answer is the hero's fourth death: the
+		// first true-death page (a scene of the game's finals, never in the
+		// flow), drawn as an event box that is no load target.
+		private const string TrueDeathScene = "FourthDeath_1";
+
+		private static bool TrueDead(SceneEffects.Hero h)
+		{
+			return h != null && h.Stats != null && h.Stats.Death >= 4;
 		}
 
 		private static string EventTitle(string scene)
 		{
+			if (scene == TrueDeathScene)
+			{
+				return Loc.Game("TrueDeath_Title", "True Death");
+			}
 			string title = SceneTexts.Title(scene);
 			string key = SceneEffects.TitleKey(scene);
 			if (string.IsNullOrEmpty(title) && key != null)
@@ -3142,6 +3227,12 @@ namespace Doorstop
 		// characters, then "Happens on its own" in italics.
 		private static string EventText(string scene)
 		{
+			if (scene == TrueDeathScene)
+			{
+				string page = Loc.Game("FourthDeath_1.Text_1", "").Trim();
+				return (page.Length > 1 && page != "FourthDeath_1.Text_1" ? page + "\n" : "")
+					+ "<i>" + Loc.T(Loc.K.StoryEnds) + "</i>";
+			}
 			string happens = "<i>" + Loc.T(Loc.K.EventHappens) + "</i>";
 			List<string> prefixes = new List<string> { scene };
 			string key = SceneEffects.TitleKey(scene);
@@ -3656,6 +3747,8 @@ namespace Doorstop
 			}
 			TreeCol cur = at >= 0 ? cols[at] : null;
 			int startChapter = cur != null ? SceneFlow.ChapterOf(cur.Scene) : 0;
+			_simPost = null;
+			_simEnd = null;
 			if (cur == null || cur.AfterHero == null || gm == null || kc == null || startChapter <= 0)
 			{
 				AddUpcomingListed(cols, from, shown, cur != null ? cur.AfterHero : null, startChapter);
@@ -3767,7 +3860,12 @@ namespace Doorstop
 			System.Diagnostics.Stopwatch tAns = new System.Diagnostics.Stopwatch();
 			List<string> between = new List<string>();
 			_tailBetween = between;
-			while (steps < 400 && sw.ElapsedMilliseconds < 1500)
+			if (TrueDead(hero))
+			{
+				between.Add(TrueDeathScene);   // the start's own answer was the fourth death
+				finished = true;
+			}
+			while (!finished && steps < 400 && sw.ElapsedMilliseconds < 1500)
 			{
 				tAdv.Start();
 				SceneFlow.Ahead a = sim.Advance();
@@ -3828,7 +3926,22 @@ namespace Doorstop
 				{
 					between.Add(scene);   // no column: its changes go to the next one
 				}
+				if (TrueDead(hero))
+				{
+					// The fourth death ends the story: the game runs its own
+					// finals (GameFinals: the true-death pages, the chapter's
+					// finale, the credits), not the chapter flow, so nothing
+					// the flow would open after it is reachable. The path ends
+					// in a "True Death" box (TrueDeathScene).
+					between.Add(TrueDeathScene);
+					finished = true;
+					ModLog.Info("ChoiceWindow: true death at " + scene + " (" + pick + ") - the path ends there");
+					break;
+				}
 			}
+			string simPost;
+			_simPost = keys.TryGetValue("Post", out simPost) ? simPost : null;
+			_simEnd = hero;
 			ModLog.Info("ChoiceWindow: simulated " + steps + " scene(s) ahead in " + sw.ElapsedMilliseconds + " ms (setup "
 				+ setupMs + ", advance " + tAdv.ElapsedMilliseconds + " of which flow " + sim.FlowMs + ", columns "
 				+ tCol.ElapsedMilliseconds + ", answers " + tPick.ElapsedMilliseconds + ", apply " + tAns.ElapsedMilliseconds + " ms)"
@@ -4203,7 +4316,7 @@ namespace Doorstop
 			label.enableWordWrapping = true;
 			LayoutElement nle = label.gameObject.AddComponent<LayoutElement>();
 			nle.flexibleWidth = 1f;
-			if (fx.Kind != 'S')
+			if (fx.Kind != 'S' && fx.Kind != 'E')
 			{
 				string sign = fx.Value > 0 ? "+" + fx.Value : "-" + (-fx.Value);   // the font has no U+2212
 				TextMeshProUGUI val = AddLabel(row.transform, "Value", sign, 19f,
@@ -6301,7 +6414,21 @@ namespace Doorstop
 						// the panel under the tree: stats, family or relations
 						string m = l.Substring(5).Trim();
 						StatPanel.SetMode(m == "family" ? StatPanel.Mode.Family
-							: m == "relations" ? StatPanel.Mode.Relations : StatPanel.Mode.Stats);
+							: m == "relations" ? StatPanel.Mode.Relations
+							: m == "destiny" ? StatPanel.Mode.Destiny : StatPanel.Mode.Stats);
+						if (m == "destiny")
+						{
+							ModLog.Info("DEV PICK: destiny " + StatPanel.DevDestiny());
+						}
+						continue;
+					}
+					else if (l.StartsWith("destiny ", StringComparison.Ordinal))
+					{
+						// the Destiny tab's chapter (0: the hero's), logged
+						int dc;
+						int.TryParse(l.Substring(8).Trim(), out dc);
+						StatPanel.DevDestinyChapter(dc);
+						ModLog.Info("DEV PICK: destiny chapter " + dc + ": " + StatPanel.DevDestiny());
 						continue;
 					}
 					else if (l == "confirm")
@@ -6389,6 +6516,10 @@ namespace Doorstop
 			}
 			ModLog.Info("  stat panel: " + DevStats(StatsHero()) + " (skills as drawn: "
 				+ DevStats(SceneEffects.WithSkillsProjected(StatsHero())) + ")");
+			if (StatPanel.Showing == StatPanel.Mode.Destiny)
+			{
+				ModLog.Info("  destiny: " + StatPanel.DevDestiny());
+			}
 		}
 
 		// The answer-less scenes simulated before an upcoming column and, for

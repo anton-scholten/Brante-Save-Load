@@ -294,17 +294,26 @@ community event sheet (`data/events.json`).
   is four shade rectangles around it (`ShadeAround`), the panel's own image
   stays the clear click target. A sorting canvas on the row did not lift it
   out of the table's masked scroll view.
-- **The stat panel shows live stats only, at a readable size.** The Destiny
-  tab and the stats the game never changes or reads (`StatPanel.Dead`: Volition,
+- **The stat panel shows live stats only, at a readable size.** The game's
+  Destiny *stat* tab (Window_Soul) and the stats the game never changes or
+  reads (`StatPanel.Dead`: Volition,
   Love, Rule, Tolerance, GWrath, Control, Cruelty, Weight, Сontention - Cyrillic
   С) are left out; FINDINGS ("Dead stats") has the evidence. Column widths are
   measured on what a row draws (icon to slider end), not its 375-unit box.
   Heir is left out too (`StatPanel.LeftOut`: only Stephan or the hero).
-  Personality is laid out in groups that a column never splits
-  (`StatPanel.Place`, `|` in `Tab.Order`): Willpower + Deaths + Perception +
-  Determination, then each occupation stat with the two chapter-3 skills it
-  feeds (Nobility - Diplomacy, Valor; Ingenuity - Manipulation, Scheming;
-  Spirituality - Theology, Eloquence).
+  Work is ordered Career, Justice, Inquisition power, Tolerance of faiths,
+  Unrest, Spy network.
+- **Personality is drawn by chapter (`StatPanel.FlowPlace`).** Column 1:
+  Willpower, Deaths, Perception, Determination (chapter 1); column 2: Nobility,
+  Ingenuity, Spirituality (chapter 2), each level with the middle of its two
+  skills; then the six chapter-3 skills. `Forks` draws each occupation's fork
+  into its two skills, the arms marked "+" Perception's / Determination's
+  icon - `CalculateChapterParams`: Diplomacy = Perception + Nobility, Valor =
+  Determination + Nobility, Manipulation/Scheming from Ingenuity,
+  Theology/Eloquence from Spirituality. It needs six rows in a column
+  (`FitsWidth` refuses less), else `Place`'s groups are the fallback. A stat
+  not open at the chapter shown is faded with the game's "Will unlock in
+  Chapter N" (`StatChapter`: occupations 2, skills 3, else the tab's chapter).
 - **Characters are met by the scene, not the answer.** The game sets
   `CharacterModel.IsUnlocked` only through `UnlockCharacter` components;
   all 46 sit on a scene's `Window_Answer_Selection` and fire when the scene
@@ -313,6 +322,27 @@ community event sheet (`data/events.json`).
   sets `IsUnlocked` (`UnlockDate` "~": after any date the game wrote).
   Listing whoever had a changed relation instead made Otton come and go
   with the Fugitive Girl answer and showed Felipe before he is met.
+- **Destiny tab (story objectives).** A fourth panel tab lists one
+  chapter's objectives as the game's Destiny window does
+  (`KeyChapterParametersController.AllGameObjectives`, by `Category`, chapter
+  4 filtered by `Objective.Post`; the true death with the outcomes from
+  chapter 3). Chapter buttons I..V (default: the chapter of the scene shown).
+  Colours: happened by the scene shown (green), happens later on the picked
+  or predicted path (`DestinyEnd`, the simulation's final hero; pale green),
+  still possible (grey), out of reach (red, struck: its chapter is over, or
+  every scene/answer that earns it in scene-objectives.tsv is in
+  `DestinyDone` - the scenes passed by the scene shown - or on another post's
+  track, `SceneFlow.SceneFits`). Hover: description, the window's conditions,
+  the earning scenes. `ChoiceWindow.ShowStats` fills the context.
+  `dev-pick.txt` takes `mode destiny` and `destiny N`.
+- **A true death ends the predicted path.** The fourth death sends the game
+  into `GameFinals` (true-death pages, the chapter's finale, credits), not the
+  chapter flow. `AddUpcoming` stops when the hero's Death reaches 4 and ends
+  the path with a "True Death" event box (`TrueDeathScene` = `FourthDeath_1`,
+  not a load target). Before, the simulation went on predicting the chapter.
+- **Objectives earned are listed in the pop-ups.** An answer's or an event's
+  pop-up adds what it earns (`E` effects: `SceneEffects.Shown`,
+  `SceneChanges`; display only, never in `For`/`ForScene`).
 - **Stats / Family / Relations tabs.** Three tabs at the top of the panel
   (`StatPanel.Mode`, `ModeTabs`) switch it between the stats and the
   characters as the same cloned stat row: portrait (the chapter's sprite),
@@ -515,6 +545,16 @@ community event sheet (`data/events.json`).
   session after a mod load crashed (any replay across it).
   `BoltDump.ResetOnceUnits` clears every `Once` flag in `LoadFlow`, as in a
   fresh session.
+- **Texts come from the live I2 terms, not the embedded CSV.**
+  `resources.assets` holds an old CSV import *and* the serialized
+  `I2Languages` terms the game reads; `tools/localization.py` parses the
+  terms. The CSV lacked answers the game shows (`052.N12.010_Trigger12`
+  "Gather your strength…", `051.060.030_Mortally` "Overcome death", all of
+  `051.070.035_Mortally`, `052.N6.010_Trigger6`), spelled
+  `054.100.090_MIlanid` (so "The Road to the Top" had no answers and was
+  simulated as answer-less), and had ~150 stale titles. Answers are listed
+  in the scene's sibling order, which is `ButtonDescriptionN` order in every
+  scene.
 - **Answer names are the button objects' names.** A few localisation keys are
   `ButtonDescription_1`; the scene's button is always `ButtonDescription1`, and
   `tools/localization.py` writes that name, or a predicted answer can never be

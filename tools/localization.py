@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 """Extract the game's localisation table and the per-scene text set.
 
-The I2 localisation data is a plain CSV inside `resources.assets`, preceded by
-its byte length and starting with `Key,Type,Desc,Russian,English,Chinese`:
-
-    01.05.01_Title,Text,,"Плач младенца",The Newborn’s Cry,
-    01.06.01_ButtonDescription1,Text,,"...",You quietly say that it was an accident.,
+The game translates through the I2 `LanguageSourceAsset` "I2Languages" in
+`resources.assets`: its serialized `mTerms` list (17552 terms), each
+`Term, TermType, Description, Languages[14], Flags[], Languages_Touch[]`.
+The same file also embeds a CSV starting `Key,Type,Desc,Russian,English,
+Chinese`, but that is an old import: it lacks terms the game shows
+(`052.N12.010_Trigger12_Button_3`, `051.060.030_Mortally_ButtonDescription4`)
+and spells `054.100.090_MIlanid` where the scene and the live terms have
+`Milanid`. Only the serialized terms are read.
 
 So every scene's title and every answer's text is available **without playing**.
 This tool writes:
 
-  data/localization.csv   the raw table (as extracted)
+  data/localization.csv   the live terms as Key,Type,Desc,Russian,English,Chinese
   data/scene-texts.json   scene id -> {title, buttons{name: text}, consequences[]}
 
 Usage:  python3 tools/localization.py [--game DIR]
@@ -29,29 +32,72 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import gamedir  # noqa: E402
-HEADER = b"Key,Type,Desc,Russian,English,Chinese"
 KEY = re.compile(r"^(\d{2,3}\.\d{2,3}\.\d{2,3}(?:_\d+)?)(?:_(Title|ButtonDescription\d+|ConsequenceText_\d+_\d+))?$")
 
 
-def extract_csv(asset):
+NAME = b"\x0b\x00\x00\x00I2Languages\x00"
+# language order of the terms' Languages array (mLanguages, after the terms)
+RUSSIAN, ENGLISH, CHINESE = 0, 1, 5
+
+
+def extract_terms(asset):
+    """[(key, [text per language])] from the serialized I2Languages source.
+
+    Layout after the object's name: three ints, then mTerms (count, then per
+    term: Term, TermType, Description, Languages[], Flags byte[],
+    Languages_Touch[]). Unity aligns every string and byte array to 4."""
     data = asset.read_bytes()
-    at = data.find(HEADER)
+    at = data.find(NAME)
     if at < 0:
-        raise SystemExit("localisation header not found")
-    length = struct.unpack_from("<i", data, at - 4)[0]
-    if length <= 0 or at + length > len(data):
-        raise SystemExit("localisation length looks wrong: %d" % length)
-    return data[at:at + length].decode("utf-8", "replace")
+        raise SystemExit("I2Languages source not found")
+    pos = at + 16 + 3 * 4
+
+    def i32():
+        nonlocal pos
+        value = struct.unpack_from("<i", data, pos)[0]
+        pos += 4
+        return value
+
+    def string():
+        nonlocal pos
+        n = i32()
+        if n < 0 or n > 1 << 20:
+            raise SystemExit("I2 terms: bad string length %d at %d" % (n, pos))
+        text = data[pos:pos + n].decode("utf-8", "replace")
+        pos = (pos + n + 3) & ~3
+        return text
+
+    count = i32()
+    if not 1000 < count < 200000:
+        raise SystemExit("I2 terms: implausible count %d" % count)
+    terms = []
+    for _ in range(count):
+        key = string()
+        i32()                                   # TermType
+        string()                                # Description
+        langs = [string() for _ in range(i32())]
+        flags = i32()
+        pos = (pos + flags + 3) & ~3
+        for _ in range(i32()):                  # Languages_Touch
+            string()
+        terms.append((key, langs))
+    return terms
 
 
-def parse(csv_text):
-    """key -> english text (column 4)."""
-    table = {}
-    for row in csv.reader(io.StringIO(csv_text, newline="")):
-        if len(row) < 5 or row[0] in ("Key", "---"):
-            continue
-        table[row[0]] = row[4]
-    return table
+def to_csv(terms):
+    out = io.StringIO()
+    w = csv.writer(out, lineterminator="\n")
+    w.writerow(["Key", "Type", "Desc", "Russian", "English", "Chinese"])
+    for key, langs in terms:
+        row = [langs[i] if i < len(langs) else "" for i in (RUSSIAN, ENGLISH, CHINESE)]
+        w.writerow([key, "Text", ""] + row)
+    return out.getvalue()
+
+
+def parse_terms(terms):
+    """key -> english text."""
+    return {key: (langs[ENGLISH] if len(langs) > ENGLISH else "") for key, langs in terms}
+
 
 
 def catalogue():
@@ -105,14 +151,14 @@ def main():
         return 1
     asset = game / "The Life and Suffering of Sir Brante_Data/resources.assets"
 
-    csv_text = extract_csv(asset)
-    (ROOT / "data" / "localization.csv").write_text(csv_text, encoding="utf-8")
-    table = parse(csv_text)
+    terms = extract_terms(asset)
+    (ROOT / "data" / "localization.csv").write_text(to_csv(terms), encoding="utf-8")
+    table = parse_terms(terms)
     scenes = build_scenes(table, catalogue())
 
     out = {
         "schema": 1,
-        "source": "I2 localisation CSV embedded in resources.assets",
+        "source": "I2Languages terms (LanguageSourceAsset) in resources.assets",
         "terms": len(table),
         "scenes": dict(sorted(scenes.items())),
     }

@@ -33,6 +33,9 @@ namespace Doorstop
 			public int Value;
 			public int Op;
 			public bool Or;
+			// Kind: P stat, R relation, S status, U met, C conversion (changes);
+			// Q/W/T/O requirements; E an objective earned (display only:
+			// Shown/SceneChanges, never in For/ForScene)
 			public bool IsRequirement
 			{
 				get { return Kind == 'Q' || Kind == 'W' || Kind == 'T' || Kind == 'O'; }
@@ -171,7 +174,23 @@ namespace Doorstop
 		// without the skill conversion): what an event scene does.
 		public static List<Effect> SceneChanges(string scene)
 		{
-			return ForScene(scene).FindAll(e => e.Kind == 'P' || e.Kind == 'R' || e.Kind == 'S');
+			List<Effect> list = ForScene(scene).FindAll(e => e.Kind == 'P' || e.Kind == 'R' || e.Kind == 'S');
+			list.AddRange(Earned(scene, 0));
+			return list;
+		}
+
+		// An answer's effects and requirements as the pop-up lists them: For
+		// plus the objectives it earns.
+		public static List<Effect> Shown(string scene, string choiceName)
+		{
+			List<Effect> list = new List<Effect>(For(scene, choiceName));
+			list.AddRange(Earned(scene, ButtonIndex(choiceName)));
+			return list;
+		}
+
+		private static List<Effect> Earned(string scene, int button)
+		{
+			return SceneObjectives.Names(scene, button).ConvertAll(n => new Effect { Kind = 'E', Name = n });
 		}
 
 		// The localisation key of an answer's name (the button's short text,
@@ -811,6 +830,7 @@ namespace Doorstop
 					return e.Kind == 'Q' ? name + " " + OpText(e.Op, e.Value) : name;
 				}
 				case 'O':
+				case 'E':
 				{
 					Objective o = ObjectiveAsset(e.Name);
 					if (o == null)

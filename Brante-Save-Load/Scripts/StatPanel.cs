@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using _Scripts.AMVCC.Models.Static;
 using _Scripts.AMVCC.Views.Windows;
 using _Scripts.AMVCC.Views.Windows.Components;
+using _Scripts.AMVCC.Views.Windows.Destiny;
 
 namespace Doorstop
 {
@@ -40,7 +41,7 @@ namespace Doorstop
 		// What the panel under the tree shows: the stats, the family or the
 		// other characters (the game's Family and Relations windows), picked
 		// by three tabs at its top.
-		public enum Mode { Stats, Family, Relations }
+		public enum Mode { Stats, Family, Relations, Destiny }
 
 		public static Mode Showing = Mode.Stats;
 		public static bool DevAllPeople;   // dev-pick "allpeople": list everyone a scene can unlock (layout test)
@@ -91,6 +92,9 @@ namespace Doorstop
 			public string Hud;            // the HUD button that opens it
 			public int Chapter;
 			public string[] Order;        // the window's stats, in its order ("|": a new group)
+			// Personality: three groups laid out by chapter, left to right
+			// (FlowPlace), with the chapter-2 -> chapter-3 forks drawn
+			public bool Flow;
 			public readonly List<int> Groups = new List<int>();   // where each group starts in Stats
 			public ParameterCategory[] Takes;   // stats of these categories not in any window
 			public readonly List<Parameter> Stats = new List<Parameter>();
@@ -129,8 +133,13 @@ namespace Doorstop
 		// Deaths) starts a new column rather than be split, unless it is
 		// taller than a column. Returns (column, row) per stat; `columns` is
 		// how many it takes.
-		private static List<Vector2> Place(Tab t, int rows, out int columns)
+		private static List<Vector2> Place(Tab t, int rows, out float columns)
 		{
+			List<Vector2> flow = FlowPlace(t, rows, out columns);
+			if (flow != null)
+			{
+				return flow;
+			}
 			List<Vector2> at = new List<Vector2>(t.Stats.Count);
 			int sub = 0, r = 0;
 			for (int i = 0; i < t.Stats.Count; i++)
@@ -157,24 +166,82 @@ namespace Doorstop
 			return at;
 		}
 
+		// The width of the forks between Personality's chapter-2 and
+		// chapter-3 columns, in columns.
+		private const float Fork = 0.55f;
+
+		// Personality by chapter (CalculateChapterParams): chapter 1's
+		// Willpower, Deaths, Perception, Determination; chapter 2's three
+		// occupations, each level with the middle of the two chapter-3 skills
+		// it makes; then the skills, Perception's above Determination's
+		// (Diplomacy = Perception + Nobility, Valor = Determination +
+		// Nobility, ...). Null when the groups are not that shape or a column
+		// cannot hold them.
+		private static List<Vector2> FlowPlace(Tab t, int rows, out float columns)
+		{
+			columns = 0f;
+			if (!t.Flow || t.Groups.Count != 3)
+			{
+				return null;
+			}
+			int a = t.Groups[1], b = t.Groups[2] - t.Groups[1], c = t.Stats.Count - t.Groups[2];
+			if (c != 2 * b || a > rows || c > rows)
+			{
+				return null;
+			}
+			List<Vector2> at = new List<Vector2>(t.Stats.Count);
+			for (int i = 0; i < a; i++)
+			{
+				at.Add(new Vector2(0f, i));
+			}
+			for (int i = 0; i < b; i++)
+			{
+				at.Add(new Vector2(1f, 2 * i + 0.5f));
+			}
+			for (int i = 0; i < c; i++)
+			{
+				at.Add(new Vector2(2f + Fork, i));
+			}
+			columns = 3f + Fork;
+			return at;
+		}
+
+		// The chapter a Personality stat first matters in: the occupations
+		// come with chapter 2 (its trigger scenes), the skills with chapter 3
+		// (converted from both at its start). The rest: their tab's chapter.
+		private static int StatChapter(Parameter p, Tab t)
+		{
+			int tab = t != null ? t.Chapter : 1;
+			switch (p.ParameterName)
+			{
+				case ParametersList.Discipline:
+				case ParametersList.Cunning:
+				case ParametersList.Spirituality:
+					return Math.Max(tab, 2);
+				default:
+					return SceneEffects.IsSkill(p.ParameterName) ? Math.Max(tab, 3) : tab;
+			}
+		}
+
 		private static List<Tab> Tabs()
 		{
 			List<Tab> tabs = new List<Tab>
 			{
 				new Tab { Hud = "HUD.Character", Chapter = 1, Takes = new[] { ParameterCategory.CharacterParameter },
-					// each occupation beside the two chapter-3 skills it feeds
-					// (CalculateChapterParams: Diplomacy = Curiosity + Discipline,
-					// Valor = Activity + Discipline, ...); Deaths under Willpower
+					// by chapter (FlowPlace): each occupation forks into the
+					// two chapter-3 skills it feeds (CalculateChapterParams:
+					// Diplomacy = Curiosity + Discipline, Valor = Activity +
+					// Discipline, ...), Curiosity's first
+					Flow = true,
 					Order = new[] { "Will", "Death", "Curiosity", "Activity",
-						"|", "Discipline", "Diplomacy", "Valor",
-						"|", "Cunning", "Manipulation", "Sabotage",
-						"|", "Spirituality", "Theology", "Preaching" } },
+						"|", "Discipline", "Cunning", "Spirituality",
+						"|", "Diplomacy", "Valor", "Manipulation", "Sabotage", "Theology", "Preaching" } },
 				new Tab { Hud = "HUD.Home", Chapter = 1, Takes = new[] { ParameterCategory.HomeParameter },
 					Order = new[] { "Unity", "Money", "Reputation", "Heir" } },
 				new Tab { Hud = "HUD.Empire", Chapter = 2, Takes = new[] { ParameterCategory.EmpireParameter },
 					Order = new[] { "State", "Church", "Prosperity", "Order" } },
 				new Tab { Hud = "HUD.Inquisition", Chapter = 4, Takes = new[] { ParameterCategory.WorkParameter },
-					Order = new[] { "Authority", "Carier", "Protest", "Justice", "Repression", "Toleration" } },
+					Order = new[] { "Carier", "Justice", "Authority", "Toleration", "Protest", "Repression" } },
 				new Tab { Hud = "HUD.Insurrection", Chapter = 5,
 					Takes = new[] { ParameterCategory.WarParameter, ParameterCategory.Insurrection },
 					Order = new[] { "Insurrection", "Army", "NoblesMans", "PriestsMans", "CommonerMans" } },
@@ -302,6 +369,9 @@ namespace Doorstop
 
 		private static void ClearContent()
 		{
+			_forks = null;
+			_destRows.Clear();
+			_destinyKey = null;
 			_rows.Clear();
 			_roots.Clear();
 			_tabs.Clear();
@@ -328,6 +398,10 @@ namespace Doorstop
 			{
 				BuildStats(_content);
 			}
+			else if (Showing == Mode.Destiny)
+			{
+				_destinyKey = null;   // built by ShowDestiny, for the chapter it shows
+			}
 			else if (_lastShown != null)
 			{
 				BuildPeople(_content, People(_lastShown, _lastNow));
@@ -344,7 +418,7 @@ namespace Doorstop
 			_modeLabels.Clear();
 			_modeBacks.Clear();
 			_hoverMode = null;
-			Mode[] modes = { Mode.Stats, Mode.Family, Mode.Relations };
+			Mode[] modes = { Mode.Stats, Mode.Family, Mode.Relations, Mode.Destiny };
 			const float w = 220f;
 			float x0 = (area.rect.width - modes.Length * w) * 0.5f;
 			for (int i = 0; i < modes.Length; i++)
@@ -390,6 +464,7 @@ namespace Doorstop
 			{
 				case Mode.Family: return Loc.Game("HUD.Family", "Family");
 				case Mode.Relations: return Loc.Game("HUD.Relation", "Relations");
+				case Mode.Destiny: return Loc.Game("HUD.Destiny", "Destiny");
 				default: return Loc.T(Loc.K.StatsTab);
 			}
 		}
@@ -464,14 +539,14 @@ namespace Doorstop
 					break;
 				}
 			}
-			int total = 0;
+			float total = 0f;
 			foreach (Tab t in _tabs)
 			{
-				int c;
+				float c;
 				Place(t, rowsFit, out c);
 				total += c;
 			}
-			float subW = width / Mathf.Max(1, total);
+			float subW = width / Mathf.Max(1f, total);
 			// spare height goes under the titles, so a locked tab's note has
 			// room before its first stat
 			float gap = Mathf.Clamp(usable - rowsFit * pitch * scale, 0f, 20f);
@@ -493,7 +568,7 @@ namespace Doorstop
 			foreach (Tab tab in _tabs)
 			{
 				List<Parameter> list = tab.Stats;
-				int subs;
+				float subs;
 				List<Vector2> at = Place(tab, rowsFit, out subs);
 				if (x > 0f)
 				{
@@ -522,8 +597,8 @@ namespace Doorstop
 					rrt.pivot = new Vector2(0f, 1f);
 					rrt.sizeDelta = natural;
 					rrt.localScale = new Vector3(scale, scale, 1f);
-					int sub = (int)at[j].x;
-					int r = (int)at[j].y;
+					float sub = at[j].x;
+					float r = at[j].y;
 					// centred on what it draws (icon to slider end), so a rule
 					// between tabs is as far from a slider as from an icon
 					rrt.anchoredPosition = new Vector2(
@@ -535,8 +610,479 @@ namespace Doorstop
 					AddHover(row, rrt);
 					_rows.Add(row);
 				}
+				if (tab.Flow && FlowPlace(tab, rowsFit, out subs) != null)
+				{
+					float w = (contentRight - contentLeft) * scale;
+					float rowH = (m.Bottom - m.Top) * scale;
+					Forks(area, tab, x + subW + (subW + w) * 0.5f, x + (2f + Fork) * subW + (subW - w) * 0.5f,
+						r => -(Header + gap + r * pitch * scale) - rowH * 0.5f, scale);
+				}
 				x += subs * subW;
 			}
+		}
+
+
+		// ---- Destiny ----
+		//
+		// The game's Destiny window (DestinyWindow): a chapter's story
+		// objectives by category - personal life, family, occupation (sides
+		// in chapter 5), the family's outcomes, the chapter's outcomes - and
+		// for chapters 4-5 only those of the hero's post (Objective.Post).
+		// Each one is coloured by where the path stands: happened by the
+		// scene shown (green), happening later on the picked/predicted path
+		// (pale green), still possible on another path (grey), or out of
+		// reach (red): its chapter is over, or every scene/answer that earns
+		// it (scene-objectives.tsv) is behind the scene shown or on another
+		// post's track.
+
+		// Set by the tree before Show: the hero at the end of the path, the
+		// scenes passed by the scene shown (answered), and the post (key
+		// parameter "Post") along the path, null when not known.
+		public static SceneEffects.Hero DestinyEnd;
+		public static HashSet<string> DestinyDone = new HashSet<string>();
+		public static string DestinyPost;
+
+		private enum Fate { Earned, Ahead, Open, Lost }
+
+		private static int _destinyPick;      // the chapter picked with the I..V buttons (0: the hero's)
+		private static string _destinyKey;    // what the content was built for
+		private static readonly List<KeyValuePair<Objective, TextMeshProUGUI>> _destRows
+			= new List<KeyValuePair<Objective, TextMeshProUGUI>>();
+		private static readonly Dictionary<Objective, Fate> _fates = new Dictionary<Objective, Fate>();
+
+		private static List<Objective> AllObjectives()
+		{
+			KeyChapterParametersController kc = KeyChapterParametersController.Initiate;
+			List<Objective> all = new List<Objective>();
+			if (kc != null && kc.AllGameObjectives != null)
+			{
+				foreach (Objective o in kc.AllGameObjectives)
+				{
+					if (o != null && !all.Contains(o))
+					{
+						all.Add(o);
+					}
+				}
+			}
+			return all;
+		}
+
+		// The objectives the Destiny window lists for `chapter`: the true
+		// death sits with each chapter's outcomes from chapter 3 on.
+		private static List<Objective> ChapterObjectives(int chapter, string post)
+		{
+			List<Objective> list = new List<Objective>();
+			foreach (Objective o in AllObjectives())
+			{
+				bool death = o.Name == ObjectiveEnum.ИстиннаяСмерть;
+				if (death ? chapter < 3 : o.Chapter != chapter)
+				{
+					continue;
+				}
+				if (!string.IsNullOrEmpty(post) && !string.IsNullOrEmpty(o.Post) && !o.Post.Contains(post))
+				{
+					continue;
+				}
+				list.Add(o);
+			}
+			list.Sort((a, b) =>
+			{
+				int c = CategoryOrder(a.Category).CompareTo(CategoryOrder(b.Category));
+				if (c == 0)
+				{
+					c = a.Order.CompareTo(b.Order);
+				}
+				return c != 0 ? c : ((int)a.Name).CompareTo((int)b.Name);
+			});
+			return list;
+		}
+
+		private static int CategoryOrder(EventCategoryEnum c)
+		{
+			switch (c)
+			{
+				case EventCategoryEnum.Person: return 0;
+				case EventCategoryEnum.Family: return 1;
+				case EventCategoryEnum.Work: return 2;
+				case EventCategoryEnum.FamilyFinal: return 3;
+				default: return 4;
+			}
+		}
+
+		private static string CategoryTitle(EventCategoryEnum c, int chapter)
+		{
+			switch (c)
+			{
+				case EventCategoryEnum.Person: return Loc.Game("ObjectivePanelPerson.Title", "Personal Life");
+				case EventCategoryEnum.Family: return Loc.Game("ObjectivePanelFamily.Title", "Family");
+				case EventCategoryEnum.Work:
+					return chapter == 5 ? Loc.Game("ObjectivePanelSide.Title", "Sides") : Loc.Game("ObjectivePanelWork.Title", "Occupation");
+				case EventCategoryEnum.FamilyFinal: return Loc.Game("ObjectivePanelFamilyFinals.Title", "Outcomes for the Brante family");
+				default:
+					return chapter == 3 ? Loc.Game("ObjectivePanelFinalYouth.Title", "Chapter Outcomes") : Loc.Game("ObjectivePanelFinal.Title", "Outcomes of the Chapter");
+			}
+		}
+
+		private static string ObjectiveKey(Objective o)
+		{
+			return o.Name == ObjectiveEnum.None ? o.name : o.Name.ToString();
+		}
+
+		private static bool Has(SceneEffects.Hero h, Objective o)
+		{
+			if (o.Name == ObjectiveEnum.ИстиннаяСмерть && h != null && h.Stats != null && h.Stats.Death >= 4)
+			{
+				return true;   // the pop-up that sets it follows the fourth death
+			}
+			if (h == null || h.Objectives == null)
+			{
+				return h != null && h.Live && o.Unlocked;
+			}
+			return h.Objectives.Contains(o.Name);
+		}
+
+		private static Fate FateOf(Objective o, SceneEffects.Hero shown, int heroChapter)
+		{
+			if (Has(shown, o))
+			{
+				return Fate.Earned;
+			}
+			if (Has(DestinyEnd, o))
+			{
+				return Fate.Ahead;
+			}
+			bool death = o.Name == ObjectiveEnum.ИстиннаяСмерть;
+			if (!death && heroChapter > 0 && o.Chapter < heroChapter)
+			{
+				return Fate.Lost;   // its chapter is over
+			}
+			List<KeyValuePair<string, int>> by = SceneObjectives.Earners((int)o.Name);
+			if (death || by.Count == 0)
+			{
+				return Fate.Open;   // earned some other way: no telling
+			}
+			Dictionary<string, string> keys = null;
+			if (!string.IsNullOrEmpty(DestinyPost))
+			{
+				keys = new Dictionary<string, string> { { "Post", DestinyPost } };
+			}
+			foreach (KeyValuePair<string, int> e in by)
+			{
+				int ch = SceneFlow.ChapterOf(e.Key);
+				if (DestinyDone.Contains(e.Key) || (ch > 0 && heroChapter > 0 && ch < heroChapter))
+				{
+					continue;   // played already, with another answer
+				}
+				if (keys != null && !SceneFlow.SceneFits(e.Key, keys))
+				{
+					continue;   // another post's track
+				}
+				return Fate.Open;
+			}
+			return Fate.Lost;
+		}
+
+		private static void ShowDestiny(SceneEffects.Hero shown, int heroChapter)
+		{
+			int chapter = _destinyPick > 0 ? _destinyPick : Mathf.Clamp(heroChapter, 1, 5);
+			List<Objective> list = ChapterObjectives(chapter, DestinyPost);
+			string key = chapter + "|" + DestinyPost + "|" + list.Count + "|" + (_content != null ? _content.rect.size.ToString() : "");
+			if (key != _destinyKey && _content != null)
+			{
+				ClearContent();
+				BuildDestiny(_content, chapter, heroChapter, list);
+				_destinyKey = key;
+			}
+			_fates.Clear();
+			foreach (KeyValuePair<Objective, TextMeshProUGUI> kv in _destRows)
+			{
+				Fate f = FateOf(kv.Key, shown, heroChapter);
+				_fates[kv.Key] = f;
+				StyleObjective(kv.Value, f);
+			}
+		}
+
+		private static Color FateColour(Fate f)
+		{
+			switch (f)
+			{
+				case Fate.Earned: return Palette.Good;
+				case Fate.Ahead: return Palette.Fade(Palette.Good, 0.6f);
+				case Fate.Lost: return Palette.Bad;
+				default: return Palette.Grey;
+			}
+		}
+
+		private static void StyleObjective(TextMeshProUGUI label, Fate f)
+		{
+			label.color = FateColour(f);
+			label.fontStyle = f == Fate.Earned ? FontStyles.Bold : f == Fate.Lost ? FontStyles.Strikethrough : FontStyles.Normal;
+			Transform row = label.transform.parent;
+			Image back = row.GetComponent<Image>();
+			if (back != null)
+			{
+				back.color = f == Fate.Earned ? Palette.Fade(Palette.Good, 0.22f)
+					: f == Fate.Ahead ? Palette.Fade(Palette.Good, 0.10f) : Color.clear;
+			}
+			Transform icon = row.Find("Icon");
+			Image img = icon != null ? icon.GetComponent<Image>() : null;
+			if (img != null)
+			{
+				img.color = new Color(1f, 1f, 1f, f == Fate.Earned ? 1f : f == Fate.Ahead ? 0.8f : 0.4f);
+			}
+		}
+
+		private const float DestinyBar = 34f;   // the chapter buttons and the legend
+
+		private static void BuildDestiny(RectTransform area, int chapter, int heroChapter, List<Objective> list)
+		{
+			_destRows.Clear();
+			GameObject template = Template();
+			float width = area.rect.width, height = area.rect.height;
+
+			// chapter buttons, left
+			TextMeshProUGUI word = Label(area, Loc.T(Loc.K.ChapterWord), template);
+			word.fontSize = 20f;
+			word.color = Palette.Muted;
+			word.alignment = TextAlignmentOptions.MidlineLeft;
+			Pin(word.rectTransform, new Vector2(8f, 0f), new Vector2(110f, DestinyBar), new Vector2(0f, 1f));
+			string[] roman = { "I", "II", "III", "IV", "V" };
+			for (int i = 1; i <= 5; i++)
+			{
+				int ch = i;
+				GameObject go = new GameObject("Chapter" + i, typeof(RectTransform));
+				go.transform.SetParent(area, false);
+				Image img = go.AddComponent<Image>();
+				img.color = ch == chapter ? Palette.Card : Color.clear;
+				Pin(img.rectTransform, new Vector2(118f + (i - 1) * 50f, -2f), new Vector2(44f, DestinyBar - 4f), new Vector2(0f, 1f));
+				Button b = go.AddComponent<Button>();
+				b.targetGraphic = img;
+				b.transition = Selectable.Transition.None;
+				b.onClick.AddListener(delegate
+				{
+					// the hero's own chapter again: follow it
+					_destinyPick = ch == Mathf.Clamp(heroChapter, 1, 5) ? 0 : ch;
+					_destinyKey = null;
+					HideTooltip();
+					if (_lastShown != null)
+					{
+						Show(_lastShown, _lastNow, _lastChapter);
+					}
+				});
+				TextMeshProUGUI t = Label(go.transform, roman[i - 1], template);
+				t.fontSize = 22f;
+				t.color = ch == chapter ? Palette.Accent : ch == heroChapter ? Palette.Ink : Palette.Fade(Palette.Ink, 0.55f);
+				t.fontStyle = ch == heroChapter ? FontStyles.Underline : FontStyles.Normal;
+				Fill(t.rectTransform);
+			}
+
+			// the legend, right
+			Fate[] fates = { Fate.Earned, Fate.Ahead, Fate.Open, Fate.Lost };
+			Loc.K[] words = { Loc.K.DestEarned, Loc.K.DestAhead, Loc.K.DestOpen, Loc.K.DestLost };
+			float lx = width - 8f;
+			for (int i = fates.Length - 1; i >= 0; i--)
+			{
+				TextMeshProUGUI t = Label(area, Loc.T(words[i]), template);
+				t.fontSize = 18f;
+				t.alignment = TextAlignmentOptions.MidlineRight;
+				t.overflowMode = TextOverflowModes.Overflow;
+				StyleLegend(t, fates[i]);
+				float tw = Mathf.Max(40f, t.GetPreferredValues(t.text, 2000f, DestinyBar).x) + 22f;
+				Pin(t.rectTransform, new Vector2(lx, 0f), new Vector2(tw, DestinyBar), new Vector2(1f, 1f));
+				lx -= tw + 6f;
+			}
+
+			if (list.Count == 0)
+			{
+				return;
+			}
+			// one column per category, as many rows as the longest needs
+			List<EventCategoryEnum> cats = new List<EventCategoryEnum>();
+			foreach (Objective o in list)
+			{
+				if (!cats.Contains(o.Category))
+				{
+					cats.Add(o.Category);
+				}
+			}
+			int most = 0;
+			foreach (EventCategoryEnum c in cats)
+			{
+				most = Math.Max(most, list.FindAll(o => o.Category == c).Count);
+			}
+			float top = DestinyBar + 6f;
+			float colW = width / cats.Count;
+			float rowH = Mathf.Clamp((height - top - 36f) / Math.Max(1, most), 18f, 42f);
+			float font = Mathf.Clamp(rowH * 0.55f, 12f, 21f);
+			for (int ci = 0; ci < cats.Count; ci++)
+			{
+				float x = ci * colW;
+				if (ci > 0)
+				{
+					Separator(area, x);
+				}
+				TextMeshProUGUI head = Label(area, CategoryTitle(cats[ci], chapter), template);
+				head.fontSize = 21f;
+				Pin(head.rectTransform, new Vector2(x + 8f, -top), new Vector2(colW - 16f, 32f), new Vector2(0f, 1f));
+				int r = 0;
+				foreach (Objective o in list)
+				{
+					if (o.Category != cats[ci])
+					{
+						continue;
+					}
+					GameObject row = new GameObject("Objective_" + ObjectiveKey(o), typeof(RectTransform));
+					row.transform.SetParent(area, false);
+					Image back = row.AddComponent<Image>();
+					back.color = Color.clear;
+					Pin(back.rectTransform, new Vector2(x + 10f, -(top + 34f + r * rowH)), new Vector2(colW - 20f, rowH - 3f), new Vector2(0f, 1f));
+					GameObject ig = new GameObject("Icon", typeof(RectTransform));
+					ig.transform.SetParent(row.transform, false);
+					Image icon = ig.AddComponent<Image>();
+					icon.sprite = o.Icon;
+					icon.preserveAspect = true;
+					icon.raycastTarget = false;
+					icon.enabled = o.Icon != null;
+					RectTransform irt = icon.rectTransform;
+					irt.anchorMin = new Vector2(0f, 0f);
+					irt.anchorMax = new Vector2(0f, 1f);
+					irt.pivot = new Vector2(0f, 0.5f);
+					irt.offsetMin = new Vector2(4f, 2f);
+					irt.offsetMax = new Vector2(4f + rowH - 7f, -2f);
+					TextMeshProUGUI name = Label(row.transform, Loc.Game(ObjectiveKey(o) + ".Title", ObjectiveKey(o)), template);
+					name.fontSize = font;
+					name.alignment = TextAlignmentOptions.MidlineLeft;
+					RectTransform nrt = name.rectTransform;
+					nrt.anchorMin = Vector2.zero;
+					nrt.anchorMax = Vector2.one;
+					nrt.offsetMin = new Vector2(rowH + 4f, 0f);
+					nrt.offsetMax = new Vector2(-4f, 0f);
+					Objective obj = o;
+					RectTransform rrt = back.rectTransform;
+					TreeHover hover = row.AddComponent<TreeHover>();
+					hover.OnHover = delegate(bool on)
+					{
+						if (on)
+						{
+							ShowObjectiveTooltip(obj, rrt);
+						}
+						else
+						{
+							HideTooltip();
+						}
+					};
+					_destRows.Add(new KeyValuePair<Objective, TextMeshProUGUI>(o, name));
+					r++;
+				}
+			}
+		}
+
+		private static void StyleLegend(TextMeshProUGUI t, Fate f)
+		{
+			t.color = FateColour(f);
+			t.fontStyle = f == Fate.Earned ? FontStyles.Bold : f == Fate.Lost ? FontStyles.Strikethrough : FontStyles.Normal;
+		}
+
+		private static void Fill(RectTransform rt)
+		{
+			rt.anchorMin = Vector2.zero;
+			rt.anchorMax = Vector2.one;
+			rt.offsetMin = Vector2.zero;
+			rt.offsetMax = Vector2.zero;
+		}
+
+		// The game's stat pop-up for an objective: icon, title, the game's
+		// description, then its conditions as the Destiny window lists them,
+		// where it stands on the path and the scenes that bring it.
+		private static void ShowObjectiveTooltip(Objective o, RectTransform over)
+		{
+			try
+			{
+				if (!EnsureTooltip())
+				{
+					return;
+				}
+				_tipComp.ClearTooltipWindow();
+				string k = ObjectiveKey(o);
+				_tipComp.Title.text = Loc.Game(k + ".Title", k);
+				_tipComp.Icon.sprite = o.Icon;
+				string descr = Loc.Game(k + ".Description", "").Trim();
+				Fate f;
+				string state = _fates.TryGetValue(o, out f) ? "<color=#" + ColorUtility.ToHtmlStringRGB(FateColour(f)) + "><b>"
+					+ Loc.T(f == Fate.Earned ? Loc.K.DestEarned : f == Fate.Ahead ? Loc.K.DestAhead
+						: f == Fate.Lost ? Loc.K.DestLost : Loc.K.DestOpen) + "</b></color>" : "";
+				_tipComp.Description.text = (state.Length > 0 ? state + "\n" : "")
+					+ (descr.Length > 1 ? SceneEffects.NobleParticle(descr) : "<i>" + Loc.T(Loc.K.NoStatText) + "</i>");
+				if (o.Condition != null)
+				{
+					foreach (ObjectiveCondition c in o.Condition)
+					{
+						string a = Operand(c.Operand1);
+						string b = Operand(c.Operand2);
+						string line = ((a ?? "") + " " + (c.Operator ?? "") + " " + (b ?? "")).Trim();
+						if (line.Length > 0)
+						{
+							_tipComp.SetRow(line, "", false);
+						}
+					}
+				}
+				int shownScenes = 0;
+				foreach (KeyValuePair<string, int> e in SceneObjectives.Earners((int)o.Name))
+				{
+					string title = SceneTexts.Title(e.Key);
+					if (string.IsNullOrEmpty(title))
+					{
+						continue;
+					}
+					string answer = e.Value > 0 ? SceneTexts.Name(e.Key, "ButtonDescription" + e.Value) : "";
+					_tipComp.SetRow(shownScenes == 0 ? Loc.T(Loc.K.DestEarnedBy) + ": " + title : title,
+						SceneEffects.NobleParticle(answer), DestinyDone.Contains(e.Key));
+					if (++shownScenes == 5)
+					{
+						break;
+					}
+				}
+				PlaceTooltip(over);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("StatPanel: objective tooltip failed:\n" + e);
+			}
+		}
+
+		// A condition's operand as the Destiny window shows it: a key
+		// ("ЗащитникНарода.Title", a stat's name) translated, else as it is.
+		private static string Operand(string text)
+		{
+			if (string.IsNullOrEmpty(text))
+			{
+				return "";
+			}
+			string t = Loc.Game(text, "");
+			return t.Trim().Length > 0 && t != text ? SceneEffects.NobleParticle(t) : text;
+		}
+
+		// dev-pick's "destiny N": the chapter shown in the Destiny tab (0: the hero's)
+		public static void DevDestinyChapter(int chapter)
+		{
+			_destinyPick = Mathf.Clamp(chapter, 0, 5);
+			_destinyKey = null;
+			if (_lastShown != null)
+			{
+				Show(_lastShown, _lastNow, _lastChapter);
+			}
+		}
+
+		// dev: the Destiny tab's entries and their colours, for the log
+		public static string DevDestiny()
+		{
+			List<string> parts = new List<string>();
+			foreach (KeyValuePair<Objective, TextMeshProUGUI> kv in _destRows)
+			{
+				Fate f;
+				parts.Add(ObjectiveKey(kv.Key) + "=" + (_fates.TryGetValue(kv.Key, out f) ? f.ToString() : "?"));
+			}
+			return "post=" + (DestinyPost ?? "-") + " done=" + DestinyDone.Count + " " + string.Join(", ", parts.ToArray());
 		}
 
 		// ---- Family and Relations ----
@@ -940,14 +1486,18 @@ namespace Doorstop
 		// `width` at `scale`: what a row draws (not its wider box) plus a gap.
 		private static bool FitsWidth(List<Tab> tabs, Metrics m, float scale, int rows, float width)
 		{
-			int columns = 0;
+			float columns = 0f;
 			foreach (Tab t in tabs)
 			{
-				int c;
+				float c;
 				Place(t, rows, out c);
+				if (t.Flow && FlowPlace(t, rows, out c) == null)
+				{
+					return false;   // Personality by chapter needs its six skills in one column
+				}
 				columns += c;
 			}
-			return (m.Right - m.Left) * scale <= width / Mathf.Max(1, columns) - ColumnGap;
+			return (m.Right - m.Left) * scale <= width / Mathf.Max(1f, columns) - ColumnGap;
 		}
 
 		// From the top of the row's box, where what it draws starts and ends:
@@ -1176,12 +1726,22 @@ namespace Doorstop
 			_lastShown = shown;
 			_lastNow = now;
 			_lastChapter = chapter;
+			if (Showing == Mode.Destiny)
+			{
+				ShowDestiny(shown, chapter);
+				return;
+			}
 			if (Showing != Mode.Stats)
 			{
 				ShowPeople(shown, now, chapter);
 				return;
 			}
 			bool early = chapter > 0 && chapter < 3;
+			if (_forks != null)
+			{
+				// the skills they lead to are a projection until chapter 3
+				_forks.GetComponent<CanvasGroup>().alpha = early ? 0.45f : 1f;
+			}
 			shown = SceneEffects.WithSkillsProjected(shown);
 			now = SceneEffects.WithSkillsProjected(now);
 			// tabs the game has not opened yet at that chapter: greyed, with
@@ -1202,10 +1762,12 @@ namespace Doorstop
 			foreach (Row row in _rows)
 			{
 				bool projected = early && SceneEffects.IsSkill(row.Param.ParameterName);
+				int opens = StatChapter(row.Param, row.Tab);
+				bool locked = chapter > 0 && opens > chapter;
 				CanvasGroup cg = RowRoot(row) != null ? RowRoot(row).GetComponent<CanvasGroup>() : null;
 				if (cg != null)
 				{
-					cg.alpha = projected || (chapter > 0 && row.Tab != null && row.Tab.Chapter > chapter) ? 0.35f : 1f;
+					cg.alpha = projected || locked ? 0.35f : 1f;
 				}
 				int value = shown.Value(row.Param);
 				int today = now.Value(row.Param);
@@ -1222,7 +1784,10 @@ namespace Doorstop
 				}
 				if (row.Descr != null)
 				{
-					row.Descr.text = projected ? Loc.Game("HUD.WillOpen3", Segment(row.Param, value)) : Segment(row.Param, value);
+					// a stat the game has not opened at that chapter says when
+					// it will (a whole locked tab says it under its title)
+					bool note = projected || locked && (row.Tab == null || row.Tab.Chapter < opens);
+					row.Descr.text = note ? Loc.Game("HUD.WillOpen" + opens, Segment(row.Param, value)) : Segment(row.Param, value);
 				}
 				FitText(row, _fitLimit);
 			}
@@ -1350,11 +1915,136 @@ namespace Doorstop
 			{
 				_ghostList.Clear();
 				_ghostFrom = null;
-				if (Showing != Mode.Stats && _lastShown != null)
+				if ((Showing == Mode.Family || Showing == Mode.Relations) && _lastShown != null)
 				{
 					ShowPeople(_lastShown, _lastNow, _lastChapter);
 				}
 			}
+		}
+
+		// Personality's forks: each chapter-2 occupation (its row's right end
+		// at `xFrom`) splits into the two chapter-3 skills it makes (their
+		// left end at `xTo`), the upper arm marked "+" Perception's icon, the
+		// lower "+" Determination's - the chapter-1 stat each adds. `rowY`
+		// gives a row's middle (rows may be fractional).
+		private static GameObject _forks;
+
+		private static void Forks(RectTransform area, Tab tab, float xFrom, float xTo, Func<float, float> rowY, float scale)
+		{
+			int b = tab.Groups[2] - tab.Groups[1];
+			GameObject holder = new GameObject("Forks", typeof(RectTransform));
+			holder.transform.SetParent(area, false);
+			RectTransform hrt = holder.GetComponent<RectTransform>();
+			hrt.anchorMin = Vector2.zero;
+			hrt.anchorMax = Vector2.one;
+			hrt.offsetMin = Vector2.zero;
+			hrt.offsetMax = Vector2.zero;
+			holder.AddComponent<CanvasGroup>().blocksRaycasts = false;
+			_forks = holder;
+			Color ink = Palette.Fade(Palette.Muted, 0.85f);
+			const float thick = 2.5f;
+			float xs = xFrom + 6f, xe = xTo - 4f;
+			float xm = xs + (xe - xs) * 0.28f;
+			float head = Mathf.Clamp(14f * scale / 0.7f, 9f, 18f);
+			Parameter[] adds = { SceneEffects.ParameterAsset("Curiosity"), SceneEffects.ParameterAsset("Activity") };
+			for (int i = 0; i < b; i++)
+			{
+				float yMid = rowY(2 * i + 0.5f), yUp = rowY(2 * i), yDown = rowY(2 * i + 1);
+				Bar(hrt, xs, yMid, xm + thick * 0.5f, yMid, thick, ink);
+				Bar(hrt, xm, yUp, xm, yDown, thick, ink);
+				for (int k = 0; k < 2; k++)
+				{
+					float y = k == 0 ? yUp : yDown;
+					Bar(hrt, xm - thick * 0.5f, y, xe - head + 1f, y, thick, ink);
+					Arrowhead(hrt, xe, y, head, ink);
+					// "+ <icon>" over the arm
+					float cx = (xm + xe - head) * 0.5f;
+					float icon = Mathf.Clamp(30f * scale / 0.7f, 18f, 40f);
+					GameObject lg = new GameObject("Plus", typeof(RectTransform));
+					lg.transform.SetParent(hrt, false);
+					TextMeshProUGUI plus = lg.AddComponent<TextMeshProUGUI>();
+					GameObject tpl = Template();
+					ParameterComponent pc = tpl != null ? tpl.GetComponent<ParameterComponent>() : null;
+					if (pc != null && pc.Name != null)
+					{
+						plus.font = pc.Name.font;
+					}
+					plus.text = "+";
+					plus.fontSize = icon * 0.9f;
+					plus.color = ink;
+					plus.alignment = TextAlignmentOptions.MidlineRight;
+					plus.raycastTarget = false;
+					RectTransform prt = plus.rectTransform;
+					Pin(prt, new Vector2(cx - icon * 0.5f - 2f, y + icon * 0.5f + 2f), new Vector2(icon, icon), new Vector2(1f, 0.5f));
+					if (adds[k] != null && adds[k].Icon != null)
+					{
+						GameObject ig = new GameObject("Adds", typeof(RectTransform));
+						ig.transform.SetParent(hrt, false);
+						Image img = ig.AddComponent<Image>();
+						img.sprite = adds[k].Icon;
+						img.preserveAspect = true;
+						img.raycastTarget = false;
+						Pin(img.rectTransform, new Vector2(cx - icon * 0.5f, y + icon * 0.5f + 2f), new Vector2(icon, icon), new Vector2(0f, 0.5f));
+					}
+				}
+			}
+		}
+
+		// Anchored at the area's top-left, `pos` the pivot's place.
+		private static void Pin(RectTransform rt, Vector2 pos, Vector2 size, Vector2 pivot)
+		{
+			rt.anchorMin = new Vector2(0f, 1f);
+			rt.anchorMax = new Vector2(0f, 1f);
+			rt.pivot = pivot;
+			rt.sizeDelta = size;
+			rt.anchoredPosition = pos;
+		}
+
+		// A straight line from (x0, y0) to (x1, y1), horizontal or vertical.
+		private static void Bar(RectTransform parent, float x0, float y0, float x1, float y1, float thick, Color c)
+		{
+			GameObject go = new GameObject("Line", typeof(RectTransform));
+			go.transform.SetParent(parent, false);
+			Image img = go.AddComponent<Image>();
+			img.color = c;
+			img.raycastTarget = false;
+			float w = Mathf.Max(thick, Mathf.Abs(x1 - x0)), h = Mathf.Max(thick, Mathf.Abs(y1 - y0));
+			Pin(img.rectTransform, new Vector2(Mathf.Min(x0, x1) - (x0 == x1 ? thick * 0.5f : 0f),
+				Mathf.Max(y0, y1) + (y0 == y1 ? thick * 0.5f : 0f)), new Vector2(w, h), new Vector2(0f, 1f));
+		}
+
+		private static Sprite _arrow;
+
+		// A right-pointing triangle, its tip at (x, y).
+		private static void Arrowhead(RectTransform parent, float x, float y, float size, Color c)
+		{
+			if (_arrow == null)
+			{
+				const int n = 32;
+				Texture2D tex = new Texture2D(n, n, TextureFormat.RGBA32, false);
+				tex.wrapMode = TextureWrapMode.Clamp;
+				Color32[] px = new Color32[n * n];
+				for (int yy = 0; yy < n; yy++)
+				{
+					for (int xx = 0; xx < n; xx++)
+					{
+						// inside when |y - mid| <= (n - x) / 2, softened over a pixel
+						float d = (n - xx - 0.5f) * 0.5f - Mathf.Abs(yy + 0.5f - n * 0.5f);
+						byte a = (byte)(Mathf.Clamp01(d + 0.5f) * 255f);
+						px[yy * n + xx] = new Color32(255, 255, 255, a);
+					}
+				}
+				tex.SetPixels32(px);
+				tex.Apply();
+				_arrow = Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f));
+			}
+			GameObject go = new GameObject("Arrow", typeof(RectTransform));
+			go.transform.SetParent(parent, false);
+			Image img = go.AddComponent<Image>();
+			img.sprite = _arrow;
+			img.color = c;
+			img.raycastTarget = false;
+			Pin(img.rectTransform, new Vector2(x, y), new Vector2(size, size), new Vector2(1f, 0.5f));
 		}
 
 		// A light vertical rule between two categories, in the colour of the

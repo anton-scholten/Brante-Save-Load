@@ -1517,3 +1517,46 @@ scenes) was compared with the tables the mod extracts from the game.
 - Nothing in it is missing from the game-extracted tables, which are also
   exact where it summarises ("Revolt = 1-5"). It is a good independent check,
   not a source.
+
+
+## Live localisation terms, objectives, the true death (16 Nov 2026)
+
+- **Two localisation tables.** `resources.assets` embeds a CSV
+  (`Key,Type,Desc,Russian,English,Chinese`) and the `LanguageSourceAsset`
+  "I2Languages" whose serialized `mTerms` (17552: `Term, TermType,
+  Description, Languages[14], Flags[], Languages_Touch[]`; after the object's
+  name three ints, then the count) is what `LocalizationManager` reads. The
+  CSV is an older import: missing `052.N12.010_Trigger12_Button_3` /
+  `_ButtonDescription3`, `051.060.030_Mortally_Button_4` /
+  `_ButtonDescription4`, every `051.070.035_Mortally` and
+  `052.N6.010_Trigger6` answer, `060.010.100_OttonDuel` answer 4, and keyed
+  `054.100.090_MIlanid` where the scene and the terms say `Milanid`. Answer
+  lists built from it dropped those answers. Language order:
+  Russian, English, Korean, Portuguese (Brazil), Japanese, Simplified
+  Chinese, German, French, Italian, Spanish (Spain), Spanish (Latin
+  America), Polish, Traditional Chinese, Turkish.
+- **Answer order.** A button shows when its `ButtonTextKey` is not empty
+  (`ParameterButtonChanger.Start`); the buttons sit under one parent in
+  `ButtonDescription1..7` sibling order in all 406 story scenes, so the
+  number is the on-screen order. Five buttons with a key sit on inactive
+  objects and never show (`051.090.050_RichFamily` 4, `052.030.010_Case4` 4,
+  `052.050.026_PatriarchPreaching` 5, `052.050.030_Case8` 4 and 5).
+- **The Destiny window.** `DestinyWindow.BuildObjectiveList` groups
+  `AllGameObjectives` by `Chapter` and `Category` (Person 1, Family 2, Work 3,
+  FamilyFinal 4, Final 5; titles `ObjectivePanel*.Title`, chapter 5's Work
+  panel is "Sides"), keeps `Post == ""` or containing the live `Post`, and
+  greys the not yet unlocked. `ИстиннаяСмерть` (chapter 4, Final, order 99)
+  is moved to the outcomes of chapters 3-5. 78 objectives: chapter 1: 4,
+  2: 7, 3: 10, 4: 42 (about 20 per post), 5: 15.
+- **The true death is outside the flow.** After the fourth death the game
+  runs `GameFinals` (`FinalsScenesConditionsHelper`): the `FourthDeath_N`
+  pages, the chapter's finale, the credits. `GoToFinals` appears in no flow
+  gate, so a simulation that keeps stepping the chapter flow after Death 4
+  predicts scenes that never come.
+- **The occupations combine in chapter 3.** `CalculateChapterParams`:
+  Diplomacy = Curiosity + Discipline, Valor = Activity + Discipline,
+  Manipulation = Curiosity + Cunning, Sabotage = Activity + Cunning,
+  Theology = Curiosity + Spirituality, Preaching = Activity + Spirituality
+  (English: Perception, Determination, Nobility, Ingenuity, Spirituality;
+  Scheming, Eloquence). The chapter-2 occupations are not computed from
+  chapter 1: answers set them (chapter-2 scenes, the `02.N.0x` triggers).

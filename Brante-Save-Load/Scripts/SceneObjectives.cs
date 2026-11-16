@@ -22,6 +22,8 @@ namespace Doorstop
 	public static class SceneObjectives
 	{
 		private static Dictionary<string, Dictionary<int, List<int>>> _byScene;
+		// the same, by objective asset name (what ObjectiveAsset looks up)
+		private static readonly Dictionary<string, List<string>> _names = new Dictionary<string, List<string>>();
 
 		private static void Load()
 		{
@@ -64,6 +66,14 @@ namespace Doorstop
 					if (!list.Contains(value))
 					{
 						list.Add(value);
+						List<string> names;
+						string at = p[0] + "#" + button;
+						if (!_names.TryGetValue(at, out names))
+						{
+							names = new List<string>();
+							_names[at] = names;
+						}
+						names.Add(p[3]);
 					}
 					n++;
 				}
@@ -91,5 +101,34 @@ namespace Doorstop
 		}
 
 		private static readonly List<int> Empty = new List<int>();
+
+		// The objective asset names `scene` earns with `button`, in the
+		// TSV's order (for display: SceneEffects.Label of an 'E' effect).
+		public static List<string> Names(string scene, int button)
+		{
+			Load();
+			List<string> list;
+			return scene != null && _names.TryGetValue(scene + "#" + button, out list) ? list : NoNames;
+		}
+
+		// Every scene/answer that earns objective `value`: (scene, button).
+		public static List<KeyValuePair<string, int>> Earners(int value)
+		{
+			Load();
+			List<KeyValuePair<string, int>> all = new List<KeyValuePair<string, int>>();
+			foreach (KeyValuePair<string, Dictionary<int, List<int>>> s in _byScene)
+			{
+				foreach (KeyValuePair<int, List<int>> b in s.Value)
+				{
+					if (b.Value.Contains(value))
+					{
+						all.Add(new KeyValuePair<string, int>(s.Key, b.Key));
+					}
+				}
+			}
+			return all;
+		}
+
+		private static readonly List<string> NoNames = new List<string>();
 	}
 }

@@ -227,9 +227,10 @@ handled outside the chapter macros. It is a set, not an order — ids mostly
 follow the story, but variants break that (`01.02.01_2` Hide and Seek comes
 *before* `01.02.01` The Great Descent in an actual playthrough).
 
-**Scene titles and answers for every scene (solved).** The I2 localisation table
-is a plain CSV inside `resources.assets` (header
-`Key,Type,Desc,Russian,English,Chinese`), so the game's own text is extractable
+**Scene titles and answers for every scene (solved).** The I2 localisation
+terms are serialized in `resources.assets` (the `I2Languages` source; an older
+CSV import with header `Key,Type,Desc,Russian,English,Chinese` sits beside them
+and is stale - FINDINGS, 16 Nov 2026), so the game's own text is extractable
 offline:
 
 ```sh

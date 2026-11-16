@@ -25,6 +25,7 @@ namespace Doorstop
 			HelpAutosave, HelpCheckpoint, HelpManual, HelpOriginal,
 			EventHappens,
 			StatsTab,
+			StoryEnds, DestEarned, DestAhead, DestOpen, DestLost, DestEarnedBy, ChapterWord,
 			
 		}
 
@@ -173,6 +174,83 @@ namespace Doorstop
 			_ja[K.EventHappens] = "選択なしで起こる";
 			_ko[K.EventHappens] = "저절로 일어남";
 			_zh[K.EventHappens] = "自然发生";
+			_en[K.StoryEnds] = "The story ends here: after a true death no choices follow, only the chapter's finale.";
+			_ru[K.StoryEnds] = "Здесь история заканчивается: после истинной смерти выборов больше нет, только финал главы.";
+			_de[K.StoryEnds] = "Hier endet die Geschichte: nach dem wahren Tod folgen keine Entscheidungen mehr, nur das Finale des Kapitels.";
+			_fr[K.StoryEnds] = "L'histoire s'arrête ici : après la vraie mort, plus aucun choix, seulement le dénouement du chapitre.";
+			_es[K.StoryEnds] = "La historia termina aquí: tras la muerte verdadera no hay más decisiones, solo el final del capítulo.";
+			_it[K.StoryEnds] = "La storia finisce qui: dopo la vera morte non ci sono più scelte, solo il finale del capitolo.";
+			_pl[K.StoryEnds] = "Tu historia się kończy: po prawdziwej śmierci nie ma już wyborów, tylko finał rozdziału.";
+			_tr[K.StoryEnds] = "Hikâye burada biter: gerçek ölümden sonra seçim yoktur, yalnızca bölümün finali.";
+			_ja[K.StoryEnds] = "物語はここで終わる。真の死の後に選択肢はなく、章の結末だけが続く。";
+			_ko[K.StoryEnds] = "이야기는 여기서 끝납니다. 진정한 죽음 이후에는 선택지가 없고 장의 결말만 이어집니다.";
+			_zh[K.StoryEnds] = "故事到此结束：实亡之后不再有选择，只有本章的结局。";
+			_en[K.DestEarned] = "Happened";
+			_ru[K.DestEarned] = "Произошло";
+			_de[K.DestEarned] = "Geschehen";
+			_fr[K.DestEarned] = "Arrivé";
+			_es[K.DestEarned] = "Ocurrido";
+			_it[K.DestEarned] = "Avvenuto";
+			_pl[K.DestEarned] = "Wydarzyło się";
+			_tr[K.DestEarned] = "Gerçekleşti";
+			_ja[K.DestEarned] = "達成";
+			_ko[K.DestEarned] = "달성";
+			_zh[K.DestEarned] = "已发生";
+			_en[K.DestAhead] = "On this path";
+			_ru[K.DestAhead] = "На этом пути";
+			_de[K.DestAhead] = "Auf diesem Pfad";
+			_fr[K.DestAhead] = "Sur ce chemin";
+			_es[K.DestAhead] = "En este camino";
+			_it[K.DestAhead] = "Su questo percorso";
+			_pl[K.DestAhead] = "Na tej ścieżce";
+			_tr[K.DestAhead] = "Bu yolda";
+			_ja[K.DestAhead] = "この道で";
+			_ko[K.DestAhead] = "이 경로에서";
+			_zh[K.DestAhead] = "此路线上";
+			_en[K.DestOpen] = "Still possible";
+			_ru[K.DestOpen] = "Ещё возможно";
+			_de[K.DestOpen] = "Noch möglich";
+			_fr[K.DestOpen] = "Encore possible";
+			_es[K.DestOpen] = "Aún posible";
+			_it[K.DestOpen] = "Ancora possibile";
+			_pl[K.DestOpen] = "Wciąż możliwe";
+			_tr[K.DestOpen] = "Hâlâ mümkün";
+			_ja[K.DestOpen] = "まだ可能";
+			_ko[K.DestOpen] = "아직 가능";
+			_zh[K.DestOpen] = "仍有可能";
+			_en[K.DestLost] = "No longer possible";
+			_ru[K.DestLost] = "Уже невозможно";
+			_de[K.DestLost] = "Nicht mehr möglich";
+			_fr[K.DestLost] = "Plus possible";
+			_es[K.DestLost] = "Ya no es posible";
+			_it[K.DestLost] = "Non più possibile";
+			_pl[K.DestLost] = "Już niemożliwe";
+			_tr[K.DestLost] = "Artık mümkün değil";
+			_ja[K.DestLost] = "もう不可能";
+			_ko[K.DestLost] = "더 이상 불가능";
+			_zh[K.DestLost] = "已不可能";
+			_en[K.DestEarnedBy] = "Comes from";
+			_ru[K.DestEarnedBy] = "Получается в";
+			_de[K.DestEarnedBy] = "Kommt aus";
+			_fr[K.DestEarnedBy] = "Vient de";
+			_es[K.DestEarnedBy] = "Viene de";
+			_it[K.DestEarnedBy] = "Viene da";
+			_pl[K.DestEarnedBy] = "Pochodzi z";
+			_tr[K.DestEarnedBy] = "Kaynağı";
+			_ja[K.DestEarnedBy] = "発生元";
+			_ko[K.DestEarnedBy] = "발생 장면";
+			_zh[K.DestEarnedBy] = "来自";
+			_en[K.ChapterWord] = "Chapter";
+			_ru[K.ChapterWord] = "Глава";
+			_de[K.ChapterWord] = "Kapitel";
+			_fr[K.ChapterWord] = "Chapitre";
+			_es[K.ChapterWord] = "Capítulo";
+			_it[K.ChapterWord] = "Capitolo";
+			_pl[K.ChapterWord] = "Rozdział";
+			_tr[K.ChapterWord] = "Bölüm";
+			_ja[K.ChapterWord] = "章";
+			_ko[K.ChapterWord] = "장";
+			_zh[K.ChapterWord] = "章";
 			_en[K.StatsTab] = "Stats";
 			_ru[K.StatsTab] = "Характеристики";
 			_de[K.StatsTab] = "Werte";
