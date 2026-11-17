@@ -25,7 +25,7 @@ namespace Doorstop
 			HelpAutosave, HelpCheckpoint, HelpManual, HelpOriginal,
 			EventHappens,
 			StatsTab,
-			StoryEnds, UnlocksIn, DestEarned, DestAhead, DestOpen, DestLost, DestEarnedBy, ChapterWord,
+			StoryEnds, TheEnd, FinaleEnds, UnlocksIn, DestEarned, DestAhead, DestOpen, DestLost, DestEarnedBy, ChapterWord,
 			
 		}
 
@@ -262,6 +262,28 @@ namespace Doorstop
 			_ja[K.UnlocksIn] = "第{0}章で解放";
 			_ko[K.UnlocksIn] = "{0}장에서 해금";
 			_zh[K.UnlocksIn] = "第{0}章解锁";
+			_en[K.TheEnd] = "The End";
+			_ru[K.TheEnd] = "Конец";
+			_de[K.TheEnd] = "Das Ende";
+			_fr[K.TheEnd] = "Fin";
+			_es[K.TheEnd] = "Fin";
+			_it[K.TheEnd] = "Fine";
+			_pl[K.TheEnd] = "Koniec";
+			_tr[K.TheEnd] = "Son";
+			_ja[K.TheEnd] = "終わり";
+			_ko[K.TheEnd] = "끝";
+			_zh[K.TheEnd] = "终";
+			_en[K.FinaleEnds] = "The story ends here: the game moves on to its finale and epilogue, and no choices follow.";
+			_ru[K.FinaleEnds] = "Здесь история заканчивается: игра переходит к финалу и эпилогу, выборов больше нет.";
+			_de[K.FinaleEnds] = "Hier endet die Geschichte: das Spiel geht zu Finale und Epilog über, es folgen keine Entscheidungen mehr.";
+			_fr[K.FinaleEnds] = "L'histoire s'arrête ici : le jeu passe au dénouement et à l'épilogue, sans autre choix.";
+			_es[K.FinaleEnds] = "La historia termina aquí: el juego pasa al final y al epílogo, sin más decisiones.";
+			_it[K.FinaleEnds] = "La storia finisce qui: il gioco passa al finale e all'epilogo, senza altre scelte.";
+			_pl[K.FinaleEnds] = "Tu historia się kończy: gra przechodzi do finału i epilogu, wyborów już nie ma.";
+			_tr[K.FinaleEnds] = "Hikâye burada biter: oyun finale ve sonsöze geçer, başka seçim yoktur.";
+			_ja[K.FinaleEnds] = "物語はここで終わる。ゲームは結末とエピローグへ進み、選択肢はもうない。";
+			_ko[K.FinaleEnds] = "이야기는 여기서 끝납니다. 게임은 결말과 에필로그로 넘어가며 더 이상 선택지가 없습니다.";
+			_zh[K.FinaleEnds] = "故事到此结束：游戏进入结局与尾声，不再有选择。";
 			_en[K.StatsTab] = "Stats";
 			_ru[K.StatsTab] = "Характеристики";
 			_de[K.StatsTab] = "Werte";

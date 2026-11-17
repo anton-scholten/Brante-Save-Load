@@ -1560,3 +1560,35 @@ scenes) was compared with the tables the mod extracts from the game.
   (English: Perception, Determination, Nobility, Ingenuity, Spirituality;
   Scheming, Eloquence). The chapter-2 occupations are not computed from
   chapter 1: answers set them (chapter-2 scenes, the `02.N.0x` triggers).
+
+## Flow order, story ends, objective conditions (17 Nov 2026)
+
+- **Discovery order is not flow order.** `bolt_story.py` walked the chapter
+  macros depth first and numbered scenes as it met them. Where the defender's
+  and the rebel's "The Final Hour" (`060.010.150`/`.160`, gated on
+  `ЗащитникИмперии` / `Мятежник`) rejoin before the shared finals, the finals
+  were numbered inside the first branch, so the rebel's Final Hour came after
+  them; the finals only test Insurrection and always passed first. The tool
+  now emits the topological order. The same run also regenerated seven turn
+  gates the shipped TSV had older: the chapter-1 triggers are `Turn >= 6`
+  (the Comparison's `aGreaterThanOrEqualToB` port), the chapter starts
+  `Turn <= 1`.
+- **Trigger scene conditions** (`SceneConditionsCollector`, dumped in game):
+  `01.N.01_Mama` Curiosity >= 4, `01.N2.01_Papa` Activity >= 4,
+  `02.N.01..03` Spirituality / Discipline / Cunning >= 4. Nothing stops both
+  chapter-1 triggers; 0 of 1708 saves holding one hold the other (the
+  chapter-1 answers rarely bring both stats to 4).
+- **GoToFinals ends the story.** `KeyChapterParametersController`'s
+  `GoToFinals=Yes` sends the game to `GameFinals`. scene-params.tsv sets it on
+  the true-death answers, `053.090.060_Final6` (Glory to the Empire!), both
+  answers of `052.210.065_Final7` (The Judgment of the Twins, which also earns
+  `ТеньВоли`), `030.070.030_RecruitForReal` answer 4,
+  `060.010.030_EscapeFromTheCity` answer 1 and the chapter-5 finals.
+- **Objective condition lists.** `Objective.Condition[].RealCondition` holds
+  `ByParameters`, `ByRelations`, `ByStatuses`, `ByObjectives`,
+  `ByKeyParameters`; `ObjectiveInitializer.GetObjectivePossibility` requires
+  all of them. They are what the Destiny window lists, and they can be
+  stricter than the scenes: `NobleObjective` lists Diplomacy >= 10 and
+  Valor >= 10 while the exam's answer needs one of them;
+  `ХозяинАнизотти` (enum `РазгонКворума`) needs `RemiElVerman is Deal`, which
+  `053.100.050_Aftermath` (the explosion: Remi status Dead) rules out.

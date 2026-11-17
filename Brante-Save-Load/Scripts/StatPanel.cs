@@ -233,13 +233,14 @@ namespace Doorstop
 					// by chapter (FlowPlace): each occupation forks into the
 					// two chapter-3 skills it feeds (CalculateChapterParams:
 					// Diplomacy = Curiosity + Discipline, Valor = Activity +
-					// Discipline, ...), Curiosity's first
+					// Discipline, ...), Curiosity's first; the occupations in
+					// the game's own order (Nobility, Spirituality, Ingenuity)
 					Flow = true,
 					Order = new[] { "Will", "Death", "Curiosity", "Activity",
-						"|", "Discipline", "Cunning", "Spirituality",
-						"|", "Diplomacy", "Valor", "Manipulation", "Sabotage", "Theology", "Preaching" } },
+						"|", "Discipline", "Spirituality", "Cunning",
+						"|", "Diplomacy", "Valor", "Theology", "Preaching", "Manipulation", "Sabotage" } },
 				new Tab { Hud = "HUD.Home", Chapter = 1, Takes = new[] { ParameterCategory.HomeParameter },
-					Order = new[] { "Unity", "Money", "Reputation", "Heir" } },
+					Order = new[] { "Reputation", "Money", "Unity", "Heir" } },
 				new Tab { Hud = "HUD.Empire", Chapter = 2, Takes = new[] { ParameterCategory.EmpireParameter },
 					Order = new[] { "State", "Church", "Prosperity", "Order" } },
 				new Tab { Hud = "HUD.Inquisition", Chapter = 4, Takes = new[] { ParameterCategory.WorkParameter },
@@ -698,9 +699,10 @@ namespace Doorstop
 				{
 					continue;
 				}
-				if (!string.IsNullOrEmpty(post) && !string.IsNullOrEmpty(o.Post) && !o.Post.Contains(post))
+				if (!string.IsNullOrEmpty(post) && !string.IsNullOrEmpty(o.Post) && !o.Post.Contains(post)
+					&& !EarnableOn(o, post))
 				{
-					continue;
+					continue;   // another post's (kept when a scene of this post earns it: Tommas's New Life)
 				}
 				list.Add(o);
 			}
@@ -714,6 +716,73 @@ namespace Doorstop
 				return c != 0 ? c : ((int)a.Name).CompareTo((int)b.Name);
 			});
 			return list;
+		}
+
+		// Whether some scene of `post`'s track earns `o` (the game lists
+		// Tommas's New Life for the inquisitor only, while the wedding that
+		// brings it is on every track).
+		private static bool EarnableOn(Objective o, string post)
+		{
+			Dictionary<string, string> keys = new Dictionary<string, string> { { "Post", post } };
+			foreach (KeyValuePair<string, int> e in SceneObjectives.Earners((int)o.Name))
+			{
+				if (SceneFlow.ChapterOf(e.Key) > 0 && SceneFlow.SceneFits(e.Key, keys))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		// Whether the game's own condition list for `o` (the one its Destiny
+		// window shows, all of them required) has a part `h` can never meet
+		// again: a status for a character who is dead, or an objective it
+		// must not have that `h` has. Other parts can still change.
+		private static bool RuledOut(Objective o, SceneEffects.Hero h)
+		{
+			if (o.Condition == null || h == null)
+			{
+				return false;
+			}
+			foreach (ObjectiveCondition oc in o.Condition)
+			{
+				ObjectiveConditions rc = oc.RealCondition;
+				if (rc == null)
+				{
+					continue;
+				}
+				if (rc.ByStatuses != null)
+				{
+					foreach (_Scripts.Helpers.ConditionByStatus c in rc.ByStatuses)
+					{
+						if (c == null || c.Character == null)
+						{
+							continue;
+						}
+						CharacterModel m = ModelOf(h, c.Character.Name);
+						if (m == null || !m.Status.ToString().StartsWith("Dead", StringComparison.Ordinal))
+						{
+							continue;   // alive: the status can still change
+						}
+						bool isNow = m.Status == c.Status;
+						if (c.Not ? isNow : !isNow)
+						{
+							return true;
+						}
+					}
+				}
+				if (rc.ByObjectives != null)
+				{
+					foreach (_Scripts.Helpers.ConditionByObjective c in rc.ByObjectives)
+					{
+						if (c != null && c.Not && c.Objective != null && Has(h, c.Objective))
+						{
+							return true;
+						}
+					}
+				}
+			}
+			return false;
 		}
 
 		private static int CategoryOrder(EventCategoryEnum c)
@@ -774,6 +843,10 @@ namespace Doorstop
 			if (!death && heroChapter > 0 && o.Chapter < heroChapter)
 			{
 				return Fate.Lost;   // its chapter is over
+			}
+			if (!death && RuledOut(o, shown))
+			{
+				return Fate.Lost;   // a condition that can no longer be met (a character is dead)
 			}
 			List<KeyValuePair<string, int>> by = SceneObjectives.Earners((int)o.Name);
 			if (death || by.Count == 0)
@@ -1055,6 +1128,7 @@ namespace Doorstop
 					sb.Append("\n\n<size=85%>").Append(string.Join("\n", conds.ToArray())).Append("</size>");
 				}
 				List<string> from = new List<string>();
+				HashSet<string> plain = new HashSet<string>();
 				foreach (KeyValuePair<string, int> e in SceneObjectives.Earners((int)o.Name))
 				{
 					string title = SceneTexts.Title(e.Key);
@@ -1064,14 +1138,17 @@ namespace Doorstop
 					}
 					string answer = e.Value > 0 ? SceneTexts.Name(e.Key, "ButtonDescription" + e.Value) : "";
 					string line = "\u2022 " + title + (answer.Length > 0 ? ": " + SceneEffects.NobleParticle(answer) : "");
+					// two versions of a scene (051.060.030 / 051.070.035 To the
+					// Death) read the same: one line
+					if (!plain.Add(line))
+					{
+						continue;
+					}
 					if (DestinyDone.Contains(e.Key))
 					{
 						line = "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Grey) + ">" + line + "</color>";
 					}
-					if (!from.Contains(line))
-					{
-						from.Add(line);
-					}
+					from.Add(line);
 					if (from.Count == 6)
 					{
 						break;
@@ -1872,7 +1949,11 @@ namespace Doorstop
 					// a stat the game has not opened at that chapter says when
 					// it will (a whole locked tab says it under its title)
 					bool note = projected || locked && (row.Tab == null || row.Tab.Chapter < opens);
-					row.Descr.text = note ? UnlocksIn(opens) : Segment(row.Param, value);
+					// the fourth death is the true death; the stat's scale
+					// stops at the third ("Died thrice")
+					bool trueDeath = row.Param.ParameterName == ParametersList.Death && value >= 4;
+					row.Descr.text = note ? UnlocksIn(opens)
+						: trueDeath ? Loc.Game("TrueDeath_Title", "True Death") : Segment(row.Param, value);
 				}
 				FitText(row, _fitLimit);
 			}

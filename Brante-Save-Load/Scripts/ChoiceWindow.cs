@@ -1225,7 +1225,7 @@ namespace Doorstop
 		// pick (SelectChoice re-selects the furthest pick) or a second click.
 		private static void SelectEvent(string scene)
 		{
-			if (scene == TrueDeathScene)
+			if (scene == TrueDeathScene || scene == EndScene)
 			{
 				return;   // the story's end: nothing to load up to
 			}
@@ -3104,7 +3104,7 @@ namespace Doorstop
 		// is not a pick.
 		private static bool IsEventScene(string scene)
 		{
-			return scene == TrueDeathScene
+			return scene == TrueDeathScene || scene == EndScene
 				|| SceneEffects.SceneChanges(scene).Count > 0 && SceneTexts.Buttons(scene).Count == 0;
 		}
 
@@ -3112,6 +3112,18 @@ namespace Doorstop
 		// first true-death page (a scene of the game's finals, never in the
 		// flow), drawn as an event box that is no load target.
 		private const string TrueDeathScene = "FourthDeath_1";
+
+		// The end of a path whose answer (or scene) sets the key parameter
+		// GoToFinals=Yes without a true death: an event box that is no load
+		// target either.
+		private const string EndScene = "GameFinals";
+
+		private static bool StoryEnded(Dictionary<string, string> keys)
+		{
+			string v;
+			return keys != null && keys.TryGetValue("GoToFinals", out v)
+				&& string.Equals(v, "Yes", StringComparison.OrdinalIgnoreCase);
+		}
 
 		private static bool TrueDead(SceneEffects.Hero h)
 		{
@@ -3123,6 +3135,10 @@ namespace Doorstop
 			if (scene == TrueDeathScene)
 			{
 				return Loc.Game("TrueDeath_Title", "True Death");
+			}
+			if (scene == EndScene)
+			{
+				return Loc.T(Loc.K.TheEnd);
 			}
 			string title = SceneTexts.Title(scene);
 			string key = SceneEffects.TitleKey(scene);
@@ -3272,6 +3288,10 @@ namespace Doorstop
 				string page = Loc.Game("FourthDeath_1.Text_1", "").Trim();
 				return (page.Length > 1 && page != "FourthDeath_1.Text_1" ? page + "\n" : "")
 					+ "<i>" + Loc.T(Loc.K.StoryEnds) + "</i>";
+			}
+			if (scene == EndScene)
+			{
+				return "<i>" + Loc.T(Loc.K.FinaleEnds) + "</i>";
 			}
 			string happens = "<i>" + Loc.T(Loc.K.EventHappens) + "</i>";
 			List<string> prefixes = new List<string> { scene };
@@ -3905,6 +3925,11 @@ namespace Doorstop
 				between.Add(TrueDeathScene);   // the start's own answer was the fourth death
 				finished = true;
 			}
+			else if (StoryEnded(keys))
+			{
+				between.Add(EndScene);         // the start's own answer ended the story
+				finished = true;
+			}
 			while (!finished && steps < 400 && sw.ElapsedMilliseconds < 1500)
 			{
 				tAdv.Start();
@@ -3976,6 +4001,17 @@ namespace Doorstop
 					between.Add(TrueDeathScene);
 					finished = true;
 					ModLog.Info("ChoiceWindow: true death at " + scene + " (" + pick + ") - the path ends there");
+					break;
+				}
+				if (StoryEnded(keys))
+				{
+					// GoToFinals=Yes: the game leaves the chapter flow for
+					// GameFinals - the true death's pages, "Glory to the
+					// Empire!", "The Judgment of the Twins" (either answer),
+					// the chapter-5 endings - and no choice comes after
+					between.Add(EndScene);
+					finished = true;
+					ModLog.Info("ChoiceWindow: the story ends at " + scene + " (" + pick + ") - GoToFinals");
 					break;
 				}
 			}
@@ -6482,6 +6518,51 @@ namespace Doorstop
 					else if (l.StartsWith("destinyhover ", StringComparison.Ordinal))
 					{
 						StatPanel.DevHoverObjective(l.Substring(13).Trim());
+						continue;
+					}
+					else if (l == "conds")
+					{
+						// the trigger scenes' own condition lists (SceneConditionsCollector)
+						foreach (_Scripts.Helpers.SceneConditionsCollector col in Resources.FindObjectsOfTypeAll<_Scripts.Helpers.SceneConditionsCollector>())
+						{
+							if (col == null || col.SceneConditions == null)
+							{
+								continue;
+							}
+							foreach (_Scripts.Helpers.SceneCondition sc in col.SceneConditions)
+							{
+								List<string> parts = new List<string>();
+								foreach (var c in sc.Condition) parts.Add(c.ParametersList + " " + c.Operations + " " + c.SecondValue);
+								foreach (var c in sc.ConditionsByStatus) parts.Add(c.Character + (c.Not ? " not " : " is ") + c.Status);
+								foreach (var c in sc.ConditionsByRelation) parts.Add(c.Character + " rel " + c.Operations + " " + c.Value);
+								foreach (var c in sc.ConditionsByObjective) parts.Add((c.Not ? "not " : "") + c.Objective);
+								ModLog.Info("DEV PICK: cond " + sc.SceneName + ": " + string.Join(" & ", parts.ToArray()));
+							}
+						}
+						// and the objectives' own condition lists (the Destiny window's)
+						_Scripts.AMVCC.Models.Static.KeyChapterParametersController kcc = _Scripts.AMVCC.Models.Static.KeyChapterParametersController.Initiate;
+						if (kcc != null && kcc.AllGameObjectives != null)
+						{
+							foreach (_Scripts.AMVCC.Views.Windows.Destiny.Objective o in kcc.AllGameObjectives)
+							{
+								List<string> parts = new List<string>();
+								if (o != null && o.Condition != null)
+								{
+									foreach (var oc in o.Condition)
+									{
+										var rc = oc.RealCondition;
+										if (rc == null) continue;
+										if (rc.ByStatuses != null) foreach (var c in rc.ByStatuses) parts.Add((c.Character != null ? c.Character.Name.ToString() : "?") + (c.Not ? " not " : " is ") + c.Status);
+										if (rc.ByObjectives != null) foreach (var c in rc.ByObjectives) parts.Add((c.Not ? "not " : "") + (c.Objective != null ? c.Objective.Name.ToString() : "?"));
+										if (rc.ByParameters != null) foreach (var c in rc.ByParameters) parts.Add((c.ParamName != null ? c.ParamName.name : "?") + " " + c.Operations + " " + c.SecondValue);
+									}
+								}
+								if (o != null && parts.Count > 0)
+								{
+									ModLog.Info("DEV PICK: objective " + o.name + " (" + o.Name + "): " + string.Join(" & ", parts.ToArray()));
+								}
+							}
+						}
 						continue;
 					}
 					else if (l == "wheel")

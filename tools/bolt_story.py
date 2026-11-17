@@ -330,8 +330,18 @@ class Walker:
                     terms.add(t if lit is None else t | {lit})
             dnf[k] = simplify(terms)
 
+        # Flow order is the topological order, not the order the walk first
+        # met each scene: where a branch rejoins (the defender's and the
+        # rebel's Final Hour before the shared chapter-5 finals), discovery
+        # order put the join's scenes inside the first branch, before the
+        # second branch's scene, so the rebel's Final Hour came after the
+        # finals and was never reached. Scenes the topological walk missed
+        # (none expected) keep their discovery place at the end.
+        seen = set(order)
+        ordered = [k for k in topo if k in seen]
+        ordered += [k for k in order if k not in set(ordered)]
         out = []
-        for key in order:
+        for key in ordered:
             info = scenes[key]
             st = nodes[key]
             out.append({"chapter": number, "macro": entry["name"], "order": len(out),

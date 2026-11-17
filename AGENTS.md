@@ -302,10 +302,10 @@ community event sheet (`data/events.json`).
   measured on what a row draws (icon to slider end), not its 375-unit box.
   Heir is left out too (`StatPanel.LeftOut`: only Stephan or the hero).
   Work is ordered Career, Justice, Inquisition power, Tolerance of faiths,
-  Unrest, Spy network.
+  Unrest, Spy network; House as Reputation, Wealth, Unity.
 - **Personality is drawn by chapter (`StatPanel.FlowPlace`).** Column 1:
   Willpower, Deaths, Perception, Determination (chapter 1); column 2: Nobility,
-  Ingenuity, Spirituality (chapter 2), each level with the middle of its two
+  Spirituality, Ingenuity (chapter 2, the game's own order), each level with the middle of its two
   skills; then the six chapter-3 skills. `Forks` draws each occupation's fork
   into its two skills (`Fork` 0.32 of a column), the arms marked "+"
   Perception's / Determination's icon, whose hover opens that stat's pop-up -
@@ -333,7 +333,14 @@ community event sheet (`data/events.json`).
   still possible (grey), out of reach (red, struck: its chapter is over, or
   every scene/answer that earns it in scene-objectives.tsv is in
   `DestinyDone` - the scenes passed by the scene shown - or on another post's
-  track, `SceneFlow.SceneFits`). Hover: the stat pop-up with everything in
+  track, `SceneFlow.SceneFits`), or the game's own condition list for it
+  (`Objective.Condition`'s `RealCondition`, all required, what the Destiny
+  window shows) has a part that can never be met again (`RuledOut`: a status
+  for a character who is dead - the explosion kills Remy El Verman, and
+  Master of Anizotte needs him at `Deal` - or an objective it must not have).
+  An objective of another post is still listed when a scene of this post
+  earns it (`EarnableOn`: Tommas's New Life, inquisitor-only in the game,
+  comes from a wedding on every track). Hover: the stat pop-up with everything in
   its description (state, description, the window's conditions, the earning
   scenes) - its rows are sized for a stat's scale and mangled longer lines -
   placed beside the entry's words, level with it. `dev-pick.txt` also takes
@@ -347,6 +354,11 @@ community event sheet (`data/events.json`).
   chapter flow. `AddUpcoming` stops when the hero's Death reaches 4 and ends
   the path with a "True Death" event box (`TrueDeathScene` = `FourthDeath_1`,
   not a load target). Before, the simulation went on predicting the chapter.
+  Any answer or scene that sets the key parameter `GoToFinals=Yes` ends the
+  story the same way ("Glory to the Empire!", either answer of "The Judgment
+  of the Twins", the chapter-5 endings): the path ends in a "The End" box
+  (`EndScene`, `StoryEnded`). The Deaths row reads "True Death" at 4 (the
+  stat's scale stops at "Died thrice").
 - **Objectives earned are listed in the pop-ups.** An answer's or an event's
   pop-up adds what it earns (`E` effects: `SceneEffects.Shown`,
   `SceneChanges`; display only, never in `For`/`ForScene`).
@@ -401,6 +413,15 @@ community event sheet (`data/events.json`).
   the viewport and on the horizontal scroll bar: over the bar the notch
   otherwise reached `ScrollRect.OnScroll`, which flips it, and scrolled the
   other way. `dev-pick.txt` `wheel` logs one notch over each.
+- **Flow order is topological.** `tools/bolt_story.py` numbers the scenes in
+  the Bolt graph's topological order, so every scene comes after everything
+  that leads to it. Discovery order put the scenes after a rejoining branch
+  inside the first branch: the chapter-5 finals came before the rebel's
+  "The Final Hour" (`060.010.160_TheFinalHour2`), and the simulation reached
+  a final first and never showed it. The default prediction from
+  `02.12.01` was identical under both orders (48 columns).
+  `dev-pick.txt` `conds` logs the trigger scenes' `SceneConditionsCollector`
+  lists and every objective's condition list.
 - **Changers off the answer buttons apply with any answer.** In
   `scene-params.tsv` button `-1` is a `KeyChapterParametersChanger` on a
   button every answer passes - the text pages' `NextButton/Image`
