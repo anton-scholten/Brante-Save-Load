@@ -181,7 +181,7 @@ delete that folder too to remove them.
 [docs/FINDINGS.md](docs/FINDINGS.md) explains how the game and the mod work, [MODDING.md](MODDING.md) is a compact how-to, and [AGENTS.md](AGENTS.md) covers working on the mod (build with `./tools/build.sh`).
 
 ## Acknowledgements
-Thanks to SVR7 for their help identifying missing and incorrect information listed by the mod as well as layout suggestions that greatly improved the final look of the tree view.
+Thanks to SVR7 for his help identifying missing and incorrect information listed by the mod as well as layout suggestions that greatly improved the final look of the tree view.
 
 ## Licence
 
