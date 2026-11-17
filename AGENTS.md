@@ -350,6 +350,15 @@ community event sheet (`data/events.json`).
 - **Objectives earned are listed in the pop-ups.** An answer's or an event's
   pop-up adds what it earns (`E` effects: `SceneEffects.Shown`,
   `SceneChanges`; display only, never in `For`/`ForScene`).
+- **Panel colours compare with the same point, not with today.** A value
+  is green/red against `StatPanel.Baseline` (`ChoiceWindow.StatsBaseline`):
+  at a played scene the hero after the answer really played there, at the
+  scene on screen the hero there, ahead today's hero. Against today, a
+  chapter-2 pick in `02.12.01` showed Sophia's -2 green and Octavia's 0 red
+  only because they differ today. A status change marked on answer hover is
+  red for a loss or a turn against the hero (`BadStatus`: dead, exile,
+  Hatred, Betrayed, ...), green for a gain (`GoodStatus`), a muted mark
+  otherwise - it was green for anything short of death.
 - **Stats / Family / Relations tabs.** Three tabs at the top of the panel
   (`StatPanel.Mode`, `ModeTabs`) switch it between the stats and the
   characters as the same cloned stat row: portrait (the chapter's sprite),

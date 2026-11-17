@@ -2862,7 +2862,39 @@ namespace Doorstop
 				post = kc.GetKeyChapterParameterValue("Post");
 			}
 			StatPanel.DestinyPost = post == "Judge" || post == "Inquisitor" || post == "Rebel" ? post : null;
+			StatPanel.Baseline = StatsBaseline();
 			StatPanel.Show(StatsHero(), SceneEffects.Now(), StatsChapter());
+		}
+
+		// What the stat colours compare with: at a played scene, the hero
+		// after the answer really played there (so only a changed answer
+		// colours anything); at the scene on screen, the hero there; ahead,
+		// today's hero (null).
+		private static SceneEffects.Hero StatsBaseline()
+		{
+			if (string.IsNullOrEmpty(_selScene))
+			{
+				return null;
+			}
+			if (EventSelected())
+			{
+				TreeCol ev = _drawCols != null ? _drawCols.Find(c => c.Event && c.Scene == _selScene) : null;
+				return ev != null && !ev.Upcoming ? ev.AfterHero ?? ev.Hero : null;
+			}
+			TreeCol col = _tree.Find(c => c.Scene == _selScene);
+			if (col == null || col.Upcoming || col.Hero == null)
+			{
+				return null;
+			}
+			if (col.Current || string.IsNullOrEmpty(col.PlayedChoice))
+			{
+				return col.Hero;
+			}
+			SceneEffects.Hero h = col.Hero.Clone();
+			h.Apply(SceneEffects.For(_selScene, col.PlayedChoice));
+			h.ApplyObjectives(_selScene, SceneEffects.ButtonIndex(col.PlayedChoice));
+			h.ApplyObjectives(_selScene, 0);
+			return h;
 		}
 
 		// The post (key parameter) the simulation reached at the path's end.

@@ -1791,16 +1791,23 @@ namespace Doorstop
 		}
 
 		// The values of `shown` (the hero along the path); a value above
-		// `now` (the hero today) is green, below red. Before chapter 3 the
+		// `Baseline` is green, below red. The baseline is what the shown
+		// point would hold without the path's changes - the hero who really
+		// played that scene, or today's hero for a scene still ahead - set by
+		// the tree (null: `now`). Against today, a chapter-2 pick showed
+		// Sophia's -2 green only because she is lower today. Before chapter 3 the
 		// six skills are 0; their rows show what the chapter-3 start would
 		// make of the stats shown (faded, "Will unlock in Chapter III"), so a
 		// pick in chapters 1-2 shows its effect there.
+		public static SceneEffects.Hero Baseline;
+
 		public static void Show(SceneEffects.Hero shown, SceneEffects.Hero now, int chapter)
 		{
 			if (shown == null || now == null)
 			{
 				return;
 			}
+			SceneEffects.Hero against = Baseline ?? now;
 			_lastShown = shown;
 			_lastNow = now;
 			_lastChapter = chapter;
@@ -1821,7 +1828,7 @@ namespace Doorstop
 				_forks.GetComponent<CanvasGroup>().alpha = early ? 0.45f : 1f;
 			}
 			shown = SceneEffects.WithSkillsProjected(shown);
-			now = SceneEffects.WithSkillsProjected(now);
+			now = SceneEffects.WithSkillsProjected(against);
 			// tabs the game has not opened yet at that chapter: greyed, with
 			// the game's own "opens in chapter N" under the title
 			foreach (Tab tab in _tabs)
@@ -1889,7 +1896,7 @@ namespace Doorstop
 				}
 				row.Ghost = _ghostList.Contains(row.Person.Name);
 				CharacterModel m = ModelOf(row.Ghost ? _ghostFrom : shown, row.Person.Name);
-				CharacterModel t = ModelOf(now, row.Person.Name);
+				CharacterModel t = ModelOf(Baseline ?? now, row.Person.Name);   // the colour's reference
 				int value = m != null ? m.Relation : 0;
 				int today = t != null ? t.Relation : value;
 				row.Shown = value;
@@ -1942,8 +1949,41 @@ namespace Doorstop
 			{
 				return b.Relation - a.Relation;
 			}
-			// a status change: red when they are lost, green otherwise
-			return b.Status == a.Status ? 0 : Gone(b.Status) ? -1 : 1;
+			// a status change: red for a loss or a turn against the hero,
+			// green for a gain, a neutral mark otherwise (it was green for
+			// anything short of death, Hatred and Betrayed included)
+			if (b.Status == a.Status)
+			{
+				return 0;
+			}
+			int mood = Mood(b.Status);
+			return mood != 0 ? mood : NeutralChange;
+		}
+
+		private const int NeutralChange = 1000;
+
+		private static readonly HashSet<CharacterStatus> BadStatus = new HashSet<CharacterStatus>
+		{
+			CharacterStatus.Dead, CharacterStatus.Dead2, CharacterStatus.Dead3, CharacterStatus.Danger,
+			CharacterStatus.Arrested, CharacterStatus.Exile, CharacterStatus.Break, CharacterStatus.Opposition,
+			CharacterStatus.Mockery, CharacterStatus.Hatred, CharacterStatus.Despair, CharacterStatus.Anger,
+			CharacterStatus.Left, CharacterStatus.Accused, CharacterStatus.Betrayed, CharacterStatus.FriendshipBreak,
+			CharacterStatus.Offended, CharacterStatus.Captivity, CharacterStatus.Enemy, CharacterStatus.Mistrust,
+			CharacterStatus.Lose, CharacterStatus.Despotism,
+		};
+
+		private static readonly HashSet<CharacterStatus> GoodStatus = new HashSet<CharacterStatus>
+		{
+			CharacterStatus.Good, CharacterStatus.Support, CharacterStatus.Consent, CharacterStatus.Friendship,
+			CharacterStatus.Healed, CharacterStatus.Saved, CharacterStatus.Free, CharacterStatus.Fidelity,
+			CharacterStatus.Love, CharacterStatus.Union, CharacterStatus.Intimacy, CharacterStatus.Hope,
+			CharacterStatus.Patronage, CharacterStatus.Promise, CharacterStatus.Engagement, CharacterStatus.Wedding,
+		};
+
+		// -1 a status that is bad for the hero's bond, +1 a good one, 0 neither.
+		private static int Mood(CharacterStatus s)
+		{
+			return BadStatus.Contains(s) ? -1 : GoodStatus.Contains(s) ? 1 : 0;
 		}
 
 		// While an answer is hovered in the tree: the stats it changes get a
@@ -1981,7 +2021,8 @@ namespace Doorstop
 					row.Mark = go.AddComponent<Image>();
 					row.Mark.raycastTarget = false;
 				}
-				row.Mark.color = Palette.Fade(d > 0 ? Palette.Good : Palette.Bad, 0.28f);
+				row.Mark.color = d == NeutralChange ? Palette.Fade(Palette.Muted, 0.28f)
+					: Palette.Fade(d > 0 ? Palette.Good : Palette.Bad, 0.28f);
 				row.Mark.enabled = true;
 			}
 		}
