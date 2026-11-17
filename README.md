@@ -101,11 +101,11 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 - **Hover** a choice or scene name to see its text and what it changes.
 - **Click** choices to make a new path (click again to undo, the arrow resets). **Load scene** plays it for you.
 - Events (scenes without a choice) have their own column; click one to load it.
-- **Stats / Family / Relations** tabs show where you stand at the end of the path. Pale rows are people you would meet. Green and red show what your picks changed.
-- **Destiny** lists the chapter's outcomes: happened, on this path, still possible, or out of reach.
+- **Stats / Family / Relations** tabs show where you stand after your last pick. Pale rows are people you would meet. Green and red show what your picks changed.
+- **Destiny** lists the chapter's outcomes: happened, on this path, still possible, or out of reach (crossed out as soon as it can no longer happen).
 - Greyed choices aren't open to you; red ones clash with an earlier pick.
 - Faded stats unlock in a later chapter; the arrows show which two stats make each chapter-3 skill.
-- A true death ends the path: no choices follow it.
+- A true death, or an ending that finishes the game, ends the path: no choices follow it.
 
 ### Fast-forward
 
@@ -116,6 +116,11 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 ## Update notes
 
+- **17 Nov 2026:**
+  - House and Personality stats in the game's own order.
+  - The rebel's "The Final Hour" now shows up in the predicted path.
+  - Endings that finish the game (Glory to the Empire!, The Judgment of the Twins) end the path; Deaths shows True Death.
+  - Destiny: outcomes are crossed out as soon as they can't happen (e.g. after a character's death); Tommas's New Life shows on every path.
 - **16 Nov 2026:**
   - Destiny tab: the chapter's outcomes, and what a choice brings or rules out.
   - Personality laid out by chapter; stats not yet unlocked are faded.
