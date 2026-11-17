@@ -102,31 +102,35 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 - **Click** choices to make a new path (click again to undo, the arrow resets). **Load scene** plays it for you.
 - Events (scenes without a choice) have their own column; click one to load it.
 - **Stats / Family / Relations** tabs show where you stand after your last pick. Pale rows are people you would meet. Green and red show what your picks changed.
-- **Destiny** lists the chapter's outcomes: happened, on this path, still possible, or out of reach (crossed out as soon as it can no longer happen).
+- **Destiny** lists the chapter's outcomes: happened, on this path, still possible, or out of reach. Hover one for what it requires and where it comes from; options that can no longer happen are crossed out.
 - Greyed choices aren't open to you; red ones clash with an earlier pick.
 - Faded stats unlock in a later chapter; the arrows show which two stats make each chapter-3 skill.
 - A true death, or an ending that finishes the game, ends the path: no choices follow it.
-- **Path ID** (the two buttons left of the arrow): **copy** puts the scene you are on and everything about it (stats, people, destinies, choices made) on the clipboard as one line of text (about 1,000 characters); **paste** loads one, e.g. from a friend, straight into that scene. Your game is kept as a "Before load" save first, and the pasted one is listed under Manual. Only path IDs from the same game version are accepted.
+
+### Path ID
+
+![The tree view's top right corner: paste path ID, copy path ID, reset path and close.](Screenshot_4.jpg)
+
+- **Copy** puts the scene you are on and everything about it (stats, people, destinies, choices so far) on the clipboard as one line of text, about 1,000 characters.
+- **Paste** loads one, e.g. from a friend, straight into that scene. Your game is saved as "Before load" first; the pasted one is listed under Manual.
+- Path IDs work between copies of the same game version. Your hero keeps their name.
 
 ### Fast-forward
 
-![Loading a path of different choices selected using the tree view will show this loading screen as the game is fast-forwarded in the background. A progress bar and time estimate is given, as well as a stop button.](Screenshot_4.jpg)
+![Loading a path picked in the tree view: the game fast-forwards in the background behind a loading box with a progress bar, the time left and a Stop button.](Screenshot_5.jpg)
 
-- Progress and time estimates given during a fast-forward when you load a path using the tree view.
-- A **Stop** button is available to drop you into the current scene.
+- **Load scene** plays your picked path at high speed, about 2-3 s a scene, with progress and time left.
+- **Stop** drops you into the scene it has reached.
 
 ## Update notes
 
 - **17 Nov 2026:**
-  - Path IDs: copy the game you are in as text, paste one to jump straight into it.
-  - The mod's own texts in Brazilian Portuguese and Traditional Chinese too (they showed English and Simplified Chinese).
-  - House and Personality stats in the game's own order.
-  - The rebel's "The Final Hour" now shows up in the predicted path.
+  - Path IDs: copy your game as text, paste one to jump straight into it.
+  - Destiny pop-ups show what an outcome requires and where it comes from; options that can no longer happen are crossed out one by one, and outcomes as soon as they can't happen.
   - Endings that finish the game (Glory to the Empire!, The Judgment of the Twins) end the path; Deaths shows True Death.
-  - Fixed: revealing Sophia's plan in Clean Hands now leads to Glory to the Empire!, not A Sleepless Night; Load scene stops if the story ends before the scene you picked.
-  - Fixed: chapter 4's family scenes are predicted in the game's order again (before the post's own in each season).
-  - Destiny pop-ups: each scene listed once under "Comes from", with what each answer needs; "one of" conditions shown as in the game; options that can no longer happen are crossed out one by one.
-  - Destiny: outcomes are crossed out as soon as they can't happen (e.g. after a character's death); Tommas's New Life shows on every path.
+  - House and Personality stats in the game's own order.
+  - Brazilian Portuguese and Traditional Chinese texts.
+  - Fixed: the rebel's "The Final Hour", Glory to the Empire! after Clean Hands, chapter 4's scene order, and Tommas's New Life on every path. Load scene stops if the story ends early.
 - **16 Nov 2026:**
   - Destiny tab: the chapter's outcomes, and what a choice brings or rules out.
   - Personality laid out by chapter; stats not yet unlocked are faded.
@@ -163,9 +167,8 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 ## Good to know
 
 - Your original save is backed up once to `Brante-Save-Load/Backups/`; the game's own saves keep working as normal.
-- Achievements stay on. Works in Iron Man. In all of the game's languages (13 texts: its two Spanish versions share one).
+- Achievements stay on. Works in Iron Man and in all of the game's languages.
 - The predicted scenes are a forecast: choices you haven't picked count as the first one open. If Load scene meets a scene it didn't expect, it stops there so you can pick and load again.
-- Load scene takes about 2-3 s per scene.
 
 ## Uninstall
 
