@@ -2151,6 +2151,7 @@ namespace Doorstop
 			string skipped = null;
 			int next = 0;
 			AutoPlay.StopAtScene = plan.ToEvent ? plan.Target : null;
+			AutoPlay.StopAtStoryEnd = true;
 			yield return AutoPlay.Run(delegate(string scene)
 			{
 				string pick;
@@ -2186,6 +2187,7 @@ namespace Doorstop
 				return true;
 			}, 60f, !File.Exists(Path.Combine(Recorder.SnapshotDir, "dev-slow.txt")));   // dev-slow.txt: at 1x
 			AutoPlay.StopAtScene = null;
+			AutoPlay.StopAtStoryEnd = false;
 			// One autosave for the scene the replay reached (the per-scene
 			// mirror is suppressed while AutoPlay runs).
 			Recorder.MirrorGameAutosave();
@@ -2204,6 +2206,7 @@ namespace Doorstop
 					? string.Format(Loc.T(Loc.K.ReplaySkipped),
 						SceneLabel(at), SceneLabel(skipped))
 					: offPath != null ? string.Format(Loc.T(Loc.K.ReplayOffPath), SceneLabel(offPath))
+					: AutoPlay.LastStop == AutoPlay.Stop.StoryEnd ? string.Format(Loc.T(Loc.K.ReplayOffPath), SceneLabel(at))
 					: AutoPlay.LastStop == AutoPlay.Stop.Death ? string.Format(Loc.T(Loc.K.ReplayDeath), SceneLabel(at))
 					: AutoPlay.LastStop == AutoPlay.Stop.Blocked ? string.Format(Loc.T(Loc.K.PickBlocked), SceneLabel(at))
 					: string.Format(Loc.T(Loc.K.ReplayStopped), SceneLabel(at),

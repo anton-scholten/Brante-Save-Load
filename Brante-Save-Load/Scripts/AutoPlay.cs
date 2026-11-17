@@ -218,6 +218,21 @@ namespace Doorstop
 					yield return new WaitForSecondsRealtime(0.05f);
 					continue;
 				}
+				if (StopAtStoryEnd && scene != StopAtScene && SceneParams.EndsStory(scene))
+				{
+					if (stopSeen < 0f)
+					{
+						stopSeen = Time.realtimeSinceStartup;
+						LastStop = Stop.StoryEnd;
+						ModLog.Info("AUTOPLAY: " + scene + " ends the story (GoToFinals) - stopping there");
+					}
+					if (Time.realtimeSinceStartup - stopSeen > 0.5f)
+					{
+						break;
+					}
+					yield return new WaitForSecondsRealtime(0.05f);
+					continue;
+				}
 				bool moved = false;
 				string stopWhy = null;
 				// A death comes from an answer (the Deaths stat it raises is in
@@ -310,6 +325,7 @@ namespace Doorstop
 				Time.maximumDeltaTime = oldMaxDelta;
 			}
 			Running = false;
+			StopAtStoryEnd = false;   // per run: a debug run plays on to the credits
 			float runTime = Time.realtimeSinceStartup - runSince;
 			ModLog.Info("AUTOPLAY: finished at " + Story() + " (" + runTime.ToString("0") + " s, "
 				+ ((Time.frameCount - runFrames) / Math.Max(runTime, 0.01f)).ToString("0") + " fps, driver "
@@ -586,7 +602,12 @@ namespace Doorstop
 			}
 		}
 
-		public enum Stop { None, Blocked, Death, User }
+		public enum Stop { None, Blocked, Death, User, StoryEnd }
+
+		// Load scene: stop when a scene that ends the story opens (it sets
+		// GoToFinals=Yes) instead of playing through the game's finale. The
+		// path predicted no such scene, or it would have ended there.
+		public static bool StopAtStoryEnd;
 
 		// A scene to stop on as soon as it opens, without pressing anything
 		// in it (Load scene to an event): set before Run, cleared after.

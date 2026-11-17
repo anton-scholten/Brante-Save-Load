@@ -75,6 +75,28 @@ namespace Doorstop
 			}
 		}
 
+		// Whether the scene sets GoToFinals=Yes as it opens: the game leaves
+		// the chapter flow for its finale ("Glory to the Empire!", the
+		// chapter-5 endings).
+		public static bool EndsStory(string scene)
+		{
+			Load();
+			List<Change> list;
+			if (scene == null || _byScene == null || !_byScene.TryGetValue(scene, out list))
+			{
+				return false;
+			}
+			foreach (Change c in list)
+			{
+				if (c.Button == 0 && c.Name == "GoToFinals"
+					&& string.Equals(c.Value, "Yes", StringComparison.OrdinalIgnoreCase))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		// "ButtonDescription3" -> 3; -1 when the name has no number.
 		public static int ButtonOf(string buttonName)
 		{

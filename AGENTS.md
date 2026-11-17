@@ -421,10 +421,28 @@ community event sheet (`data/events.json`).
   that leads to it. Discovery order put the scenes after a rejoining branch
   inside the first branch: the chapter-5 finals came before the rebel's
   "The Final Hour" (`060.010.160_TheFinalHour2`), and the simulation reached
-  a final first and never showed it. The default prediction from
-  `02.12.01` was identical under both orders (48 columns).
+  a final first and never showed it. Siblings keep their port order (the
+  DFS walks successors last-first): reversed, a Sequence's second output
+  came first and the chapter-4 family scenes (`051.*`) fell after the
+  post's (`054.*`), where the game opens them first in each slot
+  (Arrive_Prefect, FirstDayWork, Scene_1, Scene_2, Case1). Check a flow
+  change by scene names, not column counts: the default prediction from
+  `02.12.01` is identical to discovery order (48 columns, same scenes).
   `dev-pick.txt` `conds` logs the trigger scenes' `SceneConditionsCollector`
   lists and every objective's condition list.
+- **A switch's default output is a label too.** `scene-flow.tsv` writes a
+  `SwitchOnString`'s default branch as `Name=!A,B` (none of the listed
+  values; `SceneFlow.LabelOk`), not as no label. Dropped, the default
+  branch's scenes matched every value: "Clean Hands"
+  (`053.100.120_Disclosure`) answered `Disclosure=Yes` still led to A
+  Sleepless Night (`053.070.010_Bridges`, default branch, earlier in flow
+  order) instead of Glory to the Empire! (`053.090.060_Final6`). Unset
+  values are `None`/`No` in a save, never listed, so they take the default.
+  `Covers` ignores default labels of other rows (the listed values decide).
+- **Load scene stops at a story end it did not plan.** `AutoPlay.StopAtStoryEnd`
+  (set by `ReplayTo` only) stops the run 0.5 s after a scene that opens
+  with `GoToFinals=Yes` (`SceneParams.EndsStory`) and is not the event
+  aimed at; it used to click on through the finale. Debug runs play on.
 - **Changers off the answer buttons apply with any answer.** In
   `scene-params.tsv` button `-1` is a `KeyChapterParametersChanger` on a
   button every answer passes - the text pages' `NextButton/Image`

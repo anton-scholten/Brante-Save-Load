@@ -543,8 +543,7 @@ namespace Doorstop
 					foreach (KeyValuePair<string, string> lab in set)
 					{
 						string v;
-						if (values.TryGetValue(lab.Key, out v) && !string.IsNullOrEmpty(v)
-							&& !string.Equals(v, lab.Value, StringComparison.OrdinalIgnoreCase))
+						if (values.TryGetValue(lab.Key, out v) && !LabelOk(v, lab.Value))
 						{
 							ok = false;
 							break;
@@ -657,9 +656,7 @@ namespace Doorstop
 				bool ok = true;
 				foreach (KeyValuePair<string, string> lab in set)
 				{
-					string value = ctx.KeyParameter(lab.Key);
-					if (!string.IsNullOrEmpty(value)
-						&& !string.Equals(value, lab.Value, StringComparison.OrdinalIgnoreCase))
+					if (!LabelOk(ctx.KeyParameter(lab.Key), lab.Value))
 					{
 						ok = false;
 						break;
@@ -671,6 +668,32 @@ namespace Doorstop
 				}
 			}
 			return false;
+		}
+
+		// Whether the live value of a switch parameter passes one label: equal
+		// to it, or for a switch's default output ("!A,B") none of the values
+		// listed. A parameter the game has not set yet agrees with anything.
+		// Without the default's own label its scenes matched every value:
+		// "Clean Hands" answered Disclosure=Yes still went on to A Sleepless
+		// Night (the default branch, earlier in flow order) instead of Final6.
+		private static bool LabelOk(string value, string label)
+		{
+			if (string.IsNullOrEmpty(value))
+			{
+				return true;
+			}
+			if (label.StartsWith("!", StringComparison.Ordinal))
+			{
+				foreach (string v in label.Substring(1).Split(','))
+				{
+					if (string.Equals(value, v, StringComparison.OrdinalIgnoreCase))
+					{
+						return false;
+					}
+				}
+				return true;
+			}
+			return string.Equals(value, label, StringComparison.OrdinalIgnoreCase);
 		}
 
 		// Whether a scene is reachable under every value its chapter switches
@@ -721,7 +744,10 @@ namespace Doorstop
 				{
 					foreach (KeyValuePair<string, string> lab in set)
 					{
-						if (lab.Key == key && !mine.Contains(lab.Value))
+						// a default output ("!A,B") is only taken for a value
+						// the switch does not list: the listed ones decide
+						if (lab.Key == key && !lab.Value.StartsWith("!", StringComparison.Ordinal)
+							&& !mine.Contains(lab.Value))
 						{
 							return false;
 						}

@@ -297,17 +297,22 @@ class Walker:
                     todo.append((k2, st2))
             succ[key].reverse()
 
-        # topological order (reverse post-order; back edges, if any, ignored)
+        # topological order (reverse post-order; back edges, if any, ignored).
+        # Successors and roots are walked last-first, so the reversed
+        # post-order keeps siblings in port order: walked first-first, a
+        # Sequence's second output came before its first, and the chapter-4
+        # family scenes (051.*) fell after the post's own (054.*), where the
+        # game opens them first in each time slot.
         post, mark = [], set()
-        for root in [n[0] for n in starts]:
-            stack = [(root, iter(succ.get(root, [])))]
+        for root in reversed([n[0] for n in starts]):
+            stack = [(root, iter(reversed(succ.get(root, []))))]
             mark.add(root)
             while stack:
                 k, it = stack[-1]
                 for k2, _ in it:
                     if k2 not in mark:
                         mark.add(k2)
-                        stack.append((k2, iter(succ.get(k2, []))))
+                        stack.append((k2, iter(reversed(succ.get(k2, [])))))
                         break
                 else:
                     stack.pop()
@@ -416,9 +421,11 @@ class Walker:
             prefix = "KeyChapterParametersController.GetKeyChapterParameterValue("
             if subject.startswith(prefix):
                 name = unquote(subject[len(prefix):-1])
-            for opt in u.get("options") or []:
-                go("%" + str(opt), lab=labels + ["%s=%s" % (name, opt)])
-            go("default", lab=labels + ["%s=(other)" % name])
+            opts = [str(o) for o in (u.get("options") or [])]
+            for opt in opts:
+                go("%" + opt, lab=labels + ["%s=%s" % (name, opt)])
+            # the default output: any value but the listed ones ("!A,B")
+            go("default", lab=labels + ["%s=!%s" % (name, ",".join(opts))])
             return out, None
         # Everything else (InvokeMember, Once, SelectOnFlow, Sequence, ...):
         # follow every control output in port order.
@@ -525,8 +532,11 @@ def main():
 
     # One entry per scene: label sets as alternatives, and the branch
     # conditions of one path that reaches it (none when any path is free).
-    # PeaceTree and "(other)" defaults are dropped from the mod's copy: the
-    # track flips every turn, so it cannot narrow anything down.
+    # PeaceTree is dropped from the mod's copy: the track flips every turn,
+    # so it cannot narrow anything down. A switch's default output is kept
+    # as "Name=!A,B" (none of its listed values): dropped, the default
+    # branch's scenes matched every value, and "Clean Hands" answered
+    # Disclosure=Yes still led to A Sleepless Night instead of Final6.
     merged = {}
     for r in flow:
         k = (r["chapter"], r["scene"])
@@ -562,7 +572,7 @@ def main():
             continue
         seen.add(key)
         alts = ";".join(esc(l) for l in r["labels"]
-                        if not l.startswith("PeaceTree=") and not l.endswith("=(other)"))
+                        if not l.startswith("PeaceTree="))
         cond = render(simplify(r["dnf"]))
         gate = r["gate"] if re.search(r"[A-Za-z]\w*\.\w+", r["gate"]) else ""
         conditions = [c for c in (cond, gate) if c]
