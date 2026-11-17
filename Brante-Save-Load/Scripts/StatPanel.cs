@@ -1242,7 +1242,9 @@ namespace Doorstop
 		// the panel does not list. Rebuilds the rows when that changes.
 		public static void Ghosts(SceneEffects.Hero at)
 		{
-			if (Showing == Mode.Stats || _lastShown == null || at == null || at.Characters == null)
+			// only the people tabs list characters (in Destiny this rebuilt
+			// the panel as the Relations list under a lit Destiny tab)
+			if ((Showing != Mode.Family && Showing != Mode.Relations) || _lastShown == null || at == null || at.Characters == null)
 			{
 				return;
 			}
