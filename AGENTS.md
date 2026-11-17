@@ -307,13 +307,14 @@ community event sheet (`data/events.json`).
   Willpower, Deaths, Perception, Determination (chapter 1); column 2: Nobility,
   Ingenuity, Spirituality (chapter 2), each level with the middle of its two
   skills; then the six chapter-3 skills. `Forks` draws each occupation's fork
-  into its two skills, the arms marked "+" Perception's / Determination's
-  icon - `CalculateChapterParams`: Diplomacy = Perception + Nobility, Valor =
+  into its two skills (`Fork` 0.32 of a column), the arms marked "+"
+  Perception's / Determination's icon, whose hover opens that stat's pop-up -
+  `CalculateChapterParams`: Diplomacy = Perception + Nobility, Valor =
   Determination + Nobility, Manipulation/Scheming from Ingenuity,
   Theology/Eloquence from Spirituality. It needs six rows in a column
   (`FitsWidth` refuses less), else `Place`'s groups are the fallback. A stat
-  not open at the chapter shown is faded with the game's "Will unlock in
-  Chapter N" (`StatChapter`: occupations 2, skills 3, else the tab's chapter).
+  not open at the chapter shown is faded with "Unlocks in Chapter N"
+  (`Loc.K.UnlocksIn`, also under a locked tab's title; `StatChapter`: occupations 2, skills 3, else the tab's chapter).
 - **Characters are met by the scene, not the answer.** The game sets
   `CharacterModel.IsUnlocked` only through `UnlockCharacter` components;
   all 46 sit on a scene's `Window_Answer_Selection` and fire when the scene
@@ -332,8 +333,11 @@ community event sheet (`data/events.json`).
   still possible (grey), out of reach (red, struck: its chapter is over, or
   every scene/answer that earns it in scene-objectives.tsv is in
   `DestinyDone` - the scenes passed by the scene shown - or on another post's
-  track, `SceneFlow.SceneFits`). Hover: description, the window's conditions,
-  the earning scenes. `ChoiceWindow.ShowStats` fills the context.
+  track, `SceneFlow.SceneFits`). Hover: the stat pop-up with everything in
+  its description (state, description, the window's conditions, the earning
+  scenes) - its rows are sized for a stat's scale and mangled longer lines -
+  placed beside the entry's words, level with it. `dev-pick.txt` also takes
+  `destinyhover <objective>` and `forkhover`. `ChoiceWindow.ShowStats` fills the context.
   `dev-pick.txt` takes `mode destiny` and `destiny N`.
 - **A true death ends the predicted path.** The fourth death sends the game
   into `GameFinals` (true-death pages, the chapter's finale, credits), not the

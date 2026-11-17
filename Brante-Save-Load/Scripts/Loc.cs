@@ -25,7 +25,7 @@ namespace Doorstop
 			HelpAutosave, HelpCheckpoint, HelpManual, HelpOriginal,
 			EventHappens,
 			StatsTab,
-			StoryEnds, DestEarned, DestAhead, DestOpen, DestLost, DestEarnedBy, ChapterWord,
+			StoryEnds, UnlocksIn, DestEarned, DestAhead, DestOpen, DestLost, DestEarnedBy, ChapterWord,
 			
 		}
 
@@ -251,6 +251,17 @@ namespace Doorstop
 			_ja[K.ChapterWord] = "章";
 			_ko[K.ChapterWord] = "장";
 			_zh[K.ChapterWord] = "章";
+			_en[K.UnlocksIn] = "Unlocks in Chapter {0}";
+			_ru[K.UnlocksIn] = "Откроется в главе {0}";
+			_de[K.UnlocksIn] = "Ab Kapitel {0}";
+			_fr[K.UnlocksIn] = "Débloqué au chapitre {0}";
+			_es[K.UnlocksIn] = "Se desbloquea en el capítulo {0}";
+			_it[K.UnlocksIn] = "Si sblocca nel capitolo {0}";
+			_pl[K.UnlocksIn] = "Odblokowane w rozdziale {0}";
+			_tr[K.UnlocksIn] = "Bölüm {0}'de açılır";
+			_ja[K.UnlocksIn] = "第{0}章で解放";
+			_ko[K.UnlocksIn] = "{0}장에서 해금";
+			_zh[K.UnlocksIn] = "第{0}章解锁";
 			_en[K.StatsTab] = "Stats";
 			_ru[K.StatsTab] = "Характеристики";
 			_de[K.StatsTab] = "Werte";

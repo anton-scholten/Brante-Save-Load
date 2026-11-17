@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -44,7 +45,8 @@ namespace Doorstop
 		public enum Mode { Stats, Family, Relations, Destiny }
 
 		public static Mode Showing = Mode.Stats;
-		public static bool DevAllPeople;   // dev-pick "allpeople": list everyone a scene can unlock (layout test)
+		public static bool DevAllPeople;
+		public static bool DevLogHide;     // dev: log who hides the stat pop-up   // dev-pick "allpeople": list everyone a scene can unlock (layout test)
 		private const float TabStrip = 40f;   // the tabs' height
 		private static RectTransform _area, _content;
 		private static SceneEffects.Hero _lastShown, _lastNow;
@@ -168,7 +170,7 @@ namespace Doorstop
 
 		// The width of the forks between Personality's chapter-2 and
 		// chapter-3 columns, in columns.
-		private const float Fork = 0.55f;
+		private const float Fork = 0.32f;
 
 		// Personality by chapter (CalculateChapterParams): chapter 1's
 		// Willpower, Deaths, Perception, Determination; chapter 2's three
@@ -964,7 +966,7 @@ namespace Doorstop
 					{
 						if (on)
 						{
-							ShowObjectiveTooltip(obj, rrt);
+							ShowObjectiveTooltip(obj, rrt, name);
 						}
 						else
 						{
@@ -994,7 +996,7 @@ namespace Doorstop
 		// The game's stat pop-up for an objective: icon, title, the game's
 		// description, then its conditions as the Destiny window lists them,
 		// where it stands on the path and the scenes that bring it.
-		private static void ShowObjectiveTooltip(Objective o, RectTransform over)
+		private static void ShowObjectiveTooltip(Objective o, RectTransform over, TextMeshProUGUI label)
 		{
 			try
 			{
@@ -1006,27 +1008,36 @@ namespace Doorstop
 				string k = ObjectiveKey(o);
 				_tipComp.Title.text = Loc.Game(k + ".Title", k);
 				_tipComp.Icon.sprite = o.Icon;
-				string descr = Loc.Game(k + ".Description", "").Trim();
+				// everything goes in the description: the pop-up's rows are
+				// made for a stat's scale (a short range and a word) and
+				// squeezed longer lines into a narrow column
+				StringBuilder sb = new StringBuilder();
 				Fate f;
-				string state = _fates.TryGetValue(o, out f) ? "<color=#" + ColorUtility.ToHtmlStringRGB(FateColour(f)) + "><b>"
-					+ Loc.T(f == Fate.Earned ? Loc.K.DestEarned : f == Fate.Ahead ? Loc.K.DestAhead
-						: f == Fate.Lost ? Loc.K.DestLost : Loc.K.DestOpen) + "</b></color>" : "";
-				_tipComp.Description.text = (state.Length > 0 ? state + "\n" : "")
-					+ (descr.Length > 1 ? SceneEffects.NobleParticle(descr) : "<i>" + Loc.T(Loc.K.NoStatText) + "</i>");
+				if (_fates.TryGetValue(o, out f))
+				{
+					sb.Append("<color=#").Append(ColorUtility.ToHtmlStringRGB(FateColour(f))).Append("><b>")
+						.Append(Loc.T(f == Fate.Earned ? Loc.K.DestEarned : f == Fate.Ahead ? Loc.K.DestAhead
+							: f == Fate.Lost ? Loc.K.DestLost : Loc.K.DestOpen)).Append("</b></color>\n");
+				}
+				string descr = Loc.Game(k + ".Description", "").Trim();
+				sb.Append(descr.Length > 1 ? SceneEffects.NobleParticle(descr) : "<i>" + Loc.T(Loc.K.NoStatText) + "</i>");
+				List<string> conds = new List<string>();
 				if (o.Condition != null)
 				{
 					foreach (ObjectiveCondition c in o.Condition)
 					{
-						string a = Operand(c.Operand1);
-						string b = Operand(c.Operand2);
-						string line = ((a ?? "") + " " + (c.Operator ?? "") + " " + (b ?? "")).Trim();
+						string line = (Operand(c.Operand1) + " " + (c.Operator ?? "") + " " + Operand(c.Operand2)).Trim();
 						if (line.Length > 0)
 						{
-							_tipComp.SetRow(line, "", false);
+							conds.Add(line);
 						}
 					}
 				}
-				int shownScenes = 0;
+				if (conds.Count > 0)
+				{
+					sb.Append("\n\n<size=85%>").Append(string.Join("\n", conds.ToArray())).Append("</size>");
+				}
+				List<string> from = new List<string>();
 				foreach (KeyValuePair<string, int> e in SceneObjectives.Earners((int)o.Name))
 				{
 					string title = SceneTexts.Title(e.Key);
@@ -1035,14 +1046,33 @@ namespace Doorstop
 						continue;
 					}
 					string answer = e.Value > 0 ? SceneTexts.Name(e.Key, "ButtonDescription" + e.Value) : "";
-					_tipComp.SetRow(shownScenes == 0 ? Loc.T(Loc.K.DestEarnedBy) + ": " + title : title,
-						SceneEffects.NobleParticle(answer), DestinyDone.Contains(e.Key));
-					if (++shownScenes == 5)
+					string line = "\u2022 " + title + (answer.Length > 0 ? ": " + SceneEffects.NobleParticle(answer) : "");
+					if (DestinyDone.Contains(e.Key))
+					{
+						line = "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Grey) + ">" + line + "</color>";
+					}
+					if (!from.Contains(line))
+					{
+						from.Add(line);
+					}
+					if (from.Count == 6)
 					{
 						break;
 					}
 				}
-				PlaceTooltip(over);
+				if (from.Count > 0)
+				{
+					sb.Append("\n\n<size=85%><b>").Append(Loc.T(Loc.K.DestEarnedBy)).Append(":</b>\n")
+						.Append(string.Join("\n", from.ToArray())).Append("</size>");
+				}
+				_tipComp.Description.text = sb.ToString();
+				// beside the entry's words (its row spans the column), level
+				// with it, rather than over the next column
+				float words = label != null ? label.GetPreferredValues(label.text).x : 0f;
+				Vector3 end = label != null
+					? label.rectTransform.TransformPoint(new Vector3(label.rectTransform.rect.xMin + words + 10f, 0f, 0f))
+					: Vector3.zero;
+				PlaceTooltip(over, label != null ? (Vector3?)end : null, true);
 			}
 			catch (Exception e)
 			{
@@ -1071,6 +1101,35 @@ namespace Doorstop
 			{
 				Show(_lastShown, _lastNow, _lastChapter);
 			}
+		}
+
+		// dev-pick's "destinyhover <objective>": hold that entry's pop-up
+		public static void DevHoverObjective(string key)
+		{
+			foreach (KeyValuePair<Objective, TextMeshProUGUI> kv in _destRows)
+			{
+				if (ObjectiveKey(kv.Key) == key || kv.Key.name == key)
+				{
+					DevLogHide = true;
+					ShowObjectiveTooltip(kv.Key, (RectTransform)kv.Value.transform.parent, kv.Value);
+					ModLog.Info("StatPanel: holding the pop-up of " + key);
+					return;
+				}
+			}
+			ModLog.Info("StatPanel: no Destiny entry " + key);
+		}
+
+		// dev-pick's "forkhover": hold the pop-up of the first "+" icon
+		public static void DevHoverFork()
+		{
+			DevLogHide = true;
+			Transform icon = _forks != null ? _forks.transform.Find("Adds") : null;
+			TreeHover th = icon != null ? icon.GetComponent<TreeHover>() : null;
+			if (th != null && th.OnHover != null)
+			{
+				th.OnHover(true);
+			}
+			ModLog.Info("StatPanel: fork hover " + (th != null ? "held" : "not found"));
 		}
 
 		// dev: the Destiny tab's entries and their colours, for the log
@@ -1755,7 +1814,7 @@ namespace Doorstop
 				bool locked = chapter > 0 && tab.Chapter > chapter;
 				string name = TabTitle(tab);
 				tab.Title.text = locked
-					? name + "\n<size=58%>" + Loc.Game("HUD.WillOpen" + tab.Chapter, "") + "</size>"
+					? name + "\n<size=58%>" + UnlocksIn(tab.Chapter) + "</size>"
 					: name;
 				tab.Title.color = locked ? Palette.Fade(Palette.Accent, 0.45f) : Palette.Accent;
 			}
@@ -1787,7 +1846,7 @@ namespace Doorstop
 					// a stat the game has not opened at that chapter says when
 					// it will (a whole locked tab says it under its title)
 					bool note = projected || locked && (row.Tab == null || row.Tab.Chapter < opens);
-					row.Descr.text = note ? Loc.Game("HUD.WillOpen" + opens, Segment(row.Param, value)) : Segment(row.Param, value);
+					row.Descr.text = note ? UnlocksIn(opens) : Segment(row.Param, value);
 				}
 				FitText(row, _fitLimit);
 			}
@@ -1939,12 +1998,12 @@ namespace Doorstop
 			hrt.anchorMax = Vector2.one;
 			hrt.offsetMin = Vector2.zero;
 			hrt.offsetMax = Vector2.zero;
-			holder.AddComponent<CanvasGroup>().blocksRaycasts = false;
+			holder.AddComponent<CanvasGroup>();   // only the "+" icons take the pointer
 			_forks = holder;
 			Color ink = Palette.Fade(Palette.Muted, 0.85f);
 			const float thick = 2.5f;
 			float xs = xFrom + 6f, xe = xTo - 4f;
-			float xm = xs + (xe - xs) * 0.28f;
+			float xm = xs + (xe - xs) * 0.12f;
 			float head = Mathf.Clamp(14f * scale / 0.7f, 9f, 18f);
 			Parameter[] adds = { SceneEffects.ParameterAsset("Curiosity"), SceneEffects.ParameterAsset("Activity") };
 			for (int i = 0; i < b; i++)
@@ -1958,8 +2017,9 @@ namespace Doorstop
 					Bar(hrt, xm - thick * 0.5f, y, xe - head + 1f, y, thick, ink);
 					Arrowhead(hrt, xe, y, head, ink);
 					// "+ <icon>" over the arm
-					float cx = (xm + xe - head) * 0.5f;
-					float icon = Mathf.Clamp(30f * scale / 0.7f, 18f, 40f);
+					float icon = Mathf.Clamp(42f * scale / 0.7f, 24f, 56f);
+					// "+" then the icon, clear of the fork's upright
+					float cx = xm + 8f + icon * 0.55f + icon * 0.5f;
 					GameObject lg = new GameObject("Plus", typeof(RectTransform));
 					lg.transform.SetParent(hrt, false);
 					TextMeshProUGUI plus = lg.AddComponent<TextMeshProUGUI>();
@@ -1975,7 +2035,7 @@ namespace Doorstop
 					plus.alignment = TextAlignmentOptions.MidlineRight;
 					plus.raycastTarget = false;
 					RectTransform prt = plus.rectTransform;
-					Pin(prt, new Vector2(cx - icon * 0.5f - 2f, y + icon * 0.5f + 2f), new Vector2(icon, icon), new Vector2(1f, 0.5f));
+					Pin(prt, new Vector2(cx - icon * 0.5f - 2f, y + icon * 0.5f + 2f), new Vector2(icon * 0.55f, icon), new Vector2(1f, 0.5f));
 					if (adds[k] != null && adds[k].Icon != null)
 					{
 						GameObject ig = new GameObject("Adds", typeof(RectTransform));
@@ -1983,8 +2043,24 @@ namespace Doorstop
 						Image img = ig.AddComponent<Image>();
 						img.sprite = adds[k].Icon;
 						img.preserveAspect = true;
-						img.raycastTarget = false;
-						Pin(img.rectTransform, new Vector2(cx - icon * 0.5f, y + icon * 0.5f + 2f), new Vector2(icon, icon), new Vector2(0f, 0.5f));
+						img.raycastTarget = true;
+						RectTransform irt = img.rectTransform;
+						Pin(irt, new Vector2(cx - icon * 0.5f, y + icon * 0.5f + 2f), new Vector2(icon, icon), new Vector2(0f, 0.5f));
+						// the stat's own pop-up (its name, scale, value) on hover
+						Parameter added = adds[k];
+						TreeHover th = ig.AddComponent<TreeHover>();
+						th.OnHover = delegate(bool on)
+						{
+							Row r = _rows.Find(x => x.Param == added);
+							if (on && r != null)
+							{
+								ShowTooltip(r, irt);
+							}
+							else
+							{
+								HideTooltip();
+							}
+						};
 					}
 				}
 			}
@@ -2236,6 +2312,13 @@ namespace Doorstop
 
 		private static void PlaceTooltip(RectTransform over)
 		{
+			PlaceTooltip(over, null, false);
+		}
+
+		// `rightEnd` (world): where what `over` shows ends, when its box is
+		// wider; `level`: next to `over` vertically rather than mid-screen.
+		private static void PlaceTooltip(RectTransform over, Vector3? rightEnd, bool level)
+		{
 			// It is taller than the space above the stats, so it goes beside the
 			// row - right of it, or left where there is no room - centred
 			// on the screen's height, and pushed inside the window.
@@ -2249,6 +2332,10 @@ namespace Doorstop
 			over.GetWorldCorners(c);
 			Vector2 lo = box.InverseTransformPoint(c[0]);
 			Vector2 hi = box.InverseTransformPoint(c[2]);
+			if (rightEnd.HasValue)
+			{
+				hi.x = Mathf.Min(hi.x, ((Vector2)box.InverseTransformPoint(rightEnd.Value)).x);
+			}
 			Vector2 size = rt.rect.size;
 			Rect area = box.rect;
 			const float gap = 12f;
@@ -2259,12 +2346,17 @@ namespace Doorstop
 			}
 			x = Mathf.Clamp(x, area.xMin + gap, area.xMax - gap - size.x);
 			// every stat's pop-up at the same height: centred on the screen
-			float y = Mathf.Clamp(area.center.y - size.y * 0.5f, area.yMin + gap, area.yMax - gap - size.y);
+			float mid = level ? (lo.y + hi.y) * 0.5f : area.center.y;
+			float y = Mathf.Clamp(mid - size.y * 0.5f, area.yMin + gap, area.yMax - gap - size.y);
 			_tip.transform.position = box.TransformPoint(new Vector3(x, y, 0f));
 		}
 
 		public static void HideTooltip()
 		{
+			if (DevLogHide && _tip != null && _tip.activeSelf)
+			{
+				ModLog.Info("StatPanel: tooltip hidden by\n" + Environment.StackTrace);
+			}
 			if (_tip != null)
 			{
 				if (_tipComp != null)
@@ -2273,6 +2365,14 @@ namespace Doorstop
 				}
 				_tip.SetActive(false);
 			}
+		}
+
+		// "Unlocks in Chapter II": shorter than the game's "Will unlock in
+		// Chapter II "Adolescence"" (HUD.WillOpenN).
+		private static string UnlocksIn(int chapter)
+		{
+			string[] roman = { "I", "II", "III", "IV", "V" };
+			return string.Format(Loc.T(Loc.K.UnlocksIn), chapter >= 1 && chapter <= 5 ? roman[chapter - 1] : chapter.ToString());
 		}
 
 		// The game's word for where a value sits on the stat's scale.

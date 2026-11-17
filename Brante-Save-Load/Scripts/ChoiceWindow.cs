@@ -6422,6 +6422,16 @@ namespace Doorstop
 						}
 						continue;
 					}
+					else if (l.StartsWith("destinyhover ", StringComparison.Ordinal))
+					{
+						StatPanel.DevHoverObjective(l.Substring(13).Trim());
+						continue;
+					}
+					else if (l == "forkhover")
+					{
+						StatPanel.DevHoverFork();
+						continue;
+					}
 					else if (l.StartsWith("destiny ", StringComparison.Ordinal))
 					{
 						// the Destiny tab's chapter (0: the hero's), logged
