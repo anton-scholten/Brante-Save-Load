@@ -180,6 +180,9 @@ delete that folder too to remove them.
 
 [docs/FINDINGS.md](docs/FINDINGS.md) explains how the game and the mod work, [MODDING.md](MODDING.md) is a compact how-to, and [AGENTS.md](AGENTS.md) covers working on the mod (build with `./tools/build.sh`).
 
+## Acknowledgements
+Thanks to SVR7 for their help identifying missing and incorrect information listed by the mod as well as layout suggestions that greatly improved the final look of the tree view.
+
 ## Licence
 
 GPL-3.0 (see LICENSE). Bundled: Unity Doorstop 4.6.0 (LGPL-2.1, vendor/doorstop/LICENSE), Lib.Harmony 2.3.3 (MIT, vendor/LICENSE-harmony.txt).
