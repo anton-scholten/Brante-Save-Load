@@ -370,7 +370,13 @@ community event sheet (`data/events.json`).
   title alone - listed per answer it read as the same line twice - else
   each earning answer with what it needs (`Needs`: and-requirements, then
   the or-group; Last Respects: the Nobleman's Sacrament, or Nobility >= 6
-  or Gregor >= 2). `dev-pick.txt` `destinyall` logs every chapter's
+  or Gregor >= 2). Until the destiny is earned, a scene behind the scene
+  shown or on another post's track is struck in the out-of-reach red, and
+  so is each condition part that can no longer be met (`PartRuledOut`;
+  needing a destiny that is out of reach counts, one level deep: Blood
+  Tide's Nobleman's Sacrament once chapter 1 is over without it, the
+  Tournament without The Fencing Lesson), so the ways left stand out.
+  `dev-pick.txt` `destinyall` logs every chapter's
   pop-up text ("DEV DESTINY").
 - **Objectives earned are listed in the pop-ups.** An answer's or an event's
   pop-up adds what it earns (`E` effects: `SceneEffects.Shown`,

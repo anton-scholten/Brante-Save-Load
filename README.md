@@ -122,7 +122,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
   - Endings that finish the game (Glory to the Empire!, The Judgment of the Twins) end the path; Deaths shows True Death.
   - Fixed: revealing Sophia's plan in Clean Hands now leads to Glory to the Empire!, not A Sleepless Night; Load scene stops if the story ends before the scene you picked.
   - Fixed: chapter 4's family scenes are predicted in the game's order again (before the post's own in each season).
-  - Destiny pop-ups: each scene listed once under "Comes from", with what each answer needs; "one of" conditions shown as in the game.
+  - Destiny pop-ups: each scene listed once under "Comes from", with what each answer needs; "one of" conditions shown as in the game; options that can no longer happen are crossed out one by one.
   - Destiny: outcomes are crossed out as soon as they can't happen (e.g. after a character's death); Tommas's New Life shows on every path.
 - **16 Nov 2026:**
   - Destiny tab: the chapter's outcomes, and what a choice brings or rules out.

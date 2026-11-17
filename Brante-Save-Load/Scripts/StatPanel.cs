@@ -741,7 +741,7 @@ namespace Doorstop
 		// which one is enough (the window's "or" container: Blood Tide is the
 		// ritual and the Nobleman's Sacrament or Gregor >= 2). Other parts
 		// can still change.
-		private static bool RuledOut(Objective o, SceneEffects.Hero h)
+		private static bool RuledOut(Objective o, SceneEffects.Hero h, int heroChapter, int depth)
 		{
 			if (o.Condition == null || h == null)
 			{
@@ -750,7 +750,7 @@ namespace Doorstop
 			int ors = 0, orsOut = 0;
 			foreach (ObjectiveCondition oc in o.Condition)
 			{
-				bool gone = PartRuledOut(oc.RealCondition, h);
+				bool gone = PartRuledOut(oc.RealCondition, h, heroChapter, depth);
 				if (oc.OrCondition)
 				{
 					ors++;
@@ -764,7 +764,7 @@ namespace Doorstop
 			return ors > 0 && orsOut == ors;
 		}
 
-		private static bool PartRuledOut(ObjectiveConditions rc, SceneEffects.Hero h)
+		private static bool PartRuledOut(ObjectiveConditions rc, SceneEffects.Hero h, int heroChapter, int depth)
 		{
 			if (rc == null)
 			{
@@ -794,9 +794,14 @@ namespace Doorstop
 			{
 				foreach (_Scripts.Helpers.ConditionByObjective c in rc.ByObjectives)
 				{
-					if (c != null && c.Not && c.Objective != null && Has(h, c.Objective))
+					if (c == null || c.Objective == null)
 					{
-						return true;
+						continue;
+					}
+					if (c.Not ? Has(h, c.Objective)
+						: depth < 1 && !Has(h, c.Objective) && FateOf(c.Objective, h, heroChapter, depth + 1) == Fate.Lost)
+					{
+						return true;   // must not have it and has it, or needs it and it is out of reach
 					}
 				}
 			}
@@ -849,6 +854,14 @@ namespace Doorstop
 
 		private static Fate FateOf(Objective o, SceneEffects.Hero shown, int heroChapter)
 		{
+			return FateOf(o, shown, heroChapter, 0);
+		}
+
+		// `depth`: a condition on another objective asks for that one's fate,
+		// one level deep (no objective's list needs more, and a cycle would
+		// never end)
+		private static Fate FateOf(Objective o, SceneEffects.Hero shown, int heroChapter, int depth)
+		{
 			if (Has(shown, o))
 			{
 				return Fate.Earned;
@@ -862,7 +875,7 @@ namespace Doorstop
 			{
 				return Fate.Lost;   // its chapter is over
 			}
-			if (!death && RuledOut(o, shown))
+			if (!death && RuledOut(o, shown, heroChapter, depth))
 			{
 				return Fate.Lost;   // a condition that can no longer be met (a character is dead)
 			}
@@ -1144,6 +1157,10 @@ namespace Doorstop
 							// "The Family in Ruins !=": the objective must not be had
 							line = Loc.T(Loc.K.NotWord) + " " + Operand(c.Operand1);
 						}
+						if (line.Length > 0 && f != Fate.Earned && PartRuledOut(c.RealCondition, _lastShown, _lastChapter, 0))
+						{
+							line = Struck(line);   // can no longer be met: the options left stand out
+						}
 						if (line.Length > 0)
 						{
 							(c.OrCondition ? ors : conds).Add(line);
@@ -1163,7 +1180,7 @@ namespace Doorstop
 				{
 					sb.Append("\n\n<size=85%>").Append(string.Join("\n", conds.ToArray())).Append("</size>");
 				}
-				List<string> from = EarnedByLines(o);
+				List<string> from = EarnedByLines(o, _fates.TryGetValue(o, out f) ? f : Fate.Open);
 				if (from.Count > 0)
 				{
 					sb.Append("\n\n<size=85%><b>").Append(Loc.T(Loc.K.DestEarnedBy)).Append(":</b>\n")
@@ -1192,7 +1209,7 @@ namespace Doorstop
 		// line twice. Otherwise each earning answer, with what it needs
 		// (Last Respects: the Will destiny, or Nobility >= 6 or Gregor >= 2).
 		// Grey: the scene is behind the scene shown.
-		private static List<string> EarnedByLines(Objective o)
+		private static List<string> EarnedByLines(Objective o, Fate fate)
 		{
 			List<string> titles = new List<string>();
 			Dictionary<string, List<KeyValuePair<string, int>>> byTitle = new Dictionary<string, List<KeyValuePair<string, int>>>();
@@ -1217,10 +1234,13 @@ namespace Doorstop
 				List<KeyValuePair<string, int>> list = byTitle[title];
 				bool done = false;
 				bool whole = false;
+				bool open = false;
 				foreach (KeyValuePair<string, int> e in list)
 				{
-					done |= DestinyDone.Contains(e.Key);
+					bool passed = DestinyDone.Contains(e.Key) || PastChapter(e.Key);
+					done |= passed;
 					whole |= e.Value <= 0 || WholeScene(e.Key, list);
+					open |= !passed && OnTrack(e.Key);
 				}
 				List<string> mine = new List<string>();
 				if (whole)
@@ -1248,7 +1268,11 @@ namespace Doorstop
 				}
 				foreach (string line in mine)
 				{
-					lines.Add(done ? "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Grey) + ">" + line + "</color>" : line);
+					// earned: the scenes behind are grey; not earned, a scene
+					// passed (or on another post's track) is struck, so the
+					// ways left to earn it stand out
+					lines.Add(fate == Fate.Earned ? (done ? "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Grey) + ">" + line + "</color>" : line)
+						: open ? line : Struck(line));
 				}
 				if (lines.Count >= 6)
 				{
@@ -1256,6 +1280,26 @@ namespace Doorstop
 				}
 			}
 			return lines;
+		}
+
+		// A line that can no longer happen: struck, in the "out of reach" red.
+		private static string Struck(string line)
+		{
+			return "<s><color=#" + ColorUtility.ToHtmlStringRGB(FateColour(Fate.Lost)) + ">" + line + "</color></s>";
+		}
+
+		// Whether `scene`'s chapter is over for the hero shown.
+		private static bool PastChapter(string scene)
+		{
+			int ch = SceneFlow.ChapterOf(scene);
+			return ch > 0 && _lastChapter > 0 && ch < _lastChapter;
+		}
+
+		// Whether `scene` is on the post's track along the path (unknown post: yes).
+		private static bool OnTrack(string scene)
+		{
+			return string.IsNullOrEmpty(DestinyPost)
+				|| SceneFlow.SceneFits(scene, new Dictionary<string, string> { { "Post", DestinyPost } });
 		}
 
 		// Whether the earning answers of `scene` in `list` are all its answers.
