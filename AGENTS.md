@@ -302,7 +302,10 @@ community event sheet (`data/events.json`).
   measured on what a row draws (icon to slider end), not its 375-unit box.
   Heir is left out too (`StatPanel.LeftOut`: only Stephan or the hero).
   Work is ordered Career, Justice, Inquisition power, Tolerance of faiths,
-  Unrest, Spy network; House as Reputation, Wealth, Unity.
+  Unrest, Spy network (the game's `WorkWindowController` panels: Judge,
+  Inquisitor, Rebel, two stats each); the Revolt as its window (The Revolt,
+  Troops, Nobles, Clergy, Common Folk); House as Reputation, Wealth, Unity.
+  `dev-pick.txt` `windows` logs both game windows' rows in layout order.
 - **Personality is drawn by chapter (`StatPanel.FlowPlace`).** Column 1:
   Willpower, Deaths, Perception, Determination (chapter 1); column 2: Nobility,
   Spirituality, Ingenuity (chapter 2, the game's own order), each level with the middle of its two

@@ -6565,6 +6565,33 @@ namespace Doorstop
 						}
 						continue;
 					}
+					else if (l == "windows")
+					{
+						// the game's own stat windows: their rows in layout order
+						List<MonoBehaviour> wins = new List<MonoBehaviour>();
+						wins.AddRange(Resources.FindObjectsOfTypeAll<_Scripts.AMVCC.Views.Windows.Work.WorkWindowController>());
+						wins.AddRange(Resources.FindObjectsOfTypeAll<_Scripts.AMVCC.Views.Windows.InsurrectionWindowController>());
+						foreach (MonoBehaviour w in wins)
+						{
+							if (w == null)
+							{
+								continue;
+							}
+							foreach (_Scripts.AMVCC.Views.Windows.ParameterGetSet pg in w.GetComponentsInChildren<_Scripts.AMVCC.Views.Windows.ParameterGetSet>(true))
+							{
+								Transform t = pg.transform;
+								string path = t.name;
+								for (Transform q = t.parent; q != null && q != w.transform; q = q.parent)
+								{
+									path = q.name + "/" + path;
+								}
+								Vector3 at = w.transform.InverseTransformPoint(t.position);
+								ModLog.Info("DEV PICK: window " + w.GetType().Name + " " + path + " = "
+									+ (pg.Parameter != null ? pg.Parameter.name : "?") + " at (" + at.x.ToString("0") + ", " + at.y.ToString("0") + ")");
+							}
+						}
+						continue;
+					}
 					else if (l == "wheel")
 					{
 						// one wheel notch down over the tree, then over its
