@@ -552,6 +552,23 @@ namespace Doorstop
 			// spare height goes under the titles, so a locked tab's note has
 			// room before its first stat
 			float gap = Mathf.Clamp(usable - rowsFit * pitch * scale, 0f, 20f);
+			// the rows spread down to the panel's foot (up to 1.6 times the
+			// game's spacing) rather than leave the space under them empty
+			int rowsUsed = 1;
+			foreach (Tab t in _tabs)
+			{
+				float c;
+				foreach (Vector2 v in Place(t, rowsFit, out c))
+				{
+					rowsUsed = Math.Max(rowsUsed, Mathf.CeilToInt(v.y + 0.01f));
+				}
+			}
+			float step = pitch * scale;
+			if (rowsUsed > 1)
+			{
+				float rowDrawn = (m.Bottom - m.Top) * scale;
+				step = Mathf.Clamp((usable - gap - 8f - rowDrawn) / (rowsUsed - 1), pitch * scale, pitch * scale * 1.6f);
+			}
 			_statScale = scale;
 			string layoutKey = area.rect.size + " " + scale.ToString("0.00") + " " + rowsFit;
 			if (layoutKey != _layoutLogged)
@@ -605,7 +622,7 @@ namespace Doorstop
 					// between tabs is as far from a slider as from an icon
 					rrt.anchoredPosition = new Vector2(
 						x + sub * subW + (subW - (contentRight - contentLeft) * scale) * 0.5f - contentLeft * scale,
-						-(Header + gap + r * pitch * scale - contentTop * scale));
+						-(Header + gap + r * step - contentTop * scale));
 					rrt.gameObject.SetActive(true);
 					_fitLimit = contentRight;
 					FitText(row, _fitLimit);
@@ -617,7 +634,7 @@ namespace Doorstop
 					float w = (contentRight - contentLeft) * scale;
 					float rowH = (m.Bottom - m.Top) * scale;
 					Forks(area, tab, x + subW + (subW + w) * 0.5f, x + (2f + Fork) * subW + (subW - w) * 0.5f,
-						r => -(Header + gap + r * pitch * scale) - rowH * 0.5f, scale);
+						r => -(Header + gap + r * step) - rowH * 0.5f, scale);
 				}
 				x += subs * subW;
 			}
@@ -921,7 +938,7 @@ namespace Doorstop
 				float x = ci * colW;
 				if (ci > 0)
 				{
-					Separator(area, x);
+					Separator(area, x, top);   // from the category titles down, not through the chapter bar
 				}
 				TextMeshProUGUI head = Label(area, CategoryTitle(cats[ci], chapter), template);
 				head.fontSize = 21f;
@@ -2125,7 +2142,7 @@ namespace Doorstop
 
 		// A light vertical rule between two categories, in the colour of the
 		// tree's answer boxes.
-		private static void Separator(RectTransform area, float x)
+		private static void Separator(RectTransform area, float x, float top = 0f)
 		{
 			GameObject go = new GameObject("Separator", typeof(RectTransform));
 			go.transform.SetParent(area, false);
@@ -2133,8 +2150,8 @@ namespace Doorstop
 			rt.anchorMin = new Vector2(0f, 0f);
 			rt.anchorMax = new Vector2(0f, 1f);
 			rt.pivot = new Vector2(0.5f, 0.5f);
-			rt.anchoredPosition = new Vector2(x, 0f);
-			rt.sizeDelta = new Vector2(3f, -8f);
+			rt.anchoredPosition = new Vector2(x, -top * 0.5f);
+			rt.sizeDelta = new Vector2(3f, -8f - top);
 			Image img = go.AddComponent<Image>();
 			img.color = Palette.Card;
 			img.raycastTarget = false;
