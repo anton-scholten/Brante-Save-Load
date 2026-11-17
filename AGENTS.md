@@ -337,7 +337,10 @@ community event sheet (`data/events.json`).
   its description (state, description, the window's conditions, the earning
   scenes) - its rows are sized for a stat's scale and mangled longer lines -
   placed beside the entry's words, level with it. `dev-pick.txt` also takes
-  `destinyhover <objective>` and `forkhover`. `ChoiceWindow.ShowStats` fills the context.
+  `destinyhover <objective>` and `forkhover`. Hovering an answer or event
+  (`HighlightDestiny`) backs the entries it earns green and the ones it puts
+  out of reach red (every way to earn them is another answer of that scene
+  or already behind the scene shown). `ChoiceWindow.ShowStats` fills the context.
   `dev-pick.txt` takes `mode destiny` and `destiny N`.
 - **A true death ends the predicted path.** The fourth death sends the game
   into `GameFinals` (true-death pages, the chapter's finale, credits), not the
@@ -381,7 +384,8 @@ community event sheet (`data/events.json`).
   rows (`StatPanel.Ghosts`, alpha 0.3, values from that hero); leaving
   clears them (`ClearHighlight`). `dev-pick.txt` takes `hoverhead <scene>`.
 - **The tree never scrolls vertically.** `LayoutTreeArea` makes it as tall as
-  its tallest column (answer boxes `TreeNodeH` 34 in `TreeRowH` 40 rows, the
+  the scene with the most answers in the whole story (`SceneTexts.MostAnswers`:
+  7, three chapter-5 scenes), so the stats below never move with the path (answer boxes `TreeNodeH` 34 in `TreeRowH` 40 rows, the
   17-unit text unchanged) and gives the stats the rest (~0.7 of the game's row
   size at 1080p). `ScrollRect.vertical` is off and `TreeWheel` turns every
   vertical wheel notch into a sideways one (down = newer columns).

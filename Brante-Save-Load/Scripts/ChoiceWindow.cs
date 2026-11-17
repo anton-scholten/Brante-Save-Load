@@ -2458,7 +2458,10 @@ namespace Doorstop
 			float width = 30f + cols.Count * TreeColW;
 			// room under the answers for a column's foot note (Current,
 			// Upcoming, Possible depending on ...: up to three lines)
-			float height = TreeTop + rows * TreeRowH + 20f + 52f;
+			// as tall as the scene with the most answers anywhere in the story
+			// (7), not the tallest drawn: the tree and the stats under it
+			// keep their place whatever the path shows
+			float height = TreeTop + Math.Max(rows, SceneTexts.MostAnswers()) * TreeRowH + 20f + 52f;
 			SetContentSize(width, height);
 			SetStoryProgress(_focusDraw >= 0 ? (30f + (_focusDraw + 0.5f) * TreeColW) / width : 0f);
 			if (!reuse)
@@ -2754,6 +2757,8 @@ namespace Doorstop
 						StatPanel.Ghosts(after);   // characters met by then, not yet listed
 						StatPanel.HighlightChanges(before, after);
 					}
+					// and the story objectives it brings or rules out (Destiny tab)
+					StatPanel.HighlightDestiny(n.Col.Scene, n.Col.Event ? 0 : SceneEffects.ButtonIndex(c.Name), before);
 				}
 				else
 				{

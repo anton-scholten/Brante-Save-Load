@@ -1986,8 +1986,79 @@ namespace Doorstop
 			}
 		}
 
+		// While an answer (or an event) is hovered, on the Destiny tab: the
+		// objectives it earns get a green back, the ones it takes out of
+		// reach a red one - every way to earn them is another answer of this
+		// scene or is behind the scene shown (DestinyDone). `button` 0: the
+		// scene itself (an event). Null scene: clear.
+		public static void HighlightDestiny(string scene, int button, SceneEffects.Hero before)
+		{
+			if (Showing != Mode.Destiny)
+			{
+				return;
+			}
+			List<int> earns = scene != null ? new List<int>(SceneObjectives.For(scene, button)) : new List<int>();
+			if (scene != null && button > 0)
+			{
+				earns.AddRange(SceneObjectives.For(scene, 0));   // what the scene earns whatever is answered
+			}
+			foreach (KeyValuePair<Objective, TextMeshProUGUI> kv in _destRows)
+			{
+				Objective o = kv.Key;
+				Fate f;
+				if (!_fates.TryGetValue(o, out f))
+				{
+					continue;
+				}
+				StyleObjective(kv.Value, f);
+				if (scene == null || f == Fate.Earned || f == Fate.Lost || Has(before, o))
+				{
+					continue;
+				}
+				bool brings = earns.Contains((int)o.Name)
+					|| (o.Name == ObjectiveEnum.ИстиннаяСмерть && TrueDeathAnswer(scene, button, before));
+				bool rulesOut = false;
+				if (!brings && button > 0 && o.Name != ObjectiveEnum.ИстиннаяСмерть)
+				{
+					bool here = false, elsewhere = false;
+					foreach (KeyValuePair<string, int> e in SceneObjectives.Earners((int)o.Name))
+					{
+						if (e.Key == scene)
+						{
+							here |= e.Value != button && e.Value != 0;
+						}
+						else if (!DestinyDone.Contains(e.Key))
+						{
+							elsewhere = true;
+						}
+					}
+					rulesOut = here && !elsewhere;
+				}
+				if (brings || rulesOut)
+				{
+					Image back = kv.Value.transform.parent.GetComponent<Image>();
+					if (back != null)
+					{
+						back.color = Palette.Fade(brings ? Palette.Good : Palette.Bad, 0.32f);
+					}
+				}
+			}
+		}
+
+		private static bool TrueDeathAnswer(string scene, int button, SceneEffects.Hero before)
+		{
+			if (button <= 0 || before == null || before.Stats == null)
+			{
+				return false;
+			}
+			SceneEffects.Hero after = before.Clone();
+			after.Apply(SceneEffects.For(scene, "ButtonDescription" + button));
+			return after.Stats.Death >= 4;
+		}
+
 		public static void ClearHighlight()
 		{
+			HighlightDestiny(null, 0, null);
 			HighlightChanges(null, null);
 			if (_ghostList.Count > 0)
 			{

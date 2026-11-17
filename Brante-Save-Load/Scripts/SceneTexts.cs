@@ -141,6 +141,21 @@ namespace Doorstop
 		}
 
 		// Answers offered at a scene, in key order (ButtonDescription1 first).
+		// The most answers any scene has (7: three chapter-5 scenes).
+		public static int MostAnswers()
+		{
+			Load();
+			int most = 0;
+			if (_scenes != null)
+			{
+				foreach (Scene s in _scenes.Values)
+				{
+					most = Math.Max(most, s.Buttons.Count);
+				}
+			}
+			return most;
+		}
+
 		public static List<KeyValuePair<string, string>> Buttons(string scene)
 		{
 			Load();
