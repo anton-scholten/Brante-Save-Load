@@ -1178,7 +1178,9 @@ namespace Doorstop
 				}
 				if (conds.Count > 0)
 				{
-					sb.Append("\n\n<size=85%>").Append(string.Join("\n", conds.ToArray())).Append("</size>");
+					// headed like "Comes from:" below, so the two lists read apart
+					sb.Append("\n\n<size=85%><b>").Append(Loc.T(Loc.K.Requires)).Append(":</b>\n")
+						.Append(string.Join("\n", conds.ToArray())).Append("</size>");
 				}
 				List<string> from = EarnedByLines(o, _fates.TryGetValue(o, out f) ? f : Fate.Open);
 				if (from.Count > 0)
