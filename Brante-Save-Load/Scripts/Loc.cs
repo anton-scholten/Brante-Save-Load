@@ -18,7 +18,7 @@ namespace Doorstop
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, Current, NothingYet,
 			KindAll, KindAutosave, KindCheckpoint, KindOriginal, ShowMore,
-			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, OrWord, NoSaveBefore, PickBlocked, ResetPath, PickNext, OnThisScene, ReplayLoading, ReplayProgress, ReplayLeft, ReplayStop, UnitSec, UnitMin,
+			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, OrWord, CopyPathId, PastePathId, PathIdCopied, PathIdBad, PathIdLoading, NoSaveBefore, PickBlocked, ResetPath, PickNext, OnThisScene, ReplayLoading, ReplayProgress, ReplayLeft, ReplayStop, UnitSec, UnitMin,
 			PickConflict, NothingToLoad,
 			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick, ReplayOffPath, ReplayDeath, ReplayStopped,
 			ReplaySkipped, StartNotOnPath,
@@ -251,6 +251,61 @@ namespace Doorstop
 			_ja[K.OrWord] = "または";
 			_ko[K.OrWord] = "또는";
 			_zh[K.OrWord] = "或";
+			_en[K.CopyPathId] = "Copy path ID: the scene on screen and everything about it, as text to paste into another game";
+			_en[K.PastePathId] = "Paste path ID: load the scene and setup a copied path ID holds (this game is kept as a “Before load” save)";
+			_en[K.PathIdCopied] = "Path ID copied ({0} characters).";
+			_en[K.PathIdBad] = "The clipboard holds no valid path ID: {0}.";
+			_en[K.PathIdLoading] = "Loading the pasted path ID…";
+			_ru[K.CopyPathId] = "Копировать ID пути: сцена на экране и всё о ней, текстом для вставки в другую игру";
+			_ru[K.PastePathId] = "Вставить ID пути: загрузить сцену и состояние из скопированного ID (эта игра сохранится как «Перед загрузкой»)";
+			_ru[K.PathIdCopied] = "ID пути скопирован ({0} символов).";
+			_ru[K.PathIdBad] = "В буфере обмена нет правильного ID пути: {0}.";
+			_ru[K.PathIdLoading] = "Загрузка вставленного ID пути…";
+			_de[K.CopyPathId] = "Pfad-ID kopieren: die Szene auf dem Bildschirm und alles dazu, als Text für ein anderes Spiel";
+			_de[K.PastePathId] = "Pfad-ID einfügen: Szene und Stand einer kopierten Pfad-ID laden (dieses Spiel bleibt als „Vor dem Laden“ erhalten)";
+			_de[K.PathIdCopied] = "Pfad-ID kopiert ({0} Zeichen).";
+			_de[K.PathIdBad] = "Die Zwischenablage enthält keine gültige Pfad-ID: {0}.";
+			_de[K.PathIdLoading] = "Eingefügte Pfad-ID wird geladen…";
+			_fr[K.CopyPathId] = "Copier l’ID de parcours : la scène à l’écran et tout son état, en texte à coller dans une autre partie";
+			_fr[K.PastePathId] = "Coller un ID de parcours : charger la scène et l’état qu’il contient (cette partie est gardée en sauvegarde « Avant chargement »)";
+			_fr[K.PathIdCopied] = "ID de parcours copié ({0} caractères).";
+			_fr[K.PathIdBad] = "Le presse-papiers ne contient pas d’ID de parcours valide : {0}.";
+			_fr[K.PathIdLoading] = "Chargement de l’ID de parcours collé…";
+			_es[K.CopyPathId] = "Copiar ID de ruta: la escena en pantalla y todo su estado, como texto para pegar en otra partida";
+			_es[K.PastePathId] = "Pegar ID de ruta: cargar la escena y el estado que contiene (esta partida se guarda como «Antes de cargar»)";
+			_es[K.PathIdCopied] = "ID de ruta copiado ({0} caracteres).";
+			_es[K.PathIdBad] = "El portapapeles no contiene un ID de ruta válido: {0}.";
+			_es[K.PathIdLoading] = "Cargando el ID de ruta pegado…";
+			_it[K.CopyPathId] = "Copia ID percorso: la scena sullo schermo e tutto il suo stato, come testo da incollare in un’altra partita";
+			_it[K.PastePathId] = "Incolla ID percorso: carica la scena e lo stato che contiene (questa partita resta come salvataggio «Prima del caricamento»)";
+			_it[K.PathIdCopied] = "ID percorso copiato ({0} caratteri).";
+			_it[K.PathIdBad] = "Gli appunti non contengono un ID percorso valido: {0}.";
+			_it[K.PathIdLoading] = "Caricamento dell’ID percorso incollato…";
+			_pl[K.CopyPathId] = "Kopiuj ID ścieżki: scena na ekranie i cały jej stan, jako tekst do wklejenia w innej grze";
+			_pl[K.PastePathId] = "Wklej ID ścieżki: wczytaj scenę i stan z skopiowanego ID (ta gra zostanie zapisana jako „Przed wczytaniem”)";
+			_pl[K.PathIdCopied] = "Skopiowano ID ścieżki ({0} znaków).";
+			_pl[K.PathIdBad] = "Schowek nie zawiera poprawnego ID ścieżki: {0}.";
+			_pl[K.PathIdLoading] = "Wczytywanie wklejonego ID ścieżki…";
+			_tr[K.CopyPathId] = "Yol kimliğini kopyala: ekrandaki sahne ve tüm durumu, başka bir oyuna yapıştırılacak metin olarak";
+			_tr[K.PastePathId] = "Yol kimliğini yapıştır: kopyalanan kimliğin sahnesini ve durumunu yükle (bu oyun \"Yüklemeden önce\" kaydı olarak kalır)";
+			_tr[K.PathIdCopied] = "Yol kimliği kopyalandı ({0} karakter).";
+			_tr[K.PathIdBad] = "Panoda geçerli bir yol kimliği yok: {0}.";
+			_tr[K.PathIdLoading] = "Yapıştırılan yol kimliği yükleniyor…";
+			_ja[K.CopyPathId] = "パスIDをコピー：画面上のシーンとその状態すべてを、別のゲームに貼り付けられるテキストとして";
+			_ja[K.PastePathId] = "パスIDを貼り付け：コピーしたIDのシーンと状態を読み込む（このゲームは「読み込み前」セーブとして残ります）";
+			_ja[K.PathIdCopied] = "パスIDをコピーしました（{0}文字）。";
+			_ja[K.PathIdBad] = "クリップボードに有効なパスIDがありません：{0}。";
+			_ja[K.PathIdLoading] = "貼り付けたパスIDを読み込み中…";
+			_ko[K.CopyPathId] = "경로 ID 복사: 화면의 장면과 그 상태 전체를 다른 게임에 붙여 넣을 텍스트로";
+			_ko[K.PastePathId] = "경로 ID 붙여넣기: 복사한 ID의 장면과 상태를 불러오기 (이 게임은 \"불러오기 전\" 저장으로 남습니다)";
+			_ko[K.PathIdCopied] = "경로 ID를 복사했습니다 ({0}자).";
+			_ko[K.PathIdBad] = "클립보드에 올바른 경로 ID가 없습니다: {0}.";
+			_ko[K.PathIdLoading] = "붙여 넣은 경로 ID를 불러오는 중…";
+			_zh[K.CopyPathId] = "复制路径 ID：屏幕上的场景及其全部状态，作为可粘贴到另一局游戏的文本";
+			_zh[K.PastePathId] = "粘贴路径 ID：读取所复制 ID 中的场景和状态（本局会保存为“读取前”存档）";
+			_zh[K.PathIdCopied] = "已复制路径 ID（{0} 个字符）。";
+			_zh[K.PathIdBad] = "剪贴板中没有有效的路径 ID：{0}。";
+			_zh[K.PathIdLoading] = "正在读取粘贴的路径 ID…";
 			_en[K.ChapterWord] = "Chapter";
 			_ru[K.ChapterWord] = "Глава";
 			_de[K.ChapterWord] = "Kapitel";

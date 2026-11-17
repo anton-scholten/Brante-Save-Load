@@ -1138,6 +1138,11 @@ namespace Doorstop
 			uiImg.preserveAspect = true;
 			uiImg.raycastTarget = false;
 
+			// Path ID: paste (load the state a copied ID holds) and copy (the
+			// state on screen), left of reset, the same flat icon buttons
+			HeaderIcon(box.transform, "PastePathId", -208f, MakePasteIcon(), Loc.K.PastePathId, PastePathId);
+			HeaderIcon(box.transform, "CopyPathId", -146f, MakeCopyIcon(), Loc.K.CopyPathId, CopyPathId);
+
 			// Load scene: goes to the selected answer's scene along the selected
 			// path. Just wider than its label.
 			Button loadBtn = AddButton(box.transform, "LoadHere", new Vector2(0.5f, 1f), new Vector2(0f, -20f),
@@ -1166,6 +1171,119 @@ namespace Doorstop
 			BuildPopup(box.transform);
 			StatPanel.TooltipParent = box.transform;
 			_historyPanel.SetActive(false);
+		}
+
+		// A flat icon button in the header row, `x` from the right edge, with
+		// a hover pop-up naming it.
+		private static void HeaderIcon(Transform parent, string name, float x, Sprite icon, Loc.K tip, UnityEngine.Events.UnityAction onClick)
+		{
+			Button b = AddButton(parent, name, new Vector2(1f, 1f), new Vector2(x, -20f),
+				new Vector2(58f, 46f), Color.clear, null, 0f, onClick);
+			b.transition = Selectable.Transition.None;
+			RectTransform rt = b.GetComponent<RectTransform>();
+			TreeHover hover = b.gameObject.AddComponent<TreeHover>();
+			hover.OnHover = delegate(bool on)
+			{
+				if (on)
+				{
+					ShowPopup(rt, Loc.T(tip), "", new List<SceneEffects.Effect>(), null, true);
+				}
+				else
+				{
+					HidePopup();
+				}
+			};
+			GameObject go = CreateUiObject("Icon", b.transform);
+			RectTransform irt = go.GetComponent<RectTransform>();
+			Stretch(irt);
+			irt.offsetMin = new Vector2(12f, 7f);
+			irt.offsetMax = new Vector2(-12f, -7f);
+			Image img = go.AddComponent<Image>();
+			img.sprite = icon;
+			img.color = Palette.Ink;
+			img.preserveAspect = true;
+			img.raycastTarget = false;
+		}
+
+		// Copy: the state on screen as a path ID, to the system clipboard.
+		private static void CopyPathId()
+		{
+			try
+			{
+				string id = PathId.Encode(Recorder.LiveHelper());
+				GUIUtility.systemCopyBuffer = id;
+				SetHistoryInfo(string.Format(Loc.T(Loc.K.PathIdCopied), id.Length));
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: copying the path ID failed:\n" + e);
+				SetHistoryInfo(string.Format(Loc.T(Loc.K.PathIdBad), e.GetType().Name), true);
+			}
+		}
+
+		// Paste: a path ID from the clipboard, checked whole (PathId.TryApply)
+		// before anything changes, applied to a copy of the live state, kept
+		// as a manual save of this run and loaded the way the save table
+		// loads (pre-load checkpoint first).
+		private static void PastePathId()
+		{
+			string text = "";
+			try
+			{
+				text = GUIUtility.systemCopyBuffer ?? "";
+			}
+			catch (Exception)
+			{
+			}
+			try
+			{
+				SaveLoadHelper state = Recorder.LiveCopy();
+				string why;
+				if (!PathId.TryApply(text, state, out why))
+				{
+					ModLog.Info("ChoiceWindow: path ID refused: " + why);
+					SetHistoryInfo(string.Format(Loc.T(Loc.K.PathIdBad), why), true);
+					return;
+				}
+				string path = Recorder.SaveBuilt(state, "pathid");
+				SetHistoryInfo(Loc.T(Loc.K.PathIdLoading));
+				LoadSnapshot(path);
+			}
+			catch (Exception e)
+			{
+				ModLog.Error("ChoiceWindow: loading the path ID failed:\n" + e);
+				SetHistoryInfo(string.Format(Loc.T(Loc.K.PathIdBad), e.GetType().Name), true);
+			}
+		}
+
+		// dev-pick "pathid": copy, then paste the copy back (a round trip)
+		public static void DevPathId()
+		{
+			CopyPathId();
+			string id = GUIUtility.systemCopyBuffer ?? "";
+			ModLog.Info("DEV PICK: path ID " + id.Length + " chars: " + id);
+			SaveLoadHelper a = Recorder.LiveCopy();
+			SaveLoadHelper b = Recorder.LiveCopy();
+			string why;
+			bool ok = PathId.TryApply(id, b, out why);
+			// content, not bytes: BinaryFormatter shares repeated string
+			// instances of the live state, so equal states can differ in bytes
+			bool same = ok && PathId.Encode(b) == id;
+			ModLog.Info("DEV PICK: path ID round trip " + (ok ? "applies" : "refused: " + why)
+				+ ", same state: " + same);
+			if (ok && !same)
+			{
+				Recorder.DevWrite(a, "pathid-live.dat");
+				Recorder.DevWrite(b, "pathid-decoded.dat");
+			}
+			string[] bad = { "", "hello", id.Substring(0, id.Length - 1),
+				id.Replace("BSL1:", "BSL2:"), id.Length > 20 ? id.Substring(0, 20) + (id[20] == 'A' ? 'B' : 'A') + id.Substring(21) : id };
+			foreach (string t in bad)
+			{
+				SaveLoadHelper c = Recorder.LiveCopy();
+				bool took = PathId.TryApply(t, c, out why);
+				ModLog.Info("DEV PICK: path ID tamper test (" + t.Length + " chars): " + (took ? "ACCEPTED" : "refused: " + why));
+			}
 		}
 
 		// Back to the answers actually played: drops every pick.
@@ -6518,6 +6636,16 @@ namespace Doorstop
 						}
 						continue;
 					}
+					else if (l == "pathid")
+					{
+						DevPathId();
+						continue;
+					}
+					else if (l == "pathidpaste")
+					{
+						PastePathId();   // dev: paste what the clipboard holds
+						continue;
+					}
 					else if (l == "destinyall")
 					{
 						StatPanel.DevDumpDestinies();
@@ -7582,6 +7710,21 @@ namespace Doorstop
 				}
 			}
 
+			// back to transparent (a shape drawn over another)
+			public void Clear(float x, float y, float w, float h)
+			{
+				for (int yy = Mathf.FloorToInt(y); yy < Mathf.CeilToInt(y + h); yy++)
+				{
+					for (int xx = Mathf.FloorToInt(x); xx < Mathf.CeilToInt(x + w); xx++)
+					{
+						if (xx >= 0 && xx < W && yy >= 0 && yy < H)
+						{
+							Px[(H - 1 - yy) * W + xx] = new Color32(0, 0, 0, 0);
+						}
+					}
+				}
+			}
+
 			public void Frame(float x, float y, float w, float h, float t)
 			{
 				Rect(x, y, w, t);
@@ -7695,6 +7838,29 @@ namespace Doorstop
 		}
 
 		private static Sprite _binIcon;
+
+		// Copy: two sheets, the front one over the back one.
+		private static Sprite MakeCopyIcon()
+		{
+			Canvas32 c = new Canvas32(128, 128);
+			c.Frame(46f, 10f, 64f, 78f, 11f);
+			c.Clear(18f, 40f, 64f, 78f);
+			c.Frame(18f, 40f, 64f, 78f, 11f);
+			return c.ToSprite();
+		}
+
+		// Paste: a clipboard with an arrow into it.
+		private static Sprite MakePasteIcon()
+		{
+			Canvas32 c = new Canvas32(128, 128);
+			c.Frame(20f, 18f, 88f, 104f, 11f);
+			c.Clear(40f, 4f, 48f, 30f);
+			c.Rect(46f, 8f, 36f, 22f);
+			c.Line(64f, 44f, 64f, 100f, 11f);
+			c.Line(44f, 80f, 64f, 102f, 11f);
+			c.Line(84f, 80f, 64f, 102f, 11f);
+			return c.ToSprite();
+		}
 
 		// An undo arrow: three quarters of a ring, open at the top left, with
 		// the arrowhead at its top end pointing left.

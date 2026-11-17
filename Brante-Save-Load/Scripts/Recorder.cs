@@ -2013,6 +2013,50 @@ namespace Doorstop
 			ModLog.Info("Manual save " + baseName + " written to " + dir + " (" + blob.Length + " bytes, scene " + scene + ")");
 		}
 
+		// The live game's state as a save, a deep copy (our own object through
+		// BinaryFormatter: BuildHelper hands out the live lists themselves).
+		public static SaveLoadHelper LiveCopy()
+		{
+			using (MemoryStream ms = new MemoryStream(Serialize(BuildHelper())))
+			{
+				return (SaveLoadHelper)new BinaryFormatter().Deserialize(ms);
+			}
+		}
+
+		// A state built by the mod (a pasted path ID) saved as a manual save of
+		// the current run, under `prefix`; returns the file. The hero's name
+		// and the run are the player's own.
+		public static string SaveBuilt(SaveLoadHelper helper, string prefix)
+		{
+			string runId = CurrentRunId();
+			helper.SlotInfo = new SaveSlotInfo { Id = string.IsNullOrEmpty(runId) ? "" : runId, Date = "" };
+			ParametersManager pm = ParametersManager.Instance;
+			if (pm != null && !string.IsNullOrEmpty(pm.HeroName))
+			{
+				helper.HeroName = pm.HeroName;
+			}
+			string dir = RunDir(runId, KindManual);
+			Directory.CreateDirectory(dir);
+			string baseName = prefix + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
+			string path = Path.Combine(dir, baseName + ".dat");
+			File.WriteAllBytes(path, Serialize(helper));
+			WriteSidecar(dir, baseName, helper.LastOpenScene ?? "(unknown)", helper);
+			ModLog.Info("Recorder: " + baseName + " written to " + dir + " (scene " + helper.LastOpenScene + ")");
+			return path;
+		}
+
+		// dev: a state written to the snapshot folder, to compare outside the game
+		public static void DevWrite(SaveLoadHelper helper, string name)
+		{
+			File.WriteAllBytes(Path.Combine(SnapshotDir, name), Serialize(helper));
+		}
+
+		// The live state as a save (dev: path ID round trip).
+		public static SaveLoadHelper LiveHelper()
+		{
+			return BuildHelper();
+		}
+
 		// The scene state a save of the live game gets. SHOW_ANIMATION reopens
 		// the scene from the start, and its PREGAME events run again - the
 		// interludes, whose stat changes are already in the live state once

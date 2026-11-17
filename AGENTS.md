@@ -40,6 +40,7 @@ Brante-Save-Load/            the folder that gets installed into the game dir
     SceneParams.cs           scene-params.tsv: key chapter parameter simulation
     SceneObjectives.cs       scene-objectives.tsv: objectives scenes/answers unlock
     StatPanel.cs             tree's stat columns: clones of the game's stat row
+    PathId.cs                path IDs: the game state as a short text line (copy/paste)
     Loc.cs                   the UI's own translations (11 languages)
     Palette.cs               every colour the UI uses (fades, not near-copies)
     BoltDump.cs              runtime dump of the choice machine (dev only)
@@ -47,7 +48,7 @@ doorstop/doorstop_config.ini the Doorstop config installed into the game folder
 vendor/                      vendored third-party binaries + their licenses
   doorstop/winhttp.dll       Unity Doorstop 4.6.0 (x64), LGPL-2.1
   0Harmony.dll               Lib.Harmony 2.3.3 (net472), MIT
-tools/build.sh               compile against the game's own Managed/ DLLs (UI, TMP, Audio modules)
+tools/build.sh               compile against the game's own Managed/ DLLs (UI, TMP, Audio, IMGUI modules)
 tools/install.sh             build, then symlink/copy into the game folder
 tools/steam.sh               Steam library lookup (distro/Flatpak/Snap), sourced by both
 tools/gamedir.py             the same lookup for the Python tools (+ the prefix's Runs/)
@@ -378,6 +379,29 @@ community event sheet (`data/events.json`).
   Tournament without The Fencing Lesson), so the ways left stand out.
   `dev-pick.txt` `destinyall` logs every chapter's
   pop-up text ("DEV DESTINY").
+- **Path IDs never reach BinaryFormatter.** The tree header's paste and
+  copy buttons (left of reset) turn the live state into
+  `BSL1:<n>:<base64url>:<CRC-32>` and back (`PathId`). The record is the
+  mod's own: the game's fixed lists in their own order (69 key
+  parameters, 42 characters, 78 objectives, 50 events, the 64
+  `ModelParameters` ints by name), scenes as build-scene indices,
+  description keys as indices into the sorted I2 term list, zigzag
+  varints, dates as seconds from the previous one, then raw DEFLATE
+  (`MonoPosixHelper.dll` ships with the game). A schema hash over all
+  those names refuses an ID from another game version. Decoding checks
+  the shape, the length, the CRC, a 64 KB unpack cap, every count, range,
+  enum and string (printable, no `<>`), that the scene is a build scene
+  and that nothing is left over, before anything changes; it is applied
+  to `Recorder.LiveCopy()` (the live state through our own BinaryFormatter
+  round trip), saved by `Recorder.SaveBuilt` as `Manual/pathid_*.dat`
+  with the player's hero name and run, and loaded as the table loads
+  (checkpoint first). Locked objectives and events keep the dates the
+  game left in them (empty, year 1132, 2021 leftovers in its assets), so
+  every entry is encoded. A chapter-4 save is ~1,100 characters; a copy
+  re-encodes identically after a paste (`dev-pick.txt` `pathid`: round
+  trip and five tampered strings, all refused; `pathidpaste` pastes the
+  clipboard). Compare states by content (re-encode, `nrbf.py`), not
+  bytes: BinaryFormatter shares the live state's repeated strings.
 - **Objectives earned are listed in the pop-ups.** An answer's or an event's
   pop-up adds what it earns (`E` effects: `SceneEffects.Shown`,
   `SceneChanges`; display only, never in `For`/`ForScene`).
@@ -696,7 +720,7 @@ on use) and must be paired with `dev-autoload.txt`:
 | `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
 | `dev-table.txt` | open the save table, cycle the type filter through every category, log row counts, show/hide a type pop-up, page with "Show more" (a 10-row first page when the run has fewer rows) and check the Original row has no delete cell; with `dev-table-load.txt` also click the Original row and confirm its load; with `dev-table-open.txt` leave the table open afterwards (screenshots) |
 | `dev-restart.txt` | with `dev-autoload.txt` (and `dev-load.txt`): make the game's chapter restart call (`LoadChapterState`, as its Restart button does) and log the checkpoint and run state |
-| `dev-pick.txt` | with `dev-autoload.txt`: open the tree, apply `scene=ButtonDescriptionN` per line (`reset` = Reset path), log every column after each step (drawn colours, Load scene target, where the pick note is) and leave it open; `walk N`: pick the first open answer in each of the next N scenes, logging after each whether Load scene runs and why not; `hover scene=answer`: scroll to that answer and hold its hover (pop-up and stat marks); `load`: press Load scene and confirm (replays the path); `stopafter N`: press the progress box's Stop N s later; `confirm`: then open the save table and click its first row, leaving the load dialog open |
+| `dev-pick.txt` | with `dev-autoload.txt`: open the tree, apply `scene=ButtonDescriptionN` per line (`reset` = Reset path), log every column after each step (drawn colours, Load scene target, where the pick note is) and leave it open; `walk N`: pick the first open answer in each of the next N scenes, logging after each whether Load scene runs and why not; `hover scene=answer`: scroll to that answer and hold its hover (pop-up and stat marks); `load`: press Load scene and confirm (replays the path); `stopafter N`: press the progress box's Stop N s later; `confirm`: then open the save table and click its first row, leaving the load dialog open; `destinyall`: log every chapter's destiny pop-up text; `pathid`: path ID round trip + tamper tests; `pathidpaste`: paste the clipboard's path ID |
 | `dev-book.txt` | the book tabs (tree view, then save table), the save table, then the tree view: wheel, pop-ups, stat pop-up, a conflicting pick, chapter rule, a pick + its load plan, undo |
 | `dev-loadpath.txt` | with `dev-book.txt`: Load scene end to end; `back N` replays from another answer N scenes back, `chapter` from the chapter's start save, `start` from chapter 1 with an early change, `ahead` into the next chapter, `death` through a death, `offpath` a stop off the path, `first` the story's first scenes from a stand-in start (another run's chapter 1 save), `new` the same from a start built from the game's defaults, `file <name>` load that mod save as the table does (`file <name> norun`: with no run active) |
 | `dev-history.txt` | log the save's scene path (`ShowedScenesList`) |

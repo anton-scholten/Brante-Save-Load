@@ -106,6 +106,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 - Greyed choices aren't open to you; red ones clash with an earlier pick.
 - Faded stats unlock in a later chapter; the arrows show which two stats make each chapter-3 skill.
 - A true death, or an ending that finishes the game, ends the path: no choices follow it.
+- **Path ID** (the two buttons left of the arrow): **copy** puts the scene you are on and everything about it (stats, people, destinies, choices made) on the clipboard as one line of text (about 1,000 characters); **paste** loads one, e.g. from a friend, straight into that scene. Your game is kept as a "Before load" save first, and the pasted one is listed under Manual. Only path IDs from the same game version are accepted.
 
 ### Fast-forward
 
@@ -117,6 +118,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 ## Update notes
 
 - **17 Nov 2026:**
+  - Path IDs: copy the game you are in as text, paste one to jump straight into it.
   - House and Personality stats in the game's own order.
   - The rebel's "The Final Hour" now shows up in the predicted path.
   - Endings that finish the game (Glory to the Empire!, The Judgment of the Twins) end the path; Deaths shows True Death.
