@@ -92,17 +92,20 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 ### Tree view
 
-![The tree view on its Stats tab: each scene is a column with its choices under it, the player's path in red with the choices made in yellow. A picked choice has a red dashed outline and can be loaded with the "Load scene" button at the top. Hovering a choice shows what it changes and requires, and the stats it changes are marked green or red below.](Screenshot_3a.jpg)
+![The tree view on its Stats tab: each scene is a column with its choices under it, the player's path in red with the choices made in yellow. A picked choice has a red dashed outline and can be loaded with the "Load scene" button at the top. Hovering a choice shows what it changes and requires, and the stats it changes are marked green or red below. Personality is laid out by chapter, with arrows showing which two stats make each chapter-3 skill.](Screenshot_3a.jpg)
 ![The Family tab under the tree: the Brante family laid out as a family tree (Gregor; Robert and Lydia; Stephan, Nathan and Gloria), each with portrait, relation and status. Hovering a choice marks the relations it changes.](Screenshot_3b.jpg)
 ![The Relations tab under the tree: everyone else the hero has met, in three columns by estate (Nobles, Clergy, Common Folk), with relation and status.](Screenshot_3c.jpg)
+![The Destiny tab under the tree: the chapter's story outcomes by category (family, occupation, the family's and the chapter's outcomes), coloured by whether they happened, happen on this path, are still possible or are out of reach. Hovering a choice marks the outcomes it brings in green and the ones it rules out in red.](Screenshot_3d.jpg)
 
 - Columns are scenes, boxes are choices. Your path is red, your choices yellow. Scenes ahead are predicted.
 - **Hover** a choice or scene name to see its text and what it changes.
 - **Click** choices to make a new path (click again to undo, the arrow resets). **Load scene** plays it for you.
 - Events (scenes without a choice) have their own column; click one to load it.
-- **Stats / Family / Relations** tabs show where you stand at the end of the path. Pale rows are people you would meet.
+- **Stats / Family / Relations** tabs show where you stand at the end of the path. Pale rows are people you would meet. Green and red show what your picks changed.
+- **Destiny** lists the chapter's outcomes: happened, on this path, still possible, or out of reach.
 - Greyed choices aren't open to you; red ones clash with an earlier pick.
-- In chapters 1–2, the faded chapter-3 skills show what your stats will turn into.
+- Faded stats unlock in a later chapter; the arrows show which two stats make each chapter-3 skill.
+- A true death ends the path: no choices follow it.
 
 ### Fast-forward
 
@@ -113,6 +116,13 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 ## Update notes
 
+- **16 Nov 2026:**
+  - Destiny tab: the chapter's outcomes, and what a choice brings or rules out.
+  - Personality laid out by chapter; stats not yet unlocked are faded.
+  - Missing choices restored (The Silence of the Gods, To the Death, The Road to the Top and others).
+  - A true death ends the predicted path.
+  - The tree keeps one height; mouse wheel and scroll bar scroll the same way.
+  - Fixed: colours compared with today's stats instead of the scene's.
 - **13 Nov 2026:**
   - Stats, Family and Relations tabs under the tree.
   - Events that happen on their own get columns, with their names.

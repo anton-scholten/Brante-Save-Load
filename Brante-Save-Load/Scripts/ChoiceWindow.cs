@@ -1036,6 +1036,9 @@ namespace Doorstop
 			htimg.color = Palette.Track;
 			Scrollbar hsb = track.AddComponent<Scrollbar>();
 			hsb.direction = Scrollbar.Direction.LeftToRight;
+			// the wheel over the bar moves the tree the way it does over the
+			// tree (down = newer); left to the ScrollRect it went the other way
+			track.AddComponent<TreeWheel>().Scroll = sc;
 			// Progress through the story: the track filled in the path's red
 			// from the start up to the scene on screen (SetStoryProgress),
 			// under the handle.
@@ -4555,6 +4558,23 @@ namespace Doorstop
 			}
 		}
 
+		private static Transform FindDeep(Transform root, string name)
+		{
+			if (root.name == name)
+			{
+				return root;
+			}
+			foreach (Transform c in root)
+			{
+				Transform f = FindDeep(c, name);
+				if (f != null)
+				{
+					return f;
+				}
+			}
+			return null;
+		}
+
 		private static void BuildScrollbar(Transform scroll)
 		{
 			GameObject track = CreateUiObject("Scrollbar", scroll);
@@ -6462,6 +6482,27 @@ namespace Doorstop
 					else if (l.StartsWith("destinyhover ", StringComparison.Ordinal))
 					{
 						StatPanel.DevHoverObjective(l.Substring(13).Trim());
+						continue;
+					}
+					else if (l == "wheel")
+					{
+						// one wheel notch down over the tree, then over its
+						// scroll bar: both should move the same way (newer)
+						foreach (string where in new[] { "Viewport", "HScrollbar" })
+						{
+							Transform t = _historyScroll != null ? FindDeep(_historyScroll.transform, where) : null;
+							if (t == null)
+							{
+								ModLog.Info("DEV PICK: wheel: no " + where);
+								continue;
+							}
+							_historyScroll.horizontalNormalizedPosition = 0.5f;
+							PointerEventData ev = new PointerEventData(EventSystem.current);
+							ev.scrollDelta = new Vector2(0f, -1f);
+							ExecuteEvents.ExecuteHierarchy(t.gameObject, ev, ExecuteEvents.scrollHandler);
+							ModLog.Info("DEV PICK: wheel down over " + where + ": 0.500 -> "
+								+ _historyScroll.horizontalNormalizedPosition.ToString("0.000"));
+						}
 						continue;
 					}
 					else if (l == "forkhover")

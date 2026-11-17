@@ -397,7 +397,10 @@ community event sheet (`data/events.json`).
   7, three chapter-5 scenes), so the stats below never move with the path (answer boxes `TreeNodeH` 34 in `TreeRowH` 40 rows, the
   17-unit text unchanged) and gives the stats the rest (~0.7 of the game's row
   size at 1080p). `ScrollRect.vertical` is off and `TreeWheel` turns every
-  vertical wheel notch into a sideways one (down = newer columns).
+  vertical wheel notch into a sideways one (down = newer columns). It sits on
+  the viewport and on the horizontal scroll bar: over the bar the notch
+  otherwise reached `ScrollRect.OnScroll`, which flips it, and scrolled the
+  other way. `dev-pick.txt` `wheel` logs one notch over each.
 - **Changers off the answer buttons apply with any answer.** In
   `scene-params.tsv` button `-1` is a `KeyChapterParametersChanger` on a
   button every answer passes - the text pages' `NextButton/Image`
