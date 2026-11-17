@@ -6518,6 +6518,11 @@ namespace Doorstop
 						}
 						continue;
 					}
+					else if (l == "destinyall")
+					{
+						StatPanel.DevDumpDestinies();
+						continue;
+					}
 					else if (l.StartsWith("destinyhover ", StringComparison.Ordinal))
 					{
 						StatPanel.DevHoverObjective(l.Substring(13).Trim());

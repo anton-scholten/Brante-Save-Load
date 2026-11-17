@@ -337,8 +337,10 @@ community event sheet (`data/events.json`).
   every scene/answer that earns it in scene-objectives.tsv is in
   `DestinyDone` - the scenes passed by the scene shown - or on another post's
   track, `SceneFlow.SceneFits`), or the game's own condition list for it
-  (`Objective.Condition`'s `RealCondition`, all required, what the Destiny
-  window shows) has a part that can never be met again (`RuledOut`: a status
+  (`Objective.Condition`'s `RealCondition`, what the Destiny window shows:
+  every part required except those marked `OrCondition`, of which one is
+  enough - Blood Tide is the ritual and the Nobleman's Sacrament or
+  Gregor >= 2; the pop-up lists them under "One of") has a part that can never be met again (`RuledOut`: a status
   for a character who is dead - the explosion kills Remy El Verman, and
   Master of Anizotte needs him at `Deal` - or an objective it must not have).
   An objective of another post is still listed when a scene of this post
@@ -362,6 +364,14 @@ community event sheet (`data/events.json`).
   of the Twins", the chapter-5 endings): the path ends in a "The End" box
   (`EndScene`, `StoryEnded`). The Deaths row reads "True Death" at 4 (the
   stat's scale stops at "Died thrice").
+- **"Comes from" is one line per scene.** `StatPanel.EarnedByLines` groups
+  a destiny's earners by scene title: a scene that earns it by itself or
+  with every answer (Father's Sword, The Ant Farm, Forbidden Love) is its
+  title alone - listed per answer it read as the same line twice - else
+  each earning answer with what it needs (`Needs`: and-requirements, then
+  the or-group; Last Respects: the Nobleman's Sacrament, or Nobility >= 6
+  or Gregor >= 2). `dev-pick.txt` `destinyall` logs every chapter's
+  pop-up text ("DEV DESTINY").
 - **Objectives earned are listed in the pop-ups.** An answer's or an event's
   pop-up adds what it earns (`E` effects: `SceneEffects.Shown`,
   `SceneChanges`; display only, never in `For`/`ForScene`).

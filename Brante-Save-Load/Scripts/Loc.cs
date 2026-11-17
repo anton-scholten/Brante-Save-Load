@@ -18,7 +18,7 @@ namespace Doorstop
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, Current, NothingYet,
 			KindAll, KindAutosave, KindCheckpoint, KindOriginal, ShowMore,
-			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, NoSaveBefore, PickBlocked, ResetPath, PickNext, OnThisScene, ReplayLoading, ReplayProgress, ReplayLeft, ReplayStop, UnitSec, UnitMin,
+			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, OrWord, NoSaveBefore, PickBlocked, ResetPath, PickNext, OnThisScene, ReplayLoading, ReplayProgress, ReplayLeft, ReplayStop, UnitSec, UnitMin,
 			PickConflict, NothingToLoad,
 			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick, ReplayOffPath, ReplayDeath, ReplayStopped,
 			ReplaySkipped, StartNotOnPath,
@@ -240,6 +240,17 @@ namespace Doorstop
 			_ja[K.DestEarnedBy] = "発生元";
 			_ko[K.DestEarnedBy] = "발생 장면";
 			_zh[K.DestEarnedBy] = "来自";
+			_en[K.OrWord] = "or";
+			_ru[K.OrWord] = "или";
+			_de[K.OrWord] = "oder";
+			_fr[K.OrWord] = "ou";
+			_es[K.OrWord] = "o";
+			_it[K.OrWord] = "o";
+			_pl[K.OrWord] = "lub";
+			_tr[K.OrWord] = "veya";
+			_ja[K.OrWord] = "または";
+			_ko[K.OrWord] = "또는";
+			_zh[K.OrWord] = "或";
 			_en[K.ChapterWord] = "Chapter";
 			_ru[K.ChapterWord] = "Глава";
 			_de[K.ChapterWord] = "Kapitel";

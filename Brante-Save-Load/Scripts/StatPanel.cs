@@ -735,50 +735,68 @@ namespace Doorstop
 		}
 
 		// Whether the game's own condition list for `o` (the one its Destiny
-		// window shows, all of them required) has a part `h` can never meet
-		// again: a status for a character who is dead, or an objective it
-		// must not have that `h` has. Other parts can still change.
+		// window shows) has a part `h` can never meet again: a status for a
+		// character who is dead, or an objective it must not have that `h`
+		// has. Every part is required except those marked OrCondition, of
+		// which one is enough (the window's "or" container: Blood Tide is the
+		// ritual and the Nobleman's Sacrament or Gregor >= 2). Other parts
+		// can still change.
 		private static bool RuledOut(Objective o, SceneEffects.Hero h)
 		{
 			if (o.Condition == null || h == null)
 			{
 				return false;
 			}
+			int ors = 0, orsOut = 0;
 			foreach (ObjectiveCondition oc in o.Condition)
 			{
-				ObjectiveConditions rc = oc.RealCondition;
-				if (rc == null)
+				bool gone = PartRuledOut(oc.RealCondition, h);
+				if (oc.OrCondition)
 				{
-					continue;
+					ors++;
+					orsOut += gone ? 1 : 0;
 				}
-				if (rc.ByStatuses != null)
+				else if (gone)
 				{
-					foreach (_Scripts.Helpers.ConditionByStatus c in rc.ByStatuses)
+					return true;
+				}
+			}
+			return ors > 0 && orsOut == ors;
+		}
+
+		private static bool PartRuledOut(ObjectiveConditions rc, SceneEffects.Hero h)
+		{
+			if (rc == null)
+			{
+				return false;
+			}
+			if (rc.ByStatuses != null)
+			{
+				foreach (_Scripts.Helpers.ConditionByStatus c in rc.ByStatuses)
+				{
+					if (c == null || c.Character == null)
 					{
-						if (c == null || c.Character == null)
-						{
-							continue;
-						}
-						CharacterModel m = ModelOf(h, c.Character.Name);
-						if (m == null || !m.Status.ToString().StartsWith("Dead", StringComparison.Ordinal))
-						{
-							continue;   // alive: the status can still change
-						}
-						bool isNow = m.Status == c.Status;
-						if (c.Not ? isNow : !isNow)
-						{
-							return true;
-						}
+						continue;
+					}
+					CharacterModel m = ModelOf(h, c.Character.Name);
+					if (m == null || !m.Status.ToString().StartsWith("Dead", StringComparison.Ordinal))
+					{
+						continue;   // alive: the status can still change
+					}
+					bool isNow = m.Status == c.Status;
+					if (c.Not ? isNow : !isNow)
+					{
+						return true;
 					}
 				}
-				if (rc.ByObjectives != null)
+			}
+			if (rc.ByObjectives != null)
+			{
+				foreach (_Scripts.Helpers.ConditionByObjective c in rc.ByObjectives)
 				{
-					foreach (_Scripts.Helpers.ConditionByObjective c in rc.ByObjectives)
+					if (c != null && c.Not && c.Objective != null && Has(h, c.Objective))
 					{
-						if (c != null && c.Not && c.Objective != null && Has(h, c.Objective))
-						{
-							return true;
-						}
+						return true;
 					}
 				}
 			}
@@ -1111,49 +1129,41 @@ namespace Doorstop
 				}
 				string descr = Loc.Game(k + ".Description", "").Trim();
 				sb.Append(descr.Length > 1 ? SceneEffects.NobleParticle(descr) : "<i>" + Loc.T(Loc.K.NoStatText) + "</i>");
+				// as the Destiny window lists them: the required parts, then
+				// the OrCondition ones under "One of"
 				List<string> conds = new List<string>();
+				List<string> ors = new List<string>();
 				if (o.Condition != null)
 				{
 					foreach (ObjectiveCondition c in o.Condition)
 					{
-						string line = (Operand(c.Operand1) + " " + (c.Operator ?? "") + " " + Operand(c.Operand2)).Trim();
+						string op = (c.Operator ?? "").Trim();
+						string line = (Operand(c.Operand1) + " " + op + " " + Operand(c.Operand2)).Trim();
+						if (string.IsNullOrEmpty(c.Operand2) && (op == "!=" || op == "\u2260"))
+						{
+							// "The Family in Ruins !=": the objective must not be had
+							line = Loc.T(Loc.K.NotWord) + " " + Operand(c.Operand1);
+						}
 						if (line.Length > 0)
 						{
-							conds.Add(line);
+							(c.OrCondition ? ors : conds).Add(line);
 						}
 					}
+				}
+				if (ors.Count == 1)
+				{
+					conds.AddRange(ors);   // a lone "or" is simply required
+					ors.Clear();
+				}
+				if (ors.Count > 0)
+				{
+					conds.Add("<i>" + Loc.T(Loc.K.OneOf) + ":</i> " + string.Join(" / ", ors.ToArray()));
 				}
 				if (conds.Count > 0)
 				{
 					sb.Append("\n\n<size=85%>").Append(string.Join("\n", conds.ToArray())).Append("</size>");
 				}
-				List<string> from = new List<string>();
-				HashSet<string> plain = new HashSet<string>();
-				foreach (KeyValuePair<string, int> e in SceneObjectives.Earners((int)o.Name))
-				{
-					string title = SceneTexts.Title(e.Key);
-					if (string.IsNullOrEmpty(title))
-					{
-						continue;
-					}
-					string answer = e.Value > 0 ? SceneTexts.Name(e.Key, "ButtonDescription" + e.Value) : "";
-					string line = "\u2022 " + title + (answer.Length > 0 ? ": " + SceneEffects.NobleParticle(answer) : "");
-					// two versions of a scene (051.060.030 / 051.070.035 To the
-					// Death) read the same: one line
-					if (!plain.Add(line))
-					{
-						continue;
-					}
-					if (DestinyDone.Contains(e.Key))
-					{
-						line = "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Grey) + ">" + line + "</color>";
-					}
-					from.Add(line);
-					if (from.Count == 6)
-					{
-						break;
-					}
-				}
+				List<string> from = EarnedByLines(o);
 				if (from.Count > 0)
 				{
 					sb.Append("\n\n<size=85%><b>").Append(Loc.T(Loc.K.DestEarnedBy)).Append(":</b>\n")
@@ -1174,6 +1184,142 @@ namespace Doorstop
 			}
 		}
 
+		// "Comes from": one line per scene that earns the objective, grouped by
+		// the scene's title (two versions of a scene - 051.060.030 /
+		// 051.070.035 To the Death - read the same). A scene that earns it
+		// by itself or with every answer (Father's Sword, The Ant Farm) is
+		// its title alone; listed per answer, both answers read as the same
+		// line twice. Otherwise each earning answer, with what it needs
+		// (Last Respects: the Will destiny, or Nobility >= 6 or Gregor >= 2).
+		// Grey: the scene is behind the scene shown.
+		private static List<string> EarnedByLines(Objective o)
+		{
+			List<string> titles = new List<string>();
+			Dictionary<string, List<KeyValuePair<string, int>>> byTitle = new Dictionary<string, List<KeyValuePair<string, int>>>();
+			foreach (KeyValuePair<string, int> e in SceneObjectives.Earners((int)o.Name))
+			{
+				string title = SceneTexts.Title(e.Key);
+				if (string.IsNullOrEmpty(title))
+				{
+					continue;
+				}
+				List<KeyValuePair<string, int>> list;
+				if (!byTitle.TryGetValue(title, out list))
+				{
+					list = byTitle[title] = new List<KeyValuePair<string, int>>();
+					titles.Add(title);
+				}
+				list.Add(e);
+			}
+			List<string> lines = new List<string>();
+			foreach (string title in titles)
+			{
+				List<KeyValuePair<string, int>> list = byTitle[title];
+				bool done = false;
+				bool whole = false;
+				foreach (KeyValuePair<string, int> e in list)
+				{
+					done |= DestinyDone.Contains(e.Key);
+					whole |= e.Value <= 0 || WholeScene(e.Key, list);
+				}
+				List<string> mine = new List<string>();
+				if (whole)
+				{
+					mine.Add("\u2022 " + title);
+				}
+				else
+				{
+					HashSet<string> plain = new HashSet<string>();
+					foreach (KeyValuePair<string, int> e in list)
+					{
+						string choice = "ButtonDescription" + e.Value;
+						string answer = SceneTexts.Name(e.Key, choice);
+						string line = "\u2022 " + title + (answer.Length > 0 ? ": " + SceneEffects.NobleParticle(answer) : "");
+						string needs = Needs(SceneEffects.For(e.Key, choice));
+						if (needs.Length > 0)
+						{
+							line += " (" + needs + ")";
+						}
+						if (plain.Add(line))
+						{
+							mine.Add(line);
+						}
+					}
+				}
+				foreach (string line in mine)
+				{
+					lines.Add(done ? "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Grey) + ">" + line + "</color>" : line);
+				}
+				if (lines.Count >= 6)
+				{
+					break;
+				}
+			}
+			return lines;
+		}
+
+		// Whether the earning answers of `scene` in `list` are all its answers.
+		private static bool WholeScene(string scene, List<KeyValuePair<string, int>> list)
+		{
+			List<KeyValuePair<string, string>> buttons = SceneTexts.Buttons(scene);
+			if (buttons.Count == 0)
+			{
+				return false;
+			}
+			foreach (KeyValuePair<string, string> b in buttons)
+			{
+				int n = SceneParams.ButtonOf(b.Key);
+				if (!list.Exists(e => e.Key == scene && e.Value == n))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		// An answer's requirements as one phrase: the "and" ones joined by
+		// commas, then the "or" group joined by "or".
+		private static string Needs(List<SceneEffects.Effect> effects)
+		{
+			List<string> all = new List<string>();
+			List<string> any = new List<string>();
+			foreach (SceneEffects.Effect e in effects)
+			{
+				if (!e.IsRequirement)
+				{
+					continue;
+				}
+				Sprite icon;
+				(e.Or ? any : all).Add(SceneEffects.Label(e, out icon));
+			}
+			if (any.Count > 0)
+			{
+				all.Add(string.Join(" " + Loc.T(Loc.K.OrWord) + " ", any.ToArray()));
+			}
+			// the game's own signs, as in the condition lines above
+			return string.Join(", ", all.ToArray()).Replace(">=", "\u2265").Replace("<=", "\u2264");
+		}
+
+		// dev-pick's "destinyall": every chapter's entries with their pop-up
+		// text, tags stripped, for the log
+		public static void DevDumpDestinies()
+		{
+			int keep = _destinyPick;
+			for (int ch = 1; ch <= 5; ch++)
+			{
+				DevDestinyChapter(ch);
+				foreach (KeyValuePair<Objective, TextMeshProUGUI> kv in _destRows)
+				{
+					ShowObjectiveTooltip(kv.Key, (RectTransform)kv.Value.transform.parent, kv.Value);
+					string text = _tipComp != null ? _tipComp.Description.text : "";
+					text = System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", "").Replace("\n", " | ");
+					ModLog.Info("DEV DESTINY ch" + ch + " " + ObjectiveKey(kv.Key) + ": " + text);
+				}
+			}
+			HideTooltip();
+			DevDestinyChapter(keep);
+		}
+
 		// A condition's operand as the Destiny window shows it: a key
 		// ("ЗащитникНарода.Title", a stat's name) translated, else as it is.
 		private static string Operand(string text)
@@ -1182,8 +1328,16 @@ namespace Doorstop
 			{
 				return "";
 			}
-			string t = Loc.Game(text, "");
-			return t.Trim().Length > 0 && t != text ? SceneEffects.NobleParticle(t) : text;
+			// an objective is named by its key ("WillObjective"): its title
+			foreach (string key in new[] { text, text + ".Title" })
+			{
+				string t = Loc.Game(key, "");
+				if (t.Trim().Length > 0 && t != key)
+				{
+					return SceneEffects.NobleParticle(t);
+				}
+			}
+			return text;
 		}
 
 		// dev-pick's "destiny N": the chapter shown in the Destiny tab (0: the hero's)
