@@ -1217,7 +1217,7 @@ namespace Doorstop
 			catch (Exception e)
 			{
 				ModLog.Error("ChoiceWindow: copying the path ID failed:\n" + e);
-				SetHistoryInfo(string.Format(Loc.T(Loc.K.PathIdBad), e.GetType().Name), true);
+				SetHistoryInfo(e.GetType().Name, true);   // not expected: the log has the details
 			}
 		}
 
@@ -1252,7 +1252,7 @@ namespace Doorstop
 			catch (Exception e)
 			{
 				ModLog.Error("ChoiceWindow: loading the path ID failed:\n" + e);
-				SetHistoryInfo(string.Format(Loc.T(Loc.K.PathIdBad), e.GetType().Name), true);
+				SetHistoryInfo(string.Format(Loc.T(Loc.K.PathIdBad), Loc.T(Loc.K.PidDamaged)), true);
 			}
 		}
 
@@ -6507,10 +6507,41 @@ namespace Doorstop
 			return null;
 		}
 
+		// dev-pick "lang": the game's language names -> its settings enum
+		private static readonly Dictionary<string, Languages> DevLanguages = new Dictionary<string, Languages>
+		{
+			{ "English", Languages.Eng }, { "Russian", Languages.Rus }, { "Korean", Languages.Ko },
+			{ "Portuguese - Brazil", Languages.Pt_Br }, { "Japanese", Languages.Jap },
+			{ "Chinese (Simplified)", Languages.Chin }, { "Chinese (Traditional)", Languages.Zh_Tw },
+			{ "German", Languages.De }, { "French (France)", Languages.Fr }, { "Italian", Languages.It },
+			{ "Spanish (Spain)", Languages.Es_Es }, { "Spanish (Latin Americas)", Languages.Es_Us },
+			{ "Polish", Languages.Pl }, { "Turkish", Languages.Tr }
+		};
+
 		public static void DevPick(string[] picks)
 		{
 			try
 			{
+				// "lang <game language name>" lines first: the window is built
+				// in the language it opens in (not remembered as the player's)
+				foreach (string line in picks)
+				{
+					if (line.Trim().StartsWith("lang ", StringComparison.Ordinal))
+					{
+						string to = line.Trim().Substring(5).Trim();
+						string code = I2.Loc.LocalizationManager.GetLanguageCode(to);
+						I2.Loc.LocalizationManager.SetLanguageAndCode(to, code, false, true);
+						// the game's own setting too: its fonts follow it
+						// (ChangeFontAsset), and the settings menu sets both
+						Languages setting;
+						if (DevLanguages.TryGetValue(to, out setting) && GameManager.Instance != null)
+						{
+							GameManager.Instance.GameSettings.Language = setting;
+						}
+						ModLog.Info("DEV PICK: language " + to + " (" + code + "): '" + Loc.T(Loc.K.ResetPath)
+							+ "', '" + Loc.T(Loc.K.Requires) + "', '" + Loc.T(Loc.K.PidVersion) + "'");
+					}
+				}
 				OpenTreeView();
 				DevDumpTree("open");
 				foreach (string line in picks)
@@ -6523,6 +6554,10 @@ namespace Doorstop
 					if (l == "reset")
 					{
 						UndoSelections();
+					}
+					else if (l.StartsWith("lang ", StringComparison.Ordinal))
+					{
+						continue;   // done before the window opened
 					}
 					else if (l.StartsWith("walk", StringComparison.Ordinal))
 					{

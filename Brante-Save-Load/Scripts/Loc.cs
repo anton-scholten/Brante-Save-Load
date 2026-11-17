@@ -18,7 +18,7 @@ namespace Doorstop
 			ColType, ColSaved, ColChapter, ColAge, ColYear, ColSeason, ColTurn, ColScene, ColChoice,
 			TypeAuto, TypeManual, Current, NothingYet,
 			KindAll, KindAutosave, KindCheckpoint, KindOriginal, ShowMore,
-			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, OrWord, CopyPathId, PastePathId, PathIdCopied, PathIdBad, PathIdLoading, NoSaveBefore, PickBlocked, ResetPath, PickNext, OnThisScene, ReplayLoading, ReplayProgress, ReplayLeft, ReplayStop, UnitSec, UnitMin,
+			LoadScene, Upcoming, NotRecorded, Requires, OneOf, NotWord, OrWord, CopyPathId, PastePathId, PathIdCopied, PathIdBad, PathIdLoading, PidEmpty, PidShape, PidLength, PidCheck, PidVersion, PidDamaged, NoSaveBefore, PickBlocked, ResetPath, PickNext, OnThisScene, ReplayLoading, ReplayProgress, ReplayLeft, ReplayStop, UnitSec, UnitMin,
 			PickConflict, NothingToLoad,
 			PossibleOn, OnStats, OnRelations, OnFates, OnEvents, AndWord, NoStatText, MissingPick, ReplayOffPath, ReplayDeath, ReplayStopped,
 			ReplaySkipped, StartNotOnPath,
@@ -493,6 +493,160 @@ namespace Doorstop
 			AddUpcomingWord(_ja, "この先");
 			AddUpcomingWord(_ko, "앞으로");
 			AddUpcomingWord(_zh, "接下来");
+			// Brazilian Portuguese and Traditional Chinese: the game's other two
+			// text languages (its two Spanish ones share _es). True Death is
+			// the game's own "Morte Genuína" / "真正的死亡".
+			AddLoadSceneWord(_pt, "Carregar cena");
+			AddSaveKinds(_pt, "Todos", "Salvamento automático do jogo", "Antes de carregar", "Save original", "Mostrar mais");
+			AddPathChecks(_pt, "Carregar cena parou em \"{0}\": a história pulou \"{1}\" do seu caminho, então a resposta dela não pôde ser usada.", "O save que iniciaria este caminho pertence a outra linha do tempo. Escolha uma cena anterior ou carregue um save deste caminho.");
+			AddKindHelp(_pt, "O salvamento automático do próprio jogo, copiado quando o jogo o grava. Carregue-o para continuar de onde o jogo salvou por último.", "Um instantâneo feito automaticamente antes de carregar ou reiniciar um capítulo. Use-o para desfazer esse retrocesso.", "Um save que você fez com Salvar agora.", "A cópia única do save do seu jogo de antes do primeiro uso do mod. Somente leitura.");
+			AddRequirementWords(_pt, "Requer", "Um de", "não");
+			AddResetPath(_pt, "Redefinir caminho");
+			_pt[K.EventHappens] = "Acontece por si só";
+			_pt[K.StoryEnds] = "A história termina aqui: depois da Morte Genuína não há mais escolhas, só o final do capítulo.";
+			_pt[K.DestEarned] = "Aconteceu";
+			_pt[K.DestAhead] = "Neste caminho";
+			_pt[K.DestOpen] = "Ainda possível";
+			_pt[K.DestLost] = "Não é mais possível";
+			_pt[K.DestEarnedBy] = "Vem de";
+			_pt[K.OrWord] = "ou";
+			_pt[K.CopyPathId] = "Copiar ID do caminho: a cena na tela e tudo sobre ela, como texto para colar em outro jogo";
+			_pt[K.PastePathId] = "Colar ID do caminho: carregar a cena e o estado que um ID copiado contém (este jogo fica guardado como save “Antes de carregar”)";
+			_pt[K.PathIdCopied] = "ID do caminho copiado ({0} caracteres).";
+			_pt[K.PathIdBad] = "A área de transferência não contém um ID de caminho válido: {0}.";
+			_pt[K.PathIdLoading] = "Carregando o ID de caminho colado…";
+			_pt[K.ChapterWord] = "Capítulo";
+			_pt[K.UnlocksIn] = "Desbloqueia no Capítulo {0}";
+			_pt[K.TheEnd] = "Fim";
+			_pt[K.FinaleEnds] = "A história termina aqui: o jogo segue para o final e o epílogo, e não há mais escolhas.";
+			_pt[K.StatsTab] = "Atributos";
+			AddPickNext(_pt, "Escolha uma resposta aqui para continuar");
+			AddOnThisScene(_pt, "Você está nesta cena agora: dê esta resposta no jogo ou escolha respostas em cenas posteriores para carregar mais adiante.");
+			AddReplayTexts(_pt, "Carregando “{0}”", "Cena {0} de {1}");
+			AddReplayTime(_pt, "{0} restantes", "Parar", "s", "min");
+			AddPossibleOn(_pt, "Possível dependendo de {0}", "atributos", "relacionamentos", "destinos dos personagens", "eventos da história", "e");
+			AddNoStatText(_pt, "O jogo não tem descrição para este atributo.");
+			AddMissingPick(_pt, "Escolha uma resposta em todas as cenas antes da que você carrega: \"{0}\" ainda não tem.");
+			AddReplayStops(_pt, "Carregar cena parou em \"{0}\": a história seguiu outro rumo e esta cena não está no seu caminho. Escolha a resposta dela aqui e carregue de novo.", "Carregar cena parou em uma morte em \"{0}\" que nenhuma resposta do seu caminho explica, ou na última do herói. A escolha é sua.", "Carregar cena parou em \"{0}\" antes de chegar a \"{1}\".");
+			AddConflict(_pt, "A resposta em \"{0}\" no seu caminho entra em conflito com os atributos do herói naquele momento: uma escolha anterior os mudou. Escolha outra resposta ali.", "Nada para carregar: as escolhas selecionadas correspondem à cena atual.");
+			AddPickBlocked(_pt, "A resposta escolhida em \"{0}\" não estaria disponível para o seu herói ali.");
+			AddNotRecorded(_pt, "Jogado, mas a resposta não foi gravada\n(o mod não estava instalado)", "O mod não tem um save de antes deste ponto, então não é possível chegar aqui.");
+			AddUpcomingWord(_pt, "a seguir");
+			AddLoadSceneWord(_tw, "載入場景");
+			AddSaveKinds(_tw, "全部", "遊戲自動存檔", "載入前", "原始存檔", "顯示更多");
+			AddPathChecks(_tw, "載入在「{0}」停止：劇情跳過了路徑上的「{1}」，因此未能使用該回答。", "用於開始這條路徑的存檔屬於另一條時間線。請選擇更早的場景，或載入這條路徑的存檔。");
+			AddKindHelp(_tw, "遊戲自身寫入的自動存檔副本。載入它可從遊戲上次存檔處繼續。", "在載入或重開章節前自動建立的快照。可撤銷那次回退。", "用「立即存檔」建立的存檔。", "首次使用模組前遊戲存檔的一次性副本，唯讀。");
+			AddRequirementWords(_tw, "需要", "其中之一", "非");
+			AddResetPath(_tw, "重設路徑");
+			_tw[K.EventHappens] = "自然發生";
+			_tw[K.StoryEnds] = "故事到此結束：真正的死亡之後不再有選擇，只有本章的結局。";
+			_tw[K.DestEarned] = "已發生";
+			_tw[K.DestAhead] = "此路線上";
+			_tw[K.DestOpen] = "仍有可能";
+			_tw[K.DestLost] = "已不可能";
+			_tw[K.DestEarnedBy] = "來自";
+			_tw[K.OrWord] = "或";
+			_tw[K.CopyPathId] = "複製路徑 ID：畫面上的場景及其全部狀態，作為可貼到另一局遊戲的文字";
+			_tw[K.PastePathId] = "貼上路徑 ID：載入所複製 ID 中的場景和狀態（本局會保存為「載入前」存檔）";
+			_tw[K.PathIdCopied] = "已複製路徑 ID（{0} 個字元）。";
+			_tw[K.PathIdBad] = "剪貼簿中沒有有效的路徑 ID：{0}。";
+			_tw[K.PathIdLoading] = "正在載入貼上的路徑 ID…";
+			_tw[K.ChapterWord] = "章";
+			_tw[K.UnlocksIn] = "第{0}章解鎖";
+			_tw[K.TheEnd] = "終";
+			_tw[K.FinaleEnds] = "故事到此結束：遊戲進入結局與尾聲，不再有選擇。";
+			_tw[K.StatsTab] = "屬性";
+			AddPickNext(_tw, "在此選擇一個回答以繼續");
+			AddOnThisScene(_tw, "你正處於這個場景：請在遊戲中給出這個回答，或在之後的場景中選擇回答以載入更遠處。");
+			AddReplayTexts(_tw, "正在載入「{0}」", "場景 {0} / {1}");
+			AddReplayTime(_tw, "剩餘 {0}", "停止", "秒", "分");
+			AddPossibleOn(_tw, "可能出現，取決於{0}", "屬性", "關係", "角色命運", "劇情事件", "和");
+			AddNoStatText(_tw, "遊戲中沒有這項屬性的說明。");
+			AddMissingPick(_tw, "請在要載入的場景之前的每個場景中選擇答案：「{0}」尚未選擇。");
+			AddReplayStops(_tw, "載入在「{0}」停止：劇情走向了另一條路，這個場景不在你的路徑上。請在這裡選擇答案後再次載入。", "載入在「{0}」的一次死亡處停止：路徑上沒有答案能解釋這次死亡，或這是主角的最後一次死亡。由你來選擇。", "載入在到達「{1}」之前於「{0}」停止。");
+			AddConflict(_tw, "你路徑上「{0}」中的答案與主角當時的屬性衝突：之前的選擇改變了屬性。請在那裡選擇其他答案。", "無需載入：所選答案與目前場景一致。");
+			AddPickBlocked(_tw, "在「{0}」中選擇的答案屆時對你的主角不可用。");
+			AddNotRecorded(_tw, "已經歷，但未記錄選擇\n（當時未安裝模組）", "此處之前沒有模組存檔，無法前往。");
+			AddUpcomingWord(_tw, "接下來");
+			// path ID refusal reasons (PathId.TryApply), inside PathIdBad
+			_en[K.PidEmpty] = "it is empty or too long";
+			_en[K.PidShape] = "it is not a path ID (BSL1:<length>:<data>:<check>)";
+			_en[K.PidLength] = "its length does not match (cut off when copied?)";
+			_en[K.PidCheck] = "its check digits do not match (changed or cut off?)";
+			_en[K.PidVersion] = "it was made with another version of the game";
+			_en[K.PidDamaged] = "it is damaged or incomplete";
+			_ru[K.PidEmpty] = "он пуст или слишком длинный";
+			_ru[K.PidShape] = "это не ID пути (BSL1:<длина>:<данные>:<проверка>)";
+			_ru[K.PidLength] = "длина не совпадает (обрезан при копировании?)";
+			_ru[K.PidCheck] = "контрольные цифры не совпадают (изменён или обрезан?)";
+			_ru[K.PidVersion] = "он создан в другой версии игры";
+			_ru[K.PidDamaged] = "он повреждён или неполон";
+			_de[K.PidEmpty] = "sie ist leer oder zu lang";
+			_de[K.PidShape] = "das ist keine Pfad-ID (BSL1:<Länge>:<Daten>:<Prüfung>)";
+			_de[K.PidLength] = "die Länge stimmt nicht (beim Kopieren abgeschnitten?)";
+			_de[K.PidCheck] = "die Prüfziffern stimmen nicht (verändert oder abgeschnitten?)";
+			_de[K.PidVersion] = "sie stammt aus einer anderen Version des Spiels";
+			_de[K.PidDamaged] = "sie ist beschädigt oder unvollständig";
+			_fr[K.PidEmpty] = "il est vide ou trop long";
+			_fr[K.PidShape] = "ce n’est pas un ID de parcours (BSL1:<longueur>:<données>:<contrôle>)";
+			_fr[K.PidLength] = "la longueur ne correspond pas (coupé à la copie ?)";
+			_fr[K.PidCheck] = "les chiffres de contrôle ne correspondent pas (modifié ou coupé ?)";
+			_fr[K.PidVersion] = "il a été créé avec une autre version du jeu";
+			_fr[K.PidDamaged] = "il est endommagé ou incomplet";
+			_es[K.PidEmpty] = "está vacío o es demasiado largo";
+			_es[K.PidShape] = "no es un ID de ruta (BSL1:<longitud>:<datos>:<control>)";
+			_es[K.PidLength] = "la longitud no coincide (¿se cortó al copiarlo?)";
+			_es[K.PidCheck] = "los dígitos de control no coinciden (¿modificado o cortado?)";
+			_es[K.PidVersion] = "se creó con otra versión del juego";
+			_es[K.PidDamaged] = "está dañado o incompleto";
+			_it[K.PidEmpty] = "è vuoto o troppo lungo";
+			_it[K.PidShape] = "non è un ID percorso (BSL1:<lunghezza>:<dati>:<controllo>)";
+			_it[K.PidLength] = "la lunghezza non corrisponde (tagliato durante la copia?)";
+			_it[K.PidCheck] = "le cifre di controllo non corrispondono (modificato o tagliato?)";
+			_it[K.PidVersion] = "è stato creato con un’altra versione del gioco";
+			_it[K.PidDamaged] = "è danneggiato o incompleto";
+			_pl[K.PidEmpty] = "jest pusty lub za długi";
+			_pl[K.PidShape] = "to nie jest ID ścieżki (BSL1:<długość>:<dane>:<suma>)";
+			_pl[K.PidLength] = "długość się nie zgadza (ucięty przy kopiowaniu?)";
+			_pl[K.PidCheck] = "cyfry kontrolne się nie zgadzają (zmieniony lub ucięty?)";
+			_pl[K.PidVersion] = "pochodzi z innej wersji gry";
+			_pl[K.PidDamaged] = "jest uszkodzony lub niepełny";
+			_tr[K.PidEmpty] = "boş ya da çok uzun";
+			_tr[K.PidShape] = "bu bir yol kimliği değil (BSL1:<uzunluk>:<veri>:<denetim>)";
+			_tr[K.PidLength] = "uzunluk tutmuyor (kopyalanırken kesildi mi?)";
+			_tr[K.PidCheck] = "denetim basamakları tutmuyor (değişti ya da kesildi mi?)";
+			_tr[K.PidVersion] = "oyunun başka bir sürümüyle oluşturulmuş";
+			_tr[K.PidDamaged] = "bozuk ya da eksik";
+			_ja[K.PidEmpty] = "空か長すぎます";
+			_ja[K.PidShape] = "パスIDではありません（BSL1:<長さ>:<データ>:<チェック>）";
+			_ja[K.PidLength] = "長さが一致しません（コピー時に途切れた？）";
+			_ja[K.PidCheck] = "チェック値が一致しません（変更または途切れ？）";
+			_ja[K.PidVersion] = "別のバージョンのゲームで作られています";
+			_ja[K.PidDamaged] = "壊れているか不完全です";
+			_ko[K.PidEmpty] = "비어 있거나 너무 깁니다";
+			_ko[K.PidShape] = "경로 ID가 아닙니다 (BSL1:<길이>:<데이터>:<검사>)";
+			_ko[K.PidLength] = "길이가 맞지 않습니다 (복사할 때 잘렸나요?)";
+			_ko[K.PidCheck] = "검사 숫자가 맞지 않습니다 (바뀌었거나 잘렸나요?)";
+			_ko[K.PidVersion] = "다른 버전의 게임에서 만들어졌습니다";
+			_ko[K.PidDamaged] = "손상되었거나 불완전합니다";
+			_zh[K.PidEmpty] = "为空或过长";
+			_zh[K.PidShape] = "不是路径 ID（BSL1:<长度>:<数据>:<校验>）";
+			_zh[K.PidLength] = "长度不符（复制时被截断？）";
+			_zh[K.PidCheck] = "校验码不符（被修改或截断？）";
+			_zh[K.PidVersion] = "来自另一个版本的游戏";
+			_zh[K.PidDamaged] = "已损坏或不完整";
+			_pt[K.PidEmpty] = "está vazio ou longo demais";
+			_pt[K.PidShape] = "não é um ID de caminho (BSL1:<tamanho>:<dados>:<verificação>)";
+			_pt[K.PidLength] = "o tamanho não confere (cortado ao copiar?)";
+			_pt[K.PidCheck] = "os dígitos de verificação não conferem (alterado ou cortado?)";
+			_pt[K.PidVersion] = "foi criado com outra versão do jogo";
+			_pt[K.PidDamaged] = "está danificado ou incompleto";
+			_tw[K.PidEmpty] = "為空或過長";
+			_tw[K.PidShape] = "不是路徑 ID（BSL1:<長度>:<資料>:<校驗>）";
+			_tw[K.PidLength] = "長度不符（複製時被截斷？）";
+			_tw[K.PidCheck] = "校驗碼不符（被修改或截斷？）";
+			_tw[K.PidVersion] = "來自另一個版本的遊戲";
+			_tw[K.PidDamaged] = "已損壞或不完整";
 		}
 
 		private static void AddLoadSceneWord(Dictionary<K, string> d, string loadScene)
@@ -705,6 +859,10 @@ namespace Doorstop
 			if (code.StartsWith("tr") || name.Contains("turkish")) { return _tr; }
 			if (code.StartsWith("ja") || name.Contains("japanese")) { return _ja; }
 			if (code.StartsWith("ko") || name.Contains("korean")) { return _ko; }
+			if (code.StartsWith("pt") || name.Contains("portuguese")) { return _pt; }
+			// Traditional before Simplified: "Chinese (Traditional)", zh-TW/HK/MO, zh-Hant
+			if (name.Contains("traditional") || code == "zh-tw" || code == "zh-hk" || code == "zh-mo"
+				|| code.StartsWith("zh-hant")) { return _tw; }
 			if (code.StartsWith("zh") || name.Contains("chinese")) { return _zh; }
 			return _en;
 		}
@@ -856,5 +1014,25 @@ namespace Doorstop
 			"还没有存档。选择点会自动记录；请使用下方的“立即保存”。",
 			"类型", "保存时间", "章节", "年龄", "年份", "季节", "回合", "场景", "选择",
 			"自动", "手动", "当前", "还没有记录。");
+
+		private static readonly Dictionary<K, string> _pt = Make(
+			"Salvar / Carregar", "Salvar agora", "Visualização em árvore", "Partida",
+			"Carregar", "Excluir", "Salvar", "Cancelar",
+			"Carregar este save?\n\n{0}",
+			"Remover este save da lista?\n\n{0}\n\nO arquivo é excluído. Os saves do jogo não são alterados.",
+			"Salvar o jogo atual agora?\n\nEle é adicionado à lista como uma nova linha. Os saves do jogo não são alterados.",
+			"Ainda não há saves. Os pontos de escolha são gravados automaticamente; use \"Salvar agora\" abaixo.",
+			"Tipo de save", "Salvo em", "Capítulo", "Idade", "Ano", "Estação", "Turno", "Cena", "Escolha",
+			"Auto", "Manual", "atual", "Nada gravado ainda.");
+
+		private static readonly Dictionary<K, string> _tw = Make(
+			"存檔 / 載入", "立即存檔", "樹狀檢視", "遊戲歷程",
+			"載入", "刪除", "存檔", "取消",
+			"載入此存檔？\n\n{0}",
+			"從清單中移除此存檔？\n\n{0}\n\n檔案將被刪除。遊戲存檔不受影響。",
+			"現在儲存遊戲？\n\n將作為新的一列加入清單。遊戲存檔不受影響。",
+			"還沒有存檔。選擇點會自動記錄；請使用下方的「立即存檔」。",
+			"類型", "存檔時間", "章節", "年齡", "年份", "季節", "回合", "場景", "選擇",
+			"自動", "手動", "目前", "還沒有記錄。");
 	}
 }

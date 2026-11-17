@@ -41,7 +41,7 @@ Brante-Save-Load/            the folder that gets installed into the game dir
     SceneObjectives.cs       scene-objectives.tsv: objectives scenes/answers unlock
     StatPanel.cs             tree's stat columns: clones of the game's stat row
     PathId.cs                path IDs: the game state as a short text line (copy/paste)
-    Loc.cs                   the UI's own translations (11 languages)
+    Loc.cs                   the UI's own translations (13 languages)
     Palette.cs               every colour the UI uses (fades, not near-copies)
     BoltDump.cs              runtime dump of the choice machine (dev only)
 doorstop/doorstop_config.ini the Doorstop config installed into the game folder
@@ -379,6 +379,17 @@ community event sheet (`data/events.json`).
   Tournament without The Fencing Lesson), so the ways left stand out.
   `dev-pick.txt` `destinyall` logs every chapter's
   pop-up text ("DEV DESTINY").
+- **Every text in all of the game's languages.** The game has 14 (I2
+  terms carry 14 columns): `Loc` has a table for 13 - both Spanish ones
+  share `_es` - and `Loc.Table` matches the language code or name
+  (Portuguese has no code in the game: "Portuguese - Brazil";
+  "Chinese (Traditional)" / zh-TW before Simplified). Pick the game's
+  own word where the mod names a game thing (True Death: "Morte
+  Genuína", "真正的死亡"). Fonts come from the game's `ChangeFontAsset`,
+  which follows `GameSettings.Language`, not I2's language:
+  `dev-pick.txt` `lang <game language name>` sets both (not remembered),
+  else Traditional Chinese renders blank. Path ID refusal reasons are
+  `Loc.K.Pid*`. Adding a key: give it all 13 tables.
 - **Path IDs never reach BinaryFormatter.** The tree header's paste and
   copy buttons (left of reset) turn the live state into
   `BSL1:<n>:<base64url>:<CRC-32>` and back (`PathId`). The record is the
@@ -720,7 +731,7 @@ on use) and must be paired with `dev-autoload.txt`:
 | `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
 | `dev-table.txt` | open the save table, cycle the type filter through every category, log row counts, show/hide a type pop-up, page with "Show more" (a 10-row first page when the run has fewer rows) and check the Original row has no delete cell; with `dev-table-load.txt` also click the Original row and confirm its load; with `dev-table-open.txt` leave the table open afterwards (screenshots) |
 | `dev-restart.txt` | with `dev-autoload.txt` (and `dev-load.txt`): make the game's chapter restart call (`LoadChapterState`, as its Restart button does) and log the checkpoint and run state |
-| `dev-pick.txt` | with `dev-autoload.txt`: open the tree, apply `scene=ButtonDescriptionN` per line (`reset` = Reset path), log every column after each step (drawn colours, Load scene target, where the pick note is) and leave it open; `walk N`: pick the first open answer in each of the next N scenes, logging after each whether Load scene runs and why not; `hover scene=answer`: scroll to that answer and hold its hover (pop-up and stat marks); `load`: press Load scene and confirm (replays the path); `stopafter N`: press the progress box's Stop N s later; `confirm`: then open the save table and click its first row, leaving the load dialog open; `destinyall`: log every chapter's destiny pop-up text; `pathid`: path ID round trip + tamper tests; `pathidpaste`: paste the clipboard's path ID |
+| `dev-pick.txt` | with `dev-autoload.txt`: open the tree, apply `scene=ButtonDescriptionN` per line (`reset` = Reset path), log every column after each step (drawn colours, Load scene target, where the pick note is) and leave it open; `walk N`: pick the first open answer in each of the next N scenes, logging after each whether Load scene runs and why not; `hover scene=answer`: scroll to that answer and hold its hover (pop-up and stat marks); `load`: press Load scene and confirm (replays the path); `stopafter N`: press the progress box's Stop N s later; `confirm`: then open the save table and click its first row, leaving the load dialog open; `destinyall`: log every chapter's destiny pop-up text; `pathid`: path ID round trip + tamper tests; `pathidpaste`: paste the clipboard's path ID; `lang <game language name>` (first, before the tree opens): switch the game's text and font language for the run |
 | `dev-book.txt` | the book tabs (tree view, then save table), the save table, then the tree view: wheel, pop-ups, stat pop-up, a conflicting pick, chapter rule, a pick + its load plan, undo |
 | `dev-loadpath.txt` | with `dev-book.txt`: Load scene end to end; `back N` replays from another answer N scenes back, `chapter` from the chapter's start save, `start` from chapter 1 with an early change, `ahead` into the next chapter, `death` through a death, `offpath` a stop off the path, `first` the story's first scenes from a stand-in start (another run's chapter 1 save), `new` the same from a start built from the game's defaults, `file <name>` load that mod save as the table does (`file <name> norun`: with no run active) |
 | `dev-history.txt` | log the save's scene path (`ShowedScenesList`) |

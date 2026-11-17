@@ -119,6 +119,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 - **17 Nov 2026:**
   - Path IDs: copy the game you are in as text, paste one to jump straight into it.
+  - The mod's own texts in Brazilian Portuguese and Traditional Chinese too (they showed English and Simplified Chinese).
   - House and Personality stats in the game's own order.
   - The rebel's "The Final Hour" now shows up in the predicted path.
   - Endings that finish the game (Glory to the Empire!, The Judgment of the Twins) end the path; Deaths shows True Death.
@@ -162,7 +163,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 ## Good to know
 
 - Your original save is backed up once to `Brante-Save-Load/Backups/`; the game's own saves keep working as normal.
-- Achievements stay on. Works in Iron Man. In all eleven of the game's languages.
+- Achievements stay on. Works in Iron Man. In all of the game's languages (13 texts: its two Spanish versions share one).
 - The predicted scenes are a forecast: choices you haven't picked count as the first one open. If Load scene meets a scene it didn't expect, it stops there so you can pick and load again.
 - Load scene takes about 2-3 s per scene.
 

@@ -254,24 +254,24 @@ namespace Doorstop
 				text = (text ?? "").Trim();
 				if (text.Length == 0 || text.Length > MaxChars)
 				{
-					error = "empty or too long";
+					error = Loc.T(Loc.K.PidEmpty);
 					return false;
 				}
 				Match m = Shape.Match(text);
 				if (!m.Success)
 				{
-					error = "not a path ID (BSL1:<length>:<data>:<check>)";
+					error = Loc.T(Loc.K.PidShape);
 					return false;
 				}
 				string payload = m.Groups[2].Value;
 				if (int.Parse(m.Groups[1].Value) != payload.Length)
 				{
-					error = "the length does not match (cut off when copied?)";
+					error = Loc.T(Loc.K.PidLength);
 					return false;
 				}
 				if (Crc32(payload).ToString("X8") != m.Groups[3].Value)
 				{
-					error = "the check digits do not match (changed or cut off?)";
+					error = Loc.T(Loc.K.PidCheck);
 					return false;
 				}
 				string b64 = payload.Replace('-', '+').Replace('_', '/');
@@ -291,7 +291,7 @@ namespace Doorstop
 			catch (Exception e)
 			{
 				ModLog.Error("PathId: refused:\n" + e);
-				error = "unreadable (" + e.GetType().Name + ")";
+				error = Loc.T(Loc.K.PidDamaged);   // the log has what exactly
 				return false;
 			}
 		}
@@ -402,7 +402,7 @@ namespace Doorstop
 			}
 			if (schema != Schema(into))
 			{
-				d.Error = "made with another version of the game";
+				d.Error = Loc.T(Loc.K.PidVersion);
 				return d;
 			}
 			int flags = r.U(7);
