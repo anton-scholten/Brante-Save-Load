@@ -1306,6 +1306,10 @@ namespace Doorstop
 						{
 							continue;   // a stat the panel leaves out (Heir): nothing to look up
 						}
+						if (ShownByComesFrom(o, c.RealCondition))
+						{
+							continue;   // "Kiss the Sword": the answer is under Comes from
+						}
 						string op = (c.Operator ?? "").Trim();
 						string line = (Operand(c.Operand1) + " " + op + " " + Operand(c.Operand2)).Trim();
 						if (string.IsNullOrEmpty(c.Operand2) && (op == "!=" || op == "\u2260"))
@@ -1346,11 +1350,12 @@ namespace Doorstop
 				List<string> from = EarnedByLines(o, _fates.TryGetValue(o, out f) ? f : Fate.Open);
 				if (from.Count > 0)
 				{
-					comes = "<b>" + Loc.T(Loc.K.DestEarnedBy) + ":</b>\n" + string.Join("\n", from.ToArray());
+					comes = "<b>" + Loc.T(Loc.K.DestEarnedBy) + ":</b>\n"
+						+ string.Join("\n", from.ConvertAll(l => l.Replace(OptionMark, "    \u2013 ")).ToArray());
 					sb.Append("\n\n<size=85%>").Append(comes).Append("</size>");
 				}
 				_lastTipText = sb.ToString();
-				if (ShowWideTip(o, Loc.Game(k + ".Title", k), state, descr, wideConds, condIcons, wideOrs, orIcons, comes))
+				if (ShowWideTip(o, Loc.Game(k + ".Title", k), state, descr, wideConds, condIcons, wideOrs, orIcons, from))
 				{
 					return;   // over the tree, out of the way of the Destiny list
 				}
@@ -1417,37 +1422,115 @@ namespace Doorstop
 				}
 				else
 				{
-					HashSet<string> plain = new HashSet<string>();
+					// one answer: "Scene: answer (needs)"; several: the scene,
+					// then each answer as an option (OptionMark: bracketed)
+					List<string> answers = new List<string>();
 					foreach (KeyValuePair<string, int> e in list)
 					{
 						string choice = "ButtonDescription" + e.Value;
-						string answer = SceneTexts.Name(e.Key, choice);
-						string line = "\u2022 " + title + (answer.Length > 0 ? ": " + SceneEffects.NobleParticle(answer) : "");
+						string answer = SceneEffects.NobleParticle(SceneTexts.Name(e.Key, choice));
 						string needs = Needs(SceneEffects.For(e.Key, choice));
-						if (needs.Length > 0)
+						string line = answer + (needs.Length > 0 ? " (" + needs + ")" : "");
+						if (line.Length > 0 && !answers.Contains(line))
 						{
-							line += " (" + needs + ")";
+							answers.Add(line);
 						}
-						if (plain.Add(line))
+					}
+					if (answers.Count == 1)
+					{
+						mine.Add("\u2022 " + title + ": " + answers[0]);
+					}
+					else
+					{
+						mine.Add("\u2022 " + title + ":");
+						foreach (string a in answers)
 						{
-							mine.Add(line);
+							mine.Add(OptionMark + a);
 						}
 					}
 				}
-				foreach (string line in mine)
+				foreach (string raw in mine)
 				{
 					// earned: the scenes behind are grey; not earned, a scene
 					// passed (or on another post's track) is struck, so the
-					// ways left to earn it stand out
-					lines.Add(fate == Fate.Earned ? (done ? "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Grey) + ">" + line + "</color>" : line)
-						: open ? line : Struck(line));
+					// ways left to earn it stand out (the option mark stays first)
+					bool option = raw.StartsWith(OptionMark, StringComparison.Ordinal);
+					string line = option ? raw.Substring(OptionMark.Length) : raw;
+					line = fate == Fate.Earned ? (done ? "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Grey) + ">" + line + "</color>" : line)
+						: open ? line : Struck(line);
+					lines.Add(option ? OptionMark + line : line);
 				}
-				if (lines.Count >= 6)
+				if (lines.Count >= 10)
 				{
 					break;
 				}
 			}
 			return lines;
+		}
+
+		// Marks a "Comes from" line that is one of several answers of the
+		// scene above it (drawn under a bracket in the wide pop-up).
+		private const string OptionMark = "\t";
+
+		// Whether a condition part only names the answer that earns the
+		// destiny - a key parameter ("KissTheSword") that only the earning
+		// answers set (scene-params.tsv): Comes from lists them already.
+		// One set elsewhere too ("GirlsMeet") is a requirement of its own.
+		// "Accept True Death" is set by no scene; every answer that earns
+		// the true death sets Deaths to 4, so "Deaths = 4" says it all.
+		private static bool ShownByComesFrom(Objective o, ObjectiveConditions rc)
+		{
+			if (rc == null || rc.ByKeyParameters == null)
+			{
+				return false;
+			}
+			bool any = false;
+			foreach (var kp in rc.ByKeyParameters)
+			{
+				string name = KeyParamName(kp);
+				if (string.IsNullOrEmpty(name))
+				{
+					return false;
+				}
+				if (o.Name == ObjectiveEnum.ИстиннаяСмерть && name == "ПринятьИстиннуюСмерть")
+				{
+					any = true;
+					continue;
+				}
+				List<KeyValuePair<string, int>> setters = SceneParams.Setters(name);
+				if (setters.Count == 0)
+				{
+					return false;
+				}
+				List<KeyValuePair<string, int>> earners = SceneObjectives.Earners((int)o.Name);
+				foreach (KeyValuePair<string, int> st in setters)
+				{
+					if (!earners.Contains(st))
+					{
+						return false;
+					}
+				}
+				any = true;
+			}
+			return any;
+		}
+
+		// A ByKeyParameters entry's key parameter name (its KeyParameter field,
+		// an enum or an asset).
+		private static string KeyParamName(object kp)
+		{
+			if (kp == null)
+			{
+				return null;
+			}
+			FieldInfo fi = kp.GetType().GetField("KeyParameter", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+			object v = fi != null ? fi.GetValue(kp) : null;
+			if (v == null)
+			{
+				return null;
+			}
+			UnityEngine.Object uo = v as UnityEngine.Object;
+			return uo != null ? uo.name : v.ToString();
 		}
 
 		// A line that can no longer happen: struck, in the "out of reach" red.
@@ -1516,6 +1599,47 @@ namespace Doorstop
 
 		// dev-pick's "destinyall": every chapter's entries with their pop-up
 		// text, tags stripped, for the log
+		// A dev view of an object's fields, two levels deep, lists expanded.
+		private static string DevDescribe(object o, int depth)
+		{
+			if (o == null)
+			{
+				return "null";
+			}
+			if (o is string || o.GetType().IsPrimitive || o.GetType().IsEnum)
+			{
+				return o.ToString();
+			}
+			if (o is UnityEngine.Object)
+			{
+				return ((UnityEngine.Object)o).name;
+			}
+			if (depth > 2)
+			{
+				return o.GetType().Name;
+			}
+			System.Collections.IEnumerable list = o as System.Collections.IEnumerable;
+			if (list != null)
+			{
+				List<string> items = new List<string>();
+				foreach (object x in list)
+				{
+					items.Add(DevDescribe(x, depth + 1));
+				}
+				return items.Count == 0 ? "" : "[" + string.Join("; ", items.ToArray()) + "]";
+			}
+			List<string> parts = new List<string>();
+			foreach (FieldInfo fi in o.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+			{
+				string v = DevDescribe(fi.GetValue(o), depth + 1);
+				if (v.Length > 0 && v != "null")
+				{
+					parts.Add(fi.Name + "=" + v);
+				}
+			}
+			return "{" + string.Join(", ", parts.ToArray()) + "}";
+		}
+
 		public static void DevDumpDestinies()
 		{
 			int keep = _destinyPick;
@@ -1523,6 +1647,15 @@ namespace Doorstop
 			{
 				ModLog.Info("DEV DESTINY meta " + ObjectiveKey(o) + ": chapter " + o.Chapter + ", category " + o.Category
 					+ ", post '" + o.Post + "', order " + o.Order);
+				if (o.Condition == null)
+				{
+					continue;
+				}
+				foreach (ObjectiveCondition c in o.Condition)
+				{
+					ModLog.Info("DEV DESTINY cond " + ObjectiveKey(o) + ": '" + c.Operand1 + "' '" + c.Operator + "' '" + c.Operand2
+						+ "'" + (c.OrCondition ? " OR" : "") + " | " + DevDescribe(c.RealCondition, 0));
+				}
 			}
 			for (int ch = 1; ch <= 5; ch++)
 			{
@@ -3108,16 +3241,17 @@ namespace Doorstop
 		public static RectTransform TreeArea;
 		private static GameObject _wide;
 		private static Image _wideIcon;
-		private static TextMeshProUGUI _wideTitle, _wideText, _wideFrom;
+		private static TextMeshProUGUI _wideTitle, _wideText;
+		private static RectTransform _wideFromBox;   // "Comes from": one row per scene, options bracketed
+		private static readonly List<RectTransform> _wideBrackets = new List<RectTransform>();
 		private static RectTransform _wideReqBox;   // "Requires": one row per part
-		private static RectTransform _wideOneOf;    // its "One of" options, bracketed (null: none)
 		private static TMP_FontAsset _wideFont;
 		private const float WideLine = 20f, WideIcon = 26f;
 		private static string _lastTipText;   // the destiny pop-up's text, for the dev dump
 		private const float WideMax = 1500f;
 
 		private static bool ShowWideTip(Objective o, string title, string state, string descr,
-			List<string> conds, List<Sprite> condIcons, List<string> ors, List<Sprite> orIcons, string comes)
+			List<string> conds, List<Sprite> condIcons, List<string> ors, List<Sprite> orIcons, List<string> comes)
 		{
 			if (TreeArea == null || TooltipParent == null || !EnsureWide())
 			{
@@ -3132,12 +3266,13 @@ namespace Doorstop
 			_wideTitle.text = title;
 			_wideText.text = (state.Length > 0 ? state + "\n" : "") + descr;
 			bool requires = conds.Count + ors.Count > 0;
+			_wideBrackets.Clear();
 			FillRequires(conds, condIcons, ors, orIcons);
-			_wideFrom.text = comes;
+			FillComesFrom(comes);
 			_wideReqBox.gameObject.SetActive(requires);
-			_wideFrom.transform.parent.gameObject.SetActive(comes.Length > 0);
+			_wideFromBox.gameObject.SetActive(comes.Count > 0);
 			Transform bottom = _wideReqBox.parent;
-			bottom.gameObject.SetActive(requires || comes.Length > 0);
+			bottom.gameObject.SetActive(requires || comes.Count > 0);
 
 			RectTransform box = (RectTransform)TooltipParent;
 			RectTransform rt = (RectTransform)_wide.transform;
@@ -3149,8 +3284,25 @@ namespace Doorstop
 			rt.sizeDelta = new Vector2(w, rt.sizeDelta.y);
 			_wide.SetActive(true);
 			_wide.transform.SetAsLastSibling();
+			// Requires keeps its lines whole: at least as wide as its longest
+			// (up to half the box, past that its lines wrap); Comes from wraps
+			// in the rest. Without a minimum the column was squeezed and its
+			// unwrapped lines ran into Comes from.
+			LayoutElement rl = _wideReqBox.GetComponent<LayoutElement>();
+			rl.minWidth = -1f;
+			SetWrap(_wideReqBox, false);
+			LayoutRebuilder.ForceRebuildLayoutImmediate(_wideReqBox);
+			float need = LayoutUtility.GetPreferredWidth(_wideReqBox);
+			float cap = (w - 112f) * 0.5f;
+			if (comes.Count > 0 && need > cap)
+			{
+				SetWrap(_wideReqBox, true);
+				need = cap;
+			}
+			rl.minWidth = rl.preferredWidth = need;
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
-			DrawOneOfSpine();
+			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);   // wrapped heights settle on the second pass
+			DrawSpines();
 			// centred over the tree, from its top (down over the stats when
 			// it says more than the tree is tall)
 			Rect area = box.rect;
@@ -3236,7 +3388,7 @@ namespace Doorstop
 			rle.preferredHeight = rle.minHeight = 1.5f;
 
 			// bottom: requires | comes from
-			GameObject bottom = WideGroup("Lists", _wide.transform, true, 36f);
+			GameObject bottom = WideGroup("Lists", _wide.transform, true, 64f);
 			// Requires as wide as its longest line (one line each), Comes
 			// from the rest
 			GameObject req = WideGroup("Requires", bottom.transform, false, 2f);
@@ -3245,7 +3397,7 @@ namespace Doorstop
 			_wideFont = font;
 			GameObject from = WideGroup("ComesFrom", bottom.transform, false, 0f);
 			from.AddComponent<LayoutElement>().flexibleWidth = 1f;
-			_wideFrom = WideText(from.transform, "Text", font, 20f, FontStyles.Normal);
+			_wideFromBox = (RectTransform)from.transform;
 			_wide.SetActive(false);
 			return true;
 		}
@@ -3255,13 +3407,7 @@ namespace Doorstop
 		// of:" and the options under a bracket, as a scene's answers.
 		private static void FillRequires(List<string> conds, List<Sprite> condIcons, List<string> ors, List<Sprite> orIcons)
 		{
-			for (int i = _wideReqBox.childCount - 1; i >= 0; i--)
-			{
-				GameObject old = _wideReqBox.GetChild(i).gameObject;
-				old.SetActive(false);
-				UnityEngine.Object.Destroy(old);
-			}
-			_wideOneOf = null;
+			Clear(_wideReqBox);
 			if (conds.Count + ors.Count == 0)
 			{
 				return;
@@ -3276,16 +3422,72 @@ namespace Doorstop
 				return;
 			}
 			WideLineRow(_wideReqBox, null, "\u2022 <i>" + Loc.T(Loc.K.OneOf) + ":</i>", false, false);
-			GameObject box = WideGroup("OneOf", _wideReqBox, false, 2f);
-			((VerticalLayoutGroup)box.GetComponent<HorizontalOrVerticalLayoutGroup>()).padding = new RectOffset(14, 0, 0, 0);
-			_wideOneOf = (RectTransform)box.transform;
+			RectTransform box = BracketBox(_wideReqBox);
 			for (int i = 0; i < ors.Count; i++)
 			{
-				WideLineRow(_wideOneOf, orIcons[i], ors[i], false, true);
+				WideLineRow(box, orIcons[i], ors[i], false, true);
 			}
 		}
 
-		private static void WideLineRow(Transform parent, Sprite icon, string text, bool bullet, bool stub)
+		// "Comes from": a row per scene ("• Scene: answer (needs)", or the
+		// scene alone), a scene's several earning answers under a bracket.
+		// These lines wrap.
+		private static void FillComesFrom(List<string> lines)
+		{
+			Clear(_wideFromBox);
+			if (lines.Count == 0)
+			{
+				return;
+			}
+			WideLineRow(_wideFromBox, null, "<b>" + Loc.T(Loc.K.DestEarnedBy) + ":</b>", false, false);
+			RectTransform box = null;
+			foreach (string line in lines)
+			{
+				if (line.StartsWith(OptionMark, StringComparison.Ordinal))
+				{
+					if (box == null)
+					{
+						box = BracketBox(_wideFromBox);
+					}
+					WideLineRow(box, null, line.Substring(OptionMark.Length), false, true).enableWordWrapping = true;
+					continue;
+				}
+				box = null;
+				WideLineRow(_wideFromBox, null, line, false, false).enableWordWrapping = true;
+			}
+		}
+
+		private static void Clear(Transform t)
+		{
+			for (int i = t.childCount - 1; i >= 0; i--)
+			{
+				GameObject old = t.GetChild(i).gameObject;
+				old.SetActive(false);
+				UnityEngine.Object.Destroy(old);
+			}
+		}
+
+		// A box for bracketed options, indented for the spine (DrawSpines).
+		private static RectTransform BracketBox(Transform parent)
+		{
+			GameObject box = WideGroup("OneOf", parent, false, 2f);
+			((VerticalLayoutGroup)box.GetComponent<HorizontalOrVerticalLayoutGroup>()).padding = new RectOffset(14, 0, 0, 0);
+			_wideBrackets.Add((RectTransform)box.transform);
+			return (RectTransform)box.transform;
+		}
+
+		private static void SetWrap(Transform t, bool wrap)
+		{
+			foreach (TextMeshProUGUI tm in t.GetComponentsInChildren<TextMeshProUGUI>(true))
+			{
+				if (tm.name == "Text")
+				{
+					tm.enableWordWrapping = wrap;
+				}
+			}
+		}
+
+		private static TextMeshProUGUI WideLineRow(Transform parent, Sprite icon, string text, bool bullet, bool stub)
 		{
 			GameObject row = WideGroup("Line", parent, true, 6f);
 			row.GetComponent<HorizontalOrVerticalLayoutGroup>().childAlignment = TextAnchor.MiddleLeft;
@@ -3306,6 +3508,9 @@ namespace Doorstop
 				TextMeshProUGUI b = WideText(row.transform, "Bullet", _wideFont, WideLine, FontStyles.Normal);
 				b.text = "\u2022";
 				b.enableWordWrapping = false;
+				b.alignment = TextAlignmentOptions.Center;
+				LayoutElement bl = b.gameObject.AddComponent<LayoutElement>();
+				bl.preferredWidth = bl.minWidth = 12f;   // a fixed slot: the glyph's own box let it lie over the icon
 			}
 			if (icon != null)
 			{
@@ -3321,34 +3526,39 @@ namespace Doorstop
 			TextMeshProUGUI t = WideText(row.transform, "Text", _wideFont, WideLine, FontStyles.Normal);
 			t.text = text;
 			t.enableWordWrapping = false;   // one line each
+			t.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+			return t;
 		}
 
-		// The "One of" bracket's spine: from the first option's middle to the
-		// last's, where their stubs start (after layout).
-		private static void DrawOneOfSpine()
+		// Each bracket's spine: from its first option's middle to its last's,
+		// where their stubs start (after layout).
+		private static void DrawSpines()
 		{
-			if (_wideOneOf == null || _wideOneOf.childCount == 0)
+			foreach (RectTransform box in _wideBrackets)
 			{
-				return;
+				if (box == null || box.childCount == 0)
+				{
+					continue;
+				}
+				RectTransform first = (RectTransform)box.GetChild(0);
+				RectTransform last = (RectTransform)box.GetChild(box.childCount - 1);
+				float y0 = box.InverseTransformPoint(first.TransformPoint(first.rect.center)).y;
+				float y1 = box.InverseTransformPoint(last.TransformPoint(last.rect.center)).y;
+				float x = box.InverseTransformPoint(first.TransformPoint(new Vector3(first.rect.xMin, 0f, 0f))).x;
+				GameObject go = new GameObject("Spine", typeof(RectTransform));
+				go.transform.SetParent(box, false);
+				go.AddComponent<LayoutElement>().ignoreLayout = true;
+				Image img = go.AddComponent<Image>();
+				img.color = Palette.Fade(Palette.Muted, 0.55f);
+				img.raycastTarget = false;
+				RectTransform rt = img.rectTransform;
+				rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+				rt.pivot = new Vector2(0.5f, 1f);
+				rt.sizeDelta = new Vector2(3f, Mathf.Abs(y0 - y1) + 1.5f);
+				// the anchored position is from the box's centre
+				Vector2 c = box.rect.center;
+				rt.anchoredPosition = new Vector2(x - c.x, Mathf.Max(y0, y1) + 1.5f - c.y);
 			}
-			RectTransform first = (RectTransform)_wideOneOf.GetChild(0);
-			RectTransform last = (RectTransform)_wideOneOf.GetChild(_wideOneOf.childCount - 1);
-			float y0 = _wideOneOf.InverseTransformPoint(first.TransformPoint(first.rect.center)).y;
-			float y1 = _wideOneOf.InverseTransformPoint(last.TransformPoint(last.rect.center)).y;
-			float x = _wideOneOf.InverseTransformPoint(first.TransformPoint(new Vector3(first.rect.xMin, 0f, 0f))).x;
-			GameObject go = new GameObject("Spine", typeof(RectTransform));
-			go.transform.SetParent(_wideOneOf, false);
-			go.AddComponent<LayoutElement>().ignoreLayout = true;
-			Image img = go.AddComponent<Image>();
-			img.color = Palette.Fade(Palette.Muted, 0.55f);
-			img.raycastTarget = false;
-			RectTransform rt = img.rectTransform;
-			rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-			rt.pivot = new Vector2(0.5f, 1f);
-			rt.sizeDelta = new Vector2(3f, Mathf.Abs(y0 - y1) + 1.5f);
-			// the anchored position is from the box's centre
-			Vector2 c = _wideOneOf.rect.center;
-			rt.anchoredPosition = new Vector2(x - c.x, Mathf.Max(y0, y1) + 1.5f - c.y);
 		}
 
 		// The icon for a condition line, from what it tests: a stat's, a

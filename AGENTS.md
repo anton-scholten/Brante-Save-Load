@@ -382,7 +382,16 @@ community event sheet (`data/events.json`).
   (`ConditionIcon`, from `RealCondition` - the operand is a translation
   key such as `GregorBronte`, not an asset name; key-parameter parts have
   none), the text; "One of:" with its options under a bracket
-  (`DrawOneOfSpine`, after layout); the tall game tooltip beside the list covered the
+  (`DrawSpines`, after layout). Requires is at least as wide as its
+  longest line (up to half the box, then its lines wrap): unsized, it was
+  squeezed and its lines ran into Comes from. A key-parameter part that
+  only the earning answers set (`ShownByComesFrom`: every
+  `SceneParams.Setters` entry is an earner - "Kiss the Sword") is left
+  out: Comes from names that answer. One set elsewhere too ("GirlsMeet")
+  stays. True Death's "Accept True Death" is set by no scene, and every
+  answer that earns it sets Deaths to 4: it reads "Deaths = 4". Comes
+  from is one row per scene, "Scene: answer (needs)", a scene's several
+  earning answers bracketed under it (`OptionMark`), wrapped; the tall game tooltip beside the list covered the
   next columns. `ChoiceWindow.ShowStats` fills the context.
   `dev-pick.txt` takes `mode destiny` and `destiny N`.
 - **The book tabs' wood stops at the page.** `MakeBookTab` copies the
@@ -416,7 +425,10 @@ community event sheet (`data/events.json`).
   Tide's Nobleman's Sacrament once chapter 1 is over without it, the
   Tournament without The Fencing Lesson), so the ways left stand out.
   `dev-pick.txt` `destinyall` logs every chapter's
-  pop-up text ("DEV DESTINY").
+  pop-up text ("DEV DESTINY"), each destiny's metadata ("meta") and its
+  condition parts with their `RealCondition` ("cond"). The displayed
+  operands can differ from the real test: Nobleman's Sacrament shows
+  Willpower >= 0, its `RealCondition` is Will >= 5.
 - **Every text in all of the game's languages.** The game has 14 (I2
   terms carry 14 columns): `Loc` has a table for 13 - both Spanish ones
   share `_es` - and `Loc.Table` matches the language code or name
