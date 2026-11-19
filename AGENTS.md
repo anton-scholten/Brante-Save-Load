@@ -391,7 +391,15 @@ community event sheet (`data/events.json`).
   stays. True Death's "Accept True Death" is set by no scene, and every
   answer that earns it sets Deaths to 4: it reads "Deaths = 4". Comes
   from is one row per scene, "Scene: answer (needs)", a scene's several
-  earning answers bracketed under it (`OptionMark`), wrapped; the tall game tooltip beside the list covered the
+  earning answers bracketed under it (`FromLine.Option`). A need equal to
+  one of the destiny's own required parts (`Plain` text) is left to
+  Requires (Nobleman's Sacrament, Sophia Saved: Willpower). Each need
+  has its icon, so the lines are laid out by hand (`FlowLine`: words and
+  icons placed and wrapped to the column, explicit line heights - wrapped
+  TextMesh Pro rows in layout groups overlapped). TMP leaves trailing
+  spaces out of `GetPreferredValues`: words are measured without them,
+  plus `SpaceWidth`. A part whose `RealCondition` is empty (Sophia
+  Saved's Willpower) gets its icon by operand name (`NamedIcon`); the tall game tooltip beside the list covered the
   next columns. `ChoiceWindow.ShowStats` fills the context.
   `dev-pick.txt` takes `mode destiny` and `destiny N`.
 - **The book tabs' wood stops at the page.** `MakeBookTab` copies the
@@ -487,7 +495,10 @@ community event sheet (`data/events.json`).
   hero's track - the game meets Egmont on every track, but only the
   rebel's and the judge's scenes change him), ordered by `UnlockDate`;
   the rows are rebuilt when that set changes. Dead/left/exiled rows are
-  faded. A hovered answer marks relation and status changes like stats.
+  faded. A person's pop-up says who they are as the game's Relations
+  page does (`<Name>.Description`; `WhoIs` was mostly empty), then an
+  unusual status and what it means. `dev-pick.txt` `rowhover <name>`
+  holds a stat's or person's pop-up. A hovered answer marks relation and status changes like stats.
   Family is drawn as the game's family tree (`FamilyTree`: Gregor; Robert,
   Lydia; Stephan, Nathan, Gloria; `Gloria2` is a second asset of the same
   `CharacterList`, the shorter name wins). Relations are three columns by

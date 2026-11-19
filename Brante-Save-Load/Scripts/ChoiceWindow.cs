@@ -6660,6 +6660,11 @@ namespace Doorstop
 						StatPanel.DevAllPeople = true;
 						continue;
 					}
+					else if (l.StartsWith("rowhover ", StringComparison.Ordinal))
+					{
+						StatPanel.DevHoverRow(l.Substring(9).Trim());   // hold a stat's or person's pop-up
+						continue;
+					}
 					else if (l.StartsWith("tabhover ", StringComparison.Ordinal))
 					{
 						string m = l.Substring(9).Trim();

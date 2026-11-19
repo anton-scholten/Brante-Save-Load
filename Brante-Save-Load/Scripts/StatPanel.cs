@@ -1298,6 +1298,7 @@ namespace Doorstop
 				List<string> ors = new List<string>();
 				List<Sprite> condIcons = new List<Sprite>();
 				List<Sprite> orIcons = new List<Sprite>();
+				HashSet<string> required = new HashSet<string>();   // plain text of the required parts
 				if (o.Condition != null)
 				{
 					foreach (ObjectiveCondition c in o.Condition)
@@ -1317,6 +1318,10 @@ namespace Doorstop
 							// "The Family in Ruins !=": the objective must not be had
 							line = Loc.T(Loc.K.NotWord) + " " + Operand(c.Operand1);
 						}
+						if (!c.OrCondition)
+						{
+							required.Add(Plain(line));
+						}
 						if (line.Length > 0 && f != Fate.Earned && PartRuledOut(c.RealCondition, _lastShown, _lastChapter, 0))
 						{
 							line = Struck(line);   // can no longer be met: the options left stand out
@@ -1324,7 +1329,7 @@ namespace Doorstop
 						if (line.Length > 0)
 						{
 							(c.OrCondition ? ors : conds).Add(line);
-							(c.OrCondition ? orIcons : condIcons).Add(ConditionIcon(c.RealCondition));
+							(c.OrCondition ? orIcons : condIcons).Add(ConditionIcon(c.RealCondition) ?? NamedIcon(c.Operand1));
 						}
 					}
 				}
@@ -1347,7 +1352,8 @@ namespace Doorstop
 					requires = "<b>" + Loc.T(Loc.K.Requires) + ":</b>\n" + string.Join("\n", conds.ToArray());
 					sb.Append("\n\n<size=85%>").Append(requires).Append("</size>");
 				}
-				List<string> from = EarnedByLines(o, _fates.TryGetValue(o, out f) ? f : Fate.Open);
+				List<FromLine> fromLines = EarnedBy(o, _fates.TryGetValue(o, out f) ? f : Fate.Open, required);
+				List<string> from = fromLines.ConvertAll(l => (l.Option ? OptionMark : "") + l.Styled(l.Text()));
 				if (from.Count > 0)
 				{
 					comes = "<b>" + Loc.T(Loc.K.DestEarnedBy) + ":</b>\n"
@@ -1355,7 +1361,7 @@ namespace Doorstop
 					sb.Append("\n\n<size=85%>").Append(comes).Append("</size>");
 				}
 				_lastTipText = sb.ToString();
-				if (ShowWideTip(o, Loc.Game(k + ".Title", k), state, descr, wideConds, condIcons, wideOrs, orIcons, from))
+				if (ShowWideTip(o, Loc.Game(k + ".Title", k), state, descr, wideConds, condIcons, wideOrs, orIcons, fromLines))
 				{
 					return;   // over the tree, out of the way of the Destiny list
 				}
@@ -1382,7 +1388,7 @@ namespace Doorstop
 		// line twice. Otherwise each earning answer, with what it needs
 		// (Last Respects: the Will destiny, or Nobility >= 6 or Gregor >= 2).
 		// Grey: the scene is behind the scene shown.
-		private static List<string> EarnedByLines(Objective o, Fate fate)
+		private static List<FromLine> EarnedBy(Objective o, Fate fate, HashSet<string> required)
 		{
 			List<string> titles = new List<string>();
 			Dictionary<string, List<KeyValuePair<string, int>>> byTitle = new Dictionary<string, List<KeyValuePair<string, int>>>();
@@ -1401,7 +1407,7 @@ namespace Doorstop
 				}
 				list.Add(e);
 			}
-			List<string> lines = new List<string>();
+			List<FromLine> lines = new List<FromLine>();
 			foreach (string title in titles)
 			{
 				List<KeyValuePair<string, int>> list = byTitle[title];
@@ -1415,50 +1421,50 @@ namespace Doorstop
 					whole |= e.Value <= 0 || WholeScene(e.Key, list);
 					open |= !passed && OnTrack(e.Key);
 				}
-				List<string> mine = new List<string>();
+				// earned: the scenes behind are grey; not earned, a scene
+				// passed (or on another post's track) is struck, so the ways
+				// left to earn it stand out
+				int style = fate == Fate.Earned ? (done ? 1 : 0) : open ? 0 : 2;
+				List<FromLine> mine = new List<FromLine>();
 				if (whole)
 				{
-					mine.Add("\u2022 " + title);
+					mine.Add(new FromLine { Head = "\u2022 " + title });
 				}
 				else
 				{
 					// one answer: "Scene: answer (needs)"; several: the scene,
-					// then each answer as an option (OptionMark: bracketed)
-					List<string> answers = new List<string>();
+					// then each answer as an option (bracketed). A need the
+					// destiny itself requires is left to Requires.
+					List<FromLine> answers = new List<FromLine>();
 					foreach (KeyValuePair<string, int> e in list)
 					{
 						string choice = "ButtonDescription" + e.Value;
-						string answer = SceneEffects.NobleParticle(SceneTexts.Name(e.Key, choice));
-						string needs = Needs(SceneEffects.For(e.Key, choice));
-						string line = answer + (needs.Length > 0 ? " (" + needs + ")" : "");
-						if (line.Length > 0 && !answers.Contains(line))
+						FromLine a = new FromLine { Head = SceneEffects.NobleParticle(SceneTexts.Name(e.Key, choice)) };
+						NeedParts(SceneEffects.For(e.Key, choice), required, a);
+						if (a.Text().Length > 0 && !answers.Exists(x => x.Text() == a.Text()))
 						{
-							answers.Add(line);
+							answers.Add(a);
 						}
 					}
 					if (answers.Count == 1)
 					{
-						mine.Add("\u2022 " + title + ": " + answers[0]);
+						answers[0].Head = "\u2022 " + title + ": " + answers[0].Head;
+						mine.Add(answers[0]);
 					}
 					else
 					{
-						mine.Add("\u2022 " + title + ":");
-						foreach (string a in answers)
+						mine.Add(new FromLine { Head = "\u2022 " + title + ":" });
+						foreach (FromLine a in answers)
 						{
-							mine.Add(OptionMark + a);
+							a.Option = true;
+							mine.Add(a);
 						}
 					}
 				}
-				foreach (string raw in mine)
+				foreach (FromLine l in mine)
 				{
-					// earned: the scenes behind are grey; not earned, a scene
-					// passed (or on another post's track) is struck, so the
-					// ways left to earn it stand out (the option mark stays first)
-					bool option = raw.StartsWith(OptionMark, StringComparison.Ordinal);
-					string line = option ? raw.Substring(OptionMark.Length) : raw;
-					line = fate == Fate.Earned ? (done ? "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Grey) + ">" + line + "</color>" : line)
-						: open ? line : Struck(line);
-					lines.Add(option ? OptionMark + line : line);
+					l.Style = style;
+					lines.Add(l);
 				}
 				if (lines.Count >= 10)
 				{
@@ -1466,6 +1472,48 @@ namespace Doorstop
 				}
 			}
 			return lines;
+		}
+
+		// One "Comes from" line: its head ("• Scene: answer"), what the
+		// answer needs (icon, text, what follows it: ", " or " or "), its
+		// style (0 plain, 1 grey: earned and behind, 2 struck: out of reach)
+		// and whether it is one of several answers of the scene above.
+		private sealed class FromLine
+		{
+			public bool Option;
+			public string Head = "";
+			public readonly List<Sprite> Icons = new List<Sprite>();
+			public readonly List<string> Needs = new List<string>();
+			public readonly List<string> Seps = new List<string>();
+			public int Style;
+
+			public string Text()
+			{
+				if (Needs.Count == 0)
+				{
+					return Head;
+				}
+				StringBuilder sb = new StringBuilder(Head).Append(" (");
+				for (int i = 0; i < Needs.Count; i++)
+				{
+					sb.Append(Needs[i]).Append(i < Needs.Count - 1 ? Seps[i] : "");
+				}
+				return sb.Append(")").ToString();
+			}
+
+			public string Styled(string text)
+			{
+				return Style == 1 ? "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Grey) + ">" + text + "</color>"
+					: Style == 2 ? Struck(text) : text;
+			}
+		}
+
+		// A requirement's text without tags, the game's signs, lower case:
+		// to compare an answer's need with the destiny's own requirements.
+		private static string Plain(string text)
+		{
+			string t = System.Text.RegularExpressions.Regex.Replace(text ?? "", "<[^>]+>", "");
+			return t.Replace(">=", "\u2265").Replace("<=", "\u2264").Trim().ToLowerInvariant();
 		}
 
 		// Marks a "Comes from" line that is one of several answers of the
@@ -1574,27 +1622,38 @@ namespace Doorstop
 			return true;
 		}
 
-		// An answer's requirements as one phrase: the "and" ones joined by
-		// commas, then the "or" group joined by "or".
-		private static string Needs(List<SceneEffects.Effect> effects)
+		// An answer's requirements into `into`: the "and" ones joined by
+		// commas, then the "or" group joined by "or", each with its icon;
+		// those in `skip` (the destiny's own requirements) left out.
+		private static void NeedParts(List<SceneEffects.Effect> effects, HashSet<string> skip, FromLine into)
 		{
-			List<string> all = new List<string>();
-			List<string> any = new List<string>();
-			foreach (SceneEffects.Effect e in effects)
+			bool prevOr = false;
+			foreach (bool orGroup in new[] { false, true })
 			{
-				if (!e.IsRequirement || (e.Kind == 'Q' && LeftOut.Contains(e.Name)))
+				foreach (SceneEffects.Effect e in effects)
 				{
-					continue;
+					if (!e.IsRequirement || e.Or != orGroup || (e.Kind == 'Q' && LeftOut.Contains(e.Name)))
+					{
+						continue;
+					}
+					Sprite icon;
+					// the game's own signs, as in the condition lines
+					string text = SceneEffects.Label(e, out icon).Replace(">=", "\u2265").Replace("<=", "\u2264");
+					if (!orGroup && skip != null && skip.Contains(Plain(text)))
+					{
+						continue;   // Requires says it already
+					}
+					if (into.Needs.Count > 0)
+					{
+						// between two of the "or" group: "or"; else a comma
+						into.Seps[into.Seps.Count - 1] = orGroup && prevOr ? " " + Loc.T(Loc.K.OrWord) + " " : ", ";
+					}
+					into.Icons.Add(icon);
+					into.Needs.Add(text);
+					into.Seps.Add("");
+					prevOr = orGroup;
 				}
-				Sprite icon;
-				(e.Or ? any : all).Add(SceneEffects.Label(e, out icon));
 			}
-			if (any.Count > 0)
-			{
-				all.Add(string.Join(" " + Loc.T(Loc.K.OrWord) + " ", any.ToArray()));
-			}
-			// the game's own signs, as in the condition lines above
-			return string.Join(", ", all.ToArray()).Replace(">=", "\u2265").Replace("<=", "\u2264");
 		}
 
 		// dev-pick's "destinyall": every chapter's entries with their pop-up
@@ -1720,6 +1779,27 @@ namespace Doorstop
 				}
 			}
 			ModLog.Info("StatPanel: no Destiny entry " + key);
+		}
+
+		// dev-pick's "rowhover <name>": hold the pop-up of a stat or person
+		// row (asset or enum name)
+		public static void DevHoverRow(string name)
+		{
+			foreach (Row row in _rows)
+			{
+				string a = row.Person != null ? row.Person.Name.ToString() : row.Param != null ? row.Param.name : "";
+				string b = row.Person != null ? row.Person.name : row.Param != null ? row.Param.ParameterName.ToString() : "";
+				RectTransform root = RowRoot(row);
+				if ((a == name || b == name) && root != null)
+				{
+					DevLogHide = true;
+					ShowTooltip(row, root);
+					ModLog.Info("StatPanel: holding the pop-up of row " + name + ": "
+						+ (_tipComp != null ? _tipComp.Description.text.Replace("\n", " | ") : ""));
+					return;
+				}
+			}
+			ModLog.Info("StatPanel: no row " + name);
 		}
 
 		// dev-pick's "forkhover": hold the pop-up of the first "+" icon
@@ -3223,9 +3303,16 @@ namespace Doorstop
 			}
 			_tipComp.Title.text = PersonName(c);
 			_tipComp.Icon.sprite = row.Icon != null ? row.Icon.sprite : c.DefaultSprite;
-			string who = Loc.Game(c.WhoIs.ToString(), "");
+			// who they are (the game's Relations page: `<Name>.Description`,
+			// "Head of the Brante family, ..."), then what an unusual status
+			// means
+			string who = Loc.Game(c.Name + ".Description", "").Trim();
+			if (who.Length <= 1)
+			{
+				who = Loc.Game(c.WhoIs.ToString(), "").Trim();
+			}
 			string descr = Usual(row.Status) ? who
-				: Loc.Game(c.Name + "." + row.Status, "") + "\n" + Loc.Game(c.Name + "." + row.Status + ".Description", "");
+				: who + "\n\n<b>" + Loc.Game(c.Name + "." + row.Status, "") + "</b>\n" + Loc.Game(c.Name + "." + row.Status + ".Description", "");
 			_tipComp.Description.text = descr.Trim().Length > 0 ? descr.Trim() : "<i>" + Loc.T(Loc.K.NoStatText) + "</i>";
 			PlaceTooltip(over);
 		}
@@ -3251,7 +3338,7 @@ namespace Doorstop
 		private const float WideMax = 1500f;
 
 		private static bool ShowWideTip(Objective o, string title, string state, string descr,
-			List<string> conds, List<Sprite> condIcons, List<string> ors, List<Sprite> orIcons, List<string> comes)
+			List<string> conds, List<Sprite> condIcons, List<string> ors, List<Sprite> orIcons, List<FromLine> comes)
 		{
 			if (TreeArea == null || TooltipParent == null || !EnsureWide())
 			{
@@ -3268,7 +3355,6 @@ namespace Doorstop
 			bool requires = conds.Count + ors.Count > 0;
 			_wideBrackets.Clear();
 			FillRequires(conds, condIcons, ors, orIcons);
-			FillComesFrom(comes);
 			_wideReqBox.gameObject.SetActive(requires);
 			_wideFromBox.gameObject.SetActive(comes.Count > 0);
 			Transform bottom = _wideReqBox.parent;
@@ -3300,6 +3386,9 @@ namespace Doorstop
 				need = cap;
 			}
 			rl.minWidth = rl.preferredWidth = need;
+			// Comes from gets the rest: its lines are laid out by hand to it
+			float fromW = w - 112f - (requires ? need + 64f : 0f);
+			FillComesFrom(comes, fromW);
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);   // wrapped heights settle on the second pass
 			DrawSpines();
@@ -3431,8 +3520,9 @@ namespace Doorstop
 
 		// "Comes from": a row per scene ("• Scene: answer (needs)", or the
 		// scene alone), a scene's several earning answers under a bracket.
-		// These lines wrap.
-		private static void FillComesFrom(List<string> lines)
+		// Each need has its icon, so the lines are laid out by hand
+		// (FlowLine), wrapped to `width`.
+		private static void FillComesFrom(List<FromLine> lines, float width)
 		{
 			Clear(_wideFromBox);
 			if (lines.Count == 0)
@@ -3441,20 +3531,165 @@ namespace Doorstop
 			}
 			WideLineRow(_wideFromBox, null, "<b>" + Loc.T(Loc.K.DestEarnedBy) + ":</b>", false, false);
 			RectTransform box = null;
-			foreach (string line in lines)
+			foreach (FromLine line in lines)
 			{
-				if (line.StartsWith(OptionMark, StringComparison.Ordinal))
+				if (line.Option)
 				{
 					if (box == null)
 					{
 						box = BracketBox(_wideFromBox);
 					}
-					WideLineRow(box, null, line.Substring(OptionMark.Length), false, true).enableWordWrapping = true;
+					FlowLine(box, line, width - 14f, true);
 					continue;
 				}
 				box = null;
-				WideLineRow(_wideFromBox, null, line, false, false).enableWordWrapping = true;
+				FlowLine(_wideFromBox, line, width, false);
 			}
+		}
+
+		private const float FlowLineH = 28f;      // a "Comes from" line's height (an icon fits)
+		private const float FlowIcon = 24f;
+		private const float FlowStub = 18f;       // a bracketed line's room for its stub
+
+		// One "Comes from" line, its words and need icons placed left to
+		// right and wrapped at `width`; `stub`: a bracketed option, its stub
+		// on the first line.
+		private static void FlowLine(Transform parent, FromLine line, float width, bool stub)
+		{
+			GameObject go = new GameObject("Flow", typeof(RectTransform));
+			go.transform.SetParent(parent, false);
+			RectTransform frt = (RectTransform)go.transform;
+			LayoutElement le = go.AddComponent<LayoutElement>();
+			le.flexibleWidth = 1f;
+			le.minWidth = le.preferredWidth = width;
+
+			// the tokens: (icon or null, word); a word glued to the next has no space
+			List<KeyValuePair<Sprite, string>> tokens = new List<KeyValuePair<Sprite, string>>();
+			foreach (string w in line.Head.Split(' '))
+			{
+				if (w.Length > 0)
+				{
+					tokens.Add(new KeyValuePair<Sprite, string>(null, w));
+				}
+			}
+			for (int i = 0; i < line.Needs.Count; i++)
+			{
+				string text = (i == 0 ? "" : "") + line.Needs[i] + (i < line.Needs.Count - 1 ? line.Seps[i].TrimEnd() : ")");
+				string[] words = text.Split(' ');
+				for (int j = 0; j < words.Length; j++)
+				{
+					if (words[j].Length == 0)
+					{
+						continue;
+					}
+					// "(" opens the first need, before its icon
+					string word = (i == 0 && j == 0 ? "" : "") + words[j];
+					tokens.Add(new KeyValuePair<Sprite, string>(j == 0 ? line.Icons[i] : null,
+						i == 0 && j == 0 ? "\u0001" + word : word));
+				}
+			}
+
+			float x0 = stub ? FlowStub : 0f;
+			float x = x0, y = 0f;
+			StringBuilder run = new StringBuilder();
+			float runX = x;
+			System.Action flush = delegate
+			{
+				if (run.Length > 0)
+				{
+					FlowText(frt, line.Styled(run.ToString().TrimEnd()), runX, y);
+					run.Length = 0;
+				}
+			};
+			foreach (KeyValuePair<Sprite, string> t in tokens)
+			{
+				bool open = t.Value.StartsWith("\u0001", StringComparison.Ordinal);
+				string word = open ? t.Value.Substring(1) : t.Value;
+				float pre = open ? Measure("(") : 0f;
+				float iw = t.Key != null ? FlowIcon + 3f : 0f;
+				// TMP leaves trailing spaces out of a measure: the space apart
+				float ww = Measure(word) + SpaceWidth();
+				if (x > x0 && x + pre + iw + ww > width)
+				{
+					flush();
+					x = x0;
+					y -= FlowLineH;
+				}
+				if (run.Length == 0)
+				{
+					runX = x;
+				}
+				if (open)
+				{
+					run.Append("(");
+					x += pre;
+				}
+				if (t.Key != null)
+				{
+					flush();
+					FlowIconAt(frt, t.Key, x, y);
+					x += iw;
+					runX = x;
+				}
+				run.Append(word).Append(' ');
+				x += ww;
+			}
+			flush();
+			if (stub)
+			{
+				GameObject sg = new GameObject("Stub", typeof(RectTransform));
+				sg.transform.SetParent(frt, false);
+				Image si = sg.AddComponent<Image>();
+				si.color = Palette.Fade(Palette.Muted, 0.55f);
+				si.raycastTarget = false;
+				Pin(si.rectTransform, new Vector2(0f, -FlowLineH * 0.5f + 1.5f), new Vector2(12f, 3f), new Vector2(0f, 1f));
+			}
+			le.minHeight = le.preferredHeight = -y + FlowLineH;
+		}
+
+		private static void FlowText(RectTransform parent, string text, float x, float y)
+		{
+			TextMeshProUGUI t = WideText(parent, "Text", _wideFont, WideLine, FontStyles.Normal);
+			t.text = text;
+			t.enableWordWrapping = false;
+			t.alignment = TextAlignmentOptions.MidlineLeft;
+			Pin(t.rectTransform, new Vector2(x, y), new Vector2(Measure(text) + 8f, FlowLineH), new Vector2(0f, 1f));
+		}
+
+		private static void FlowIconAt(RectTransform parent, Sprite icon, float x, float y)
+		{
+			GameObject ig = new GameObject("Icon", typeof(RectTransform));
+			ig.transform.SetParent(parent, false);
+			Image img = ig.AddComponent<Image>();
+			img.sprite = icon;
+			img.preserveAspect = true;
+			img.raycastTarget = false;
+			Pin(img.rectTransform, new Vector2(x, y - (FlowLineH - FlowIcon) * 0.5f), new Vector2(FlowIcon, FlowIcon), new Vector2(0f, 1f));
+		}
+
+		private static TextMeshProUGUI _measure;
+		private static float _space = -1f;
+
+		private static float SpaceWidth()
+		{
+			if (_space < 0f)
+			{
+				_space = Mathf.Max(0f, Measure("x x") - Measure("xx"));
+			}
+			return _space;
+		}
+
+		// The width of `text` in the pop-up's font and size (tags ignored by TMP).
+		private static float Measure(string text)
+		{
+			if (_measure == null)
+			{
+				_measure = WideText(_wide.transform, "Measure", _wideFont, WideLine, FontStyles.Normal);
+				_measure.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+				_measure.enableWordWrapping = false;
+				_measure.color = Color.clear;
+			}
+			return _measure.GetPreferredValues(text).x;
 		}
 
 		private static void Clear(Transform t)
@@ -3536,15 +3771,31 @@ namespace Doorstop
 		{
 			foreach (RectTransform box in _wideBrackets)
 			{
-				if (box == null || box.childCount == 0)
+				if (box == null)
 				{
 					continue;
 				}
-				RectTransform first = (RectTransform)box.GetChild(0);
-				RectTransform last = (RectTransform)box.GetChild(box.childCount - 1);
-				float y0 = box.InverseTransformPoint(first.TransformPoint(first.rect.center)).y;
-				float y1 = box.InverseTransformPoint(last.TransformPoint(last.rect.center)).y;
-				float x = box.InverseTransformPoint(first.TransformPoint(new Vector3(first.rect.xMin, 0f, 0f))).x;
+				// the stubs of its options, top to bottom
+				List<RectTransform> stubs = new List<RectTransform>();
+				foreach (Transform t in box.GetComponentsInChildren<Transform>(false))
+				{
+					if (t.name == "Stub")
+					{
+						stubs.Add((RectTransform)t);
+					}
+				}
+				if (stubs.Count == 0)
+				{
+					continue;
+				}
+				float top = float.MinValue, bottom = float.MaxValue, x = 0f;
+				foreach (RectTransform st in stubs)
+				{
+					Vector3 p = box.InverseTransformPoint(st.TransformPoint(st.rect.center));
+					top = Mathf.Max(top, p.y);
+					bottom = Mathf.Min(bottom, p.y);
+					x = box.InverseTransformPoint(st.TransformPoint(new Vector3(st.rect.xMin, 0f, 0f))).x;
+				}
 				GameObject go = new GameObject("Spine", typeof(RectTransform));
 				go.transform.SetParent(box, false);
 				go.AddComponent<LayoutElement>().ignoreLayout = true;
@@ -3553,11 +3804,11 @@ namespace Doorstop
 				img.raycastTarget = false;
 				RectTransform rt = img.rectTransform;
 				rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-				rt.pivot = new Vector2(0.5f, 1f);
-				rt.sizeDelta = new Vector2(3f, Mathf.Abs(y0 - y1) + 1.5f);
+				rt.pivot = new Vector2(0f, 1f);
+				rt.sizeDelta = new Vector2(3f, top - bottom + 3f);
 				// the anchored position is from the box's centre
 				Vector2 c = box.rect.center;
-				rt.anchoredPosition = new Vector2(x - c.x, Mathf.Max(y0, y1) + 1.5f - c.y);
+				rt.anchoredPosition = new Vector2(x - c.x, top + 1.5f - c.y);
 			}
 		}
 
@@ -3565,6 +3816,30 @@ namespace Doorstop
 		// destiny's or a person's portrait. Its operand is a translation key
 		// ("GregorBronte", "WillObjective"), not an asset name. Key-parameter
 		// tests ("Take part in the ritual") have none.
+		// An operand that is an asset name ("Will"; Sophia Saved's
+		// condition has an empty RealCondition): its stat's, person's or
+		// destiny's icon.
+		private static Sprite NamedIcon(string operand)
+		{
+			string key = (operand ?? "").Trim();
+			if (key.Length == 0)
+			{
+				return null;
+			}
+			Parameter p = SceneEffects.ParameterAsset(key);
+			if (p != null)
+			{
+				return p.Icon;
+			}
+			Character c = SceneEffects.CharacterAsset(key);
+			if (c != null)
+			{
+				return c.TooltipPortret;
+			}
+			Objective o = SceneEffects.ObjectiveAsset(key);
+			return o != null ? o.Icon : null;
+		}
+
 		private static Sprite ConditionIcon(ObjectiveConditions rc)
 		{
 			if (rc == null)
@@ -3659,6 +3934,8 @@ namespace Doorstop
 			return t;
 		}
 
+		private const float TipIconOverhang = 60f;
+
 		private static void PlaceTooltip(RectTransform over)
 		{
 			PlaceTooltip(over, null, false);
@@ -3696,7 +3973,8 @@ namespace Doorstop
 			x = Mathf.Clamp(x, area.xMin + gap, area.xMax - gap - size.x);
 			// every stat's pop-up at the same height: centred on the screen
 			float mid = level ? (lo.y + hi.y) * 0.5f : area.center.y;
-			float y = Mathf.Clamp(mid - size.y * 0.5f, area.yMin + gap, area.yMax - gap - size.y);
+			// the portrait/icon sits on the pop-up's top edge, half above it
+			float y = Mathf.Clamp(mid - size.y * 0.5f, area.yMin + gap, area.yMax - gap - size.y - TipIconOverhang);
 			_tip.transform.position = box.TransformPoint(new Vector3(x, y, 0f));
 		}
 
