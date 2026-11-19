@@ -551,9 +551,10 @@ namespace Doorstop
 
 		private static Sprite _saveLoadIcon, _treeTabIcon;
 
-		// the tab's wood (MakeBookTab), in settings-tab heights: the top cut
-		// starts WoodSplit up from its foot, the bottom cut ends WoodBelow under it
-		private const float WoodSplit = 0.3f, WoodBelow = 0.6f;
+		// the share of the settings strip's height left off the foot of the
+		// tab's wood (MakeBookTab): whole, it reached over the left page's
+		// top edge and looked laid on the page instead of behind it
+		private const float WoodCropBottom = 0.03f;
 
 		// One tab, the size and shape of the settings tab: its button and
 		// wood, a plain medallion, `icon` on it (`size` units, in the chapter
@@ -602,39 +603,14 @@ namespace Doorstop
 				srt.GetWorldCorners(sc);
 				Vector3[] tc = new Vector3[4];
 				rt.GetWorldCorners(tc);
-				// The game's strips run on down behind the left page (both are
-				// in "book_new", the page painted over the strip's foot). The
-				// copy is two cuts, laid beside the chapter tab at its height:
-				// the top from the settings tab's strip (no rope crosses it;
-				// its foot is the right page's edge, so only down to
-				// WoodSplit of its height), the rest from the chapter tab's
-				// column, WoodBelow of a tab height under the settings tab's
-				// foot, page edge and all - there the page already covers it
-				float h = sc[2].y - sc[0].y;
-				float half = (sc[2].x - sc[0].x) * 0.5f;
-				float split = sc[0].y + h * WoodSplit;
-				Vector3[] cc = new Vector3[4];
-				crt.GetWorldCorners(cc);
-				float cx = (cc[0].x + cc[2].x) * 0.5f;
-				float sx = (sc[0].x + sc[2].x) * 0.5f;
-				float tx = (tc[0].x + tc[2].x) * 0.5f;
-				float z = sc[0].z;
-				Vector3[][] cuts =
-				{
-					new[] { new Vector3(sx - half, split, z), new Vector3(sx + half, sc[2].y, z) },
-					new[] { new Vector3(cx - half, sc[0].y - h * WoodBelow, z), new Vector3(cx + half, split, z) },
-				};
+				Vector3 woodAt = new Vector3((tc[0].x + tc[2].x) * 0.5f, (sc[0].y + sc[2].y) * 0.5f, tc[0].z);
+				Vector2 woodSize = srt.rect.size;
 				int at = tab.transform.GetSiblingIndex();
 				foreach (Image layer in hud.root.GetComponentsInChildren<Image>(true))
 				{
-					if (layer.sprite == null || layer.sprite.name != "book_new")
+					if (layer.sprite != null && (layer.sprite.name == "background" || layer.sprite.name == "book_new"))
 					{
-						continue;
-					}
-					foreach (Vector3[] cut in cuts)
-					{
-						Vector3 woodAt = new Vector3(tx, (cut[0].y + cut[1].y) * 0.5f, tc[0].z);
-						Image patch = CopyPatch(layer, cut[0], cut[1], hud, woodAt);
+						Image patch = CopyPatch(layer, srt, hud, woodAt, woodSize);
 						if (patch != null)
 						{
 							patch.transform.SetSiblingIndex(at++);
@@ -697,7 +673,7 @@ namespace Doorstop
 
 		// The part of `layer`'s sprite under `over`, as an Image under `parent`
 		// centred on the world point `at`, `size` units big.
-		private static Image CopyPatch(Image layer, Vector3 cutLo, Vector3 cutHi, Transform parent, Vector3 at)
+		private static Image CopyPatch(Image layer, RectTransform over, Transform parent, Vector3 at, Vector2 size)
 		{
 			RectTransform lrt = layer.rectTransform;
 			Rect lr = lrt.rect;
@@ -717,8 +693,10 @@ namespace Doorstop
 					lr = new Rect(lr.xMin, lr.center.y - h * 0.5f, lr.width, h);
 				}
 			}
-			Vector2 lo = lrt.InverseTransformPoint(cutLo);
-			Vector2 hi = lrt.InverseTransformPoint(cutHi);
+			Vector3[] c = new Vector3[4];
+			over.GetWorldCorners(c);
+			Vector2 lo = lrt.InverseTransformPoint(c[0]);
+			Vector2 hi = lrt.InverseTransformPoint(c[2]);
 			Sprite sp = layer.sprite;
 			Rect tr = sp.textureRect;
 			Rect cut = new Rect(
@@ -726,6 +704,8 @@ namespace Doorstop
 				tr.y + (lo.y - lr.yMin) / lr.height * tr.height,
 				(hi.x - lo.x) / lr.width * tr.width,
 				(hi.y - lo.y) / lr.height * tr.height);
+			// the foot left off (the patch below loses as much, its top stays)
+			cut.yMin += cut.height * WoodCropBottom;
 			if (cut.width <= 0f || cut.height <= 0f || cut.xMin < tr.xMin || cut.yMin < tr.yMin
 				|| cut.xMax > tr.xMax || cut.yMax > tr.yMax)
 			{
@@ -737,11 +717,9 @@ namespace Doorstop
 			img.sprite = Sprite.Create(sp.texture, cut, new Vector2(0.5f, 0.5f), sp.pixelsPerUnit);
 			img.raycastTarget = false;
 			RectTransform rt = go.GetComponent<RectTransform>();
-			// as big as the cut, in the parent's units
-			Vector2 plo = parent.InverseTransformPoint(cutLo);
-			Vector2 phi = parent.InverseTransformPoint(cutHi);
-			rt.sizeDelta = new Vector2(Mathf.Abs(phi.x - plo.x), Mathf.Abs(phi.y - plo.y));
+			rt.sizeDelta = new Vector2(size.x, size.y * (1f - WoodCropBottom));
 			rt.position = at;
+			rt.anchoredPosition += new Vector2(0f, size.y * WoodCropBottom * 0.5f);
 			return img;
 		}
 
@@ -969,6 +947,7 @@ namespace Doorstop
 			_historyProgress = null;
 			_statsArea = null;
 			_historyScrollRt = null;
+			StatPanel.TreeArea = null;
 			_popup = null;
 			_popupText = null;
 			_popupNote = null;
@@ -1036,6 +1015,7 @@ namespace Doorstop
 			RectTransform srt = scroll.GetComponent<RectTransform>();
 			// placed by LayoutTreeArea: as tall as the answers, the stats below
 			_historyScrollRt = srt;
+			StatPanel.TreeArea = srt;
 			ScrollRect sc = scroll.AddComponent<ScrollRect>();
 			sc.horizontal = true;
 			sc.vertical = false;   // as tall as the tallest column (LayoutTreeArea)

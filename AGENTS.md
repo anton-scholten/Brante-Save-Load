@@ -360,16 +360,22 @@ community event sheet (`data/events.json`).
   (`MarkRequired`) over their fate colour, so a needed destiny that
   happened or is out of reach still shows both. Condition parts on a
   stat the panel leaves out (`LeftOut`: Heir) are not listed.
-  `ChoiceWindow.ShowStats` fills the context.
+  Fills and outlines reach `RowPadX`/`RowPadY` past the row (a `Fill`
+  child; the row's own image stays the clear hover target). In each
+  category the entries go in the order the story can first bring them
+  (`FirstAppearance`: the earliest earning scene in flow order; then the
+  game's `Order`; true death last). The pop-up is wide, over the tree
+  (`ShowWideTip`, `TreeArea`): icon, name, state, description on top,
+  Requires and Comes from side by side below, on the game tooltip's
+  parchment and font; the tall game tooltip beside the list covered the
+  next columns. `ChoiceWindow.ShowStats` fills the context.
   `dev-pick.txt` takes `mode destiny` and `destiny N`.
-- **The book tabs' wood runs behind the page.** The game's strips are
-  painted into `book_new`, the left page over each strip's foot.
-  `MakeBookTab` lays two cuts of it beside the chapter tab: the top from
-  the settings tab's strip (no rope crosses it; its foot is the right
-  page's edge, so only down to `WoodSplit`), the rest from the chapter
-  tab's column down to `WoodBelow` under the foot, page edge included. A
-  single cut of the settings strip ended above the page and looked laid
-  on it; the chapter column alone carried the year tab's rope.
+- **The book tabs' wood stops at the page.** `MakeBookTab` copies the
+  wood under the settings tab out of the book images, minus its foot
+  (`WoodCropBottom`, 3%; the patch is that much shorter, its top in
+  place): whole, it reached over the left page's top edge and looked laid
+  on the page rather than behind it. Two-cut copies (settings top +
+  chapter column under the page) looked worse and were dropped.
 - **A true death ends the predicted path.** The fourth death sends the game
   into `GameFinals` (true-death pages, the chapter's finale, credits), not the
   chapter flow. `AddUpcoming` stops when the hero's Death reaches 4 and ends

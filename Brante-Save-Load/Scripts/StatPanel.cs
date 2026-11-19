@@ -706,9 +706,21 @@ namespace Doorstop
 				}
 				list.Add(o);
 			}
+			// in a category, in the order the story can first bring them (the
+			// earliest scene that earns one, in flow order); the game's own
+			// Order for ties and for those no scene earns, the true death last
+			Dictionary<Objective, long> first = new Dictionary<Objective, long>();
+			foreach (Objective o in list)
+			{
+				first[o] = FirstAppearance(o);
+			}
 			list.Sort((a, b) =>
 			{
 				int c = CategoryOrder(a.Category).CompareTo(CategoryOrder(b.Category));
+				if (c == 0)
+				{
+					c = first[a].CompareTo(first[b]);
+				}
 				if (c == 0)
 				{
 					c = a.Order.CompareTo(b.Order);
@@ -716,6 +728,27 @@ namespace Doorstop
 				return c != 0 ? c : ((int)a.Name).CompareTo((int)b.Name);
 			});
 			return list;
+		}
+
+		// Where `o` can first come in the story: the flow position (chapter,
+		// then the chapter's order) of the earliest scene that earns it;
+		// long.MaxValue - 1 when no scene does, long.MaxValue for the true death.
+		private static long FirstAppearance(Objective o)
+		{
+			if (o.Name == ObjectiveEnum.ИстиннаяСмерть)
+			{
+				return long.MaxValue;
+			}
+			long best = long.MaxValue - 1;
+			foreach (KeyValuePair<string, int> e in SceneObjectives.Earners((int)o.Name))
+			{
+				SceneFlow.Row r = SceneFlow.Find(e.Key);
+				if (r != null)
+				{
+					best = Math.Min(best, (long)r.Chapter * 100000L + r.Order);
+				}
+			}
+			return best;
 		}
 
 		// Whether some scene of `post`'s track earns `o` (the game lists
@@ -936,12 +969,31 @@ namespace Doorstop
 			}
 		}
 
+		// A destiny row's colour and outline reach this far past the row,
+		// left/right and up/down (rows are 3 apart: they just meet).
+		private const float RowPadX = 2f, RowPadY = 1.5f;
+
+		private static void Around(RectTransform rt)
+		{
+			rt.anchorMin = Vector2.zero;
+			rt.anchorMax = Vector2.one;
+			rt.pivot = new Vector2(0.5f, 0.5f);
+			rt.offsetMin = new Vector2(-RowPadX, -RowPadY);
+			rt.offsetMax = new Vector2(RowPadX, RowPadY);
+		}
+
+		private static Image RowFill(Transform row)
+		{
+			Transform f = row != null ? row.Find("Fill") : null;
+			return f != null ? f.GetComponent<Image>() : null;
+		}
+
 		private static void StyleObjective(TextMeshProUGUI label, Fate f)
 		{
 			label.color = FateColour(f);
 			label.fontStyle = f == Fate.Earned ? FontStyles.Bold : f == Fate.Lost ? FontStyles.Strikethrough : FontStyles.Normal;
 			Transform row = label.transform.parent;
-			Image back = row.GetComponent<Image>();
+			Image back = RowFill(row);
 			if (back != null)
 			{
 				back.color = f == Fate.Earned ? Palette.Fade(Palette.Good, 0.22f)
@@ -1059,6 +1111,14 @@ namespace Doorstop
 					Image back = row.AddComponent<Image>();
 					back.color = Color.clear;
 					Pin(back.rectTransform, new Vector2(x + 10f, -(top + 34f + r * rowH)), new Vector2(colW - 20f, rowH - 3f), new Vector2(0f, 1f));
+					// the fate/hover colour, a little bigger than the row (the
+					// row's own image stays the clear hover target)
+					GameObject fg = new GameObject("Fill", typeof(RectTransform));
+					fg.transform.SetParent(row.transform, false);
+					Image fill = fg.AddComponent<Image>();
+					fill.color = Color.clear;
+					fill.raycastTarget = false;
+					Around(fill.rectTransform);
 					GameObject ig = new GameObject("Icon", typeof(RectTransform));
 					ig.transform.SetParent(row.transform, false);
 					Image icon = ig.AddComponent<Image>();
@@ -1136,14 +1196,17 @@ namespace Doorstop
 				// squeezed longer lines into a narrow column
 				StringBuilder sb = new StringBuilder();
 				Fate f;
+				string state = "";
 				if (_fates.TryGetValue(o, out f))
 				{
-					sb.Append("<color=#").Append(ColorUtility.ToHtmlStringRGB(FateColour(f))).Append("><b>")
-						.Append(Loc.T(f == Fate.Earned ? Loc.K.DestEarned : f == Fate.Ahead ? Loc.K.DestAhead
-							: f == Fate.Lost ? Loc.K.DestLost : Loc.K.DestOpen)).Append("</b></color>\n");
+					state = "<color=#" + ColorUtility.ToHtmlStringRGB(FateColour(f)) + "><b>"
+						+ Loc.T(f == Fate.Earned ? Loc.K.DestEarned : f == Fate.Ahead ? Loc.K.DestAhead
+							: f == Fate.Lost ? Loc.K.DestLost : Loc.K.DestOpen) + "</b></color>";
+					sb.Append(state).Append("\n");
 				}
 				string descr = Loc.Game(k + ".Description", "").Trim();
-				sb.Append(descr.Length > 1 ? SceneEffects.NobleParticle(descr) : "<i>" + Loc.T(Loc.K.NoStatText) + "</i>");
+				descr = descr.Length > 1 ? SceneEffects.NobleParticle(descr) : "<i>" + Loc.T(Loc.K.NoStatText) + "</i>";
+				sb.Append(descr);
 				// as the Destiny window lists them: the required parts, then
 				// the OrCondition ones under "One of"
 				List<string> conds = new List<string>();
@@ -1182,19 +1245,25 @@ namespace Doorstop
 				{
 					conds.Add("<i>" + Loc.T(Loc.K.OneOf) + ":</i> " + string.Join(" / ", ors.ToArray()));
 				}
+				string requires = "", comes = "";
 				if (conds.Count > 0)
 				{
 					// headed like "Comes from:" below, so the two lists read apart
-					sb.Append("\n\n<size=85%><b>").Append(Loc.T(Loc.K.Requires)).Append(":</b>\n")
-						.Append(string.Join("\n", conds.ToArray())).Append("</size>");
+					requires = "<b>" + Loc.T(Loc.K.Requires) + ":</b>\n" + string.Join("\n", conds.ToArray());
+					sb.Append("\n\n<size=85%>").Append(requires).Append("</size>");
 				}
 				List<string> from = EarnedByLines(o, _fates.TryGetValue(o, out f) ? f : Fate.Open);
 				if (from.Count > 0)
 				{
-					sb.Append("\n\n<size=85%><b>").Append(Loc.T(Loc.K.DestEarnedBy)).Append(":</b>\n")
-						.Append(string.Join("\n", from.ToArray())).Append("</size>");
+					comes = "<b>" + Loc.T(Loc.K.DestEarnedBy) + ":</b>\n" + string.Join("\n", from.ToArray());
+					sb.Append("\n\n<size=85%>").Append(comes).Append("</size>");
 				}
-				_tipComp.Description.text = sb.ToString();
+				_lastTipText = sb.ToString();
+				if (ShowWideTip(o, Loc.Game(k + ".Title", k), state, descr, requires, comes))
+				{
+					return;   // over the tree, out of the way of the Destiny list
+				}
+				_tipComp.Description.text = _lastTipText;
 				// beside the entry's words (its row spans the column), level
 				// with it, rather than over the next column
 				float words = label != null ? label.GetPreferredValues(label.text).x : 0f;
@@ -1368,7 +1437,7 @@ namespace Doorstop
 				foreach (KeyValuePair<Objective, TextMeshProUGUI> kv in _destRows)
 				{
 					ShowObjectiveTooltip(kv.Key, (RectTransform)kv.Value.transform.parent, kv.Value);
-					string text = _tipComp != null ? _tipComp.Description.text : "";
+					string text = _lastTipText ?? "";
 					text = System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", "").Replace("\n", " | ");
 					ModLog.Info("DEV DESTINY ch" + ch + " " + ObjectiveKey(kv.Key) + ": " + text);
 				}
@@ -2406,7 +2475,7 @@ namespace Doorstop
 				}
 				if (brings || rulesOut)
 				{
-					Image back = kv.Value.transform.parent.GetComponent<Image>();
+					Image back = RowFill(kv.Value.transform.parent);
 					if (back != null)
 					{
 						back.color = Palette.Fade(brings ? Palette.Good : Palette.Bad, 0.32f);
@@ -2505,10 +2574,7 @@ namespace Doorstop
 					GameObject go = new GameObject("Required", typeof(RectTransform));
 					go.transform.SetParent(row, false);
 					go.AddComponent<LayoutElement>().ignoreLayout = true;
-					RectTransform brt = go.GetComponent<RectTransform>();
-					brt.anchorMin = Vector2.zero;
-					brt.anchorMax = Vector2.one;
-					brt.offsetMin = brt.offsetMax = Vector2.zero;
+					Around(go.GetComponent<RectTransform>());
 					const float w = 2.5f;
 					// bottom, top, left, right edges
 					Vector4[] edges =
@@ -2892,6 +2958,188 @@ namespace Doorstop
 			PlaceTooltip(over);
 		}
 
+		// ---- the wide destiny pop-up ----
+		//
+		// A destiny's pop-up is laid over the tree (TreeArea), as wide as it:
+		// the icon, name, state and description on top, what it requires and
+		// where it comes from side by side below. On the game's tooltip
+		// parchment, in its font. The game's tall tooltip, beside the list,
+		// covered the next columns of destinies and grew past the screen
+		// with a long "Comes from".
+		public static RectTransform TreeArea;
+		private static GameObject _wide;
+		private static Image _wideIcon;
+		private static TextMeshProUGUI _wideTitle, _wideText, _wideReq, _wideFrom;
+		private static string _lastTipText;   // the destiny pop-up's text, for the dev dump
+		private const float WideMax = 1500f;
+
+		private static bool ShowWideTip(Objective o, string title, string state, string descr, string requires, string comes)
+		{
+			if (TreeArea == null || TooltipParent == null || !EnsureWide())
+			{
+				return false;
+			}
+			if (_tip != null)
+			{
+				_tip.SetActive(false);
+			}
+			_wideIcon.sprite = o.Icon;
+			_wideIcon.enabled = o.Icon != null;
+			_wideTitle.text = title;
+			_wideText.text = (state.Length > 0 ? state + "\n" : "") + descr;
+			_wideReq.text = requires;
+			_wideFrom.text = comes;
+			_wideReq.transform.parent.gameObject.SetActive(requires.Length > 0);
+			_wideFrom.transform.parent.gameObject.SetActive(comes.Length > 0);
+			Transform bottom = _wideReq.transform.parent.parent;
+			bottom.gameObject.SetActive(requires.Length > 0 || comes.Length > 0);
+			// the two lists share the width by how much each says
+			LayoutElement rl = _wideReq.transform.parent.GetComponent<LayoutElement>();
+			LayoutElement fl = _wideFrom.transform.parent.GetComponent<LayoutElement>();
+			rl.flexibleWidth = requires.Length > 0 && comes.Length > 0 ? 0.8f : 1f;
+			fl.flexibleWidth = 1.2f;
+
+			RectTransform box = (RectTransform)TooltipParent;
+			RectTransform rt = (RectTransform)_wide.transform;
+			Vector3[] c = new Vector3[4];
+			TreeArea.GetWorldCorners(c);
+			Vector2 lo = box.InverseTransformPoint(c[0]);
+			Vector2 hi = box.InverseTransformPoint(c[2]);
+			float w = Mathf.Min(hi.x - lo.x, WideMax);
+			rt.sizeDelta = new Vector2(w, rt.sizeDelta.y);
+			_wide.SetActive(true);
+			_wide.transform.SetAsLastSibling();
+			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
+			// centred over the tree, from its top (down over the stats when
+			// it says more than the tree is tall)
+			Rect area = box.rect;
+			float h = rt.rect.height;
+			float x = (lo.x + hi.x - w) * 0.5f;
+			float y = Mathf.Clamp(hi.y, area.yMin + 12f + h, area.yMax - 12f);
+			rt.pivot = new Vector2(0f, 1f);
+			rt.position = box.TransformPoint(new Vector3(x, y, 0f));
+			return true;
+		}
+
+		private static bool EnsureWide()
+		{
+			if (_wide != null)
+			{
+				return true;
+			}
+			if (!EnsureTooltip())
+			{
+				return false;
+			}
+			// the game tooltip's parchment: its biggest sliced image
+			Image paper = null;
+			foreach (Image img in _tip.GetComponentsInChildren<Image>(true))
+			{
+				if (img.sprite != null && (paper == null
+					|| img.rectTransform.rect.width * img.rectTransform.rect.height
+						> paper.rectTransform.rect.width * paper.rectTransform.rect.height))
+				{
+					paper = img;
+				}
+			}
+			TMP_FontAsset font = _tipComp.Description != null ? _tipComp.Description.font : null;
+			TMP_FontAsset titleFont = _tipComp.Title != null ? _tipComp.Title.font : font;
+
+			_wide = new GameObject("BranteSaveLoad_DestinyTip", typeof(RectTransform));
+			_wide.transform.SetParent(TooltipParent, false);
+			Canvas cv = _wide.AddComponent<Canvas>();
+			cv.overrideSorting = true;
+			cv.sortingOrder = 8100;   // over the tree, as the stat tooltip
+			Image back = _wide.AddComponent<Image>();
+			back.raycastTarget = false;
+			if (paper != null)
+			{
+				back.sprite = paper.sprite;
+				back.type = paper.type;
+				back.color = paper.color;
+			}
+			else
+			{
+				back.color = Palette.PaperLight;
+			}
+			VerticalLayoutGroup v = _wide.AddComponent<VerticalLayoutGroup>();
+			v.padding = new RectOffset(56, 56, 30, 34);
+			v.spacing = 14f;
+			v.childControlWidth = v.childControlHeight = true;
+			v.childForceExpandWidth = true;
+			v.childForceExpandHeight = false;
+			ContentSizeFitter fit = _wide.AddComponent<ContentSizeFitter>();
+			fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+			// top: icon | name, state, description
+			GameObject top = WideGroup("Top", _wide.transform, true, 18f);
+			GameObject ig = new GameObject("Icon", typeof(RectTransform));
+			ig.transform.SetParent(top.transform, false);
+			_wideIcon = ig.AddComponent<Image>();
+			_wideIcon.preserveAspect = true;
+			_wideIcon.raycastTarget = false;
+			LayoutElement il = ig.AddComponent<LayoutElement>();
+			il.preferredWidth = il.preferredHeight = il.minWidth = il.minHeight = 84f;
+			GameObject words = WideGroup("Words", top.transform, false, 4f);
+			words.AddComponent<LayoutElement>().flexibleWidth = 1f;
+			_wideTitle = WideText(words.transform, "Title", titleFont, 30f, FontStyles.Bold);
+			_wideText = WideText(words.transform, "Text", font, 22f, FontStyles.Normal);
+
+			// a rule between
+			GameObject rule = new GameObject("Rule", typeof(RectTransform));
+			rule.transform.SetParent(_wide.transform, false);
+			Image ri = rule.AddComponent<Image>();
+			ri.color = Palette.Fade(Palette.Muted, 0.5f);
+			ri.raycastTarget = false;
+			LayoutElement rle = rule.AddComponent<LayoutElement>();
+			rle.preferredHeight = rle.minHeight = 1.5f;
+
+			// bottom: requires | comes from
+			GameObject bottom = WideGroup("Lists", _wide.transform, true, 36f);
+			GameObject req = WideGroup("Requires", bottom.transform, false, 0f);
+			req.AddComponent<LayoutElement>().flexibleWidth = 0.8f;
+			_wideReq = WideText(req.transform, "Text", font, 20f, FontStyles.Normal);
+			GameObject from = WideGroup("ComesFrom", bottom.transform, false, 0f);
+			from.AddComponent<LayoutElement>().flexibleWidth = 1.2f;
+			_wideFrom = WideText(from.transform, "Text", font, 20f, FontStyles.Normal);
+			_wide.SetActive(false);
+			return true;
+		}
+
+		private static GameObject WideGroup(string name, Transform parent, bool across, float spacing)
+		{
+			GameObject go = new GameObject(name, typeof(RectTransform));
+			go.transform.SetParent(parent, false);
+			HorizontalOrVerticalLayoutGroup g = across
+				? (HorizontalOrVerticalLayoutGroup)go.AddComponent<HorizontalLayoutGroup>()
+				: go.AddComponent<VerticalLayoutGroup>();
+			g.spacing = spacing;
+			g.childControlWidth = g.childControlHeight = true;
+			g.childForceExpandWidth = false;
+			g.childForceExpandHeight = false;
+			g.childAlignment = TextAnchor.UpperLeft;
+			return go;
+		}
+
+		private static TextMeshProUGUI WideText(Transform parent, string name, TMP_FontAsset font, float size, FontStyles style)
+		{
+			GameObject go = new GameObject(name, typeof(RectTransform));
+			go.transform.SetParent(parent, false);
+			TextMeshProUGUI t = go.AddComponent<TextMeshProUGUI>();
+			if (font != null)
+			{
+				t.font = font;
+			}
+			t.fontSize = size;
+			t.fontStyle = style;
+			t.color = Palette.Ink;
+			t.alignment = TextAlignmentOptions.TopLeft;
+			t.enableWordWrapping = true;
+			t.overflowMode = TextOverflowModes.Overflow;
+			t.raycastTarget = false;
+			return t;
+		}
+
 		private static void PlaceTooltip(RectTransform over)
 		{
 			PlaceTooltip(over, null, false);
@@ -2935,6 +3183,10 @@ namespace Doorstop
 
 		public static void HideTooltip()
 		{
+			if (_wide != null)
+			{
+				_wide.SetActive(false);
+			}
 			if (DevLogHide && _tip != null && _tip.activeSelf)
 			{
 				ModLog.Info("StatPanel: tooltip hidden by\n" + Environment.StackTrace);
