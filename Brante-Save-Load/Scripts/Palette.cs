@@ -22,6 +22,7 @@ namespace Doorstop
 		public static readonly Color ConflictBg = new Color(0.86f, 0.42f, 0.38f);  // an answer that cannot be taken
 		public static readonly Color Good = new Color(0.18f, 0.42f, 0.18f);        // a value up, a requirement met
 		public static readonly Color Bad = new Color(0.62f, 0.16f, 0.12f);         // a value down, a requirement not met
+		public static readonly Color Required = new Color(0.86f, 0.62f, 0.04f);    // the outline of a destiny a hovered answer/destiny needs
 		public static readonly Color Shade = new Color(0f, 0f, 0f, 0.55f);         // the dim behind a window
 		public static readonly Color Track = new Color(0f, 0f, 0f, 0.12f);         // a scrollbar's track
 

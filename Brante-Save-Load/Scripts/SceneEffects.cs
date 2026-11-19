@@ -137,6 +137,40 @@ namespace Doorstop
 		// chapter-3 start's skill conversion.
 		// Every character some scene unlocks (U rows): the most the
 		// Relations tab could ever list (dev-pick "allpeople").
+		// The scenes any of whose answers or openings change the hero's
+		// relation with `character` (an `R` row), by asset name.
+		public static HashSet<string> RelationScenes(string character)
+		{
+			Load();
+			if (_relationScenes == null)
+			{
+				_relationScenes = new Dictionary<string, HashSet<string>>();
+				foreach (KeyValuePair<string, Dictionary<int, List<Effect>>> scene in _effects)
+				{
+					foreach (List<Effect> fx in scene.Value.Values)
+					{
+						foreach (Effect e in fx)
+						{
+							if (e.Kind != 'R')
+							{
+								continue;
+							}
+							HashSet<string> set;
+							if (!_relationScenes.TryGetValue(e.Name, out set))
+							{
+								_relationScenes[e.Name] = set = new HashSet<string>();
+							}
+							set.Add(scene.Key);
+						}
+					}
+				}
+			}
+			HashSet<string> found;
+			return _relationScenes.TryGetValue(character ?? "", out found) ? found : new HashSet<string>();
+		}
+
+		private static Dictionary<string, HashSet<string>> _relationScenes;
+
 		public static HashSet<string> AllUnlockable()
 		{
 			Load();

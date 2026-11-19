@@ -353,8 +353,23 @@ community event sheet (`data/events.json`).
   `destinyhover <objective>` and `forkhover`. Hovering an answer or event
   (`HighlightDestiny`) backs the entries it earns green and the ones it puts
   out of reach red (every way to earn them is another answer of that scene
-  or already behind the scene shown). `ChoiceWindow.ShowStats` fills the context.
+  or already behind the scene shown). The destinies a hovered answer or
+  destiny needs (`StatPanel.Needed`/`RequiredBy`: the answer's `O`
+  requirements without "not"; a destiny's condition list and its earning
+  answers' requirements) get a `Palette.Required` (amber) outline
+  (`MarkRequired`) over their fate colour, so a needed destiny that
+  happened or is out of reach still shows both. Condition parts on a
+  stat the panel leaves out (`LeftOut`: Heir) are not listed.
+  `ChoiceWindow.ShowStats` fills the context.
   `dev-pick.txt` takes `mode destiny` and `destiny N`.
+- **The book tabs' wood runs behind the page.** The game's strips are
+  painted into `book_new`, the left page over each strip's foot.
+  `MakeBookTab` lays two cuts of it beside the chapter tab: the top from
+  the settings tab's strip (no rope crosses it; its foot is the right
+  page's edge, so only down to `WoodSplit`), the rest from the chapter
+  tab's column down to `WoodBelow` under the foot, page edge included. A
+  single cut of the settings strip ended above the page and looked laid
+  on it; the chapter column alone carried the year tab's rope.
 - **A true death ends the predicted path.** The fourth death sends the game
   into `GameFinals` (true-death pages, the chapter's finale, credits), not the
   chapter flow. `AddUpcoming` stops when the hero's Death reaches 4 and ends
@@ -431,8 +446,11 @@ community event sheet (`data/events.json`).
   `GetCharacterTrueName`, relation -5..+5 on the two-sided slider, the game's
   relation word or, when the status is not `Good`/`Not`, the status
   (`<Character>.<Status>`). Family = `Character.IsFamily` without the hero,
-  Relations = everyone else the hero shown has met (`IsUnlocked` only, as
-  the game's windows), ordered by `UnlockDate`;
+  Relations = everyone else the hero shown has met (`IsUnlocked`, as
+  the game's windows) whose relation is not 0 or can still change
+  (`StatPanel.RelationCounts`: an `R` row in a scene not yet passed on the
+  hero's track - the game meets Egmont on every track, but only the
+  rebel's and the judge's scenes change him), ordered by `UnlockDate`;
   the rows are rebuilt when that set changes. Dead/left/exiled rows are
   faded. A hovered answer marks relation and status changes like stats.
   Family is drawn as the game's family tree (`FamilyTree`: Gregor; Robert,

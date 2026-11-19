@@ -1088,10 +1088,12 @@ namespace Doorstop
 						if (on)
 						{
 							ShowObjectiveTooltip(obj, rrt, name);
+							MarkRequired(RequiredBy(obj));
 						}
 						else
 						{
 							HideTooltip();
+							MarkRequired(null);
 						}
 					};
 					_destRows.Add(new KeyValuePair<Objective, TextMeshProUGUI>(o, name));
@@ -1150,6 +1152,10 @@ namespace Doorstop
 				{
 					foreach (ObjectiveCondition c in o.Condition)
 					{
+						if (LeftOut.Contains((c.Operand1 ?? "").Trim()))
+						{
+							continue;   // a stat the panel leaves out (Heir): nothing to look up
+						}
 						string op = (c.Operator ?? "").Trim();
 						string line = (Operand(c.Operand1) + " " + op + " " + Operand(c.Operand2)).Trim();
 						if (string.IsNullOrEmpty(c.Operand2) && (op == "!=" || op == "\u2260"))
@@ -1331,7 +1337,7 @@ namespace Doorstop
 			List<string> any = new List<string>();
 			foreach (SceneEffects.Effect e in effects)
 			{
-				if (!e.IsRequirement)
+				if (!e.IsRequirement || (e.Kind == 'Q' && LeftOut.Contains(e.Name)))
 				{
 					continue;
 				}
@@ -1351,6 +1357,11 @@ namespace Doorstop
 		public static void DevDumpDestinies()
 		{
 			int keep = _destinyPick;
+			foreach (Objective o in AllObjectives())
+			{
+				ModLog.Info("DEV DESTINY meta " + ObjectiveKey(o) + ": chapter " + o.Chapter + ", category " + o.Category
+					+ ", post '" + o.Post + "', order " + o.Order);
+			}
 			for (int ch = 1; ch <= 5; ch++)
 			{
 				DevDestinyChapter(ch);
@@ -1406,7 +1417,10 @@ namespace Doorstop
 				{
 					DevLogHide = true;
 					ShowObjectiveTooltip(kv.Key, (RectTransform)kv.Value.transform.parent, kv.Value);
-					ModLog.Info("StatPanel: holding the pop-up of " + key);
+					HashSet<Objective> req = RequiredBy(kv.Key);
+					MarkRequired(req);
+					ModLog.Info("StatPanel: holding the pop-up of " + key + "; needs "
+						+ string.Join(", ", new List<Objective>(req).ConvertAll(ObjectiveKey).ToArray()));
 					return;
 				}
 			}
@@ -1492,6 +1506,10 @@ namespace Doorstop
 					{
 						continue;   // the hero shown has not met them yet
 					}
+					if (!forced && !RelationCounts(c, shown, now))
+					{
+						continue;   // met, but nothing on this track changes how they see the hero
+					}
 					seen.Add(m.Character);
 					found.Add(new KeyValuePair<string, Character>(m.UnlockDate ?? "", c));
 				}
@@ -1515,6 +1533,35 @@ namespace Doorstop
 			return list;
 		}
 
+		// Whether the Relations tab lists `c` (the family always): a relation
+		// that is not 0 for either hero, or a scene not yet passed on the
+		// hero's track that changes it (scene-effects.tsv `R` rows). The game
+		// meets Egmont on every track, but only the rebel's and the judge's
+		// scenes change how he sees the hero.
+		private static bool RelationCounts(Character c, SceneEffects.Hero shown, SceneEffects.Hero now)
+		{
+			if (c == null || c.IsFamily)
+			{
+				return true;
+			}
+			foreach (SceneEffects.Hero h in new[] { shown, now })
+			{
+				CharacterModel m = ModelOf(h, c.Name);
+				if (m != null && m.Relation != 0)
+				{
+					return true;
+				}
+			}
+			foreach (string scene in SceneEffects.RelationScenes(c.name))
+			{
+				if (!DestinyDone.Contains(scene) && OnTrack(scene))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		// The ghost rows for a hovered answer or scene: who `at` has met that
 		// the panel does not list. Rebuilds the rows when that changes.
 		public static void Ghosts(SceneEffects.Hero at)
@@ -1531,7 +1578,8 @@ namespace Doorstop
 			foreach (CharacterModel m in at.Characters)
 			{
 				Character c = m != null && m.IsUnlocked && m.Character != CharacterList.Hero ? PersonAsset(m.Character) : null;
-				if (c != null && c.IsFamily == (Showing == Mode.Family) && !listed.Contains(c))
+				if (c != null && c.IsFamily == (Showing == Mode.Family) && !listed.Contains(c)
+					&& RelationCounts(c, at, null))
 				{
 					_ghostList.Add(m.Character);
 				}
@@ -2364,6 +2412,128 @@ namespace Doorstop
 						back.color = Palette.Fade(brings ? Palette.Good : Palette.Bad, 0.32f);
 					}
 				}
+			}
+			MarkRequired(scene != null && button > 0 ? Needed(SceneEffects.For(scene, "ButtonDescription" + button)) : null);
+		}
+
+		// The destinies listed that `effects` (an answer's) require to be
+		// had (`O` rows without "not").
+		private static HashSet<Objective> Needed(List<SceneEffects.Effect> effects)
+		{
+			HashSet<Objective> found = new HashSet<Objective>();
+			foreach (SceneEffects.Effect e in effects)
+			{
+				Objective o;
+				if (e.Kind == 'O' && e.Op == 0 && (o = ListedObjective(e.Name)) != null)
+				{
+					found.Add(o);
+				}
+			}
+			return found;
+		}
+
+		// What a hovered destiny needs: the destinies in its condition list
+		// (not the "not" ones) and those its earning answers require.
+		private static HashSet<Objective> RequiredBy(Objective target)
+		{
+			HashSet<Objective> found = new HashSet<Objective>();
+			if (target.Condition != null)
+			{
+				foreach (ObjectiveCondition c in target.Condition)
+				{
+					string op = (c.Operator ?? "").Trim();
+					Objective o = ListedObjective((c.Operand1 ?? "").Trim());
+					if (o != null && op != "!=" && op != "\u2260")
+					{
+						found.Add(o);
+					}
+				}
+			}
+			foreach (KeyValuePair<string, int> e in SceneObjectives.Earners((int)target.Name))
+			{
+				if (e.Value > 0)
+				{
+					found.UnionWith(Needed(SceneEffects.For(e.Key, "ButtonDescription" + e.Value)));
+				}
+			}
+			found.Remove(target);
+			return found;
+		}
+
+		// The listed destiny a key names: its asset name, its enum name, or
+		// its title key.
+		private static Objective ListedObjective(string key)
+		{
+			if (string.IsNullOrEmpty(key))
+			{
+				return null;
+			}
+			if (key.EndsWith(".Title", StringComparison.Ordinal))
+			{
+				key = key.Substring(0, key.Length - 6);
+			}
+			foreach (KeyValuePair<Objective, TextMeshProUGUI> kv in _destRows)
+			{
+				if (kv.Key.name == key || ObjectiveKey(kv.Key) == key)
+				{
+					return kv.Key;
+				}
+			}
+			return null;
+		}
+
+		// An outline in Palette.Required round each listed destiny in `req`
+		// (null: none): over its fate colour, so a destiny that happened or
+		// is out of reach still shows that it is needed.
+		private static void MarkRequired(ICollection<Objective> req)
+		{
+			foreach (KeyValuePair<Objective, TextMeshProUGUI> kv in _destRows)
+			{
+				Transform row = kv.Value != null ? kv.Value.transform.parent : null;
+				if (row == null)
+				{
+					continue;
+				}
+				bool on = req != null && req.Contains(kv.Key);
+				Transform box = row.Find("Required");
+				if (box == null)
+				{
+					if (!on)
+					{
+						continue;
+					}
+					GameObject go = new GameObject("Required", typeof(RectTransform));
+					go.transform.SetParent(row, false);
+					go.AddComponent<LayoutElement>().ignoreLayout = true;
+					RectTransform brt = go.GetComponent<RectTransform>();
+					brt.anchorMin = Vector2.zero;
+					brt.anchorMax = Vector2.one;
+					brt.offsetMin = brt.offsetMax = Vector2.zero;
+					const float w = 2.5f;
+					// bottom, top, left, right edges
+					Vector4[] edges =
+					{
+						new Vector4(0f, 0f, 1f, 0f), new Vector4(0f, 1f, 1f, 1f),
+						new Vector4(0f, 0f, 0f, 1f), new Vector4(1f, 0f, 1f, 1f),
+					};
+					foreach (Vector4 ed in edges)
+					{
+						GameObject eg = new GameObject("Edge", typeof(RectTransform));
+						eg.transform.SetParent(go.transform, false);
+						Image img = eg.AddComponent<Image>();
+						img.color = Palette.Required;
+						img.raycastTarget = false;
+						RectTransform ert = eg.GetComponent<RectTransform>();
+						ert.anchorMin = new Vector2(ed.x, ed.y);
+						ert.anchorMax = new Vector2(ed.z, ed.w);
+						bool flat = ed.y == ed.w;
+						ert.pivot = new Vector2(ed.x == 1f && !flat ? 1f : 0f, ed.y == 1f && flat ? 1f : 0f);
+						ert.sizeDelta = flat ? new Vector2(0f, w) : new Vector2(w, 0f);
+						ert.anchoredPosition = Vector2.zero;
+					}
+					box = go.transform;
+				}
+				box.gameObject.SetActive(on);
 			}
 		}
 

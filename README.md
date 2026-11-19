@@ -102,7 +102,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 - **Click** choices to make a new path (click again to undo, the arrow resets). **Load scene** plays it for you.
 - Events (scenes without a choice) have their own column; click one to load it.
 - **Stats / Family / Relations** tabs show where you stand after your last pick. Pale rows are people you would meet. Green and red show what your picks changed.
-- **Destiny** lists the chapter's outcomes: happened, on this path, still possible, or out of reach. Hover one for what it requires and where it comes from; options that can no longer happen are crossed out.
+- **Destiny** lists the chapter's outcomes: happened, on this path, still possible, or out of reach. Hover one for what it requires and where it comes from; options that can no longer happen are crossed out. Destinies the hovered choice or destiny needs are outlined in amber.
 - Greyed choices aren't open to you; red ones clash with an earlier pick.
 - Faded stats unlock in a later chapter; the arrows show which two stats make each chapter-3 skill.
 - A true death, or an ending that finishes the game, ends the path: no choices follow it.
@@ -124,6 +124,11 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 ## Update notes
 
+- **19 Nov 2026:**
+  - Hovering a choice or a destiny outlines the destinies it needs in amber.
+  - Relations lists only people whose relation can still change on your path.
+  - The save/load and tree view tabs sit behind the page like the chapter tab.
+  - Heir of the Family no longer lists the hidden Heir stat.
 - **17 Nov 2026:**
   - Path IDs: copy your game as text, paste one to jump straight into it.
   - Destiny pop-ups show what an outcome requires and where it comes from; options that can no longer happen are crossed out one by one, and outcomes as soon as they can't happen.
