@@ -727,8 +727,65 @@ namespace Doorstop
 				}
 				return c != 0 ? c : ((int)a.Name).CompareTo((int)b.Name);
 			});
-			return list;
+			// the members of an exclusive group together, where the first comes
+			List<Objective> grouped = new List<Objective>();
+			foreach (Objective o in list)
+			{
+				if (grouped.Contains(o))
+				{
+					continue;
+				}
+				grouped.Add(o);
+				int g = ExclusiveGroup(o);
+				if (g >= 0)
+				{
+					grouped.AddRange(list.FindAll(x => x != o && x.Category == o.Category && ExclusiveGroup(x) == g));
+				}
+			}
+			return grouped;
 		}
+
+		// Destinies of which at most one can happen, drawn bracketed together
+		// (as a scene's answers in the tree). From the game's data:
+		// - the chapter-3 paths: the Exam's answers 1/2/3 (030.020.010);
+		// - the shields of the faiths: the Religious Dispute's answers 1/2;
+		// - the Lotless: Recruitment's answers 1/3 (030.070.030);
+		// - the family's fortune: Ruins (Wealth = 0) or Means (Wealth = 10),
+		//   Branded by Dishonor (Reputation = 0) or Glorious Bloodline (= 10);
+		// - the family in the Revolt: Fled (Escape from the City), or Perished
+		//   / Saved (Hearth and Home's answers; it needs not Fled). In the
+		//   City is not one of them: Fled can follow it;
+		// - the sides: each side's answers need not the other.
+		// The chapters' outcomes are one each too, but they are a whole
+		// column already titled as such.
+		private static readonly string[][] Exclusive =
+		{
+			new[] { "Noble", "Cleric", "Bourgeois" },
+			new[] { "OldFaithDefend", "NewFaithDefend" },
+			new[] { "BezudelSafe", "BezudelEnd" },
+			new[] { "РазорениеСемьи", "БогатыйРод" },
+			new[] { "КлеймоПозора", "СлавныйРод" },
+			new[] { "СемьяСбежала", "СемьяПогибла", "СемьяСпасена" },
+			new[] { "ЗащитникИмперии", "Мятежник" },
+		};
+
+		private static int ExclusiveGroup(Objective o)
+		{
+			string key = ObjectiveKey(o);
+			string bare = key.EndsWith("Objective", StringComparison.Ordinal) ? key.Substring(0, key.Length - 9) : key;
+			for (int g = 0; g < Exclusive.Length; g++)
+			{
+				if (Array.IndexOf(Exclusive[g], o.name) >= 0 || Array.IndexOf(Exclusive[g], key) >= 0
+					|| Array.IndexOf(Exclusive[g], bare) >= 0)
+				{
+					return g;
+				}
+			}
+			return -1;
+		}
+
+		private const float BracketW = 20f;
+   // a bracketed destiny's indent: the spine and its stub
 
 		// Where `o` can first come in the story: the flow position (chapter,
 		// then the chapter's order) of the earliest scene that earns it;
@@ -1100,17 +1157,32 @@ namespace Doorstop
 				head.fontSize = 21f;
 				Pin(head.rectTransform, new Vector2(x + 8f, -top), new Vector2(colW - 16f, 32f), new Vector2(0f, 1f));
 				int r = 0;
+				Dictionary<int, List<float>> brackets = new Dictionary<int, List<float>>();   // group -> row centres
 				foreach (Objective o in list)
 				{
 					if (o.Category != cats[ci])
 					{
 						continue;
 					}
+					int g = ExclusiveGroup(o);
+					if (g >= 0 && list.FindAll(q => q.Category == o.Category && ExclusiveGroup(q) == g).Count < 2)
+					{
+						g = -1;   // alone in this list (another post's are left out)
+					}
+					float indent = g >= 0 ? BracketW : 0f;
+					if (g >= 0)
+					{
+						if (!brackets.ContainsKey(g))
+						{
+							brackets[g] = new List<float>();
+						}
+						brackets[g].Add(-(top + 34f + r * rowH + (rowH - 3f) * 0.5f));
+					}
 					GameObject row = new GameObject("Objective_" + ObjectiveKey(o), typeof(RectTransform));
 					row.transform.SetParent(area, false);
 					Image back = row.AddComponent<Image>();
 					back.color = Color.clear;
-					Pin(back.rectTransform, new Vector2(x + 10f, -(top + 34f + r * rowH)), new Vector2(colW - 20f, rowH - 3f), new Vector2(0f, 1f));
+					Pin(back.rectTransform, new Vector2(x + 10f + indent, -(top + 34f + r * rowH)), new Vector2(colW - 20f - indent, rowH - 3f), new Vector2(0f, 1f));
 					// the fate/hover colour, a little bigger than the row (the
 					// row's own image stays the clear hover target)
 					GameObject fg = new GameObject("Fill", typeof(RectTransform));
@@ -1158,6 +1230,18 @@ namespace Doorstop
 					};
 					_destRows.Add(new KeyValuePair<Objective, TextMeshProUGUI>(o, name));
 					r++;
+				}
+				// each exclusive group's bracket: a spine down its rows' left,
+				// a stub to each, in the tree's pale grey
+				foreach (List<float> ys in brackets.Values)
+				{
+					float sx = x + 10f + 6f;
+					Color pale = Palette.Fade(Palette.Muted, 0.55f);
+					Bar(area, sx, ys[0], sx, ys[ys.Count - 1], 3f, pale);
+					foreach (float y in ys)
+					{
+						Bar(area, sx - 1.5f, y, x + 10f + BracketW - 2f, y, 3f, pale);
+					}
 				}
 			}
 		}
@@ -1362,7 +1446,9 @@ namespace Doorstop
 		// A line that can no longer happen: struck, in the "out of reach" red.
 		private static string Struck(string line)
 		{
-			return "<s><color=#" + ColorUtility.ToHtmlStringRGB(FateColour(Fate.Lost)) + ">" + line + "</color></s>";
+			// the colour first: TextMesh Pro draws the line in the colour
+			// current at <s> (inside it, the line came out black)
+			return "<color=#" + ColorUtility.ToHtmlStringRGB(FateColour(Fate.Lost)) + "><s>" + line + "</s></color>";
 		}
 
 		// Whether `scene`'s chapter is over for the hero shown.
@@ -2039,6 +2125,44 @@ namespace Doorstop
 			rt.offsetMax = new Vector2(_drawnX.y + pad, -_hoverInset.x);
 		}
 
+		private const float MarkPadX = 8f;      // a change mark past the row's drawn ends
+		private const float MarkPadYAlone = 6f; // and above/below where no row is next to it
+
+		// (below, above), in `root`'s units: half the space between what this
+		// row draws and what the next row in its column draws.
+		private static Vector2 MarkPadY(RectTransform root)
+		{
+			float ls = Mathf.Max(0.0001f, root.lossyScale.y);
+			Vector3[] c = new Vector3[4];
+			root.GetWorldCorners(c);
+			float left = c[0].x;
+			float bottom = c[0].y + _hoverInset.y * ls, top = c[1].y - _hoverInset.x * ls;
+			float below = float.MaxValue, above = float.MaxValue;
+			foreach (RectTransform other in _roots.Values)
+			{
+				if (other == null || other == root || !other.gameObject.activeInHierarchy)
+				{
+					continue;
+				}
+				other.GetWorldCorners(c);
+				if (Mathf.Abs(c[0].x - left) > 2f * ls)
+				{
+					continue;   // another column
+				}
+				float oBottom = c[0].y + _hoverInset.y * ls, oTop = c[1].y - _hoverInset.x * ls;
+				if (oTop <= bottom)
+				{
+					below = Mathf.Min(below, bottom - oTop);
+				}
+				else if (oBottom >= top)
+				{
+					above = Mathf.Min(above, oBottom - top);
+				}
+			}
+			return new Vector2(below == float.MaxValue ? MarkPadYAlone : below * 0.5f / ls,
+				above == float.MaxValue ? MarkPadYAlone : above * 0.5f / ls);
+		}
+
 		private static readonly Dictionary<Row, RectTransform> _roots = new Dictionary<Row, RectTransform>();
 
 		private static RectTransform RowRoot(Row row)
@@ -2414,7 +2538,12 @@ namespace Doorstop
 					go.transform.SetParent(root, false);
 					go.transform.SetAsFirstSibling();   // behind the icon and the text
 					RectTransform rt = go.GetComponent<RectTransform>();
-					OverDrawn(rt, 4f);   // the stat only, not the rest of its box
+					OverDrawn(rt, MarkPadX);   // the stat only, not the rest of its box
+					// down and up to halfway to the rows above and below, so
+					// marked neighbours meet
+					Vector2 pad = MarkPadY(root);
+					rt.offsetMin -= new Vector2(0f, pad.x);
+					rt.offsetMax += new Vector2(0f, pad.y);
 					go.AddComponent<LayoutElement>().ignoreLayout = true;
 					row.Mark = go.AddComponent<Image>();
 					row.Mark.raycastTarget = false;

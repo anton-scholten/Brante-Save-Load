@@ -275,7 +275,9 @@ community event sheet (`data/events.json`).
   the air. Hovering an answer marks the stat rows it changes
   (`StatPanel.HighlightChanges`: the hero at that scene before and after the
   answer's effects; `Palette.Good`/`Bad` at 28%, the game's consequence-row
-  green and red); leaving the answer clears them. The mark and a row's
+  green and red); leaving the answer clears them The mark reaches `MarkPadX`
+  past the row's ends and halfway to the rows above and below in its
+  column (`MarkPadY`), so marked neighbours meet. The mark and a row's
   hover area cover what the row draws (`StatPanel.OverDrawn`: icon to
   slider end), not its 375-unit box, which reaches into the next column.
 - **Load scene shows its progress and blocks the player.** `ReplayTo` puts
@@ -360,6 +362,12 @@ community event sheet (`data/events.json`).
   (`MarkRequired`) over their fate colour, so a needed destiny that
   happened or is out of reach still shows both. Condition parts on a
   stat the panel leaves out (`LeftOut`: Heir) are not listed.
+  Exclusive destinies (`StatPanel.Exclusive`: the chapter-3 paths,
+  shields and Lotless, the family's fortune pairs, the family in the
+  Revolt - Fled / Perished / Saved, not In the City - and the sides; the
+  evidence is in the comment) are listed together under a bracket like a
+  scene's answers. Struck text puts its colour before `<s>`: TextMesh Pro
+  draws the line in the colour current at the tag (it came out black).
   Fills and outlines reach `RowPadX`/`RowPadY` past the row (a `Fill`
   child; the row's own image stays the clear hover target). In each
   category the entries go in the order the story can first bring them
@@ -371,11 +379,13 @@ community event sheet (`data/events.json`).
   next columns. `ChoiceWindow.ShowStats` fills the context.
   `dev-pick.txt` takes `mode destiny` and `destiny N`.
 - **The book tabs' wood stops at the page.** `MakeBookTab` copies the
-  wood under the settings tab out of the book images, minus its foot
-  (`WoodCropBottom`, 3%; the patch is that much shorter, its top in
-  place): whole, it reached over the left page's top edge and looked laid
-  on the page rather than behind it. Two-cut copies (settings top +
-  chapter column under the page) looked worse and were dropped.
+  wood under the settings tab out of the book images, minus a share of
+  its foot per tab (`crop`; the patch is that much shorter, its top in
+  place). The left page's top edge slopes down to the right: whole, the
+  save/load tab's wood (3% off) reached over it and looked laid on the
+  page, while the tree view tab's (0%) just meets it - cropped, a gap
+  showed. Two-cut copies (settings top + chapter column under the page)
+  looked worse and were dropped.
 - **A true death ends the predicted path.** The fourth death sends the game
   into `GameFinals` (true-death pages, the chapter's finale, credits), not the
   chapter flow. `AddUpcoming` stops when the hero's Death reaches 4 and ends

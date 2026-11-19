@@ -537,9 +537,9 @@ namespace Doorstop
 					_saveLoadIcon = MakeSaveLoadIcon();
 					_treeTabIcon = MakeTreeTabIcon();
 				}
-				MakeBookTab(settings, hud, chapter, "HUD.SaveLoad", _saveLoadIcon, new Vector2(56f, 56f), 150f,
+				MakeBookTab(settings, hud, chapter, "HUD.SaveLoad", _saveLoadIcon, new Vector2(56f, 56f), 150f, 0.03f,
 					Loc.T(Loc.K.Title), OpenSaveLoad);
-				MakeBookTab(settings, hud, chapter, "HUD.TreeView", _treeTabIcon, new Vector2(62f, 48f), 280f,
+				MakeBookTab(settings, hud, chapter, "HUD.TreeView", _treeTabIcon, new Vector2(62f, 48f), 280f, 0f,
 					Loc.T(Loc.K.History), OpenTreeView);
 				ModLog.Info("ChoiceWindow: book tabs added next to the chapter tab");
 			}
@@ -551,17 +551,16 @@ namespace Doorstop
 
 		private static Sprite _saveLoadIcon, _treeTabIcon;
 
-		// the share of the settings strip's height left off the foot of the
-		// tab's wood (MakeBookTab): whole, it reached over the left page's
-		// top edge and looked laid on the page instead of behind it
-		private const float WoodCropBottom = 0.03f;
-
 		// One tab, the size and shape of the settings tab: its button and
 		// wood, a plain medallion, `icon` on it (`size` units, in the chapter
 		// word's colour), `dx` to the right of the chapter tab; on hover it
-		// lights up and the game's tooltip says `tip`.
+		// lights up and the game's tooltip says `tip`. `crop`: the share of
+		// the wood's height left off its foot - the left page's top edge
+		// slopes down to the right: whole, the save/load tab's wood reached
+		// over it and looked laid on the page, while the tree view tab's
+		// just meets it (cropped, a gap showed).
 		private static void MakeBookTab(Button settings, Transform hud, Transform chapter, string name,
-			Sprite icon, Vector2 size, float dx, string tip, UnityEngine.Events.UnityAction onClick)
+			Sprite icon, Vector2 size, float dx, float crop, string tip, UnityEngine.Events.UnityAction onClick)
 		{
 			{
 				GameObject tab = UnityEngine.Object.Instantiate(settings.gameObject, hud, false);
@@ -610,7 +609,7 @@ namespace Doorstop
 				{
 					if (layer.sprite != null && (layer.sprite.name == "background" || layer.sprite.name == "book_new"))
 					{
-						Image patch = CopyPatch(layer, srt, hud, woodAt, woodSize);
+						Image patch = CopyPatch(layer, srt, hud, woodAt, woodSize, crop);
 						if (patch != null)
 						{
 							patch.transform.SetSiblingIndex(at++);
@@ -673,7 +672,7 @@ namespace Doorstop
 
 		// The part of `layer`'s sprite under `over`, as an Image under `parent`
 		// centred on the world point `at`, `size` units big.
-		private static Image CopyPatch(Image layer, RectTransform over, Transform parent, Vector3 at, Vector2 size)
+		private static Image CopyPatch(Image layer, RectTransform over, Transform parent, Vector3 at, Vector2 size, float crop)
 		{
 			RectTransform lrt = layer.rectTransform;
 			Rect lr = lrt.rect;
@@ -705,7 +704,7 @@ namespace Doorstop
 				(hi.x - lo.x) / lr.width * tr.width,
 				(hi.y - lo.y) / lr.height * tr.height);
 			// the foot left off (the patch below loses as much, its top stays)
-			cut.yMin += cut.height * WoodCropBottom;
+			cut.yMin += cut.height * crop;
 			if (cut.width <= 0f || cut.height <= 0f || cut.xMin < tr.xMin || cut.yMin < tr.yMin
 				|| cut.xMax > tr.xMax || cut.yMax > tr.yMax)
 			{
@@ -717,9 +716,9 @@ namespace Doorstop
 			img.sprite = Sprite.Create(sp.texture, cut, new Vector2(0.5f, 0.5f), sp.pixelsPerUnit);
 			img.raycastTarget = false;
 			RectTransform rt = go.GetComponent<RectTransform>();
-			rt.sizeDelta = new Vector2(size.x, size.y * (1f - WoodCropBottom));
+			rt.sizeDelta = new Vector2(size.x, size.y * (1f - crop));
 			rt.position = at;
-			rt.anchoredPosition += new Vector2(0f, size.y * WoodCropBottom * 0.5f);
+			rt.anchoredPosition += new Vector2(0f, size.y * crop * 0.5f);
 			return img;
 		}
 
