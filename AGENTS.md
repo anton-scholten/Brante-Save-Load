@@ -277,7 +277,9 @@ community event sheet (`data/events.json`).
   answer's effects; `Palette.Good`/`Bad` at 28%, the game's consequence-row
   green and red); leaving the answer clears them The mark reaches `MarkPadX`
   past the row's ends and halfway to the rows above and below in its
-  column (`MarkPadY`), so marked neighbours meet. The mark and a row's
+  column (`MarkPadY`), so marked neighbours meet - at most `MarkPadYMax`
+  (8): rows set far apart (Ingenuity under Spirituality, Nathan under
+  Gregor) were stretched to half that gap. The mark and a row's
   hover area cover what the row draws (`StatPanel.OverDrawn`: icon to
   slider end), not its 375-unit box, which reaches into the next column.
 - **Load scene shows its progress and blocks the player.** `ReplayTo` puts
@@ -375,7 +377,12 @@ community event sheet (`data/events.json`).
   game's `Order`; true death last). The pop-up is wide, over the tree
   (`ShowWideTip`, `TreeArea`): icon, name, state, description on top,
   Requires and Comes from side by side below, on the game tooltip's
-  parchment and font; the tall game tooltip beside the list covered the
+  parchment and font. Requires is one row per part, never wrapped
+  (`FillRequires`): a bullet, the icon of what the part tests
+  (`ConditionIcon`, from `RealCondition` - the operand is a translation
+  key such as `GregorBronte`, not an asset name; key-parameter parts have
+  none), the text; "One of:" with its options under a bracket
+  (`DrawOneOfSpine`, after layout); the tall game tooltip beside the list covered the
   next columns. `ChoiceWindow.ShowStats` fills the context.
   `dev-pick.txt` takes `mode destiny` and `destiny N`.
 - **The book tabs' wood stops at the page.** `MakeBookTab` copies the
@@ -479,7 +486,9 @@ community event sheet (`data/events.json`).
   `PeopleMaxScale` (1.25), larger than the stat rows. A tab under the
   pointer turns accent-coloured on a `Palette.Card` back. `dev-pick.txt`
   takes `mode stats|family|relations`, `tabhover <mode>` and `allpeople`
-  (list all 24 characters any scene unlocks: the layout's worst case; one
+  (list all 24 characters any scene unlocks - 12 nobles, 7 clergy, 5
+  common folk; each estate's column takes as many sub-columns as it
+  needs: the layout's worst case; one
   playthrough meets at most 19 - 3014 saves agree - and all 24 fit at
   0.83 at 1080p, more than the stat rows' 0.7).
 - **Hovers show what is ahead.** A column title's hover (`TreeHover` on the

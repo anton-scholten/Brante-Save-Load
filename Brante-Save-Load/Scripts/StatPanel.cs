@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -1295,6 +1296,8 @@ namespace Doorstop
 				// the OrCondition ones under "One of"
 				List<string> conds = new List<string>();
 				List<string> ors = new List<string>();
+				List<Sprite> condIcons = new List<Sprite>();
+				List<Sprite> orIcons = new List<Sprite>();
 				if (o.Condition != null)
 				{
 					foreach (ObjectiveCondition c in o.Condition)
@@ -1317,14 +1320,18 @@ namespace Doorstop
 						if (line.Length > 0)
 						{
 							(c.OrCondition ? ors : conds).Add(line);
+							(c.OrCondition ? orIcons : condIcons).Add(ConditionIcon(c.RealCondition));
 						}
 					}
 				}
 				if (ors.Count == 1)
 				{
 					conds.AddRange(ors);   // a lone "or" is simply required
+					condIcons.AddRange(orIcons);
 					ors.Clear();
+					orIcons.Clear();
 				}
+				List<string> wideConds = new List<string>(conds), wideOrs = new List<string>(ors);
 				if (ors.Count > 0)
 				{
 					conds.Add("<i>" + Loc.T(Loc.K.OneOf) + ":</i> " + string.Join(" / ", ors.ToArray()));
@@ -1343,7 +1350,7 @@ namespace Doorstop
 					sb.Append("\n\n<size=85%>").Append(comes).Append("</size>");
 				}
 				_lastTipText = sb.ToString();
-				if (ShowWideTip(o, Loc.Game(k + ".Title", k), state, descr, requires, comes))
+				if (ShowWideTip(o, Loc.Game(k + ".Title", k), state, descr, wideConds, condIcons, wideOrs, orIcons, comes))
 				{
 					return;   // over the tree, out of the way of the Destiny list
 				}
@@ -2127,6 +2134,7 @@ namespace Doorstop
 
 		private const float MarkPadX = 8f;      // a change mark past the row's drawn ends
 		private const float MarkPadYAlone = 6f; // and above/below where no row is next to it
+		private const float MarkPadYMax = 8f;   // never more than this
 
 		// (below, above), in `root`'s units: half the space between what this
 		// row draws and what the next row in its column draws.
@@ -2159,8 +2167,10 @@ namespace Doorstop
 					above = Mathf.Min(above, oBottom - top);
 				}
 			}
-			return new Vector2(below == float.MaxValue ? MarkPadYAlone : below * 0.5f / ls,
-				above == float.MaxValue ? MarkPadYAlone : above * 0.5f / ls);
+			// at most MarkPadYMax: rows set far apart (Ingenuity under
+			// Spirituality, Nathan under Gregor) are not stretched to meet
+			return new Vector2(below == float.MaxValue ? MarkPadYAlone : Mathf.Min(MarkPadYMax, below * 0.5f / ls),
+				above == float.MaxValue ? MarkPadYAlone : Mathf.Min(MarkPadYMax, above * 0.5f / ls));
 		}
 
 		private static readonly Dictionary<Row, RectTransform> _roots = new Dictionary<Row, RectTransform>();
@@ -3098,11 +3108,16 @@ namespace Doorstop
 		public static RectTransform TreeArea;
 		private static GameObject _wide;
 		private static Image _wideIcon;
-		private static TextMeshProUGUI _wideTitle, _wideText, _wideReq, _wideFrom;
+		private static TextMeshProUGUI _wideTitle, _wideText, _wideFrom;
+		private static RectTransform _wideReqBox;   // "Requires": one row per part
+		private static RectTransform _wideOneOf;    // its "One of" options, bracketed (null: none)
+		private static TMP_FontAsset _wideFont;
+		private const float WideLine = 20f, WideIcon = 26f;
 		private static string _lastTipText;   // the destiny pop-up's text, for the dev dump
 		private const float WideMax = 1500f;
 
-		private static bool ShowWideTip(Objective o, string title, string state, string descr, string requires, string comes)
+		private static bool ShowWideTip(Objective o, string title, string state, string descr,
+			List<string> conds, List<Sprite> condIcons, List<string> ors, List<Sprite> orIcons, string comes)
 		{
 			if (TreeArea == null || TooltipParent == null || !EnsureWide())
 			{
@@ -3116,17 +3131,13 @@ namespace Doorstop
 			_wideIcon.enabled = o.Icon != null;
 			_wideTitle.text = title;
 			_wideText.text = (state.Length > 0 ? state + "\n" : "") + descr;
-			_wideReq.text = requires;
+			bool requires = conds.Count + ors.Count > 0;
+			FillRequires(conds, condIcons, ors, orIcons);
 			_wideFrom.text = comes;
-			_wideReq.transform.parent.gameObject.SetActive(requires.Length > 0);
+			_wideReqBox.gameObject.SetActive(requires);
 			_wideFrom.transform.parent.gameObject.SetActive(comes.Length > 0);
-			Transform bottom = _wideReq.transform.parent.parent;
-			bottom.gameObject.SetActive(requires.Length > 0 || comes.Length > 0);
-			// the two lists share the width by how much each says
-			LayoutElement rl = _wideReq.transform.parent.GetComponent<LayoutElement>();
-			LayoutElement fl = _wideFrom.transform.parent.GetComponent<LayoutElement>();
-			rl.flexibleWidth = requires.Length > 0 && comes.Length > 0 ? 0.8f : 1f;
-			fl.flexibleWidth = 1.2f;
+			Transform bottom = _wideReqBox.parent;
+			bottom.gameObject.SetActive(requires || comes.Length > 0);
 
 			RectTransform box = (RectTransform)TooltipParent;
 			RectTransform rt = (RectTransform)_wide.transform;
@@ -3139,6 +3150,7 @@ namespace Doorstop
 			_wide.SetActive(true);
 			_wide.transform.SetAsLastSibling();
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
+			DrawOneOfSpine();
 			// centred over the tree, from its top (down over the stats when
 			// it says more than the tree is tall)
 			Rect area = box.rect;
@@ -3225,14 +3237,182 @@ namespace Doorstop
 
 			// bottom: requires | comes from
 			GameObject bottom = WideGroup("Lists", _wide.transform, true, 36f);
-			GameObject req = WideGroup("Requires", bottom.transform, false, 0f);
-			req.AddComponent<LayoutElement>().flexibleWidth = 0.8f;
-			_wideReq = WideText(req.transform, "Text", font, 20f, FontStyles.Normal);
+			// Requires as wide as its longest line (one line each), Comes
+			// from the rest
+			GameObject req = WideGroup("Requires", bottom.transform, false, 2f);
+			req.AddComponent<LayoutElement>().flexibleWidth = 0f;
+			_wideReqBox = (RectTransform)req.transform;
+			_wideFont = font;
 			GameObject from = WideGroup("ComesFrom", bottom.transform, false, 0f);
-			from.AddComponent<LayoutElement>().flexibleWidth = 1.2f;
+			from.AddComponent<LayoutElement>().flexibleWidth = 1f;
 			_wideFrom = WideText(from.transform, "Text", font, 20f, FontStyles.Normal);
 			_wide.SetActive(false);
 			return true;
+		}
+
+		// The Requires column's rows: the heading, a bullet line per required
+		// part (its stat's, person's or destiny's icon first), then "One
+		// of:" and the options under a bracket, as a scene's answers.
+		private static void FillRequires(List<string> conds, List<Sprite> condIcons, List<string> ors, List<Sprite> orIcons)
+		{
+			for (int i = _wideReqBox.childCount - 1; i >= 0; i--)
+			{
+				GameObject old = _wideReqBox.GetChild(i).gameObject;
+				old.SetActive(false);
+				UnityEngine.Object.Destroy(old);
+			}
+			_wideOneOf = null;
+			if (conds.Count + ors.Count == 0)
+			{
+				return;
+			}
+			WideLineRow(_wideReqBox, null, "<b>" + Loc.T(Loc.K.Requires) + ":</b>", false, false);
+			for (int i = 0; i < conds.Count; i++)
+			{
+				WideLineRow(_wideReqBox, condIcons[i], conds[i], true, false);
+			}
+			if (ors.Count == 0)
+			{
+				return;
+			}
+			WideLineRow(_wideReqBox, null, "\u2022 <i>" + Loc.T(Loc.K.OneOf) + ":</i>", false, false);
+			GameObject box = WideGroup("OneOf", _wideReqBox, false, 2f);
+			((VerticalLayoutGroup)box.GetComponent<HorizontalOrVerticalLayoutGroup>()).padding = new RectOffset(14, 0, 0, 0);
+			_wideOneOf = (RectTransform)box.transform;
+			for (int i = 0; i < ors.Count; i++)
+			{
+				WideLineRow(_wideOneOf, orIcons[i], ors[i], false, true);
+			}
+		}
+
+		private static void WideLineRow(Transform parent, Sprite icon, string text, bool bullet, bool stub)
+		{
+			GameObject row = WideGroup("Line", parent, true, 6f);
+			row.GetComponent<HorizontalOrVerticalLayoutGroup>().childAlignment = TextAnchor.MiddleLeft;
+			if (stub)
+			{
+				// the bracket's stub, from the spine (DrawOneOfSpine) to the line
+				GameObject sg = new GameObject("Stub", typeof(RectTransform));
+				sg.transform.SetParent(row.transform, false);
+				Image si = sg.AddComponent<Image>();
+				si.color = Palette.Fade(Palette.Muted, 0.55f);
+				si.raycastTarget = false;
+				LayoutElement sl = sg.AddComponent<LayoutElement>();
+				sl.preferredWidth = sl.minWidth = 12f;
+				sl.preferredHeight = sl.minHeight = 3f;
+			}
+			if (bullet)
+			{
+				TextMeshProUGUI b = WideText(row.transform, "Bullet", _wideFont, WideLine, FontStyles.Normal);
+				b.text = "\u2022";
+				b.enableWordWrapping = false;
+			}
+			if (icon != null)
+			{
+				GameObject ig = new GameObject("Icon", typeof(RectTransform));
+				ig.transform.SetParent(row.transform, false);
+				Image img = ig.AddComponent<Image>();
+				img.sprite = icon;
+				img.preserveAspect = true;
+				img.raycastTarget = false;
+				LayoutElement il = ig.AddComponent<LayoutElement>();
+				il.preferredWidth = il.minWidth = il.preferredHeight = il.minHeight = WideIcon;
+			}
+			TextMeshProUGUI t = WideText(row.transform, "Text", _wideFont, WideLine, FontStyles.Normal);
+			t.text = text;
+			t.enableWordWrapping = false;   // one line each
+		}
+
+		// The "One of" bracket's spine: from the first option's middle to the
+		// last's, where their stubs start (after layout).
+		private static void DrawOneOfSpine()
+		{
+			if (_wideOneOf == null || _wideOneOf.childCount == 0)
+			{
+				return;
+			}
+			RectTransform first = (RectTransform)_wideOneOf.GetChild(0);
+			RectTransform last = (RectTransform)_wideOneOf.GetChild(_wideOneOf.childCount - 1);
+			float y0 = _wideOneOf.InverseTransformPoint(first.TransformPoint(first.rect.center)).y;
+			float y1 = _wideOneOf.InverseTransformPoint(last.TransformPoint(last.rect.center)).y;
+			float x = _wideOneOf.InverseTransformPoint(first.TransformPoint(new Vector3(first.rect.xMin, 0f, 0f))).x;
+			GameObject go = new GameObject("Spine", typeof(RectTransform));
+			go.transform.SetParent(_wideOneOf, false);
+			go.AddComponent<LayoutElement>().ignoreLayout = true;
+			Image img = go.AddComponent<Image>();
+			img.color = Palette.Fade(Palette.Muted, 0.55f);
+			img.raycastTarget = false;
+			RectTransform rt = img.rectTransform;
+			rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+			rt.pivot = new Vector2(0.5f, 1f);
+			rt.sizeDelta = new Vector2(3f, Mathf.Abs(y0 - y1) + 1.5f);
+			// the anchored position is from the box's centre
+			Vector2 c = _wideOneOf.rect.center;
+			rt.anchoredPosition = new Vector2(x - c.x, Mathf.Max(y0, y1) + 1.5f - c.y);
+		}
+
+		// The icon for a condition line, from what it tests: a stat's, a
+		// destiny's or a person's portrait. Its operand is a translation key
+		// ("GregorBronte", "WillObjective"), not an asset name. Key-parameter
+		// tests ("Take part in the ritual") have none.
+		private static Sprite ConditionIcon(ObjectiveConditions rc)
+		{
+			if (rc == null)
+			{
+				return null;
+			}
+			if (rc.ByParameters != null)
+			{
+				foreach (var c in rc.ByParameters)
+				{
+					if (c != null && c.ParamName != null && c.ParamName.Icon != null)
+					{
+						return c.ParamName.Icon;
+					}
+				}
+			}
+			if (rc.ByObjectives != null)
+			{
+				foreach (_Scripts.Helpers.ConditionByObjective c in rc.ByObjectives)
+				{
+					if (c != null && c.Objective != null && c.Objective.Icon != null)
+					{
+						return c.Objective.Icon;
+					}
+				}
+			}
+			if (rc.ByStatuses != null)
+			{
+				foreach (_Scripts.Helpers.ConditionByStatus c in rc.ByStatuses)
+				{
+					if (c != null && c.Character != null && c.Character.TooltipPortret != null)
+					{
+						return c.Character.TooltipPortret;
+					}
+				}
+			}
+			// relations: their element type is not used elsewhere; its
+			// Character field by reflection
+			System.Collections.IEnumerable rels = rc.ByRelations as System.Collections.IEnumerable;
+			if (rels != null)
+			{
+				foreach (object c in rels)
+				{
+					if (c == null)
+					{
+						continue;
+					}
+					foreach (FieldInfo fi in c.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+					{
+						Character ch = fi.GetValue(c) as Character;
+						if (ch != null && ch.TooltipPortret != null)
+						{
+							return ch.TooltipPortret;
+						}
+					}
+				}
+			}
+			return null;
 		}
 
 		private static GameObject WideGroup(string name, Transform parent, bool across, float spacing)

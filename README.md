@@ -128,6 +128,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
   - Hovering a choice or a destiny outlines the destinies it needs in amber.
   - Destinies are listed in the order they can happen; their pop-up is a wide box over the tree.
   - Destinies of which only one can happen are bracketed together.
+  - Destiny pop-ups list each requirement on its own line with its stat's icon, and "one of" options under a bracket.
   - Relations lists only people whose relation can still change on your path.
   - The save/load and tree view tabs sit behind the page like the chapter tab.
   - Heir of the Family no longer lists the hidden Heir stat.
