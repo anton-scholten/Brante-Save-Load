@@ -390,7 +390,10 @@ community event sheet (`data/events.json`).
   one. `CheckOverlap` logs "OVERLAP" when Requires' drawn text reaches
   into Comes from; `destinyall` hovers every destiny (none since). In
   Comes from, "(" and ")" keep the line's own style; only a whole line is
-  green or red. A key-parameter part that
+  green or red. Two answers of a scene's versions whose names are at most
+  two letters apart with the same needs are one line (`SameAnswer`: "Rout
+  the insurgents" / "Route the insurgents", a typo in the game; the only
+  such pair). A key-parameter part that
   only the earning answers set (`ShownByComesFrom`: every
   `SceneParams.Setters` entry is an earner - "Kiss the Sword") is left
   out: Comes from names that answer. One set elsewhere too ("GirlsMeet")
@@ -419,13 +422,17 @@ community event sheet (`data/events.json`).
   `dev-pick.txt` takes `mode destiny` and `destiny N`.
 - **Stat and people pop-ups are wide too.** `ShowWideScale`: the same box
   over the tree - icon or portrait, name, value and range word (or the
-  status), the description - and the scale as a line (`DrawScale`): marks
-  at its ends and between ranges, each range's numbers above and word
-  below, the range the value is in drawn thick in `Palette.Accent` with
-  a diamond at the value. Its text is the description's size (22); a range
-  word wraps only between words, in a box at least as wide as its longest
-  word, centred on its range and kept inside the line (it may reach over a
-  neighbour's edge), and the scale is as tall as its tallest word. Text is
+  status), the description - and the scale (`DrawScale`): a small diamond
+  for every whole value, a line joining the diamonds of each range (none
+  across the gap between two ranges), each range's numbers above and word
+  below, the value's range thick in `Palette.Accent` and a large diamond
+  at the value. The row of diamonds is inset from the box's ends as far as
+  the first and last range's labels need to sit centred on their range
+  ("Prophet"); a range word is a little narrower than its range (a long
+  one goes on two lines), never narrower than its longest word (no word
+  is broken), and neighbouring labels are pushed apart (`Spread`). Its
+  text is the description's size (22); the scale is as tall as its
+  tallest word. Text is
   measured with `MeasureAt` on the shared `_measure` object, with the box
   shown: a hidden text object, or a height limit of 0 in
   `GetPreferredValues`, measured ~1/3 to ~1/10 of the size ("Orator" broke
@@ -434,7 +441,11 @@ community event sheet (`data/events.json`).
   use the same parchment (`StatPanel.Paper`, once the stat tooltip is
   cloned). Hovering an answer outlines in amber the stat and people rows
   it requires (`MarkNeeds`: its Q, W, T requirements), as the Destiny
-  tab outlines the destinies it needs.
+  tab outlines the destinies it needs. Every outline (`Outline`) is
+  `OutlinePx` (3) pixels at 1080p, scaled with the screen: its width in
+  units is divided by the row's world scale, so a stat row at 0.7 gets
+  the same line as a destiny, and a whole number of pixels - 2.5 units
+  fell on 2 or 3 pixels by position, two edges looking thicker.
 - **Opening the window is cheap.** The tree from its tab no longer
   builds the save table (`Open(false)`); save rows are cached per file
   (`_entryCache`: path, size, write time, kind, language); reopening the

@@ -1457,7 +1457,12 @@ namespace Doorstop
 						FromLine a = new FromLine { Head = SceneEffects.NobleParticle(SceneTexts.Name(e.Key, choice)),
 							Played = DestinyDone.Contains(e.Key) && DestinyPlayed.TryGetValue(e.Key, out took) && took == e.Value };
 						NeedParts(SceneEffects.For(e.Key, choice), required, a);
-						if (a.Text().Length > 0 && !answers.Exists(x => x.Text() == a.Text()))
+						FromLine same = answers.Find(x => x.Text() == a.Text() || SameAnswer(x, a));
+						if (same != null)
+						{
+							same.Played |= a.Played;   // one line for both
+						}
+						else if (a.Text().Length > 0)
 						{
 							answers.Add(a);
 						}
@@ -1496,6 +1501,47 @@ namespace Doorstop
 				}
 			}
 			return lines;
+		}
+
+		// Two answers of a scene's versions that are the same but for a typo
+		// in the game's texts ("Rout the insurgents" / "Route the
+		// insurgents", The Battle for Anizotte's two versions): names at most
+		// two letters apart, the same needs. The only such pair in the game.
+		private static bool SameAnswer(FromLine a, FromLine b)
+		{
+			if (a.Needs.Count != b.Needs.Count || a.Head.Length < 8 || b.Head.Length < 8)
+			{
+				return false;
+			}
+			for (int i = 0; i < a.Needs.Count; i++)
+			{
+				if (a.Needs[i] != b.Needs[i])
+				{
+					return false;
+				}
+			}
+			return Distance(a.Head.ToLowerInvariant(), b.Head.ToLowerInvariant()) <= 2;
+		}
+
+		private static int Distance(string a, string b)
+		{
+			int[] d = new int[b.Length + 1];
+			for (int j = 0; j <= b.Length; j++)
+			{
+				d[j] = j;
+			}
+			for (int i = 1; i <= a.Length; i++)
+			{
+				int prev = d[0];
+				d[0] = i;
+				for (int j = 1; j <= b.Length; j++)
+				{
+					int keep = d[j];
+					d[j] = Math.Min(Math.Min(d[j] + 1, d[j - 1] + 1), prev + (a[i - 1] == b[j - 1] ? 0 : 1));
+					prev = keep;
+				}
+			}
+			return d[b.Length];
 		}
 
 		// One "Comes from" line: its head ("• Scene: answer"), what the
@@ -3078,6 +3124,8 @@ namespace Doorstop
 
 		// An outline in Palette.Required (four edges) under `parent`, its
 		// rect left to the caller.
+		private const float OutlinePx = 3f;   // the outline's width in pixels at 1080p
+
 		private static GameObject Outline(Transform parent, string name)
 		{
 			GameObject go = new GameObject(name, typeof(RectTransform));
@@ -3085,7 +3133,15 @@ namespace Doorstop
 			go.AddComponent<LayoutElement>().ignoreLayout = true;
 			{
 				{
-					const float w = 2.5f;
+					// the same width on screen whatever the row's scale (the
+					// stat rows are drawn at ~0.7, the destinies at 1), and a
+					// whole number of pixels: 2.5 units fell on 2 or 3 pixels
+					// by position, so two edges looked thicker than the others.
+					// On a screen-space canvas the world scale is pixels a unit.
+					float px = Mathf.Max(2f, Mathf.Round(OutlinePx * Screen.height / 1080f));
+					Vector3 ls = parent.lossyScale;
+					float wx = px / Mathf.Max(0.0001f, Mathf.Abs(ls.x));
+					float wy = px / Mathf.Max(0.0001f, Mathf.Abs(ls.y));
 					// bottom, top, left, right edges
 					Vector4[] edges =
 					{
@@ -3104,7 +3160,7 @@ namespace Doorstop
 						ert.anchorMax = new Vector2(ed.z, ed.w);
 						bool flat = ed.y == ed.w;
 						ert.pivot = new Vector2(ed.x == 1f && !flat ? 1f : 0f, ed.y == 1f && flat ? 1f : 0f);
-						ert.sizeDelta = flat ? new Vector2(0f, w) : new Vector2(w, 0f);
+						ert.sizeDelta = flat ? new Vector2(0f, wy) : new Vector2(wx, 0f);
 						ert.anchoredPosition = Vector2.zero;
 					}
 				}
@@ -3763,72 +3819,144 @@ namespace Doorstop
 				return;
 			}
 			int min = ranges[0][0], max = ranges[ranges.Count - 1][1];
-			float cell = width / Mathf.Max(1, max - min + 1);   // each whole value a cell
-			Color ink = Palette.Ink, pale = Palette.Fade(Palette.Ink, 0.55f);
 			const float size = 22f;                  // as the description
+			Color ink = Palette.Ink, pale = Palette.Fade(Palette.Ink, 0.55f);
 			float numsH = size * 1.35f;
-			float lineY = -(numsH + 10f);
-			float wordsH = 0f;
-			// the line, a mark at each end and between two ranges
-			Bar(area, 0f, lineY, width, lineY, 2f, ink);
-			Bar(area, 0f, lineY + 9f, 0f, lineY - 9f, 2f, ink);
-			Bar(area, width, lineY + 9f, width, lineY - 9f, 2f, ink);
-			for (int i = 0; i < ranges.Count; i++)
+			float lineY = -(numsH + 12f);
+			int n = ranges.Count;
+			string[] nums = new string[n];
+			float[] numW = new float[n], wordW = new float[n], longest = new float[n];
+			for (int i = 0; i < n; i++)
 			{
-				float x0 = (ranges[i][0] - min) * cell, x1 = (ranges[i][1] - min + 1) * cell;
-				if (i > 0)
-				{
-					Bar(area, x0, lineY + 9f, x0, lineY - 9f, 2f, ink);
-				}
 				bool here = value >= ranges[i][0] && value <= ranges[i][1];
-				if (here)
+				FontStyles style = here ? FontStyles.Bold : FontStyles.Normal;
+				nums[i] = ranges[i][0] == ranges[i][1] ? ranges[i][0].ToString() : ranges[i][0] + " \u2026 " + ranges[i][1];
+				numW[i] = MeasureAt(nums[i], size, FontStyles.Normal, 0f).x + 10f;
+				string w = i < words.Count ? words[i] : "";
+				wordW[i] = MeasureAt(w, size, style, 0f).x + 10f;
+				foreach (string part in w.Split(' '))
 				{
-					// the range the value is in: the line drawn thick there
-					Bar(area, x0, lineY, x1, lineY, 6f, Palette.Accent);
+					longest[i] = Mathf.Max(longest[i], MeasureAt(part, size, style, 0f).x + 12f);
 				}
-				TextMeshProUGUI nums = WideText(area, "Range", _wideFont, size, FontStyles.Normal);
-				nums.text = ranges[i][0] == ranges[i][1] ? ranges[i][0].ToString() : ranges[i][0] + " \u2026 " + ranges[i][1];
-				nums.color = here ? ink : pale;
-				nums.alignment = TextAlignmentOptions.Bottom;
-				nums.enableWordWrapping = false;
-				float nw = Mathf.Max(x1 - x0, MeasureAt(nums.text, size, FontStyles.Normal, 0f).x + 8f);
-				Pin(nums.rectTransform, new Vector2(Mathf.Clamp((x0 + x1 - nw) * 0.5f, 0f, width - nw), 0f),
-					new Vector2(nw, numsH), new Vector2(0f, 1f));
-				// the word: wrapped only between words - a box at least as wide
-				// as its longest word, centred on the range (it may reach over
-				// a neighbour's edge rather than break "Orator" in two)
-				TextMeshProUGUI word = WideText(area, "Word", _wideFont, size, here ? FontStyles.Bold : FontStyles.Normal);
+			}
+			// The values are a row of diamonds, one a whole value. The row is
+			// inset from the box's ends as much as the first and last range's
+			// labels need to sit centred on their range ("Prophet").
+			float inset = 0f, cell = 1f;
+			for (int pass = 0; pass < 4; pass++)
+			{
+				cell = (width - 2f * inset) / Mathf.Max(1, max - min + 1);
+				float first = (ranges[0][1] - ranges[0][0] + 1) * cell;
+				float last = (ranges[n - 1][1] - ranges[n - 1][0] + 1) * cell;
+				float need = Mathf.Max(
+					Mathf.Max(Mathf.Min(wordW[0], Mathf.Max(longest[0], first)), numW[0]) * 0.5f - first * 0.5f,
+					Mathf.Max(Mathf.Min(wordW[n - 1], Mathf.Max(longest[n - 1], last)), numW[n - 1]) * 0.5f - last * 0.5f);
+				inset = Mathf.Clamp(need, 0f, width * 0.2f);
+			}
+			System.Func<int, float> at = v => inset + (v - min + 0.5f) * cell;   // a value's diamond
+
+			// each label's box: a word as wide as its range (wrapped only
+			// between words, never narrower than its longest word), the
+			// numbers on one line; neighbours pushed apart, kept inside
+			float[] wordX = new float[n], wordBox = new float[n], numX = new float[n];
+			for (int i = 0; i < n; i++)
+			{
+				float rw = (ranges[i][1] - ranges[i][0] + 1) * cell;
+				float c = (at(ranges[i][0]) + at(ranges[i][1])) * 0.5f;
+				// a little narrower than the range, so two names never touch:
+				// a long one goes on two lines ("Received in Elite Circles")
+				wordBox[i] = Mathf.Min(width, Mathf.Min(wordW[i], Mathf.Max(longest[i], rw - 18f)));
+				wordX[i] = c - wordBox[i] * 0.5f;
+				numX[i] = c - numW[i] * 0.5f;
+			}
+			Spread(wordX, wordBox, width, 16f);
+			Spread(numX, numW, width, 8f);
+
+			float wordsH = 0f;
+			for (int i = 0; i < n; i++)
+			{
+				bool here = value >= ranges[i][0] && value <= ranges[i][1];
+				// the range: a line joining its diamonds (none across a gap
+				// between two ranges), thick in the accent for the value's
+				float x0 = at(ranges[i][0]), x1 = at(ranges[i][1]);
+				if (x1 > x0)
+				{
+					Bar(area, x0, lineY, x1, lineY, here ? 5f : 2f, here ? Palette.Accent : ink);
+				}
+				for (int v = ranges[i][0]; v <= ranges[i][1]; v++)
+				{
+					Diamond(area, at(v), lineY, here ? 9f : 8f, here ? Palette.Accent : ink);
+				}
+				TextMeshProUGUI num = WideText(area, "Range", _wideFont, size, FontStyles.Normal);
+				num.text = nums[i];
+				num.color = here ? ink : pale;
+				num.alignment = TextAlignmentOptions.Bottom;
+				num.enableWordWrapping = false;
+				Pin(num.rectTransform, new Vector2(numX[i], 0f), new Vector2(numW[i], numsH), new Vector2(0f, 1f));
+				FontStyles style = here ? FontStyles.Bold : FontStyles.Normal;
+				TextMeshProUGUI word = WideText(area, "Word", _wideFont, size, style);
 				word.text = i < words.Count ? words[i] : "";
 				word.color = here ? Palette.Accent : ink;
 				word.alignment = TextAlignmentOptions.Top;
 				word.enableWordWrapping = true;
-				FontStyles style = here ? FontStyles.Bold : FontStyles.Normal;
-				float longest = 0f;
-				foreach (string part in word.text.Split(' '))
-				{
-					longest = Mathf.Max(longest, MeasureAt(part, size, style, 0f).x);
-				}
-				float ww = Mathf.Min(width, Mathf.Max(x1 - x0 - 8f, longest + 12f));
-				float wh = MeasureAt(word.text, size, style, ww - 4f).y;
+				float wh = MeasureAt(word.text, size, style, wordBox[i] - 4f).y;
 				wordsH = Mathf.Max(wordsH, wh);
-				// centred on its range, kept inside the line's ends
-				Pin(word.rectTransform, new Vector2(Mathf.Clamp((x0 + x1 - ww) * 0.5f, 0f, width - ww), lineY - 14f),
-					new Vector2(ww, wh + 6f), new Vector2(0f, 1f));
+				Pin(word.rectTransform, new Vector2(wordX[i], lineY - 16f), new Vector2(wordBox[i], wh + 6f), new Vector2(0f, 1f));
 			}
+			// the value: a larger diamond
+			Diamond(area, at(Mathf.Clamp(value, min, max)), lineY, 18f, Palette.Accent);
 			// as tall as what it draws
 			LayoutElement le = area.GetComponent<LayoutElement>();
-			le.preferredHeight = le.minHeight = -lineY + 14f + wordsH + 4f;
-			// the value: a diamond on the line
-			GameObject dg = new GameObject("Value", typeof(RectTransform));
-			dg.transform.SetParent(area, false);
+			le.preferredHeight = le.minHeight = -lineY + 16f + wordsH + 4f;
+		}
+
+		// Boxes (left edges `x`, widths `w`, in order) moved apart so none
+		// overlaps the next by less than `gap`, each as near its place as
+		// it can be, all inside 0..`width`.
+		private static void Spread(float[] x, float[] w, float width, float gap)
+		{
+			int n = x.Length;
+			for (int i = 0; i < n; i++)
+			{
+				x[i] = Mathf.Clamp(x[i], 0f, Mathf.Max(0f, width - w[i]));
+			}
+			for (int pass = 0; pass < 6; pass++)
+			{
+				bool moved = false;
+				for (int i = 1; i < n; i++)
+				{
+					float over = x[i - 1] + w[i - 1] + gap - x[i];
+					if (over > 0.5f)
+					{
+						// each moves half, as far as the box's ends allow
+						float left = Mathf.Min(over * 0.5f, x[i - 1]);
+						float right = Mathf.Min(over - left, Mathf.Max(0f, width - w[i] - x[i]));
+						left = Mathf.Min(over - right, x[i - 1]);
+						x[i - 1] -= left;
+						x[i] += right;
+						moved = true;
+					}
+				}
+				if (!moved)
+				{
+					break;
+				}
+			}
+		}
+
+		// A diamond (a square turned 45 degrees) centred on (x, y).
+		private static void Diamond(RectTransform parent, float x, float y, float size, Color colour)
+		{
+			GameObject dg = new GameObject("Diamond", typeof(RectTransform));
+			dg.transform.SetParent(parent, false);
 			Image di = dg.AddComponent<Image>();
-			di.color = Palette.Accent;
+			di.color = colour;
 			di.raycastTarget = false;
 			RectTransform drt = di.rectTransform;
 			drt.anchorMin = drt.anchorMax = new Vector2(0f, 1f);
 			drt.pivot = new Vector2(0.5f, 0.5f);
-			drt.sizeDelta = new Vector2(14f, 14f);
-			drt.anchoredPosition = new Vector2((Mathf.Clamp(value, min, max) - min + 0.5f) * cell, lineY);
+			drt.sizeDelta = new Vector2(size, size);
+			drt.anchoredPosition = new Vector2(x, y);
 			drt.localRotation = Quaternion.Euler(0f, 0f, 45f);
 		}
 
