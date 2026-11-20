@@ -384,7 +384,13 @@ community event sheet (`data/events.json`).
   none), the text; "One of:" with its options under a bracket
   (`DrawSpines`, after layout). Requires is at least as wide as its
   longest line (up to half the box, then its lines wrap): unsized, it was
-  squeezed and its lines ran into Comes from. A key-parameter part that
+  squeezed and its lines ran into Comes from. Both its `LayoutElement`
+  sizes are cleared before measuring: a `LayoutElement` outranks the
+  column's own size, and the first pop-up's width stuck to every later
+  one. `CheckOverlap` logs "OVERLAP" when Requires' drawn text reaches
+  into Comes from; `destinyall` hovers every destiny (none since). In
+  Comes from, "(" and ")" keep the line's own style; only a whole line is
+  green or red. A key-parameter part that
   only the earning answers set (`ShownByComesFrom`: every
   `SceneParams.Setters` entry is an earner - "Kiss the Sword") is left
   out: Comes from names that answer. One set elsewhere too ("GirlsMeet")
@@ -416,8 +422,19 @@ community event sheet (`data/events.json`).
   status), the description - and the scale as a line (`DrawScale`): marks
   at its ends and between ranges, each range's numbers above and word
   below, the range the value is in drawn thick in `Palette.Accent` with
-  a diamond at the value. The tree's answer and save-type pop-ups use the
-  same parchment (`StatPanel.Paper`, once the stat tooltip is cloned).
+  a diamond at the value. Its text is the description's size (22); a range
+  word wraps only between words, in a box at least as wide as its longest
+  word, centred on its range and kept inside the line (it may reach over a
+  neighbour's edge), and the scale is as tall as its tallest word. Text is
+  measured with `MeasureAt` on the shared `_measure` object, with the box
+  shown: a hidden text object, or a height limit of 0 in
+  `GetPreferredValues`, measured ~1/3 to ~1/10 of the size ("Orator" broke
+  in two). The margins are `WidePadL`/`WidePadR` (the parchment's right and
+  bottom edges are more ragged). The tree's answer and save-type pop-ups
+  use the same parchment (`StatPanel.Paper`, once the stat tooltip is
+  cloned). Hovering an answer outlines in amber the stat and people rows
+  it requires (`MarkNeeds`: its Q, W, T requirements), as the Destiny
+  tab outlines the destinies it needs.
 - **Opening the window is cheap.** The tree from its tab no longer
   builds the save table (`Open(false)`); save rows are cached per file
   (`_entryCache`: path, size, write time, kind, language); reopening the
