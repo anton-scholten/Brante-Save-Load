@@ -674,7 +674,8 @@ namespace Doorstop
 		public static string DestinyAt;
 
 		// Whether `scene`'s time slot is over by the scene shown: the same
-		// chapter, both timed, its last turn before the shown scene's turn
+		// chapter, both timed, its last (turn, season) before the shown
+		// scene's
 		// (A Family of Means opens in turns 2-7; at the judge's turn-8
 		// finale it is out of reach).
 		private static bool SlotPassed(string scene)
@@ -684,7 +685,18 @@ namespace Doorstop
 				return false;
 			}
 			SceneFlow.Row a = SceneFlow.Find(scene), at = SceneFlow.Find(DestinyAt);
-			return a != null && at != null && a.Chapter == at.Chapter && a.Timed && at.Timed && a.TurnMax < at.Turn;
+			if (a == null || at == null || a.Chapter != at.Chapter || !a.Timed || !at.Timed)
+			{
+				return false;
+			}
+			// (turn, season) slots; seasons run 1-5 inside a turn and only
+			// forward (IncreaceTurn: Season++ to 5, then Turn++). The
+			// scene's last slot: its last turn, at its season (any season:
+			// 5); the shown scene's earliest: its first turn, at its season
+			// (any: 1)
+			int endSeason = a.Season > 0 ? a.Season : 5;
+			int atSeason = at.Season > 0 ? at.Season : 1;
+			return a.TurnMax < at.Turn || (a.TurnMax == at.Turn && endSeason < atSeason);
 		}
 
 		// Whether `scene` comes at or after the early end of the path (and

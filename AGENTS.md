@@ -361,7 +361,8 @@ community event sheet (`data/events.json`).
   chapter, at the end's turn or later - Broken Chains after A Lesson Writ
   in Blood; untimed, later in flow order), or whose time slot is over
   (`SlotPassed`: same chapter as the scene shown, `DestinyAt`, its last
-  turn before that scene's turn - A Family of Means (turns 2-7), The
+  (turn, season) before that scene's earliest - seasons run 1-5 inside a
+  turn and only forward; "any season" ends at 5 and starts at 1 - A Family of Means (turns 2-7), The
   Family in Ruins, Gloria Brante at the judge's turn-8 finale), or the game's own condition list for it
   (`Objective.Condition`'s `RealCondition`, what the Destiny window shows:
   every part required except those marked `OrCondition`, of which one is
