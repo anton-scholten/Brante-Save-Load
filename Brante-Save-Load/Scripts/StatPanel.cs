@@ -668,6 +668,24 @@ namespace Doorstop
 		// on the path. A scene off the path from that point on cannot come.
 		public static string DestinyStop;
 		public static HashSet<string> DestinyPath = new HashSet<string>();
+		// The scene the panel shows (selected, on screen, or the last
+		// played): an earner of its chapter whose last turn is before it
+		// cannot open any more.
+		public static string DestinyAt;
+
+		// Whether `scene`'s time slot is over by the scene shown: the same
+		// chapter, both timed, its last turn before the shown scene's turn
+		// (A Family of Means opens in turns 2-7; at the judge's turn-8
+		// finale it is out of reach).
+		private static bool SlotPassed(string scene)
+		{
+			if (string.IsNullOrEmpty(DestinyAt) || scene == DestinyAt)
+			{
+				return false;
+			}
+			SceneFlow.Row a = SceneFlow.Find(scene), at = SceneFlow.Find(DestinyAt);
+			return a != null && at != null && a.Chapter == at.Chapter && a.Timed && at.Timed && a.TurnMax < at.Turn;
+		}
 
 		// Whether `scene` comes at or after the early end of the path (and
 		// is not on it): a later chapter, or the same chapter in the end's
@@ -1054,9 +1072,9 @@ namespace Doorstop
 				{
 					continue;   // another post's track
 				}
-				if (AfterStop(e.Key))
+				if (AfterStop(e.Key) || SlotPassed(e.Key))
 				{
-					continue;   // the path's story is over before it
+					continue;   // the path's story is over before it, or its turns are
 				}
 				return Fate.Open;
 			}
@@ -1495,7 +1513,7 @@ namespace Doorstop
 				bool open = false;
 				foreach (KeyValuePair<string, int> e in list)
 				{
-					bool passed = DestinyDone.Contains(e.Key) || PastChapter(e.Key);
+					bool passed = DestinyDone.Contains(e.Key) || PastChapter(e.Key) || SlotPassed(e.Key);
 					done |= passed;
 					whole |= e.Value <= 0 || WholeScene(e.Key, list);
 					open |= !passed && OnTrack(e.Key) && !AfterStop(e.Key);

@@ -359,7 +359,10 @@ community event sheet (`data/events.json`).
   `ChoiceWindow.ShowStats` sets `DestinyStop` to its last scene and
   `AfterStop` rules out a scene off the path in a later chapter or, in that
   chapter, at the end's turn or later - Broken Chains after A Lesson Writ
-  in Blood; untimed, later in flow order), or the game's own condition list for it
+  in Blood; untimed, later in flow order), or whose time slot is over
+  (`SlotPassed`: same chapter as the scene shown, `DestinyAt`, its last
+  turn before that scene's turn - A Family of Means (turns 2-7), The
+  Family in Ruins, Gloria Brante at the judge's turn-8 finale), or the game's own condition list for it
   (`Objective.Condition`'s `RealCondition`, what the Destiny window shows:
   every part required except those marked `OrCondition`, of which one is
   enough - Blood Tide is the ritual and the Nobleman's Sacrament or

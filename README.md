@@ -136,6 +136,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
   - The family's fortune and fate are listed best to worst.
   - Destiny pop-ups join requirements with "and" / "or", list a scene's several choices under dashes, and show what a scene needs to happen at all (A Glorious Bloodline: Reputation 10 and not Branded by Dishonor; Otton's Sentence: the choice at The Hour Has Come).
   - When your path ends in a true death (or an early ending), destinies that could only come after it are crossed out.
+  - Destinies whose scenes can only open in turns that are already over are crossed out (A Family of Means at the end of chapter 4).
   - A choice that appears in several versions of a scene (The Battle for Anizotte) is one line, with each version's requirements joined by "or"; joining words are in italics and wrapped lines are indented.
   - `Brante-Save-Load/scene-list.tsv`: every scene and choice of the game with its text, when it happens, what it requires, changes and earns.
 - **19 Nov 2026:**

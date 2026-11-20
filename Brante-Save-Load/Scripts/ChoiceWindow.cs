@@ -3094,6 +3094,13 @@ namespace Doorstop
 					walk(sc);
 				}
 			}
+			string at = !string.IsNullOrEmpty(_selScene) ? _selScene : null;
+			if (at == null && _tree != null)
+			{
+				TreeCol now = _tree.Find(c => c.Current) ?? _tree.FindLast(c => !c.Upcoming);
+				at = now != null ? now.Scene : null;
+			}
+			StatPanel.DestinyAt = at;
 			StatPanel.DestinyPath = path;
 			StatPanel.DestinyStop = early ? lastScene : null;
 			StatPanel.DestinyDone = done;
