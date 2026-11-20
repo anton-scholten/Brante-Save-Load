@@ -430,7 +430,11 @@ community event sheet (`data/events.json`).
   the first and last range's labels need to sit centred on their range
   ("Prophet"); a range word is a little narrower than its range (a long
   one goes on two lines), never narrower than its longest word (no word
-  is broken), and neighbouring labels are pushed apart (`Spread`). Its
+  is broken), and always centred on its range: a label that would meet
+  its neighbour is made narrower about its centre, so it wraps onto more
+  lines (`Narrow`; the one with more room to give first, never below its
+  longest word). Moving labels sideways (`Spread`) is the last resort, for
+  two longest words that still meet. Its
   text is the description's size (22); the scale is as tall as its
   tallest word. Text is
   measured with `MeasureAt` on the shared `_measure` object, with the box

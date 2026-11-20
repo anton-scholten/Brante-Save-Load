@@ -3869,7 +3869,8 @@ namespace Doorstop
 				wordX[i] = c - wordBox[i] * 0.5f;
 				numX[i] = c - numW[i] * 0.5f;
 			}
-			Spread(wordX, wordBox, width, 16f);
+			Narrow(wordX, wordBox, longest, 16f);
+			Spread(wordX, wordBox, width, 16f);   // only if two longest words still meet
 			Spread(numX, numW, width, 8f);
 
 			float wordsH = 0f;
@@ -3908,6 +3909,49 @@ namespace Doorstop
 			// as tall as what it draws
 			LayoutElement le = area.GetComponent<LayoutElement>();
 			le.preferredHeight = le.minHeight = -lineY + 16f + wordsH + 4f;
+		}
+
+		// Centred boxes (left edges `x`, widths `w`, in order) that would meet
+		// their neighbour are made narrower about their centre - a word
+		// label then wraps onto more lines - the one with more room to give
+		// first, never below its longest word (`least`). They stay centred
+		// on their range ("Received in Elite Circles" beside "Influential").
+		private static void Narrow(float[] x, float[] w, float[] least, float gap)
+		{
+			for (int pass = 0; pass < 8; pass++)
+			{
+				bool changed = false;
+				for (int i = 1; i < x.Length; i++)
+				{
+					float over = x[i - 1] + w[i - 1] + gap - x[i];
+					if (over <= 0.5f)
+					{
+						continue;
+					}
+					// narrowing a box by d frees d/2 on each side
+					int a = w[i - 1] - least[i - 1] >= w[i] - least[i] ? i - 1 : i;
+					int b = a == i ? i - 1 : i;
+					foreach (int k in new[] { a, b })
+					{
+						float give = Mathf.Min(2f * over, w[k] - least[k]);
+						if (give > 0.5f)
+						{
+							x[k] += give * 0.5f;
+							w[k] -= give;
+							over -= give * 0.5f;
+							changed = true;
+						}
+						if (over <= 0.5f)
+						{
+							break;
+						}
+					}
+				}
+				if (!changed)
+				{
+					break;
+				}
+			}
 		}
 
 		// Boxes (left edges `x`, widths `w`, in order) moved apart so none
