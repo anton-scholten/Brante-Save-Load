@@ -403,6 +403,11 @@ namespace Doorstop
 			public int Turn;
 			public string Scene;
 
+			public object MemberwiseCloneEntry()
+			{
+				return MemberwiseClone();
+			}
+
 			public string Choice
 			{
 				get
@@ -725,7 +730,7 @@ namespace Doorstop
 		// The tree view straight away, from the book tab.
 		public static void OpenTreeView()
 		{
-			Open();
+			Open(false);
 			OpenHistory();
 			_treeOnly = true;
 		}
@@ -745,6 +750,14 @@ namespace Doorstop
 		// Returns the number of saves shown (used by the dev UI test).
 		public static int Open()
 		{
+			return Open(true);
+		}
+
+		// `rows`: build the save table's rows; the tree opened from its own
+		// tab never shows the table, and building it was half of the lag
+		// when the tree opened.
+		private static int Open(bool rows)
+		{
 			// The labels are built from the game's localisation (and with its
 			// font), so a language change makes them stale: rebuild the window.
 			if (_canvas != null && _builtLanguage.Length > 0 && CurrentLanguage() != _builtLanguage)
@@ -753,13 +766,17 @@ namespace Doorstop
 					+ "' -> '" + CurrentLanguage() + "'), rebuilding the window");
 				DestroyWindow();
 			}
+			System.Diagnostics.Stopwatch tOpen = System.Diagnostics.Stopwatch.StartNew();
+			bool built = _canvas == null;
 			if (_canvas == null)
 			{
 				BuildCanvas();
 			}
+			long tCanvas = tOpen.ElapsedMilliseconds;
 			// The type filter is per opening (no persisted setting).
 			_filter = SaveFilter.All;
-			int n = RefreshItems();
+			int n = rows ? RefreshItems() : _lastItemCount;
+			long tItems = tOpen.ElapsedMilliseconds - tCanvas;
 			_lastItemCount = n;
 			if (_scrollRect != null)
 			{
@@ -771,7 +788,9 @@ namespace Doorstop
 			// rebuild; without this flush the text paints seconds late.
 			Canvas.ForceUpdateCanvases();
 			MeasureMarquees();
-			ModLog.Info("ChoiceWindow: opened (" + n + " save(s))");
+			ModLog.Info("ChoiceWindow: opened (" + n + " save(s)) in " + tOpen.ElapsedMilliseconds + " ms (window "
+				+ (built ? tCanvas + " ms, built" : tCanvas + " ms") + ", rows " + tItems + " ms, layout "
+				+ (tOpen.ElapsedMilliseconds - tCanvas - tItems) + " ms)");
 			return n;
 		}
 
@@ -948,6 +967,8 @@ namespace Doorstop
 			_historyScrollRt = null;
 			StatPanel.TreeArea = null;
 			_popup = null;
+			_popupPaper = false;
+			_tablePopupPaper = false;
 			_popupText = null;
 			_popupNote = null;
 			_popupEffects = null;
@@ -2353,12 +2374,39 @@ namespace Doorstop
 			// on screen first: texts are measured and fitted as they are built
 			// (stat names, the Load scene label), so nothing changes size
 			// later when a pick refreshes the values
+			System.Diagnostics.Stopwatch tOpen = System.Diagnostics.Stopwatch.StartNew();
 			_historyPanel.SetActive(true);
 			_historyPanel.transform.SetAsLastSibling();
-			int n = RefreshHistory(true);
+			// the same game state as when it was last built: keep what is
+			// drawn (back to the played answers if picks were made)
+			string key = HistoryKey();
+			int n;
+			if (key != null && key == _historyKey && _baseCols != null && _baseCols.Count > 0)
+			{
+				if (_picksAtClose)
+				{
+					_redrawAhead = ResimulateAhead();
+					RefreshHistory(false);
+				}
+				else
+				{
+					ShowStats();
+					UpdateLoadButton();
+				}
+				n = _tree.Count;
+				ModLog.Info("ChoiceWindow: the tree is as last built - not rebuilt");
+			}
+			else
+			{
+				n = RefreshHistory(true);
+				_historyKey = key;
+			}
+			long tTree = tOpen.ElapsedMilliseconds;
 			UpdateLoadButton();
 			Canvas.ForceUpdateCanvases();
 			ScrollHistoryToFocus();
+			ModLog.Info("ChoiceWindow: history open took " + tOpen.ElapsedMilliseconds + " ms (tree " + tTree
+				+ " ms, canvas update " + (tOpen.ElapsedMilliseconds - tTree) + " ms)");
 			int ahead = 0, possible = 0;
 			foreach (TreeCol c in _tree)
 			{
@@ -2376,6 +2424,23 @@ namespace Doorstop
 				+ possible + " possible)");
 		}
 
+		private static string _historyKey;   // the game state the tree was last built for
+		private static bool _picksAtClose;   // it was closed with picks: re-predict on reopening
+
+		// What the tree is built from: the run, the scenes shown, the answer
+		// held, the snapshots on disk and the language. Null when unknown.
+		private static string HistoryKey()
+		{
+			GameManager gm = GameManager.Instance;
+			if (gm == null || gm.ShowedScenesList == null)
+			{
+				return null;
+			}
+			ShowedScenes last = gm.ShowedScenesList.Count > 0 ? gm.ShowedScenesList[gm.ShowedScenesList.Count - 1] : null;
+			return Recorder.CurrentRunId() + "|" + gm.ShowedScenesList.Count + "|" + (last != null ? last.SceneName + last.IsShowed : "")
+				+ "|" + gm.CurrentConsequene + "|" + History.SnapshotCount() + "|" + CurrentLanguage();
+		}
+
 		private static void CloseHistory()
 		{
 			if (_treeOnly)
@@ -2390,6 +2455,7 @@ namespace Doorstop
 			{
 				_historyPanel.SetActive(false);
 			}
+			_picksAtClose = _overrides.Count > 0 || _selScene != null;
 			_overrides.Clear();
 			_selScene = null;
 			_selChoice = null;
@@ -2944,6 +3010,7 @@ namespace Doorstop
 		private static void ShowStats()
 		{
 			HashSet<string> done = new HashSet<string>();
+			Dictionary<string, int> played = new Dictionary<string, int>();   // scene -> the answer played there
 			SceneEffects.Hero end = null;
 			if (_tree != null && _tree.Count > 0)
 			{
@@ -2980,6 +3047,10 @@ namespace Doorstop
 						break;   // nothing on screen or picked: the played columns
 					}
 					done.Add(c.Scene);
+					if (!c.Upcoming && !c.Current && !string.IsNullOrEmpty(c.PlayedChoice))
+					{
+						played[c.Scene] = SceneParams.ButtonOf(c.PlayedChoice);
+					}
 					if (c.Scene == stop)
 					{
 						break;
@@ -2987,6 +3058,7 @@ namespace Doorstop
 				}
 			}
 			StatPanel.DestinyDone = done;
+			StatPanel.DestinyPlayed = played;
 			StatPanel.DestinyEnd = end;
 			string post = _simPost;
 			_Scripts.AMVCC.Models.Static.KeyChapterParametersController kc = _Scripts.AMVCC.Models.Static.KeyChapterParametersController.Initiate;
@@ -4330,12 +4402,37 @@ namespace Doorstop
 			go.SetActive(false);
 		}
 
+		// The pop-ups on the game tooltip's parchment, as the destiny and stat
+		// pop-ups (StatPanel.Paper; it is there once the stat tooltip has been
+		// cloned): no outline, a wider margin for its ragged edge.
+		private static bool _popupPaper, _tablePopupPaper;
+
+		private static void Parchment(RectTransform popup, ref bool done)
+		{
+			if (done || popup == null || !StatPanel.Paper(popup.GetComponent<Image>()))
+			{
+				return;
+			}
+			done = true;
+			Outline o = popup.GetComponent<Outline>();
+			if (o != null)
+			{
+				UnityEngine.Object.DestroyImmediate(o);
+			}
+			VerticalLayoutGroup v = popup.GetComponent<VerticalLayoutGroup>();
+			if (v != null)
+			{
+				v.padding = new RectOffset(v.padding.left + 14, v.padding.right + 14, v.padding.top + 8, v.padding.bottom + 10);
+			}
+		}
+
 		private static void ShowTablePopup(RectTransform node, string text)
 		{
 			if (_tablePopup == null || _tableBox == null)
 			{
 				return;
 			}
+			Parchment(_tablePopup, ref _tablePopupPaper);
 			_tablePopupText.text = text;
 			_tablePopup.gameObject.SetActive(true);
 			_tablePopup.sizeDelta = new Vector2(380f, _tablePopup.sizeDelta.y);
@@ -4429,6 +4526,7 @@ namespace Doorstop
 			{
 				return;
 			}
+			Parchment(_popup, ref _popupPaper);
 			_popupText.text = SceneEffects.NobleParticle(text);
 			_popupNote.text = note;
 			_popupNote.gameObject.SetActive(!string.IsNullOrEmpty(note));
@@ -5506,7 +5604,121 @@ namespace Doorstop
 			}
 		}
 
+		// Rows read before, by file: a save file never changes under the same
+		// path, size and write time, so the table reads only new ones
+		// (deserialising and hashing every save took ~450 ms for 71).
+		private static readonly Dictionary<string, KeyValuePair<string, SaveEntry>> _entryCache =
+			new Dictionary<string, KeyValuePair<string, SaveEntry>>();
+
 		private static SaveEntry ReadEntry(string f, string kind)
+		{
+			string stamp;
+			try
+			{
+				FileInfo fi = new FileInfo(f);
+				stamp = fi.Length + "|" + fi.LastWriteTimeUtc.Ticks + "|" + kind + "|" + CurrentLanguage();
+			}
+			catch (Exception)
+			{
+				stamp = null;
+			}
+			KeyValuePair<string, SaveEntry> hit;
+			if (stamp != null && _entryCache.TryGetValue(f, out hit) && hit.Key == stamp)
+			{
+				return CopyEntry(hit.Value);
+			}
+			SaveEntry read = ReadEntryFile(f, kind);
+			if (read != null && stamp != null)
+			{
+				_entryCache[f] = new KeyValuePair<string, SaveEntry>(stamp, CopyEntry(read));
+			}
+			return read;
+		}
+
+		// After a scene opens: read what opening the window would read - the
+		// played scenes' snapshots and the run's saves - one file a frame, a
+		// few seconds in, so the first opening finds them cached instead of
+		// stalling (~1 s for a chapter-4 game). Skipped while the window is
+		// open or a replay runs; a later scene load starts it again.
+		public static System.Collections.IEnumerator Prewarm()
+		{
+			yield return new WaitForSecondsRealtime(3f);
+			System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+			int files = 0;
+			// the shipped tables load on first use: one a frame
+			System.Action[] tables =
+			{
+				() => SceneTexts.Title("01.01.01"),
+				() => SceneEffects.For("01.01.01", "ButtonDescription1"),
+				() => SceneFlow.Find("01.01.01"),
+				() => SceneParams.EndsStory("01.01.01"),
+				() => SceneObjectives.Earners(0),
+			};
+			foreach (System.Action load in tables)
+			{
+				if (AutoPlay.Running || (_canvas != null && _canvas.activeSelf))
+				{
+					yield break;
+				}
+				load();
+				yield return null;
+			}
+			long tTables = sw.ElapsedMilliseconds;
+			List<string> work = new List<string>();
+			History.FromCurrentGame();   // the snapshot folder, titles, answers chosen
+			yield return null;
+			GameManager gm = GameManager.Instance;
+			if (gm != null && gm.ShowedScenesList != null)
+			{
+				foreach (ShowedScenes sc in gm.ShowedScenesList)
+				{
+					if (sc != null && !string.IsNullOrEmpty(sc.SceneName))
+					{
+						work.AddRange(History.SnapshotsFor(sc.SceneName));
+					}
+				}
+			}
+			foreach (string path in work)
+			{
+				if (AutoPlay.Running || (_canvas != null && _canvas.activeSelf))
+				{
+					yield break;
+				}
+				SceneEffects.FromSnapshot(path);   // what the tree's timeline reads of each
+				History.ChosenAllIn(path);
+				History.ConsequenceOf(path);
+				files++;
+				yield return null;
+			}
+			string run = Recorder.CurrentRunId();
+			foreach (string kind in new[] { Recorder.KindAutosaves, Recorder.KindCheckpoints, Recorder.KindManual })
+			{
+				string dir = Recorder.RunDir(run, kind);
+				string[] dats = Directory.Exists(dir) ? Directory.GetFiles(dir, "*.dat") : new string[0];
+				foreach (string f in dats)
+				{
+					if (AutoPlay.Running || (_canvas != null && _canvas.activeSelf))
+					{
+						yield break;
+					}
+					ReadEntry(f, kind);
+					files++;
+					yield return null;
+				}
+			}
+			ModLog.Info("ChoiceWindow: warmed the tables (" + tTables + " ms) and " + files + " file(s) for the window in "
+				+ sw.ElapsedMilliseconds + " ms");
+		}
+
+		// A fresh row with the same fields (Dedupe adds to Copies).
+		private static SaveEntry CopyEntry(SaveEntry e)
+		{
+			SaveEntry c = (SaveEntry)e.MemberwiseCloneEntry();
+			c.Copies = new List<string>(e.Copies);
+			return c;
+		}
+
+		private static SaveEntry ReadEntryFile(string f, string kind)
 		{
 			try
 			{
@@ -6658,6 +6870,17 @@ namespace Doorstop
 					else if (l == "allpeople")
 					{
 						StatPanel.DevAllPeople = true;
+						continue;
+					}
+					else if (l == "late")
+					{
+						continue;   // ModHost waited for the warm-up before this run
+					}
+					else if (l == "reopen")
+					{
+						// close the window and open the tree again from its tab (timed in the log)
+						Close();
+						OpenTreeView();
 						continue;
 					}
 					else if (l.StartsWith("rowhover ", StringComparison.Ordinal))

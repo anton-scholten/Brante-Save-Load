@@ -463,6 +463,14 @@ namespace Doorstop
 			}
 		}
 
+		// The snapshot folder's state (path and last change), for the tree's
+		// "nothing changed" test.
+		public static string SnapshotCount()
+		{
+			SnapshotMap();
+			return _mapDir + "@" + _mapStamp.Ticks;
+		}
+
 		// Dev dump (marker: Snapshots/dev-history.txt): logs the scene path
 		// from the newest game save, and from the live game when one is loaded.
 		public static void Dump()

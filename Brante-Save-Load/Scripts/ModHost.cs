@@ -46,7 +46,14 @@ namespace Doorstop
 				ModLog.Info("AUTOPLAY: scene loaded " + scene.name);
 			}
 			StartCoroutine(BookTabSoon());
+			if (_warm != null)
+			{
+				StopCoroutine(_warm);
+			}
+			_warm = StartCoroutine(ChoiceWindow.Prewarm());
 		}
+
+		private Coroutine _warm;
 
 		// The scene's HUD is set up during its first frames; add the book tab
 		// once it is there.
@@ -608,6 +615,10 @@ namespace Doorstop
 						try { picks = File.ReadAllLines(pickFile); File.Delete(pickFile); }
 						catch (Exception) { }
 						yield return new WaitForSeconds(3f);
+						if (Array.IndexOf(picks, "late") >= 0)
+						{
+							yield return new WaitForSecondsRealtime(8f);   // after the window's warm-up
+						}
 						ChoiceWindow.DevPick(picks);
 						foreach (string pl in picks)
 						{

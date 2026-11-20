@@ -124,6 +124,11 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 ## Update notes
 
+- **20 Nov 2026:**
+  - The tree and save table open much faster.
+  - Stat, family and relation pop-ups are wide boxes over the tree, their scale drawn as a line with its ranges named.
+  - Destiny pop-ups show the game's own picture and icons; what is met or was played is green.
+  - All pop-ups use the game's parchment.
 - **19 Nov 2026:**
   - Hovering a choice or a destiny outlines the destinies it needs in amber.
   - Destinies are listed in the order they can happen; their pop-up is a wide box over the tree.

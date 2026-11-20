@@ -661,6 +661,7 @@ namespace Doorstop
 		// parameter "Post") along the path, null when not known.
 		public static SceneEffects.Hero DestinyEnd;
 		public static HashSet<string> DestinyDone = new HashSet<string>();
+		public static Dictionary<string, int> DestinyPlayed = new Dictionary<string, int>();   // passed scene -> answer played
 		public static string DestinyPost;
 
 		private enum Fate { Earned, Ahead, Open, Lost }
@@ -1326,10 +1327,14 @@ namespace Doorstop
 						{
 							line = Struck(line);   // can no longer be met: the options left stand out
 						}
+						else if (line.Length > 0 && PartMet(c, _lastShown) == true)
+						{
+							line = Met(line);   // already true for the hero shown
+						}
 						if (line.Length > 0)
 						{
 							(c.OrCondition ? ors : conds).Add(line);
-							(c.OrCondition ? orIcons : condIcons).Add(ConditionIcon(c.RealCondition) ?? NamedIcon(c.Operand1));
+							(c.OrCondition ? orIcons : condIcons).Add(c.Icon ?? ConditionIcon(c.RealCondition) ?? NamedIcon(c.Operand1));
 						}
 					}
 				}
@@ -1425,6 +1430,15 @@ namespace Doorstop
 				// passed (or on another post's track) is struck, so the ways
 				// left to earn it stand out
 				int style = fate == Fate.Earned ? (done ? 1 : 0) : open ? 0 : 2;
+				// the way it came (or the scene that brought it by itself) on
+				// the path played: green
+				bool playedHere = false;
+				foreach (KeyValuePair<string, int> e in list)
+				{
+					int b;
+					playedHere |= DestinyDone.Contains(e.Key) && (e.Value <= 0
+						|| (DestinyPlayed.TryGetValue(e.Key, out b) && (b == e.Value || WholeScene(e.Key, list))));
+				}
 				List<FromLine> mine = new List<FromLine>();
 				if (whole)
 				{
@@ -1439,7 +1453,9 @@ namespace Doorstop
 					foreach (KeyValuePair<string, int> e in list)
 					{
 						string choice = "ButtonDescription" + e.Value;
-						FromLine a = new FromLine { Head = SceneEffects.NobleParticle(SceneTexts.Name(e.Key, choice)) };
+						int took;
+						FromLine a = new FromLine { Head = SceneEffects.NobleParticle(SceneTexts.Name(e.Key, choice)),
+							Played = DestinyDone.Contains(e.Key) && DestinyPlayed.TryGetValue(e.Key, out took) && took == e.Value };
 						NeedParts(SceneEffects.For(e.Key, choice), required, a);
 						if (a.Text().Length > 0 && !answers.Exists(x => x.Text() == a.Text()))
 						{
@@ -1453,7 +1469,7 @@ namespace Doorstop
 					}
 					else
 					{
-						mine.Add(new FromLine { Head = "\u2022 " + title + ":" });
+						mine.Add(new FromLine { Head = "\u2022 " + title + ":", Played = answers.Exists(x => x.Played) });
 						foreach (FromLine a in answers)
 						{
 							a.Option = true;
@@ -1464,7 +1480,15 @@ namespace Doorstop
 				foreach (FromLine l in mine)
 				{
 					l.Style = style;
+					if (l.Played)
+					{
+						l.Style = 3;
+					}
 					lines.Add(l);
+				}
+				if (whole && playedHere)
+				{
+					mine[0].Style = 3;
 				}
 				if (lines.Count >= 10)
 				{
@@ -1481,7 +1505,9 @@ namespace Doorstop
 		private sealed class FromLine
 		{
 			public bool Option;
+			public bool Played;   // the answer taken on the path played (or its scene's head)
 			public string Head = "";
+			public readonly List<bool> NeedMet = new List<bool>();   // each need met by the hero shown
 			public readonly List<Sprite> Icons = new List<Sprite>();
 			public readonly List<string> Needs = new List<string>();
 			public readonly List<string> Seps = new List<string>();
@@ -1504,7 +1530,7 @@ namespace Doorstop
 			public string Styled(string text)
 			{
 				return Style == 1 ? "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Grey) + ">" + text + "</color>"
-					: Style == 2 ? Struck(text) : text;
+					: Style == 2 ? Struck(text) : Style == 3 ? Met(text) : text;
 			}
 		}
 
@@ -1581,6 +1607,124 @@ namespace Doorstop
 			return uo != null ? uo.name : v.ToString();
 		}
 
+		// A requirement already met (an answer chosen, a destiny earned): green.
+		private static string Met(string line)
+		{
+			return "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Good) + ">" + line + "</color>";
+		}
+
+		// Whether `h` meets a condition part (its RealCondition, every test
+		// in it; else its operands when they name a stat): null when it
+		// cannot be told (a key parameter, nothing to test).
+		private static bool? PartMet(ObjectiveCondition c, SceneEffects.Hero h)
+		{
+			if (h == null)
+			{
+				return null;
+			}
+			List<SceneEffects.Effect> tests = new List<SceneEffects.Effect>();
+			ObjectiveConditions rc = c.RealCondition;
+			bool unknown = false;
+			if (rc != null)
+			{
+				if (rc.ByParameters != null)
+				{
+					foreach (var p in rc.ByParameters)
+					{
+						if (p == null || p.ParamName == null || p.ItsDiapason)
+						{
+							unknown = true;
+							continue;
+						}
+						tests.Add(new SceneEffects.Effect { Kind = 'Q', Name = p.ParamName.name, Op = (int)p.Operations, Value = p.SecondValue });
+					}
+				}
+				if (rc.ByRelations != null)
+				{
+					foreach (_Scripts.Helpers.ConditionByRelation r in rc.ByRelations)
+					{
+						if (r != null && r.Character != null)
+						{
+							tests.Add(new SceneEffects.Effect { Kind = 'W', Name = r.Character.name, Op = (int)r.Operations, Value = r.Value });
+						}
+					}
+				}
+				if (rc.ByStatuses != null)
+				{
+					foreach (_Scripts.Helpers.ConditionByStatus st in rc.ByStatuses)
+					{
+						if (st != null && st.Character != null)
+						{
+							tests.Add(new SceneEffects.Effect { Kind = 'T', Name = st.Character.name, Op = st.Not ? 1 : 0, Value = (int)st.Status });
+						}
+					}
+				}
+				if (rc.ByObjectives != null)
+				{
+					foreach (_Scripts.Helpers.ConditionByObjective ob in rc.ByObjectives)
+					{
+						if (ob != null && ob.Objective != null)
+						{
+							bool has = Has(h, ob.Objective);
+							if (ob.Not ? has : !has)
+							{
+								return false;
+							}
+							tests.Add(null);   // counted as tested
+						}
+					}
+				}
+				if (rc.ByKeyParameters != null && rc.ByKeyParameters.Count > 0)
+				{
+					unknown = true;
+				}
+			}
+			if (tests.Count == 0 && !unknown)
+			{
+				// no typed test (Sophia Saved's Willpower): the operands
+				Parameter p = SceneEffects.ParameterAsset((c.Operand1 ?? "").Trim());
+				int v;
+				int op = OpOf((c.Operator ?? "").Trim());
+				if (p != null && op >= 0 && int.TryParse((c.Operand2 ?? "").Trim(), out v))
+				{
+					tests.Add(new SceneEffects.Effect { Kind = 'Q', Name = p.name, Op = op, Value = v });
+				}
+			}
+			if (tests.Count == 0)
+			{
+				return null;
+			}
+			foreach (SceneEffects.Effect e in tests)
+			{
+				if (e == null)
+				{
+					continue;
+				}
+				bool? m = h.Meets(e);
+				if (m == false)
+				{
+					return false;
+				}
+				unknown |= m == null;
+			}
+			return unknown ? (bool?)null : true;
+		}
+
+		// A shown operator as the game's Operations number (-1: unknown).
+		private static int OpOf(string op)
+		{
+			switch (op)
+			{
+				case ">": return 0;
+				case "<": return 1;
+				case "=": case "==": return 2;
+				case ">=": case "\u2265": return 3;
+				case "<=": case "\u2264": return 4;
+				case "!=": case "\u2260": return 5;
+				default: return -1;
+			}
+		}
+
 		// A line that can no longer happen: struck, in the "out of reach" red.
 		private static string Struck(string line)
 		{
@@ -1651,6 +1795,7 @@ namespace Doorstop
 					into.Icons.Add(icon);
 					into.Needs.Add(text);
 					into.Seps.Add("");
+					into.NeedMet.Add(_lastShown != null && _lastShown.Meets(e) == true);
 					prevOr = orGroup;
 				}
 			}
@@ -3281,6 +3426,31 @@ namespace Doorstop
 				// rather than leave the pop-up looking broken
 				string descr = Loc.Game(p.ParameterName + ".Description", "");
 				_tipComp.Description.text = descr.Length > 0 ? descr : "<i>" + Loc.T(Loc.K.NoStatText) + "</i>";
+				// wide over the tree, the scale as a line
+				List<int[]> ranges = new List<int[]>();
+				List<string> words = new List<string>();
+				string now = "";
+				if (p.Scales != null)
+				{
+					for (int i = 0; i < p.Scales.Length; i++)
+					{
+						Scale sc = p.Scales[i];
+						int a = Mathf.RoundToInt((float)sc.MinValue), b = Mathf.RoundToInt((float)sc.MaxValue);
+						ranges.Add(new[] { a, b });
+						string word = Loc.Game(p.ParameterName + ".Segment" + (i + 1), "");
+						words.Add(word);
+						if (row.Shown >= a && row.Shown <= b)
+						{
+							now = word;
+						}
+					}
+				}
+				string state = "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Accent) + "><b>" + row.Shown
+					+ (now.Length > 0 ? "  \u00b7  " + now : "") + "</b></color>\n";
+				if (ShowWideScale(p.Icon, _tipComp.Title.text, state + _tipComp.Description.text, ranges, words, row.Shown))
+				{
+					return;
+				}
 				PlaceTooltip(over);
 			}
 			catch (Exception e)
@@ -3311,9 +3481,24 @@ namespace Doorstop
 			{
 				who = Loc.Game(c.WhoIs.ToString(), "").Trim();
 			}
+			// (the status's name is on the value line above)
 			string descr = Usual(row.Status) ? who
-				: who + "\n\n<b>" + Loc.Game(c.Name + "." + row.Status, "") + "</b>\n" + Loc.Game(c.Name + "." + row.Status + ".Description", "");
+				: who + "\n\n" + Loc.Game(c.Name + "." + row.Status + ".Description", "");
 			_tipComp.Description.text = descr.Trim().Length > 0 ? descr.Trim() : "<i>" + Loc.T(Loc.K.NoStatText) + "</i>";
+			List<int[]> ranges = new List<int[]>();
+			List<string> words = new List<string>();
+			foreach (int[] st in steps)
+			{
+				ranges.Add(st);
+				words.Add(RelationWord(st[0]));
+			}
+			string state = "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Accent) + "><b>" + (row.Shown > 0 ? "+" : "") + row.Shown
+				+ "  \u00b7  " + (Usual(row.Status) ? RelationWord(row.Shown) : Loc.Game(c.Name + "." + row.Status, row.Status.ToString()))
+				+ "</b></color>\n";
+			if (ShowWideScale(_tipComp.Icon.sprite, _tipComp.Title.text, state + _tipComp.Description.text, ranges, words, row.Shown))
+			{
+				return;
+			}
 			PlaceTooltip(over);
 		}
 
@@ -3352,6 +3537,8 @@ namespace Doorstop
 			_wideIcon.enabled = o.Icon != null;
 			_wideTitle.text = title;
 			_wideText.text = (state.Length > 0 ? state + "\n" : "") + descr;
+			SetPicture(o.Picture);
+			_wideScale.gameObject.SetActive(false);
 			bool requires = conds.Count + ors.Count > 0;
 			_wideBrackets.Clear();
 			FillRequires(conds, condIcons, ors, orIcons);
@@ -3392,14 +3579,166 @@ namespace Doorstop
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);   // wrapped heights settle on the second pass
 			DrawSpines();
-			// centred over the tree, from its top (down over the stats when
-			// it says more than the tree is tall)
+			PlaceWide(box, rt, lo, hi, w);
+			return true;
+		}
+
+		// Centred over the tree, from its top (down over the stats when it
+		// says more than the tree is tall).
+		private static void PlaceWide(RectTransform box, RectTransform rt, Vector2 lo, Vector2 hi, float w)
+		{
 			Rect area = box.rect;
 			float h = rt.rect.height;
 			float x = (lo.x + hi.x - w) * 0.5f;
 			float y = Mathf.Clamp(hi.y, area.yMin + 12f + h, area.yMax - 12f);
 			rt.pivot = new Vector2(0f, 1f);
 			rt.position = box.TransformPoint(new Vector3(x, y, 0f));
+		}
+
+		// The picture top right (none: hidden), as tall as PictureH.
+		private const float PictureH = 150f;
+
+		private static void SetPicture(Sprite pic)
+		{
+			_widePicture.sprite = pic;
+			_widePicture.gameObject.SetActive(pic != null);
+			LayoutElement le = _widePicture.GetComponent<LayoutElement>();
+			float aspect = pic != null && pic.rect.height > 0f ? pic.rect.width / pic.rect.height : 1f;
+			le.preferredHeight = le.minHeight = PictureH;
+			le.preferredWidth = le.minWidth = PictureH * aspect;
+		}
+
+		// A stat's or a person's pop-up, wide over the tree as the
+		// destinies': the icon or portrait, the name, the value (or status)
+		// and the description on top; below, the scale as a line with marks
+		// at its ends and between its ranges, each range's numbers above
+		// and its word below, the range the value is in marked.
+		private static bool ShowWideScale(Sprite icon, string title, string text, List<int[]> ranges, List<string> words, int value)
+		{
+			if (TreeArea == null || TooltipParent == null || !EnsureWide())
+			{
+				return false;
+			}
+			if (_tip != null)
+			{
+				_tip.SetActive(false);
+			}
+			_wideIcon.sprite = icon;
+			_wideIcon.enabled = icon != null;
+			_wideTitle.text = title;
+			_wideText.text = text;
+			SetPicture(null);
+			_wideReqBox.parent.gameObject.SetActive(false);
+			RectTransform box = (RectTransform)TooltipParent;
+			RectTransform rt = (RectTransform)_wide.transform;
+			Vector3[] c = new Vector3[4];
+			TreeArea.GetWorldCorners(c);
+			Vector2 lo = box.InverseTransformPoint(c[0]);
+			Vector2 hi = box.InverseTransformPoint(c[2]);
+			float w = Mathf.Min(hi.x - lo.x, WideMax);
+			rt.sizeDelta = new Vector2(w, rt.sizeDelta.y);
+			_wideScale.gameObject.SetActive(ranges.Count > 0);
+			DrawScale(_wideScale, w - 112f, ranges, words, value);
+			_wide.SetActive(true);
+			_wide.transform.SetAsLastSibling();
+			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
+			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
+			PlaceWide(box, rt, lo, hi, w);
+			return true;
+		}
+
+		private static void DrawScale(RectTransform area, float width, List<int[]> ranges, List<string> words, int value)
+		{
+			Clear(area);
+			if (ranges.Count == 0)
+			{
+				return;
+			}
+			int min = ranges[0][0], max = ranges[ranges.Count - 1][1];
+			float cell = width / Mathf.Max(1, max - min + 1);   // each whole value a cell
+			Color ink = Palette.Ink, pale = Palette.Fade(Palette.Ink, 0.55f);
+			const float lineY = -30f;
+			// the line, a mark at each end and between two ranges
+			Bar(area, 0f, lineY, width, lineY, 2f, ink);
+			Bar(area, 0f, lineY + 9f, 0f, lineY - 9f, 2f, ink);
+			Bar(area, width, lineY + 9f, width, lineY - 9f, 2f, ink);
+			for (int i = 0; i < ranges.Count; i++)
+			{
+				float x0 = (ranges[i][0] - min) * cell, x1 = (ranges[i][1] - min + 1) * cell;
+				if (i > 0)
+				{
+					Bar(area, x0, lineY + 9f, x0, lineY - 9f, 2f, ink);
+				}
+				bool here = value >= ranges[i][0] && value <= ranges[i][1];
+				if (here)
+				{
+					// the range the value is in: the line drawn thick there
+					Bar(area, x0, lineY, x1, lineY, 6f, Palette.Accent);
+				}
+				TextMeshProUGUI nums = WideText(area, "Range", _wideFont, 16f, FontStyles.Normal);
+				nums.text = ranges[i][0] == ranges[i][1] ? ranges[i][0].ToString() : ranges[i][0] + " \u2026 " + ranges[i][1];
+				nums.color = here ? ink : pale;
+				nums.alignment = TextAlignmentOptions.Bottom;
+				nums.enableWordWrapping = false;
+				Pin(nums.rectTransform, new Vector2(x0, 0f), new Vector2(x1 - x0, lineY * -1f - 10f), new Vector2(0f, 1f));
+				TextMeshProUGUI word = WideText(area, "Word", _wideFont, 20f, here ? FontStyles.Bold : FontStyles.Normal);
+				word.text = i < words.Count ? words[i] : "";
+				word.color = here ? Palette.Accent : ink;
+				word.alignment = TextAlignmentOptions.Top;
+				word.enableWordWrapping = true;
+				Pin(word.rectTransform, new Vector2(x0 + 4f, lineY - 14f), new Vector2(x1 - x0 - 8f, ScaleH + lineY + 10f), new Vector2(0f, 1f));
+			}
+			// the value: a diamond on the line
+			GameObject dg = new GameObject("Value", typeof(RectTransform));
+			dg.transform.SetParent(area, false);
+			Image di = dg.AddComponent<Image>();
+			di.color = Palette.Accent;
+			di.raycastTarget = false;
+			RectTransform drt = di.rectTransform;
+			drt.anchorMin = drt.anchorMax = new Vector2(0f, 1f);
+			drt.pivot = new Vector2(0.5f, 0.5f);
+			drt.sizeDelta = new Vector2(14f, 14f);
+			drt.anchoredPosition = new Vector2((Mathf.Clamp(value, min, max) - min + 0.5f) * cell, lineY);
+			drt.localRotation = Quaternion.Euler(0f, 0f, 45f);
+		}
+
+		private static Image _widePicture;
+		private static RectTransform _wideScale;
+		private const float ScaleH = 92f;
+
+		// The game tooltip's parchment: its biggest image (null before the
+		// tooltip is cloned).
+		private static Image PaperImage()
+		{
+			if (!EnsureTooltip())
+			{
+				return null;
+			}
+			Image paper = null;
+			foreach (Image img in _tip.GetComponentsInChildren<Image>(true))
+			{
+				if (img.sprite != null && (paper == null
+					|| img.rectTransform.rect.width * img.rectTransform.rect.height
+						> paper.rectTransform.rect.width * paper.rectTransform.rect.height))
+				{
+					paper = img;
+				}
+			}
+			return paper;
+		}
+
+		// Lays the parchment on `img` (the tree's own pop-ups); false when
+		// it is not there yet.
+		public static bool Paper(Image img)
+		{
+			Image paper = PaperImage();
+			if (paper == null || img == null)
+			{
+				return false;
+			}
+			img.sprite = paper.sprite;
+			img.type = paper.type;
+			img.color = paper.color;
 			return true;
 		}
 
@@ -3413,17 +3752,7 @@ namespace Doorstop
 			{
 				return false;
 			}
-			// the game tooltip's parchment: its biggest sliced image
-			Image paper = null;
-			foreach (Image img in _tip.GetComponentsInChildren<Image>(true))
-			{
-				if (img.sprite != null && (paper == null
-					|| img.rectTransform.rect.width * img.rectTransform.rect.height
-						> paper.rectTransform.rect.width * paper.rectTransform.rect.height))
-				{
-					paper = img;
-				}
-			}
+			Image paper = PaperImage();
 			TMP_FontAsset font = _tipComp.Description != null ? _tipComp.Description.font : null;
 			TMP_FontAsset titleFont = _tipComp.Title != null ? _tipComp.Title.font : font;
 
@@ -3466,6 +3795,13 @@ namespace Doorstop
 			words.AddComponent<LayoutElement>().flexibleWidth = 1f;
 			_wideTitle = WideText(words.transform, "Title", titleFont, 30f, FontStyles.Bold);
 			_wideText = WideText(words.transform, "Text", font, 22f, FontStyles.Normal);
+			// the destiny's picture, as the game's Destiny window shows it, top right
+			GameObject pg = new GameObject("Picture", typeof(RectTransform));
+			pg.transform.SetParent(top.transform, false);
+			_widePicture = pg.AddComponent<Image>();
+			_widePicture.preserveAspect = true;
+			_widePicture.raycastTarget = false;
+			pg.AddComponent<LayoutElement>();
 
 			// a rule between
 			GameObject rule = new GameObject("Rule", typeof(RectTransform));
@@ -3487,6 +3823,12 @@ namespace Doorstop
 			GameObject from = WideGroup("ComesFrom", bottom.transform, false, 0f);
 			from.AddComponent<LayoutElement>().flexibleWidth = 1f;
 			_wideFromBox = (RectTransform)from.transform;
+			// a stat's or person's scale (ShowWideScale), in place of the lists
+			GameObject scale = new GameObject("Scale", typeof(RectTransform));
+			scale.transform.SetParent(_wide.transform, false);
+			_wideScale = (RectTransform)scale.transform;
+			LayoutElement sle = scale.AddComponent<LayoutElement>();
+			sle.preferredHeight = sle.minHeight = ScaleH;
 			_wide.SetActive(false);
 			return true;
 		}
@@ -3565,11 +3907,13 @@ namespace Doorstop
 
 			// the tokens: (icon or null, word); a word glued to the next has no space
 			List<KeyValuePair<Sprite, string>> tokens = new List<KeyValuePair<Sprite, string>>();
+			List<bool> greens = new List<bool>();   // a need met by the hero shown (drawn green)
 			foreach (string w in line.Head.Split(' '))
 			{
 				if (w.Length > 0)
 				{
 					tokens.Add(new KeyValuePair<Sprite, string>(null, w));
+					greens.Add(false);
 				}
 			}
 			for (int i = 0; i < line.Needs.Count; i++)
@@ -3586,6 +3930,7 @@ namespace Doorstop
 					string word = (i == 0 && j == 0 ? "" : "") + words[j];
 					tokens.Add(new KeyValuePair<Sprite, string>(j == 0 ? line.Icons[i] : null,
 						i == 0 && j == 0 ? "\u0001" + word : word));
+					greens.Add(i < line.NeedMet.Count && line.NeedMet[i]);
 				}
 			}
 
@@ -3593,16 +3938,24 @@ namespace Doorstop
 			float x = x0, y = 0f;
 			StringBuilder run = new StringBuilder();
 			float runX = x;
+			bool runGreen = false;
 			System.Action flush = delegate
 			{
 				if (run.Length > 0)
 				{
-					FlowText(frt, line.Styled(run.ToString().TrimEnd()), runX, y);
+					string text = run.ToString().TrimEnd();
+					FlowText(frt, runGreen && line.Style == 0 ? Met(text) : line.Styled(text), runX, y);
 					run.Length = 0;
 				}
 			};
-			foreach (KeyValuePair<Sprite, string> t in tokens)
+			for (int ti = 0; ti < tokens.Count; ti++)
 			{
+				KeyValuePair<Sprite, string> t = tokens[ti];
+				if (greens[ti] != runGreen)
+				{
+					flush();
+					runGreen = greens[ti];
+				}
 				bool open = t.Value.StartsWith("\u0001", StringComparison.Ordinal);
 				string word = open ? t.Value.Substring(1) : t.Value;
 				float pre = open ? Measure("(") : 0f;

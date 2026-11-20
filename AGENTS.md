@@ -399,9 +399,37 @@ community event sheet (`data/events.json`).
   TextMesh Pro rows in layout groups overlapped). TMP leaves trailing
   spaces out of `GetPreferredValues`: words are measured without them,
   plus `SpaceWidth`. A part whose `RealCondition` is empty (Sophia
-  Saved's Willpower) gets its icon by operand name (`NamedIcon`); the tall game tooltip beside the list covered the
+  Saved's Willpower) gets its icon by operand name (`NamedIcon`). A
+  condition's own `ObjectiveCondition.Icon` (what the game's Destiny
+  window draws: icon, `Operand1`, `Operator`, `Operand2`) comes first.
+  Colours against the hero shown: a requirement met is green
+  (`PartMet` tests the `RealCondition` - the real values, e.g. Will >= 5
+  where Willpower >= 0 is shown; key parameters cannot be told and stay
+  ink), unmet ink, out of reach red and struck; in Comes from, the answer
+  played on the path (`DestinyPlayed`, set with `DestinyDone`) is green,
+  else each need met is green. The destiny's picture
+  (`Objective.Picture`, the game window's) sits top right; the tall game tooltip beside the list covered the
   next columns. `ChoiceWindow.ShowStats` fills the context.
   `dev-pick.txt` takes `mode destiny` and `destiny N`.
+- **Stat and people pop-ups are wide too.** `ShowWideScale`: the same box
+  over the tree - icon or portrait, name, value and range word (or the
+  status), the description - and the scale as a line (`DrawScale`): marks
+  at its ends and between ranges, each range's numbers above and word
+  below, the range the value is in drawn thick in `Palette.Accent` with
+  a diamond at the value. The tree's answer and save-type pop-ups use the
+  same parchment (`StatPanel.Paper`, once the stat tooltip is cloned).
+- **Opening the window is cheap.** The tree from its tab no longer
+  builds the save table (`Open(false)`); save rows are cached per file
+  (`_entryCache`: path, size, write time, kind, language); reopening the
+  tree on the same game state (`HistoryKey`: run, scenes shown, answer
+  held, snapshot folder, language) keeps what is drawn, re-predicting
+  only when it was closed with picks. 3 s after a scene loads,
+  `ChoiceWindow.Prewarm` loads the shipped tables and reads the played
+  scenes' snapshots and the run's saves, one a frame, stopping when the
+  window opens or a replay runs. Chapter 4, 71 saves: the tree's first
+  open 1.46 s -> 0.46 s (most left is building and drawing the columns),
+  a reopen ~0.1 s. `dev-pick.txt` `late` waits for the warm-up, `reopen`
+  times a second opening.
 - **The book tabs' wood stops at the page.** `MakeBookTab` copies the
   wood under the settings tab out of the book images, minus a share of
   its foot per tab (`crop`; the patch is that much shorter, its top in
