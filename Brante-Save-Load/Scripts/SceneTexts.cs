@@ -89,6 +89,13 @@ namespace Doorstop
 			return s;
 		}
 
+		// Every scene with a title or answers in scene-texts.tsv.
+		public static List<string> All()
+		{
+			Load();
+			return _scenes == null ? new List<string>() : new List<string>(_scenes.Keys);
+		}
+
 		public static string Title(string scene)
 		{
 			Load();

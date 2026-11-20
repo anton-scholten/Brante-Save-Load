@@ -24,6 +24,8 @@ Brante-Save-Load/            the folder that gets installed into the game dir
   scene-effects.tsv          every answer's stat/relation/status changes, and each scene's opening ones
   scene-params.tsv           key chapter parameter changes by scenes/answers (from the game)
   scene-objectives.tsv       the story objectives scenes/answers unlock (from the game)
+  scene-list.tsv             every scene and answer, readable: text, gate, requirements,
+                             effects, destinies (written by the mod: dev-pick `scenelist`)
   Scripts/*.cs               the source
     Entrypoint.cs            Doorstop entry: Harmony patches, host creation
     ModLog.cs                file logger (usable before Unity is up)
@@ -39,6 +41,7 @@ Brante-Save-Load/            the folder that gets installed into the game dir
     SceneEffects.cs          scene-effects.tsv: what each answer changes (tree pop-up)
     SceneParams.cs           scene-params.tsv: key chapter parameter simulation
     SceneObjectives.cs       scene-objectives.tsv: objectives scenes/answers unlock
+    SceneList.cs             writes scene-list.tsv from the tables above
     StatPanel.cs             tree's stat columns: clones of the game's stat row
     PathId.cs                path IDs: the game state as a short text line (copy/paste)
     Loc.cs                   the UI's own translations (13 languages)
@@ -102,6 +105,16 @@ python3 tools/localization.py     # scene-texts.tsv (+ data/localization.csv)
 python3 tools/scene_effects.py    # scene-effects.tsv (needs UnityPy)
 python3 tools/scene_params.py     # scene-params.tsv (needs UnityPy)
 python3 tools/scene_objectives.py # scene-objectives.tsv (needs UnityPy)
+```
+
+then `scene-list.tsv` from them, inside the game (it needs the game's assets
+for the names of stats, people and destinies): `dev-autoload.txt` plus
+`dev-pick.txt` holding `scenelist`. One row per scene (kind choice / event /
+page, its text pages, "Opens when" = `StatPanel.GateOf`, the opening's
+changes and destinies, key parameters) and one per answer (name, text,
+requirements as the pop-ups write them, changes, destinies, key parameters).
+
+```sh
 ```
 
 `tools/bolt_*.py`, `tools/scene_effects.py`, `tools/scene_params.py`,
@@ -341,7 +354,12 @@ community event sheet (`data/events.json`).
   still possible (grey), out of reach (red, struck: its chapter is over, or
   every scene/answer that earns it in scene-objectives.tsv is in
   `DestinyDone` - the scenes passed by the scene shown - or on another post's
-  track, `SceneFlow.SceneFits`), or the game's own condition list for it
+  track, `SceneFlow.SceneFits`, or after the path's early end: when the
+  path shown ends in a true death or a finale before chapter 5,
+  `ChoiceWindow.ShowStats` sets `DestinyStop` to its last scene and
+  `AfterStop` rules out a scene off the path in a later chapter or, in that
+  chapter, at the end's turn or later - Broken Chains after A Lesson Writ
+  in Blood; untimed, later in flow order), or the game's own condition list for it
   (`Objective.Condition`'s `RealCondition`, what the Destiny window shows:
   every part required except those marked `OrCondition`, of which one is
   enough - Blood Tide is the ritual and the Nobleman's Sacrament or
@@ -427,7 +445,18 @@ community event sheet (`data/events.json`).
   scene that earns a destiny by opening has nothing else to show: A
   Glorious Bloodline is "Reputation = 10 and not Branded by Dishonor",
   Otton's Sentence "The Hour Has Come: Charge Otton with crimes or ...:
-  Summon Otton to trial"; before, such lines were the title alone. Each need
+  Summon Otton to trial"; before, such lines were the title alone.
+  Each version of a scene (the same title: The Battle for Anizotte's
+  `060.010.170/180/190_TheFinalN`) adds its own gate to its answers,
+  less what all versions share; `SceneFlow.Gate` takes, from a
+  top-level "or" of compounds, the tests every branch makes (the
+  Revolt's level). One answer in several versions is one line
+  (`SameName`, `NeedAlternatives`): the versions' needs as "A and B,
+  or C" after what they share; a version that asks nothing more leaves
+  only the shared needs. The joining words are italic (`<i>` per word
+  token); a wrapped line starts under the first need after "(" when
+  that is in the line's first half, else under the text after the
+  bullet or dash; a glued ")" or "," never wraps alone. Each need
   has its icon, so the lines are laid out by hand (`FlowLine`: words and
   icons placed and wrapped to the column, explicit line heights - wrapped
   TextMesh Pro rows in layout groups overlapped). TMP leaves trailing
@@ -896,7 +925,7 @@ on use) and must be paired with `dev-autoload.txt`:
 | `dev-uitest.txt` | drive the save table: open, confirm, delete, load |
 | `dev-table.txt` | open the save table, cycle the type filter through every category, log row counts, show/hide a type pop-up, page with "Show more" (a 10-row first page when the run has fewer rows) and check the Original row has no delete cell; with `dev-table-load.txt` also click the Original row and confirm its load; with `dev-table-open.txt` leave the table open afterwards (screenshots) |
 | `dev-restart.txt` | with `dev-autoload.txt` (and `dev-load.txt`): make the game's chapter restart call (`LoadChapterState`, as its Restart button does) and log the checkpoint and run state |
-| `dev-pick.txt` | with `dev-autoload.txt`: open the tree, apply `scene=ButtonDescriptionN` per line (`reset` = Reset path), log every column after each step (drawn colours, Load scene target, where the pick note is) and leave it open; `walk N`: pick the first open answer in each of the next N scenes, logging after each whether Load scene runs and why not; `hover scene=answer`: scroll to that answer and hold its hover (pop-up and stat marks); `load`: press Load scene and confirm (replays the path); `stopafter N`: press the progress box's Stop N s later; `confirm`: then open the save table and click its first row, leaving the load dialog open; `destinyall`: log every chapter's destiny pop-up text; `pathid`: path ID round trip + tamper tests; `pathidpaste`: paste the clipboard's path ID; `lang <game language name>` (first, before the tree opens): switch the game's text and font language for the run |
+| `dev-pick.txt` | with `dev-autoload.txt`: open the tree, apply `scene=ButtonDescriptionN` per line (`reset` = Reset path), log every column after each step (drawn colours, Load scene target, where the pick note is) and leave it open; `walk N`: pick the first open answer in each of the next N scenes, logging after each whether Load scene runs and why not; `hover scene=answer`: scroll to that answer and hold its hover (pop-up and stat marks); `load`: press Load scene and confirm (replays the path); `stopafter N`: press the progress box's Stop N s later; `confirm`: then open the save table and click its first row, leaving the load dialog open; `destinyall`: log every chapter's destiny pop-up text; `pathid`: path ID round trip + tamper tests; `pathidpaste`: paste the clipboard's path ID; `scenelist`: write `scene-list.tsv` beside the DLL; `lang <game language name>` (first, before the tree opens): switch the game's text and font language for the run |
 | `dev-book.txt` | the book tabs (tree view, then save table), the save table, then the tree view: wheel, pop-ups, stat pop-up, a conflicting pick, chapter rule, a pick + its load plan, undo |
 | `dev-loadpath.txt` | with `dev-book.txt`: Load scene end to end; `back N` replays from another answer N scenes back, `chapter` from the chapter's start save, `start` from chapter 1 with an early change, `ahead` into the next chapter, `death` through a death, `offpath` a stop off the path, `first` the story's first scenes from a stand-in start (another run's chapter 1 save), `new` the same from a start built from the game's defaults, `file <name>` load that mod save as the table does (`file <name> norun`: with no run active) |
 | `dev-history.txt` | log the save's scene path (`ShowedScenesList`) |

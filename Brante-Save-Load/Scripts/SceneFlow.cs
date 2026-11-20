@@ -169,6 +169,13 @@ namespace Doorstop
 			return alts;
 		}
 
+		// Every flow row, in file order (chapter, then flow order).
+		public static List<Row> Rows()
+		{
+			Load();
+			return _rows == null ? new List<Row>() : new List<Row>(_rows);
+		}
+
 		public static Row Find(string scene)
 		{
 			Load();
@@ -633,7 +640,28 @@ namespace Doorstop
 							{
 								hadOr = true;
 								parts.AddRange(ors);
+								continue;
 							}
+							// an "or" of compounds: what every branch asks
+							// (The Battle for Anizotte's versions: the
+							// Revolt's level, whatever the family's state)
+							List<SceneEffects.Effect> shared = null;
+							foreach (Node o in l.Parts)
+							{
+								List<Node> branch = new List<Node>();
+								Flatten(o, branch);
+								List<SceneEffects.Effect> simple = new List<SceneEffects.Effect>();
+								foreach (Node bn in branch)
+								{
+									SceneEffects.Effect be = Simple(bn);
+									if (be != null)
+									{
+										simple.Add(be);
+									}
+								}
+								shared = shared == null ? simple : shared.FindAll(x => simple.Exists(y => SameEffect(x, y)));
+							}
+							parts.AddRange(shared ?? new List<SceneEffects.Effect>());
 						}
 					}
 					catch (Exception)

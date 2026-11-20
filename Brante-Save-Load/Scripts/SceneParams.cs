@@ -111,6 +111,26 @@ namespace Doorstop
 			return all;
 		}
 
+		// The key parameters `button` of `scene` sets ("Name=Value"; 0 the
+		// scene's opening, -1 any answer).
+		public static List<string> Changes(string scene, int button)
+		{
+			Load();
+			List<string> all = new List<string>();
+			List<Change> list;
+			if (scene != null && _byScene.TryGetValue(scene, out list))
+			{
+				foreach (Change c in list)
+				{
+					if (c.Button == button)
+					{
+						all.Add(c.Name + "=" + c.Value);
+					}
+				}
+			}
+			return all;
+		}
+
 		// Whether the scene sets GoToFinals=Yes as it opens: the game leaves
 		// the chapter flow for its finale ("Glory to the Empire!", the
 		// chapter-5 endings).

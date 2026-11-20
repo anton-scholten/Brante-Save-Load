@@ -3059,6 +3059,43 @@ namespace Doorstop
 					}
 				}
 			}
+			// the whole path, and where it stops when the story ends early
+			HashSet<string> path = new HashSet<string>();
+			string lastScene = null;
+			bool early = false;
+			System.Action<string> walk = delegate(string sc)
+			{
+				if (string.IsNullOrEmpty(sc))
+				{
+					return;
+				}
+				if (IsStoryEnd(sc))
+				{
+					// a true death, or a finale before chapter 5 (Glory to
+					// the Empire!); chapter 5's own end leaves nothing after
+					early |= sc == TrueDeathScene || SceneFlow.ChapterOf(lastScene ?? "") < 5;
+					return;
+				}
+				path.Add(sc);
+				lastScene = sc;
+			};
+			if (_tree != null)
+			{
+				foreach (TreeCol c in _tree)
+				{
+					foreach (string sc in (c.Upcoming ? c.Between : c.PlayedBetween) ?? new List<string>())
+					{
+						walk(sc);
+					}
+					walk(c.Scene);
+				}
+				foreach (string sc in _tailBetween ?? new List<string>())
+				{
+					walk(sc);
+				}
+			}
+			StatPanel.DestinyPath = path;
+			StatPanel.DestinyStop = early ? lastScene : null;
 			StatPanel.DestinyDone = done;
 			StatPanel.DestinyPlayed = played;
 			StatPanel.DestinyEnd = end;
@@ -6949,6 +6986,12 @@ namespace Doorstop
 						{
 							ModLog.Info("DEV PICK: destiny " + StatPanel.DevDestiny());
 						}
+						continue;
+					}
+					else if (l == "scenelist")
+					{
+						// every scene and answer -> scene-list.tsv beside the DLL
+						SceneList.Write();
 						continue;
 					}
 					else if (l == "pathid")

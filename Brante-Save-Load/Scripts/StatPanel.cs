@@ -663,6 +663,38 @@ namespace Doorstop
 		public static HashSet<string> DestinyDone = new HashSet<string>();
 		public static Dictionary<string, int> DestinyPlayed = new Dictionary<string, int>();   // passed scene -> answer played
 		public static string DestinyPost;
+		// The last scene of a path that ends early (a true death, or a
+		// finale before chapter 5's end), null otherwise; and every scene
+		// on the path. A scene off the path from that point on cannot come.
+		public static string DestinyStop;
+		public static HashSet<string> DestinyPath = new HashSet<string>();
+
+		// Whether `scene` comes at or after the early end of the path (and
+		// is not on it): a later chapter, or the same chapter in the end's
+		// time slot or later (untimed: later in flow order). Broken Chains
+		// (054.080.010_Final1, turn 8) after A Lesson Writ in Blood's true
+		// death (054.080.100_Final5, turn 8).
+		private static bool AfterStop(string scene)
+		{
+			if (string.IsNullOrEmpty(DestinyStop) || DestinyPath.Contains(scene))
+			{
+				return false;
+			}
+			SceneFlow.Row a = SceneFlow.Find(scene), end = SceneFlow.Find(DestinyStop);
+			if (a == null || end == null)
+			{
+				return false;
+			}
+			if (a.Chapter != end.Chapter)
+			{
+				return a.Chapter > end.Chapter;
+			}
+			if (a.Timed && end.Timed)
+			{
+				return a.Turn >= end.Turn;
+			}
+			return a.Order > end.Order;
+		}
 
 		private enum Fate { Earned, Ahead, Open, Lost }
 
@@ -1021,6 +1053,10 @@ namespace Doorstop
 				if (keys != null && !SceneFlow.SceneFits(e.Key, keys))
 				{
 					continue;   // another post's track
+				}
+				if (AfterStop(e.Key))
+				{
+					continue;   // the path's story is over before it
 				}
 				return Fate.Open;
 			}
@@ -1462,7 +1498,7 @@ namespace Doorstop
 					bool passed = DestinyDone.Contains(e.Key) || PastChapter(e.Key);
 					done |= passed;
 					whole |= e.Value <= 0 || WholeScene(e.Key, list);
-					open |= !passed && OnTrack(e.Key);
+					open |= !passed && OnTrack(e.Key) && !AfterStop(e.Key);
 				}
 				// earned: the scenes behind are grey; not earned, a scene
 				// passed (or on another post's track) is struck, so the ways
@@ -1489,34 +1525,47 @@ namespace Doorstop
 				{
 					// one answer: "Scene: answer (needs)", the scene's own
 					// gate among the needs; several: the scene (its gate),
-					// then each answer as an option under a dash
+					// then each answer as an option under a dash. An answer
+					// carries what sets its version of the scene apart (The
+					// Battle for Anizotte's three are by the Revolt's
+					// level); one answer in several versions is one line,
+					// the versions' needs joined by "or".
 					List<FromLine> answers = new List<FromLine>();
-					Dictionary<FromLine, List<SceneEffects.Effect>> needs = new Dictionary<FromLine, List<SceneEffects.Effect>>();
+					Dictionary<FromLine, List<List<SceneEffects.Effect>>> alts = new Dictionary<FromLine, List<List<SceneEffects.Effect>>>();
+					Dictionary<string, List<SceneEffects.Effect>> versionGate = new Dictionary<string, List<SceneEffects.Effect>>();
 					foreach (KeyValuePair<string, int> e in list)
 					{
 						string choice = "ButtonDescription" + e.Value;
 						int took;
-						FromLine a = new FromLine { Head = SceneEffects.NobleParticle(SceneTexts.Name(e.Key, choice)).Trim(),
-							Played = DestinyDone.Contains(e.Key) && DestinyPlayed.TryGetValue(e.Key, out took) && took == e.Value };
-						List<SceneEffects.Effect> own = SceneEffects.For(e.Key, choice);
-						NeedParts(own, a);
-						needs[a] = own;
-						FromLine same = answers.Find(x => x.Text() == a.Text() || SameAnswer(x, a));
+						List<SceneEffects.Effect> vg;
+						if (!versionGate.TryGetValue(e.Key, out vg))
+						{
+							vg = versionGate[e.Key] = Minus(SceneGate(new List<KeyValuePair<string, int>> { e }), gate);
+						}
+						List<SceneEffects.Effect> own = new List<SceneEffects.Effect>(vg);
+						own.AddRange(SceneEffects.For(e.Key, choice));
+						string name = SceneEffects.NobleParticle(SceneTexts.Name(e.Key, choice)).Trim();
+						bool played = DestinyDone.Contains(e.Key) && DestinyPlayed.TryGetValue(e.Key, out took) && took == e.Value;
+						FromLine same = answers.Find(x => SameName(x.Head, name));
 						if (same != null)
 						{
-							same.Played |= a.Played;   // one line for both
+							same.Played |= played;   // one line for both
+							if (!alts[same].Exists(l => SameNeeds(l, own)))
+							{
+								alts[same].Add(own);
+							}
 						}
-						else if (a.Text().Length > 0)
+						else if (name.Length > 0)
 						{
+							FromLine a = new FromLine { Head = name, Played = played };
+							alts[a] = new List<List<SceneEffects.Effect>> { own };
 							answers.Add(a);
 						}
 					}
 					if (answers.Count == 1)
 					{
 						FromLine one = new FromLine { Head = "\u2022 " + title + ": " + answers[0].Head, Played = answers[0].Played };
-						List<SceneEffects.Effect> all = new List<SceneEffects.Effect>(gate);
-						all.AddRange(needs[answers[0]]);
-						NeedParts(all, one);
+						NeedAlternatives(gate, alts[answers[0]], one);
 						mine.Add(one);
 					}
 					else
@@ -1531,6 +1580,7 @@ namespace Doorstop
 						mine.Add(head);
 						foreach (FromLine a in answers)
 						{
+							NeedAlternatives(new List<SceneEffects.Effect>(), alts[a], a);
 							a.Option = true;
 							mine.Add(a);
 						}
@@ -1557,24 +1607,32 @@ namespace Doorstop
 			return lines;
 		}
 
-		// Two answers of a scene's versions that are the same but for a typo
-		// in the game's texts ("Rout the insurgents" / "Route the
-		// insurgents", The Battle for Anizotte's two versions): names at most
-		// two letters apart, the same needs. The only such pair in the game.
-		private static bool SameAnswer(FromLine a, FromLine b)
+		// One answer in two of a scene's versions: the same name, or names
+		// at most two letters apart ("Rout the insurgents" / "Route the
+		// insurgents", The Battle for Anizotte's versions: a typo in the
+		// game's texts, the only such pair).
+		private static bool SameName(string a, string b)
 		{
-			if (a.Needs.Count != b.Needs.Count || a.Head.Length < 8 || b.Head.Length < 8)
+			if (string.Equals(a, b, StringComparison.OrdinalIgnoreCase))
 			{
-				return false;
+				return true;
 			}
-			for (int i = 0; i < a.Needs.Count; i++)
-			{
-				if (a.Needs[i] != b.Needs[i])
-				{
-					return false;
-				}
-			}
-			return Distance(a.Head.ToLowerInvariant(), b.Head.ToLowerInvariant()) <= 2;
+			return a.Length >= 8 && b.Length >= 8 && Distance(a.ToLowerInvariant(), b.ToLowerInvariant()) <= 2;
+		}
+
+		private static bool SameNeed(SceneEffects.Effect x, SceneEffects.Effect y)
+		{
+			return x.Kind == y.Kind && x.Name == y.Name && x.Op == y.Op && x.Value == y.Value && x.Or == y.Or;
+		}
+
+		private static bool SameNeeds(List<SceneEffects.Effect> a, List<SceneEffects.Effect> b)
+		{
+			return a.TrueForAll(x => b.Exists(y => SameNeed(x, y))) && b.TrueForAll(x => a.Exists(y => SameNeed(x, y)));
+		}
+
+		private static List<SceneEffects.Effect> Minus(List<SceneEffects.Effect> a, List<SceneEffects.Effect> b)
+		{
+			return a.FindAll(x => !b.Exists(y => SameNeed(x, y)));
 		}
 
 		private static int Distance(string a, string b)
@@ -1885,6 +1943,16 @@ namespace Doorstop
 			return true;
 		}
 
+		// One requirement drawn: its words, icon, whether the hero shown
+		// meets it, and whether it is one of the "or" group.
+		private sealed class Part
+		{
+			public string Text;
+			public Sprite Icon;
+			public bool Met;
+			public bool Or;
+		}
+
 		// Requirements into `into`: the "and" ones joined by "and", then the
 		// "or" group ("and one of: A or B"), each with its icon. Two "and"
 		// bounds on one stat or relation are one range ("Power > -5" and
@@ -1893,9 +1961,102 @@ namespace Doorstop
 		// answer that sets a key parameter the flow switches on).
 		private static void NeedParts(List<SceneEffects.Effect> effects, FromLine into)
 		{
+			List<Part> parts = Parts(effects);
+			Append(into, parts, Seps(parts));
+		}
+
+		// Needs that differ by the scene's version: `common` and then the
+		// versions' own, "A and B, or C" (what all versions share is
+		// common). A version that asks nothing more leaves only the common.
+		private static void NeedAlternatives(List<SceneEffects.Effect> common, List<List<SceneEffects.Effect>> alts, FromLine into)
+		{
+			List<SceneEffects.Effect> shared = new List<SceneEffects.Effect>(common);
+			List<SceneEffects.Effect> inAll = null;
+			foreach (List<SceneEffects.Effect> l in alts)
+			{
+				inAll = inAll == null ? new List<SceneEffects.Effect>(l) : inAll.FindAll(x => l.Exists(y => SameNeed(x, y)));
+			}
+			shared.AddRange(inAll ?? new List<SceneEffects.Effect>());
+			List<List<Part>> rests = new List<List<Part>>();
+			foreach (List<SceneEffects.Effect> l in alts)
+			{
+				List<Part> r = Parts(Minus(l, shared));
+				if (r.Count == 0)
+				{
+					rests = null;   // a version that asks no more: the common is all
+					break;
+				}
+				rests.Add(r);
+			}
+			if (rests == null || rests.Count < 2)
+			{
+				if (rests != null && rests.Count == 1)
+				{
+					shared.AddRange(Minus(alts[0], shared));
+				}
+				NeedParts(shared, into);
+				return;
+			}
+			List<Part> head = Parts(shared);
+			List<string> seps = Seps(head);
+			List<Part> all = new List<Part>(head);
+			string and = " " + Loc.T(Loc.K.AndWord) + " ";
+			string or = ", " + Loc.T(Loc.K.OrWord) + " ";
+			for (int g = 0; g < rests.Count; g++)
+			{
+				if (all.Count > 0)
+				{
+					seps[seps.Count - 1] = g == 0 ? and + OneOfWord() + ": " : or;
+				}
+				all.AddRange(rests[g]);
+				seps.AddRange(Seps(rests[g]));
+			}
+			Append(into, all, seps);
+		}
+
+		private static string OneOfWord()
+		{
+			string oneOf = Loc.T(Loc.K.OneOf);
+			return oneOf.Length > 0 ? char.ToLowerInvariant(oneOf[0]) + oneOf.Substring(1) : oneOf;
+		}
+
+		private static void Append(FromLine into, List<Part> parts, List<string> seps)
+		{
+			for (int i = 0; i < parts.Count; i++)
+			{
+				if (into.Needs.Count > 0 && i == 0)
+				{
+					into.Seps[into.Seps.Count - 1] = " " + Loc.T(Loc.K.AndWord) + " ";
+				}
+				into.Icons.Add(parts[i].Icon);
+				into.Needs.Add(parts[i].Text);
+				into.Seps.Add(seps[i]);
+				into.NeedMet.Add(parts[i].Met);
+			}
+		}
+
+		// The words between parts: "and", "and one of:" before an "or" group
+		// of two or more, "or" inside it; "" after the last.
+		private static List<string> Seps(List<Part> parts)
+		{
+			int ors = parts.FindAll(x => x.Or).Count;
+			string and = " " + Loc.T(Loc.K.AndWord) + " ";
+			List<string> seps = new List<string>();
+			for (int i = 0; i < parts.Count; i++)
+			{
+				seps.Add(i + 1 >= parts.Count ? ""
+					: !parts[i + 1].Or ? and
+					: !parts[i].Or ? (ors > 1 ? and + OneOfWord() + ": " : and)
+					: " " + Loc.T(Loc.K.OrWord) + " ");
+			}
+			return seps;
+		}
+
+		private static List<Part> Parts(List<SceneEffects.Effect> effects)
+		{
+			List<Part> parts = new List<Part>();
 			HashSet<string> merged = new HashSet<string>();
 			HashSet<string> seen = new HashSet<string>();
-			List<bool> isOr = new List<bool>();
 			foreach (bool orGroup in new[] { false, true })
 			{
 				foreach (SceneEffects.Effect e in effects)
@@ -1950,23 +2111,10 @@ namespace Doorstop
 							met = _lastShown != null && bounds.TrueForAll(x => _lastShown.Meets(x) == true);
 						}
 					}
-					into.Icons.Add(icon);
-					into.Needs.Add(text);
-					into.Seps.Add("");
-					into.NeedMet.Add(met);
-					isOr.Add(orGroup);
+					parts.Add(new Part { Text = text, Icon = icon, Met = met, Or = orGroup });
 				}
 			}
-			int ors = isOr.FindAll(x => x).Count;
-			string and = " " + Loc.T(Loc.K.AndWord) + " ";
-			string oneOf = Loc.T(Loc.K.OneOf);
-			oneOf = oneOf.Length > 0 ? char.ToLowerInvariant(oneOf[0]) + oneOf.Substring(1) : oneOf;
-			for (int i = 0; i + 1 < isOr.Count; i++)
-			{
-				into.Seps[i] = !isOr[i + 1] ? and
-					: !isOr[i] ? (ors > 1 ? and + oneOf + ": " : and)
-					: " " + Loc.T(Loc.K.OrWord) + " ";
-			}
+			return parts;
 		}
 
 		// The scene's own flow gate (SceneFlow.Gate), what every version of
@@ -2029,6 +2177,26 @@ namespace Doorstop
 					&& x.Op == y.Op && x.Value == y.Value && x.Or == y.Or));
 			}
 			return common ?? new List<SceneEffects.Effect>();
+		}
+
+		// A list of requirements as plain text, joined as in the pop-ups
+		// ("A and B and one of: C or D"); scene-list.tsv uses it.
+		public static string NeedsText(List<SceneEffects.Effect> effects)
+		{
+			FromLine l = new FromLine();
+			NeedParts(effects, l);
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < l.Needs.Count; i++)
+			{
+				sb.Append(l.Needs[i]).Append(i < l.Needs.Count - 1 ? l.Seps[i] : "");
+			}
+			return sb.ToString();
+		}
+
+		// A scene's own flow gate as requirements (SceneGate).
+		public static List<SceneEffects.Effect> GateOf(string scene)
+		{
+			return SceneGate(new List<KeyValuePair<string, int>> { new KeyValuePair<string, int>(scene, 0) });
 		}
 
 		private static readonly string[] PathObjectives = { "Noble", "Cleric", "Bourgeois" };
@@ -4481,7 +4649,10 @@ namespace Doorstop
 				{
 					if (w.Length > 0)
 					{
-						tokens.Add(new KeyValuePair<Sprite, string>(null, w));
+						// italic; the comma before an alternative's "or" is
+						// glued to the need before it, upright
+						string wd = w == "," ? "\u0002," : "<i>" + w + "</i>";
+						tokens.Add(new KeyValuePair<Sprite, string>(null, wd));
 						greens.Add(false);
 					}
 				}
@@ -4495,6 +4666,10 @@ namespace Doorstop
 
 			float x0 = 0f;
 			float x = x0, y = 0f;
+			// where a wrapped line starts: under the text after the bullet
+			// or dash, or under the first need after "(" when that is in
+			// the line's first half
+			float textX = 0f, needX = -1f;
 			StringBuilder run = new StringBuilder();
 			float runX = x;
 			bool runGreen = false;
@@ -4529,10 +4704,10 @@ namespace Doorstop
 				float iw = t.Key != null ? FlowIcon + 3f : 0f;
 				// TMP leaves trailing spaces out of a measure: the space apart
 				float ww = Measure(word) + SpaceWidth();
-				if (x > x0 && x + pre + iw + ww > width)
+				if (!glue && x > x0 && x + pre + iw + ww > width)
 				{
 					flush();
-					x = x0;
+					x = needX >= 0f && needX < width * 0.5f ? needX : textX;
 					y -= FlowLineH;
 				}
 				if (run.Length == 0)
@@ -4551,6 +4726,7 @@ namespace Doorstop
 					x += pre;
 					runX = x;
 					runGreen = g;
+					needX = x;
 				}
 				if (t.Key != null)
 				{
@@ -4561,6 +4737,10 @@ namespace Doorstop
 				}
 				run.Append(word).Append(' ');
 				x += ww;
+				if (ti == 0 && (word == "\u2022" || word == "\u2013"))
+				{
+					textX = x;
+				}
 			}
 			flush();
 			le.minHeight = le.preferredHeight = -y + FlowLineH;
