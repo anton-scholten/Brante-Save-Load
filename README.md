@@ -92,17 +92,17 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 ### Tree view
 
-![The tree view on its Stats tab: each scene is a column with its choices under it, the player's path in red with the choices made in yellow. A picked choice has a red dashed outline and can be loaded with the "Load scene" button at the top. Hovering a choice shows what it changes and requires, and the stats it changes are marked green or red below. Personality is laid out by chapter, with arrows showing which two stats make each chapter-3 skill.](Screenshot_3a.jpg)
-![The Family tab under the tree: the Brante family laid out as a family tree (Gregor; Robert and Lydia; Stephan, Nathan and Gloria), each with portrait, relation and status. Hovering a choice marks the relations it changes.](Screenshot_3b.jpg)
-![The Relations tab under the tree: everyone else the hero has met, in three columns by estate (Nobles, Clergy, Common Folk), with relation and status.](Screenshot_3c.jpg)
-![The Destiny tab under the tree: the chapter's story outcomes by category (family, occupation, the family's and the chapter's outcomes), coloured by whether they happened, happen on this path, are still possible or are out of reach. Hovering a choice marks the outcomes it brings in green and the ones it rules out in red.](Screenshot_3d.jpg)
+![The tree view on its Stats tab: each scene is a column with its choices under it, the player's path in red with the choices made in yellow. Hovering a choice shows what it changes and requires; below, the stats it changes are marked green or red and the stats it requires are outlined in amber. Personality is laid out by chapter, with arrows showing which two stats make each chapter-3 skill.](Screenshot_3a.jpg)
+![The Family tab under the tree: the Brante family laid out as a family tree, each with portrait, relation and status. A picked choice has a red dashed outline and can be loaded with the "Load scene" button. Hovering a choice marks the relations it changes and outlines the people it requires.](Screenshot_3b.jpg)
+![The Relations tab under the tree: the people whose relation with the hero can change, in three columns by estate (Nobles, Clergy, Common Folk), with relation and status; the hovered choice's changes and requirements are marked.](Screenshot_3c.jpg)
+![The Destiny tab under the tree: the chapter's outcomes by category, coloured by whether they happened, happen on this path, are still possible or are out of reach, outcomes of which only one can happen bracketed together. Hovering one opens a wide pop-up over the tree with its picture, what it requires (met in green, out of reach struck in red) and where it comes from; the destinies it needs are outlined in amber.](Screenshot_3d.jpg)
 
 - Columns are scenes, boxes are choices. Your path is red, your choices yellow. Scenes ahead are predicted.
-- **Hover** a choice or scene name to see its text and what it changes.
+- **Hover** a choice or scene name to see its text and what it changes. The stats, people and destinies a choice requires are outlined in amber.
 - **Click** choices to make a new path (click again to undo, the arrow resets). **Load scene** plays it for you.
 - Events (scenes without a choice) have their own column; click one to load it.
-- **Stats / Family / Relations** tabs show where you stand after your last pick. Pale rows are people you would meet. Green and red show what your picks changed.
-- **Destiny** lists the chapter's outcomes: happened, on this path, still possible, or out of reach. Hover one for what it requires and where it comes from; options that can no longer happen are crossed out. Destinies the hovered choice or destiny needs are outlined in amber.
+- **Stats / Family / Relations** tabs show where you stand after your last pick. Pale rows are people you would meet. Green and red show what your picks changed. Hover a row for its description and its scale.
+- **Destiny** lists the chapter's outcomes: happened, on this path, still possible, or out of reach; those of which only one can happen are bracketed. Hover one for what it requires and where it comes from: met in green, no longer possible crossed out in red.
 - Greyed choices aren't open to you; red ones clash with an earlier pick.
 - Faded stats unlock in a later chapter; the arrows show which two stats make each chapter-3 skill.
 - A true death, or an ending that finishes the game, ends the path: no choices follow it.
@@ -126,19 +126,15 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 - **20 Nov 2026:**
   - The tree and save table open much faster.
-  - Stat, family and relation pop-ups are wide boxes over the tree, their scale drawn as a line with its ranges named.
-  - Destiny pop-ups show the game's own picture and icons; what is met or was played is green.
+  - Hovering a choice outlines in amber the stats, people and destinies it requires.
+  - Stat, family and relation pop-ups are wide boxes over the tree, their scale a row of diamonds with each range named.
+  - Destiny pop-ups show the game's picture and icons, each requirement on its own line; what is met or was played is green.
   - All pop-ups use the game's parchment.
-  - Hovering a choice outlines the stats and people it requires.
 - **19 Nov 2026:**
-  - Hovering a choice or a destiny outlines the destinies it needs in amber.
-  - Destinies are listed in the order they can happen; their pop-up is a wide box over the tree.
-  - Destinies of which only one can happen are bracketed together.
-  - Destiny pop-ups list each requirement on its own line with its stat's icon, and "one of" options under a bracket; a choice that earns the destiny is only under "Comes from", with a scene's several choices bracketed.
-  - Relations lists only people whose relation can still change on your path.
-  - Hovering a person shows who they are, as the game's Relations page does.
+  - Destinies are listed in the order they can happen; those of which only one can happen are bracketed together.
+  - Destiny pop-ups: a choice that earns the destiny is listed once, under "Comes from", a scene's several choices bracketed.
+  - Relations lists only people whose relation can still change on your path; hovering a person shows who they are.
   - The save/load and tree view tabs sit behind the page like the chapter tab.
-  - Heir of the Family no longer lists the hidden Heir stat.
 - **17 Nov 2026:**
   - Path IDs: copy your game as text, paste one to jump straight into it.
   - Destiny pop-ups show what an outcome requires and where it comes from; options that can no longer happen are crossed out one by one, and outcomes as soon as they can't happen.
