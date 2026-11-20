@@ -1592,3 +1592,42 @@ scenes) was compared with the tables the mod extracts from the game.
   Valor >= 10 while the exam's answer needs one of them;
   `ХозяинАнизотти` (enum `РазгонКворума`) needs `RemiElVerman is Deal`, which
   `053.100.050_Aftermath` (the explosion: Remi status Dead) rules out.
+
+## Destiny conditions, the finale, people (20 Nov 2026)
+
+- **A destiny's condition list is not checked when it is earned.**
+  `KeyChapterParametersController.EarnObjective` finds the objective in
+  `AllGameObjectives` and unlocks it; the scene components that call it
+  (`ConsequenceNextButton`, the scene consequence generators) test nothing but
+  whether it is already earned. The condition list is read in one place,
+  `ObjectiveInitializer.GetObjectivePossibility`, which colours the Destiny
+  window's entry black or grey. It compares each `ByParameters` part with its
+  `Operations`/`SecondValue` only (`ItsDiapason`, `MaxValue` unused); a range
+  shown as "State = -3...-4" is two parts, `<= -3` and `>= -4`. The lists can
+  be off: both faith shields (`OldFaithDefendObjective`,
+  `NewFaithDefendObjective`) list Will >= 0, which only the New Faith's
+  answer of `030.030.020_ReligiousDisput` needs (the Old Faith's needs
+  Theology >= 10). The earning answer's requirements are the real gate.
+- **"A Lesson Writ in Blood" is no destiny.** `ObjectiveEnum.УрокКрови` has a
+  translated title and description but no asset in `AllGameObjectives`:
+  the judge's ending `054.080.100_Final5` of that name earns only
+  `ИстиннаяСмерть`, and the game's Destiny window does not list it.
+- **What the finale plays** (`GameFinals`, the macro the game reruns after
+  each finale page, from `data/bolt-edges.json`): first the true-death
+  pages; then a switch on `FuckOffGods` - `Yes` (either answer of The
+  Judgment of the Twins) goes straight to `LiveTimeline` and the credits;
+  otherwise, unless `DeathBeforeInsurrection=Yes` (two chapter-5 answers,
+  `CutscenePlayerDie`), "The Outcome of the Revolt"
+  (`TheOutcomeOfTheUprising_Title`): the first of
+  `070.090.010`..`070.090.090_TheOutcomeOfTheUprisingN` whose condition
+  holds, else `Final_Provinces`, then the family's fates
+  (`070.240.0x0_FateOfTheFamilyN`) and the hero's (`070.070.0x0_YourFateN`).
+- **Starting relations are not all 0.** `Felippe` is -1 in every save from
+  chapter 1 on, before he is met. A Relations list that kept "relation != 0"
+  showed him to the judge, whose scenes never change him (only the rebel's
+  `053.*` and the bourgeois' `030.070.030_RecruitForReal` do).
+- **The later cast has Cyrillic enum names.** `CharacterList` runs from
+  `RobertBronte` to `Старик`; Aylis is `Arianna` (asset and enum; the
+  translation key `Arianna` reads "Aylis"), the Archduke is
+  `TarkviniyMilanid` (asset `TMilanid`). Aylis's relation never changes;
+  her status does (the chapter-3 tracks) and `052.040.010_Case5` tests it.

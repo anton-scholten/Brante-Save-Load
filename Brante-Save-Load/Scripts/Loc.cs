@@ -25,7 +25,7 @@ namespace Doorstop
 			HelpAutosave, HelpCheckpoint, HelpManual, HelpOriginal,
 			EventHappens,
 			StatsTab,
-			StoryEnds, TheEnd, FinaleEnds, UnlocksIn, DestEarned, DestAhead, DestOpen, DestLost, DestEarnedBy, ChapterWord,
+			StoryEnds, TheEnd, FinaleEnds, OutcomeNote, UnlocksIn, DestEarned, DestAhead, DestOpen, DestLost, DestEarnedBy, ChapterWord,
 			
 		}
 
@@ -340,16 +340,27 @@ namespace Doorstop
 			_ko[K.TheEnd] = "끝";
 			_zh[K.TheEnd] = "终";
 			_en[K.FinaleEnds] = "The story ends here: the game moves on to its finale and epilogue, and no choices follow.";
+			_en[K.OutcomeNote] = "The game then tells what became of the Revolt, and the epilogue follows. No choices are left.";
 			_ru[K.FinaleEnds] = "Здесь история заканчивается: игра переходит к финалу и эпилогу, выборов больше нет.";
+			_ru[K.OutcomeNote] = "Затем игра рассказывает, чем закончилось восстание, и следует эпилог. Выборов больше нет.";
 			_de[K.FinaleEnds] = "Hier endet die Geschichte: das Spiel geht zu Finale und Epilog über, es folgen keine Entscheidungen mehr.";
+			_de[K.OutcomeNote] = "Danach erzählt das Spiel, wie der Aufstand ausging, und der Epilog folgt. Es gibt keine Entscheidungen mehr.";
 			_fr[K.FinaleEnds] = "L'histoire s'arrête ici : le jeu passe au dénouement et à l'épilogue, sans autre choix.";
+			_fr[K.OutcomeNote] = "Le jeu raconte ensuite l'issue de la révolte, puis vient l'épilogue. Il ne reste aucun choix.";
 			_es[K.FinaleEnds] = "La historia termina aquí: el juego pasa al final y al epílogo, sin más decisiones.";
+			_es[K.OutcomeNote] = "Después el juego cuenta cómo terminó la revuelta y sigue el epílogo. No quedan decisiones.";
 			_it[K.FinaleEnds] = "La storia finisce qui: il gioco passa al finale e all'epilogo, senza altre scelte.";
+			_it[K.OutcomeNote] = "Poi il gioco racconta come è finita la rivolta e segue l'epilogo. Non restano scelte.";
 			_pl[K.FinaleEnds] = "Tu historia się kończy: gra przechodzi do finału i epilogu, wyborów już nie ma.";
+			_pl[K.OutcomeNote] = "Potem gra opowiada, jak skończyła się rewolta, i następuje epilog. Nie ma już wyborów.";
 			_tr[K.FinaleEnds] = "Hikâye burada biter: oyun finale ve sonsöze geçer, başka seçim yoktur.";
+			_tr[K.OutcomeNote] = "Ardından oyun isyanın nasıl sonuçlandığını anlatır ve sonsöz gelir. Başka seçim kalmaz.";
 			_ja[K.FinaleEnds] = "物語はここで終わる。ゲームは結末とエピローグへ進み、選択肢はもうない。";
+			_ja[K.OutcomeNote] = "その後、反乱の結末が語られ、エピローグが続く。選択肢はもうない。";
 			_ko[K.FinaleEnds] = "이야기는 여기서 끝납니다. 게임은 결말과 에필로그로 넘어가며 더 이상 선택지가 없습니다.";
+			_ko[K.OutcomeNote] = "그 후 게임은 반란이 어떻게 끝났는지 보여 주고 에필로그가 이어집니다. 더 이상 선택지가 없습니다.";
 			_zh[K.FinaleEnds] = "故事到此结束：游戏进入结局与尾声，不再有选择。";
+			_zh[K.OutcomeNote] = "随后游戏讲述起义的结局，接着是尾声。不再有选择。";
 			_en[K.StatsTab] = "Stats";
 			_ru[K.StatsTab] = "Характеристики";
 			_de[K.StatsTab] = "Werte";
@@ -519,6 +530,7 @@ namespace Doorstop
 			_pt[K.UnlocksIn] = "Desbloqueia no Capítulo {0}";
 			_pt[K.TheEnd] = "Fim";
 			_pt[K.FinaleEnds] = "A história termina aqui: o jogo segue para o final e o epílogo, e não há mais escolhas.";
+			_pt[K.OutcomeNote] = "Depois o jogo conta como terminou a revolta, e segue-se o epílogo. Não restam escolhas.";
 			_pt[K.StatsTab] = "Atributos";
 			AddPickNext(_pt, "Escolha uma resposta aqui para continuar");
 			AddOnThisScene(_pt, "Você está nesta cena agora: dê esta resposta no jogo ou escolha respostas em cenas posteriores para carregar mais adiante.");
@@ -555,6 +567,7 @@ namespace Doorstop
 			_tw[K.UnlocksIn] = "第{0}章解鎖";
 			_tw[K.TheEnd] = "終";
 			_tw[K.FinaleEnds] = "故事到此結束：遊戲進入結局與尾聲，不再有選擇。";
+			_tw[K.OutcomeNote] = "隨後遊戲講述起義的結局，接著是尾聲。不再有選擇。";
 			_tw[K.StatsTab] = "屬性";
 			AddPickNext(_tw, "在此選擇一個回答以繼續");
 			AddOnThisScene(_tw, "你正處於這個場景：請在遊戲中給出這個回答，或在之後的場景中選擇回答以載入更遠處。");

@@ -45,12 +45,11 @@ the call keeps throwing even after boot. The working pattern:
 Log with `ModLog` to `Brante-Save-Load/Brante-Save-Load.log`; that is the mod's
 only diagnostic channel. Game exceptions land in the game's `output_log.txt`.
 
-```csharp
-[HarmonyPatch(typeof(_Scripts.Managers.GameManager), "Awake")]
-static class BootPatch {
-    static void Postfix() { ModHost.Ensure(); }
-}
-```
+Patches are applied by hand, from a table of type/method/patch names in
+`Entrypoint` (`"_Scripts.Managers.GameManager, Assembly-CSharp"`, `"Awake"`,
+`"BootHookPostfix"`), resolved with `Type.GetType` in the `AssemblyLoad` handler
+for `Assembly-CSharp` - the entry point runs before that assembly is loaded, so
+nothing there may name a game type directly.
 
 Useful game types (`Assembly-CSharp.dll`, namespace `_Scripts.*`):
 
@@ -65,8 +64,12 @@ Useful game types (`Assembly-CSharp.dll`, namespace `_Scripts.*`):
 - `_Scripts.AMVCC.Models.Static.KeyChapterParametersController` — switches
   (`Post`, `TriggerBlock`, `PeaceTree`, `GoToFinals`, ...) and
   `AllGameObjectives`.
-- `_Scripts.AMVCC.Views.Windows.Destiny.Objective` / `ObjectiveEnum` — story
-  objectives.
+- `_Scripts.AMVCC.Views.Windows.Destiny.Objective` /
+  `_Scripts.AMVCC.Views.Windows.ObjectiveEnum` — story objectives (destinies).
+- `_Scripts.AMVCC.Models.Static.Character` / `CharacterList` /
+  `CharacterModel` — people: the asset (portraits, estate, family), the enum
+  (Cyrillic names for the later cast: `Айлис` is Aylis), the saved relation
+  and status.
 - `_Scripts.AMVCC.Views.Windows.Death.*` — death page.
 
 Decompile with:
@@ -160,13 +163,23 @@ python3 tools/scene_objectives.py  # scene-objectives.tsv (UnityPy)
   interludes. `KeyChapterParametersChanger` off the answer buttons is button
   `-1` (text-page Next / every answer's continue) and applies with any answer.
 - Objectives are earned **after** the answer, not at scene open
-  (`scene-objectives.tsv`). A character is met when the scene opens
+  (`scene-objectives.tsv`). `KeyChapterParametersController.EarnObjective`
+  tests nothing: an objective's `Condition` list only greys its entry in the
+  Destiny window (`ObjectiveInitializer.GetObjectivePossibility`), and it can be
+  wrong (both faith shields list Will >= 0, which only one answer needs). The
+  earning answer's requirements are the real gate. A character is met when the scene opens
   (`UnlockCharacter`, button-0 `U` rows), not by the answer.
 - The answer button number comes from the `ButtonDescriptionN` **object name**:
   nine buttons in six scenes serialise `ButtonIndex == 0`.
 - The fourth death (`Death = 4`) and any `GoToFinals=Yes` end the story, not
-  the chapter flow; the prediction stops with a True Death/The End box and does
-  not plan on.
+  the chapter flow. The game then runs the `GameFinals` macro: the true-death
+  pages first, then - unless `FuckOffGods=Yes` (The Judgment of the Twins:
+  straight to the credits) or `DeathBeforeInsurrection=Yes` - "The Outcome of
+  the Revolt" pages (`070.090.0x0_TheOutcomeOfTheUprisingN`, then
+  `Final_Provinces`), the family's fates, the credits. The prediction ends in
+  those boxes and does not plan on.
+- A character's starting relation is not always 0 (Felipe starts at -1), so
+  "relation != 0" does not mean a scene changed it. Use the `R`/`S` rows.
 - A plan is still a prediction. `AutoPlay` clicks the picked answer, pages
   consequences/pop-ups, and checks every scene against `plan.Order`;
   skipped/off-path stops and opens the tree with the scene named. Never claim a
@@ -201,6 +214,26 @@ python3 tools/scene_objectives.py  # scene-objectives.tsv (UnityPy)
 - `FourthDeath_3.._6` wire CONTINUE to a button with an empty `DeathObjective`;
   the game throws and stops. `Entrypoint.TrueDeathPrefix` calls
   `SceneButton_Click` instead (game bug workaround).
+
+## UI (Unity UI + TextMesh Pro, 2018.3)
+
+- Measure TMP text with its object **active** and a real height limit:
+  `GetPreferredValues(text, width, 10000)`. Inactive, or with a height of 0,
+  it measured a third to a tenth of the true size.
+- TMP leaves trailing spaces out of `GetPreferredValues`; add a space's width
+  yourself when placing words one by one.
+- A `LayoutElement` outranks the layout group's own sizing and keeps its
+  values between uses: reset `minWidth`/`preferredWidth` to -1 before
+  measuring a reused box. Wrapped rows need two
+  `LayoutRebuilder.ForceRebuildLayoutImmediate` passes to settle.
+- Struck text: put the colour before `<s>` (`<color=..><s>..</s></color>`);
+  TMP draws the line in the colour current at the tag.
+- A line that must look the same everywhere is a whole number of screen
+  pixels: width in units = pixels x (Screen.height / 1080) / lossyScale.
+- A sorting `Canvas` on one row does not lift it out of a masked scroll view;
+  shade around it instead.
+- The game's tooltip (`TooltipComponent`) is sized for a stat's scale; long
+  text goes in a pop-up of your own (clone its parchment sprite and font).
 
 ## Dev harness
 

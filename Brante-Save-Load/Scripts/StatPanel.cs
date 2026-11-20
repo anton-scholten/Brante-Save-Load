@@ -744,8 +744,38 @@ namespace Doorstop
 					grouped.AddRange(list.FindAll(x => x != o && x.Category == o.Category && ExclusiveGroup(x) == g));
 				}
 			}
+			// the family's fortune and fate read best to worst: their places
+			// in the list kept, taken in this order
+			foreach (string[] seq in Ranked)
+			{
+				List<int> at = new List<int>();
+				List<Objective> members = new List<Objective>();
+				foreach (string name in seq)
+				{
+					int i = grouped.FindIndex(x => x.name == name || ObjectiveKey(x) == name);
+					if (i >= 0)
+					{
+						at.Add(i);
+						members.Add(grouped[i]);
+					}
+				}
+				at.Sort();
+				for (int i = 0; i < at.Count; i++)
+				{
+					grouped[at[i]] = members[i];
+				}
+			}
 			return grouped;
 		}
+
+		// Destinies drawn in a fixed order where they stand together:
+		// A Glorious Bloodline, Branded by Dishonor, A Family of Means, The
+		// Family in Ruins; the family Saved, Fled, Perished.
+		private static readonly string[][] Ranked =
+		{
+			new[] { "СлавныйРод", "КлеймоПозора", "БогатыйРод", "РазорениеСемьи" },
+			new[] { "СемьяСпасена", "СемьяСбежала", "СемьяПогибла" },
+		};
 
 		// Destinies of which at most one can happen, drawn bracketed together
 		// (as a scene's answers in the tree). From the game's data:
@@ -1299,7 +1329,6 @@ namespace Doorstop
 				List<string> ors = new List<string>();
 				List<Sprite> condIcons = new List<Sprite>();
 				List<Sprite> orIcons = new List<Sprite>();
-				HashSet<string> required = new HashSet<string>();   // plain text of the required parts
 				if (o.Condition != null)
 				{
 					foreach (ObjectiveCondition c in o.Condition)
@@ -1318,10 +1347,6 @@ namespace Doorstop
 						{
 							// "The Family in Ruins !=": the objective must not be had
 							line = Loc.T(Loc.K.NotWord) + " " + Operand(c.Operand1);
-						}
-						if (!c.OrCondition)
-						{
-							required.Add(Plain(line));
 						}
 						if (line.Length > 0 && f != Fate.Earned && PartRuledOut(c.RealCondition, _lastShown, _lastChapter, 0))
 						{
@@ -1345,6 +1370,20 @@ namespace Doorstop
 					ors.Clear();
 					orIcons.Clear();
 				}
+				// The game earns a destiny with the scene or answer alone
+				// (EarnObjective tests nothing): its condition list only greys
+				// the Destiny window's entry, and it can be off (both shields
+				// list Will >= 0, which only the New Faith's answer needs). So
+				// Comes from carries the earning answers' own needs, and the
+				// list is shown only for a destiny no scene earns.
+				List<FromLine> fromLines = EarnedBy(o, _fates.TryGetValue(o, out f) ? f : Fate.Open);
+				if (fromLines.Count > 0)
+				{
+					conds.Clear();
+					ors.Clear();
+					condIcons.Clear();
+					orIcons.Clear();
+				}
 				List<string> wideConds = new List<string>(conds), wideOrs = new List<string>(ors);
 				if (ors.Count > 0)
 				{
@@ -1357,7 +1396,6 @@ namespace Doorstop
 					requires = "<b>" + Loc.T(Loc.K.Requires) + ":</b>\n" + string.Join("\n", conds.ToArray());
 					sb.Append("\n\n<size=85%>").Append(requires).Append("</size>");
 				}
-				List<FromLine> fromLines = EarnedBy(o, _fates.TryGetValue(o, out f) ? f : Fate.Open, required);
 				List<string> from = fromLines.ConvertAll(l => (l.Option ? OptionMark : "") + l.Styled(l.Text()));
 				if (from.Count > 0)
 				{
@@ -1393,7 +1431,7 @@ namespace Doorstop
 		// line twice. Otherwise each earning answer, with what it needs
 		// (Last Respects: the Will destiny, or Nobility >= 6 or Gregor >= 2).
 		// Grey: the scene is behind the scene shown.
-		private static List<FromLine> EarnedBy(Objective o, Fate fate, HashSet<string> required)
+		private static List<FromLine> EarnedBy(Objective o, Fate fate)
 		{
 			List<string> titles = new List<string>();
 			Dictionary<string, List<KeyValuePair<string, int>>> byTitle = new Dictionary<string, List<KeyValuePair<string, int>>>();
@@ -1456,7 +1494,7 @@ namespace Doorstop
 						int took;
 						FromLine a = new FromLine { Head = SceneEffects.NobleParticle(SceneTexts.Name(e.Key, choice)),
 							Played = DestinyDone.Contains(e.Key) && DestinyPlayed.TryGetValue(e.Key, out took) && took == e.Value };
-						NeedParts(SceneEffects.For(e.Key, choice), required, a);
+						NeedParts(SceneEffects.For(e.Key, choice), a);
 						FromLine same = answers.Find(x => x.Text() == a.Text() || SameAnswer(x, a));
 						if (same != null)
 						{
@@ -1578,14 +1616,6 @@ namespace Doorstop
 				return Style == 1 ? "<color=#" + ColorUtility.ToHtmlStringRGB(Palette.Grey) + ">" + text + "</color>"
 					: Style == 2 ? Struck(text) : Style == 3 ? Met(text) : text;
 			}
-		}
-
-		// A requirement's text without tags, the game's signs, lower case:
-		// to compare an answer's need with the destiny's own requirements.
-		private static string Plain(string text)
-		{
-			string t = System.Text.RegularExpressions.Regex.Replace(text ?? "", "<[^>]+>", "");
-			return t.Replace(">=", "\u2265").Replace("<=", "\u2264").Trim().ToLowerInvariant();
 		}
 
 		// Marks a "Comes from" line that is one of several answers of the
@@ -1789,9 +1819,35 @@ namespace Doorstop
 		// Whether `scene` is on the post's track along the path (unknown post: yes).
 		private static bool OnTrack(string scene)
 		{
-			return string.IsNullOrEmpty(DestinyPost)
-				|| SceneFlow.SceneFits(scene, new Dictionary<string, string> { { "Post", DestinyPost } });
+			if (string.IsNullOrEmpty(DestinyPost))
+			{
+				return true;
+			}
+			if (!SceneFlow.SceneFits(scene, new Dictionary<string, string> { { "Post", DestinyPost } }))
+			{
+				return false;
+			}
+			// chapter 3's tracks are gated on the path destiny, not on Post:
+			// the noble's leads to the judge, the cleric's to the inquisitor,
+			// the bourgeois' to the rebel
+			SceneFlow.Row row = SceneFlow.Find(scene);
+			string path = DestinyPost == "Judge" ? "Noble" : DestinyPost == "Inquisitor" ? "Cleric" : "Bourgeois";
+			if (row != null && !string.IsNullOrEmpty(row.Condition))
+			{
+				foreach (System.Text.RegularExpressions.Match m in PathTest.Matches(row.Condition))
+				{
+					if (m.Groups[1].Value.Length == 0 && m.Groups[2].Value != path)
+					{
+						return false;   // another path's scene
+					}
+				}
+			}
+			return true;
 		}
+
+		// "GetObjectiveStatus(@Objective'Noble')", "!(" before it when negated
+		private static readonly System.Text.RegularExpressions.Regex PathTest = new System.Text.RegularExpressions.Regex(
+			@"(!\()?KeyChapterParametersController\.GetObjectiveStatus\(@Objective'(Noble|Cleric|Bourgeois)'\)");
 
 		// Whether the earning answers of `scene` in `list` are all its answers.
 		private static bool WholeScene(string scene, List<KeyValuePair<string, int>> list)
@@ -1813,11 +1869,13 @@ namespace Doorstop
 		}
 
 		// An answer's requirements into `into`: the "and" ones joined by
-		// commas, then the "or" group joined by "or", each with its icon;
-		// those in `skip` (the destiny's own requirements) left out.
-		private static void NeedParts(List<SceneEffects.Effect> effects, HashSet<string> skip, FromLine into)
+		// commas, then the "or" group joined by "or", each with its icon.
+		// Two "and" bounds on one stat or relation are one range
+		// ("Power > -5" and "Power <= -3": "Power = -4...-3").
+		private static void NeedParts(List<SceneEffects.Effect> effects, FromLine into)
 		{
 			bool prevOr = false;
+			HashSet<string> merged = new HashSet<string>();
 			foreach (bool orGroup in new[] { false, true })
 			{
 				foreach (SceneEffects.Effect e in effects)
@@ -1826,12 +1884,27 @@ namespace Doorstop
 					{
 						continue;
 					}
+					string key = e.Kind + "|" + e.Name;
+					if (!orGroup && merged.Contains(key))
+					{
+						continue;   // drawn as part of its range
+					}
 					Sprite icon;
 					// the game's own signs, as in the condition lines
 					string text = SceneEffects.Label(e, out icon).Replace(">=", "\u2265").Replace("<=", "\u2264");
-					if (!orGroup && skip != null && skip.Contains(Plain(text)))
+					bool met = _lastShown != null && _lastShown.Meets(e) == true;
+					if (!orGroup && (e.Kind == 'Q' || e.Kind == 'W'))
 					{
-						continue;   // Requires says it already
+						List<SceneEffects.Effect> bounds = effects.FindAll(x => x.IsRequirement && !x.Or && x.Kind == e.Kind && x.Name == e.Name);
+						string range = bounds.Count > 1 ? Range(bounds) : null;
+						if (range != null)
+						{
+							merged.Add(key);
+							// the name: the label without its sign and value
+							string[] words = text.Split(' ');
+							text = string.Join(" ", words, 0, Math.Max(1, words.Length - 2)) + " " + range;
+							met = _lastShown != null && bounds.TrueForAll(x => _lastShown.Meets(x) == true);
+						}
 					}
 					if (into.Needs.Count > 0)
 					{
@@ -1841,10 +1914,43 @@ namespace Doorstop
 					into.Icons.Add(icon);
 					into.Needs.Add(text);
 					into.Seps.Add("");
-					into.NeedMet.Add(_lastShown != null && _lastShown.Meets(e) == true);
+					into.NeedMet.Add(met);
 					prevOr = orGroup;
 				}
 			}
+		}
+
+		// Bounds on one value (the game's Operations: > < = >= <=) as one
+		// inclusive range: "= 7", "= -4...-3", ">= 5"; null when they are
+		// not all bounds (a "!=") or say nothing more than one sign.
+		private static string Range(List<SceneEffects.Effect> bounds)
+		{
+			int lo = int.MinValue, hi = int.MaxValue;
+			foreach (SceneEffects.Effect b in bounds)
+			{
+				switch (b.Op)
+				{
+					case 0: lo = Math.Max(lo, b.Value + 1); break;
+					case 1: hi = Math.Min(hi, b.Value - 1); break;
+					case 2: lo = Math.Max(lo, b.Value); hi = Math.Min(hi, b.Value); break;
+					case 3: lo = Math.Max(lo, b.Value); break;
+					case 4: hi = Math.Min(hi, b.Value); break;
+					default: return null;
+				}
+			}
+			if (lo == int.MinValue && hi == int.MaxValue)
+			{
+				return null;
+			}
+			if (lo == int.MinValue)
+			{
+				return "\u2264 " + hi;
+			}
+			if (hi == int.MaxValue)
+			{
+				return "\u2265 " + lo;
+			}
+			return lo == hi ? "= " + lo : "= " + lo + "..." + hi;
 		}
 
 		// dev-pick's "destinyall": every chapter's entries with their pop-up
@@ -2099,26 +2205,29 @@ namespace Doorstop
 			return list;
 		}
 
-		// Whether the Relations tab lists `c` (the family always): a relation
-		// that is not 0 for either hero, or a scene not yet passed on the
-		// hero's track that changes it (scene-effects.tsv `R` rows). The game
-		// meets Egmont on every track, but only the rebel's and the judge's
-		// scenes change how he sees the hero.
+		// Whether the Relations tab lists `c` (the family always): someone
+		// whose relation with the hero a scene changes, or whose status a
+		// scene changes, on the scenes played or still ahead on the hero's
+		// track; or whose status or relation a scene ahead on the track
+		// tests (Aylis: the cleric's chapter 3 sets her fate, the
+		// inquisitor's 052.040.010_Case5 asks for it). The game meets Felipe
+		// on the judge's track too, but only the rebel's scenes (and the
+		// bourgeois' chapter 3) change him: his -1 is where every game
+		// starts him, so a relation other than 0 says nothing.
 		private static bool RelationCounts(Character c, SceneEffects.Hero shown, SceneEffects.Hero now)
 		{
 			if (c == null || c.IsFamily)
 			{
 				return true;
 			}
-			foreach (SceneEffects.Hero h in new[] { shown, now })
+			foreach (string scene in SceneEffects.PersonScenes(c.name, "RS"))
 			{
-				CharacterModel m = ModelOf(h, c.Name);
-				if (m != null && m.Relation != 0)
+				if (DestinyDone.Contains(scene) || OnTrack(scene))
 				{
 					return true;
 				}
 			}
-			foreach (string scene in SceneEffects.RelationScenes(c.name))
+			foreach (string scene in SceneEffects.PersonScenes(c.name, "T"))
 			{
 				if (!DestinyDone.Contains(scene) && OnTrack(scene))
 				{

@@ -130,6 +130,10 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
   - Stat, family and relation pop-ups are wide boxes over the tree, their scale a row of diamonds with each range named.
   - Destiny pop-ups show the game's picture and icons, each requirement on its own line; what is met or was played is green.
   - All pop-ups use the game's parchment.
+  - Destiny pop-ups list each choice that earns the destiny with exactly what that choice needs (the game itself checks nothing else); two limits on one stat read as one range.
+  - Endings show what the game plays next: True Death, then the Outcome of the Revolt (none after The Judgment of the Twins).
+  - Relations lists the people your path can change, or whose fate a later scene asks about (Aylis, the Archduke); Felipe no longer shows for the judge.
+  - The family's fortune and fate are listed best to worst.
 - **19 Nov 2026:**
   - Destinies are listed in the order they can happen; those of which only one can happen are bracketed together.
   - Destiny pop-ups: a choice that earns the destiny is listed once, under "Comes from", a scene's several choices bracketed.

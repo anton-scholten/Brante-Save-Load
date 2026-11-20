@@ -1373,7 +1373,7 @@ namespace Doorstop
 		// pick (SelectChoice re-selects the furthest pick) or a second click.
 		private static void SelectEvent(string scene)
 		{
-			if (scene == TrueDeathScene || scene == EndScene)
+			if (IsStoryEnd(scene))
 			{
 				return;   // the story's end: nothing to load up to
 			}
@@ -3308,7 +3308,7 @@ namespace Doorstop
 		// is not a pick.
 		private static bool IsEventScene(string scene)
 		{
-			return scene == TrueDeathScene || scene == EndScene
+			return IsStoryEnd(scene)
 				|| SceneEffects.SceneChanges(scene).Count > 0 && SceneTexts.Buttons(scene).Count == 0;
 		}
 
@@ -3321,6 +3321,44 @@ namespace Doorstop
 		// GoToFinals=Yes without a true death: an event box that is no load
 		// target either.
 		private const string EndScene = "GameFinals";
+
+		// After a true death or a chapter-4/5 ending the game's finale
+		// (GameFinals) tells what became of the Revolt
+		// (070.090.0x0_TheOutcomeOfTheUprisingN, then Final_Provinces),
+		// unless Ulrich's Judgment of the Twins set FuckOffGods (straight to
+		// the credits) or the hero died before the Insurrection
+		// (DeathBeforeInsurrection): one box for those pages.
+		private const string OutcomeScene = "070.090.010_TheOutcomeOfTheUprising";
+
+		private static bool IsStoryEnd(string scene)
+		{
+			return scene == TrueDeathScene || scene == EndScene || scene == OutcomeScene;
+		}
+
+		// The boxes a path ends in, in the order the finale plays them: the
+		// true death's pages (the fourth death; The Judgment of the Twins,
+		// either answer: the hero is dead and judged), then the Revolt's
+		// outcome; "The End" only when neither comes.
+		private static void AddStoryEnd(List<string> between, SceneEffects.Hero hero, Dictionary<string, string> keys, int chapter)
+		{
+			string v;
+			bool gods = keys != null && keys.TryGetValue("FuckOffGods", out v) && string.Equals(v, "Yes", StringComparison.OrdinalIgnoreCase);
+			bool early = keys != null && keys.TryGetValue("DeathBeforeInsurrection", out v) && string.Equals(v, "Yes", StringComparison.OrdinalIgnoreCase);
+			bool death = TrueDead(hero) || gods;
+			bool outcome = chapter >= 4 && !gods && !early;
+			if (death)
+			{
+				between.Add(TrueDeathScene);
+			}
+			if (outcome)
+			{
+				between.Add(OutcomeScene);
+			}
+			if (!death && !outcome)
+			{
+				between.Add(EndScene);
+			}
+		}
 
 		private static bool StoryEnded(Dictionary<string, string> keys)
 		{
@@ -3343,6 +3381,10 @@ namespace Doorstop
 			if (scene == EndScene)
 			{
 				return Loc.T(Loc.K.TheEnd);
+			}
+			if (scene == OutcomeScene)
+			{
+				return Loc.Game("TheOutcomeOfTheUprising_Title", "Outcome of the Revolt");
 			}
 			string title = SceneTexts.Title(scene);
 			string key = SceneEffects.TitleKey(scene);
@@ -3496,6 +3538,10 @@ namespace Doorstop
 			if (scene == EndScene)
 			{
 				return "<i>" + Loc.T(Loc.K.FinaleEnds) + "</i>";
+			}
+			if (scene == OutcomeScene)
+			{
+				return "<i>" + Loc.T(Loc.K.OutcomeNote) + "</i>";
 			}
 			string happens = "<i>" + Loc.T(Loc.K.EventHappens) + "</i>";
 			List<string> prefixes = new List<string> { scene };
@@ -4124,14 +4170,9 @@ namespace Doorstop
 			System.Diagnostics.Stopwatch tAns = new System.Diagnostics.Stopwatch();
 			List<string> between = new List<string>();
 			_tailBetween = between;
-			if (TrueDead(hero))
+			if (TrueDead(hero) || StoryEnded(keys))
 			{
-				between.Add(TrueDeathScene);   // the start's own answer was the fourth death
-				finished = true;
-			}
-			else if (StoryEnded(keys))
-			{
-				between.Add(EndScene);         // the start's own answer ended the story
+				AddStoryEnd(between, hero, keys, startChapter);   // the start's own answer ended the story
 				finished = true;
 			}
 			while (!finished && steps < 400 && sw.ElapsedMilliseconds < 1500)
@@ -4202,7 +4243,7 @@ namespace Doorstop
 					// finale, the credits), not the chapter flow, so nothing
 					// the flow would open after it is reachable. The path ends
 					// in a "True Death" box (TrueDeathScene).
-					between.Add(TrueDeathScene);
+					AddStoryEnd(between, hero, keys, chapter);
 					finished = true;
 					ModLog.Info("ChoiceWindow: true death at " + scene + " (" + pick + ") - the path ends there");
 					break;
@@ -4213,7 +4254,7 @@ namespace Doorstop
 					// GameFinals - the true death's pages, "Glory to the
 					// Empire!", "The Judgment of the Twins" (either answer),
 					// the chapter-5 endings - and no choice comes after
-					between.Add(EndScene);
+					AddStoryEnd(between, hero, keys, chapter);
 					finished = true;
 					ModLog.Info("ChoiceWindow: the story ends at " + scene + " (" + pick + ") - GoToFinals");
 					break;

@@ -374,10 +374,19 @@ community event sheet (`data/events.json`).
   child; the row's own image stays the clear hover target). In each
   category the entries go in the order the story can first bring them
   (`FirstAppearance`: the earliest earning scene in flow order; then the
-  game's `Order`; true death last). The pop-up is wide, over the tree
-  (`ShowWideTip`, `TreeArea`): icon, name, state, description on top,
-  Requires and Comes from side by side below, on the game tooltip's
-  parchment and font. Requires is one row per part, never wrapped
+  game's `Order`; true death last), except `StatPanel.Ranked`: A Glorious
+  Bloodline, Branded by Dishonor, A Family of Means, The Family in Ruins;
+  the family Saved, Fled, Perished (best to worst, in their places). The
+  pop-up is wide, over the tree (`ShowWideTip`, `TreeArea`): icon, name,
+  state, description on top, Comes from below, on the game tooltip's
+  parchment and font. The game earns a destiny with the scene or answer
+  alone (`EarnObjective` tests nothing; the condition list only greys the
+  game's Destiny entry, and is sometimes off: both faith shields list
+  Will >= 0, which only the New Faith's answer needs). So each Comes from
+  line carries the earning answer's own needs, and the condition list is
+  shown, as Requires beside it, only for a destiny no scene earns. Two
+  bounds on one stat or relation are one range (`Range`: "Power > -5",
+  "Power <= -3" -> "Power = -4...-3"). Requires is one row per part, never wrapped
   (`FillRequires`): a bullet, the icon of what the part tests
   (`ConditionIcon`, from `RealCondition` - the operand is a translation
   key such as `GregorBronte`, not an asset name; key-parameter parts have
@@ -477,9 +486,18 @@ community event sheet (`data/events.json`).
   not a load target). Before, the simulation went on predicting the chapter.
   Any answer or scene that sets the key parameter `GoToFinals=Yes` ends the
   story the same way ("Glory to the Empire!", either answer of "The Judgment
-  of the Twins", the chapter-5 endings): the path ends in a "The End" box
-  (`EndScene`, `StoryEnded`). The Deaths row reads "True Death" at 4 (the
-  stat's scale stops at "Died thrice").
+  of the Twins", the chapter-5 endings). `AddStoryEnd` ends the path as the
+  game's `GameFinals` macro plays it: "True Death" (Death 4, or The
+  Judgment of the Twins: `FuckOffGods=Yes`, the hero dead and judged), then
+  "Outcome of the Revolt" (`OutcomeScene`, the
+  `070.090.0x0_TheOutcomeOfTheUprisingN` pages) from chapter 4 on unless
+  `FuckOffGods` (straight to the credits) or `DeathBeforeInsurrection=Yes`;
+  "The End" (`EndScene`) only when neither comes. Wrath of the Gods and A
+  Lesson Writ in Blood: event, True Death, Outcome; Glory to the Empire:
+  event, Outcome. The Deaths row reads "True Death" at 4 (the stat's scale
+  stops at "Died thrice"). `ObjectiveEnum.УрокКрови` ("A Lesson Writ in
+  Blood") has a title but no asset in `AllGameObjectives` and no earner:
+  that ending earns only the true death, in the game too.
 - **"Comes from" is one line per scene.** `StatPanel.EarnedByLines` groups
   a destiny's earners by scene title: a scene that earns it by itself or
   with every answer (Father's Sword, The Ant Farm, Forbidden Love) is its
@@ -550,10 +568,15 @@ community event sheet (`data/events.json`).
   relation word or, when the status is not `Good`/`Not`, the status
   (`<Character>.<Status>`). Family = `Character.IsFamily` without the hero,
   Relations = everyone else the hero shown has met (`IsUnlocked`, as
-  the game's windows) whose relation is not 0 or can still change
-  (`StatPanel.RelationCounts`: an `R` row in a scene not yet passed on the
-  hero's track - the game meets Egmont on every track, but only the
-  rebel's and the judge's scenes change him), ordered by `UnlockDate`;
+  the game's windows) whose relation or status a scene changes
+  (`StatPanel.RelationCounts`: an `R`/`S` row in a scene played or still
+  ahead on the hero's track) or whose status a scene ahead on the track
+  tests (`T`). Aylis: the chapter-3 tracks set her fate, the inquisitor's
+  `052.040.010_Case5` asks for it. Not "relation != 0": Felipe starts
+  every game at -1, and the judge meets him but no judge scene changes
+  him. `OnTrack` takes chapter 3's tracks from the path destinies in a
+  scene's flow condition (Noble -> Judge, Cleric -> Inquisitor,
+  Bourgeois -> Rebel), the later chapters from `Post`. Ordered by `UnlockDate`;
   the rows are rebuilt when that set changes. Dead/left/exiled rows are
   faded. A person's pop-up says who they are as the game's Relations
   page does (`<Name>.Description`; `WhoIs` was mostly empty), then an

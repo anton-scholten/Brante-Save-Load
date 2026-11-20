@@ -129,36 +129,30 @@ namespace Doorstop
 			return new List<Effect>();
 		}
 
-		// What a scene changes by itself when it opens, before any answer
-		// (button 0): the ConsequenceSceneController of the answer-less event
-		// and final scenes (052.N5.010_Trigger5, Insurrection_Incident_N, ...)
-		// and the interludes its SceneStateMachine shows in PREGAME
-		// (TeenagerInterlude1 in 02.03.01, ...); a "C Convert" row is the
-		// chapter-3 start's skill conversion.
-		// Every character some scene unlocks (U rows): the most the
-		// Relations tab could ever list (dev-pick "allpeople").
-		// The scenes any of whose answers or openings change the hero's
-		// relation with `character` (an `R` row), by asset name.
-		public static HashSet<string> RelationScenes(string character)
+		// The scenes with a row of one of `kinds` for `character` (by asset
+		// name): 'R' a relation change, 'S' a status change, 'W'/'T' a
+		// relation/status requirement - on any answer or at the opening.
+		public static HashSet<string> PersonScenes(string character, string kinds)
 		{
 			Load();
-			if (_relationScenes == null)
+			Dictionary<string, HashSet<string>> byName;
+			if (!_personScenes.TryGetValue(kinds, out byName))
 			{
-				_relationScenes = new Dictionary<string, HashSet<string>>();
+				_personScenes[kinds] = byName = new Dictionary<string, HashSet<string>>();
 				foreach (KeyValuePair<string, Dictionary<int, List<Effect>>> scene in _effects)
 				{
 					foreach (List<Effect> fx in scene.Value.Values)
 					{
 						foreach (Effect e in fx)
 						{
-							if (e.Kind != 'R')
+							if (kinds.IndexOf(e.Kind) < 0)
 							{
 								continue;
 							}
 							HashSet<string> set;
-							if (!_relationScenes.TryGetValue(e.Name, out set))
+							if (!byName.TryGetValue(e.Name, out set))
 							{
-								_relationScenes[e.Name] = set = new HashSet<string>();
+								byName[e.Name] = set = new HashSet<string>();
 							}
 							set.Add(scene.Key);
 						}
@@ -166,11 +160,14 @@ namespace Doorstop
 				}
 			}
 			HashSet<string> found;
-			return _relationScenes.TryGetValue(character ?? "", out found) ? found : new HashSet<string>();
+			return byName.TryGetValue(character ?? "", out found) ? found : new HashSet<string>();
 		}
 
-		private static Dictionary<string, HashSet<string>> _relationScenes;
+		private static readonly Dictionary<string, Dictionary<string, HashSet<string>>> _personScenes
+			= new Dictionary<string, Dictionary<string, HashSet<string>>>();
 
+		// Every character some scene unlocks (U rows): the most the
+		// Relations tab could ever list (dev-pick "allpeople").
 		public static HashSet<string> AllUnlockable()
 		{
 			Load();
