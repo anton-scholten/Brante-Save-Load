@@ -454,7 +454,10 @@ community event sheet (`data/events.json`).
   (`SameName`, `NeedAlternatives`): the versions' needs as "A and B,
   or C" after what they share; a version that asks nothing more leaves
   only the shared needs. The joining words are italic (`<i>` per word
-  token); a wrapped line starts under the first need after "(" when
+  token, 0.7 of a space extra after each: italics lean past their
+  measure and met the next icon); each run is centred on the font's line
+  (`TextAlignmentOptions.Left`), not its own glyphs (`MidlineLeft` put
+  "and one of:" higher than its neighbours); a wrapped line starts under the first need after "(" when
   that is in the line's first half, else under the text after the
   bullet or dash; a glued ")" or "," never wraps alone. Each need
   has its icon, so the lines are laid out by hand (`FlowLine`: words and

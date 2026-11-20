@@ -4704,6 +4704,12 @@ namespace Doorstop
 				float iw = t.Key != null ? FlowIcon + 3f : 0f;
 				// TMP leaves trailing spaces out of a measure: the space apart
 				float ww = Measure(word) + SpaceWidth();
+				if (word.StartsWith("<i>", StringComparison.Ordinal))
+				{
+					// an italic word leans past its measured width: room
+					// before the next icon
+					ww += SpaceWidth() * 0.7f;
+				}
 				if (!glue && x > x0 && x + pre + iw + ww > width)
 				{
 					flush();
@@ -4751,7 +4757,10 @@ namespace Doorstop
 			TextMeshProUGUI t = WideText(parent, "Text", _wideFont, WideLine, FontStyles.Normal);
 			t.text = text;
 			t.enableWordWrapping = false;
-			t.alignment = TextAlignmentOptions.MidlineLeft;
+			// centred on the font's line, not on the run's own glyphs
+			// (MidlineLeft): a run without tall letters or descenders ("and
+			// one of:") sat higher or lower than its neighbours
+			t.alignment = TextAlignmentOptions.Left;
 			Pin(t.rectTransform, new Vector2(x, y), new Vector2(Measure(text) + 8f, FlowLineH), new Vector2(0f, 1f));
 		}
 
