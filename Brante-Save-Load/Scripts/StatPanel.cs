@@ -3068,10 +3068,23 @@ namespace Doorstop
 					{
 						continue;
 					}
-					GameObject go = new GameObject("Required", typeof(RectTransform));
-					go.transform.SetParent(row, false);
-					go.AddComponent<LayoutElement>().ignoreLayout = true;
+					GameObject go = Outline(row, "Required");
 					Around(go.GetComponent<RectTransform>());
+					box = go.transform;
+				}
+				box.gameObject.SetActive(on);
+			}
+		}
+
+		// An outline in Palette.Required (four edges) under `parent`, its
+		// rect left to the caller.
+		private static GameObject Outline(Transform parent, string name)
+		{
+			GameObject go = new GameObject(name, typeof(RectTransform));
+			go.transform.SetParent(parent, false);
+			go.AddComponent<LayoutElement>().ignoreLayout = true;
+			{
+				{
 					const float w = 2.5f;
 					// bottom, top, left, right edges
 					Vector4[] edges =
@@ -3094,9 +3107,62 @@ namespace Doorstop
 						ert.sizeDelta = flat ? new Vector2(0f, w) : new Vector2(w, 0f);
 						ert.anchoredPosition = Vector2.zero;
 					}
+				}
+			}
+			return go;
+		}
+
+		// While an answer is hovered: the stat and people rows it requires
+		// (its Q, W and T requirements) get the amber outline the Destiny tab
+		// gives a needed destiny; null clears them.
+		public static void MarkNeeds(List<SceneEffects.Effect> effects)
+		{
+			foreach (Row row in _rows)
+			{
+				RectTransform root = RowRoot(row);
+				if (root == null)
+				{
+					continue;
+				}
+				bool on = false;
+				if (effects != null)
+				{
+					foreach (SceneEffects.Effect e in effects)
+					{
+						if (!e.IsRequirement)
+						{
+							continue;
+						}
+						if (e.Kind == 'Q' && row.Param != null)
+						{
+							on |= row.Param.name == e.Name || row.Param.ParameterName.ToString() == e.Name;
+						}
+						else if ((e.Kind == 'W' || e.Kind == 'T') && row.Person != null)
+						{
+							on |= row.Person.name == e.Name || row.Person.Name.ToString() == e.Name;
+						}
+					}
+				}
+				Transform box = root.Find("Needed");
+				if (box == null)
+				{
+					if (!on)
+					{
+						continue;
+					}
+					GameObject go = Outline(root, "Needed");
+					RectTransform rt = go.GetComponent<RectTransform>();
+					OverDrawn(rt, MarkPadX);   // as the change mark: what the row draws
+					Vector2 pad = MarkPadY(root);
+					rt.offsetMin -= new Vector2(0f, pad.x);
+					rt.offsetMax += new Vector2(0f, pad.y);
 					box = go.transform;
 				}
 				box.gameObject.SetActive(on);
+				if (on)
+				{
+					box.SetAsLastSibling();
+				}
 			}
 		}
 
@@ -3113,6 +3179,7 @@ namespace Doorstop
 
 		public static void ClearHighlight()
 		{
+			MarkNeeds(null);
 			HighlightDestiny(null, 0, null);
 			HighlightChanges(null, null);
 			if (_ghostList.Count > 0)
@@ -3562,11 +3629,15 @@ namespace Doorstop
 			// in the rest. Without a minimum the column was squeezed and its
 			// unwrapped lines ran into Comes from.
 			LayoutElement rl = _wideReqBox.GetComponent<LayoutElement>();
+			// both cleared before measuring: a LayoutElement outranks the
+			// column's own size, and the previous pop-up's width stuck -
+			// longer requirements then ran into Comes from
 			rl.minWidth = -1f;
+			rl.preferredWidth = -1f;
 			SetWrap(_wideReqBox, false);
 			LayoutRebuilder.ForceRebuildLayoutImmediate(_wideReqBox);
 			float need = LayoutUtility.GetPreferredWidth(_wideReqBox);
-			float cap = (w - 112f) * 0.5f;
+			float cap = (w - WidePadL - WidePadR) * 0.5f;
 			if (comes.Count > 0 && need > cap)
 			{
 				SetWrap(_wideReqBox, true);
@@ -3574,13 +3645,48 @@ namespace Doorstop
 			}
 			rl.minWidth = rl.preferredWidth = need;
 			// Comes from gets the rest: its lines are laid out by hand to it
-			float fromW = w - 112f - (requires ? need + 64f : 0f);
+			float fromW = w - WidePadL - WidePadR - (requires ? need + 64f : 0f);
 			FillComesFrom(comes, fromW);
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);   // wrapped heights settle on the second pass
 			DrawSpines();
 			PlaceWide(box, rt, lo, hi, w);
+			CheckOverlap(title);
 			return true;
+		}
+
+		// Logs where Requires' text reaches into Comes from (the text's
+		// drawn bounds, not its box).
+		private static void CheckOverlap(string title)
+		{
+			if (!_wideReqBox.gameObject.activeSelf || !_wideFromBox.gameObject.activeSelf)
+			{
+				return;
+			}
+			Vector3[] c = new Vector3[4];
+			_wideFromBox.GetWorldCorners(c);
+			float fromLeft = c[0].x;
+			float worst = float.MinValue;
+			string what = "";
+			foreach (TextMeshProUGUI t in _wideReqBox.GetComponentsInChildren<TextMeshProUGUI>(false))
+			{
+				t.ForceMeshUpdate();
+				if (t.textInfo == null || t.textInfo.characterCount == 0)
+				{
+					continue;
+				}
+				float right = t.transform.TransformPoint(new Vector3(t.textBounds.max.x, 0f, 0f)).x;
+				if (right - fromLeft > worst)
+				{
+					worst = right - fromLeft;
+					what = t.text;
+				}
+			}
+			float scale = Mathf.Max(0.0001f, _wideFromBox.lossyScale.x);
+			if (worst > 0f)
+			{
+				ModLog.Info("StatPanel: OVERLAP in the pop-up of " + title + ": " + (worst / scale).ToString("0") + " units, '" + what + "'");
+			}
 		}
 
 		// Centred over the tree, from its top (down over the stats when it
@@ -3638,8 +3744,10 @@ namespace Doorstop
 			float w = Mathf.Min(hi.x - lo.x, WideMax);
 			rt.sizeDelta = new Vector2(w, rt.sizeDelta.y);
 			_wideScale.gameObject.SetActive(ranges.Count > 0);
-			DrawScale(_wideScale, w - 112f, ranges, words, value);
+			// shown first: text measured while the box is hidden came out
+			// ~1/3 of its size ("Orator" broke in two)
 			_wide.SetActive(true);
+			DrawScale(_wideScale, w - WidePadL - WidePadR, ranges, words, value);
 			_wide.transform.SetAsLastSibling();
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
@@ -3657,7 +3765,10 @@ namespace Doorstop
 			int min = ranges[0][0], max = ranges[ranges.Count - 1][1];
 			float cell = width / Mathf.Max(1, max - min + 1);   // each whole value a cell
 			Color ink = Palette.Ink, pale = Palette.Fade(Palette.Ink, 0.55f);
-			const float lineY = -30f;
+			const float size = 22f;                  // as the description
+			float numsH = size * 1.35f;
+			float lineY = -(numsH + 10f);
+			float wordsH = 0f;
 			// the line, a mark at each end and between two ranges
 			Bar(area, 0f, lineY, width, lineY, 2f, ink);
 			Bar(area, 0f, lineY + 9f, 0f, lineY - 9f, 2f, ink);
@@ -3675,19 +3786,38 @@ namespace Doorstop
 					// the range the value is in: the line drawn thick there
 					Bar(area, x0, lineY, x1, lineY, 6f, Palette.Accent);
 				}
-				TextMeshProUGUI nums = WideText(area, "Range", _wideFont, 16f, FontStyles.Normal);
+				TextMeshProUGUI nums = WideText(area, "Range", _wideFont, size, FontStyles.Normal);
 				nums.text = ranges[i][0] == ranges[i][1] ? ranges[i][0].ToString() : ranges[i][0] + " \u2026 " + ranges[i][1];
 				nums.color = here ? ink : pale;
 				nums.alignment = TextAlignmentOptions.Bottom;
 				nums.enableWordWrapping = false;
-				Pin(nums.rectTransform, new Vector2(x0, 0f), new Vector2(x1 - x0, lineY * -1f - 10f), new Vector2(0f, 1f));
-				TextMeshProUGUI word = WideText(area, "Word", _wideFont, 20f, here ? FontStyles.Bold : FontStyles.Normal);
+				float nw = Mathf.Max(x1 - x0, MeasureAt(nums.text, size, FontStyles.Normal, 0f).x + 8f);
+				Pin(nums.rectTransform, new Vector2(Mathf.Clamp((x0 + x1 - nw) * 0.5f, 0f, width - nw), 0f),
+					new Vector2(nw, numsH), new Vector2(0f, 1f));
+				// the word: wrapped only between words - a box at least as wide
+				// as its longest word, centred on the range (it may reach over
+				// a neighbour's edge rather than break "Orator" in two)
+				TextMeshProUGUI word = WideText(area, "Word", _wideFont, size, here ? FontStyles.Bold : FontStyles.Normal);
 				word.text = i < words.Count ? words[i] : "";
 				word.color = here ? Palette.Accent : ink;
 				word.alignment = TextAlignmentOptions.Top;
 				word.enableWordWrapping = true;
-				Pin(word.rectTransform, new Vector2(x0 + 4f, lineY - 14f), new Vector2(x1 - x0 - 8f, ScaleH + lineY + 10f), new Vector2(0f, 1f));
+				FontStyles style = here ? FontStyles.Bold : FontStyles.Normal;
+				float longest = 0f;
+				foreach (string part in word.text.Split(' '))
+				{
+					longest = Mathf.Max(longest, MeasureAt(part, size, style, 0f).x);
+				}
+				float ww = Mathf.Min(width, Mathf.Max(x1 - x0 - 8f, longest + 12f));
+				float wh = MeasureAt(word.text, size, style, ww - 4f).y;
+				wordsH = Mathf.Max(wordsH, wh);
+				// centred on its range, kept inside the line's ends
+				Pin(word.rectTransform, new Vector2(Mathf.Clamp((x0 + x1 - ww) * 0.5f, 0f, width - ww), lineY - 14f),
+					new Vector2(ww, wh + 6f), new Vector2(0f, 1f));
 			}
+			// as tall as what it draws
+			LayoutElement le = area.GetComponent<LayoutElement>();
+			le.preferredHeight = le.minHeight = -lineY + 14f + wordsH + 4f;
 			// the value: a diamond on the line
 			GameObject dg = new GameObject("Value", typeof(RectTransform));
 			dg.transform.SetParent(area, false);
@@ -3702,6 +3832,7 @@ namespace Doorstop
 			drt.localRotation = Quaternion.Euler(0f, 0f, 45f);
 		}
 
+		private const float WidePadL = 56f, WidePadR = 68f;   // the wide pop-up's side margins
 		private static Image _widePicture;
 		private static RectTransform _wideScale;
 		private const float ScaleH = 92f;
@@ -3774,7 +3905,9 @@ namespace Doorstop
 				back.color = Palette.PaperLight;
 			}
 			VerticalLayoutGroup v = _wide.AddComponent<VerticalLayoutGroup>();
-			v.padding = new RectOffset(56, 56, 30, 34);
+			// the parchment's edges are ragged, more so at the right and the
+			// foot: text kept as far from each
+			v.padding = new RectOffset((int)WidePadL, (int)WidePadR, 30, 48);
 			v.spacing = 14f;
 			v.childControlWidth = v.childControlHeight = true;
 			v.childForceExpandWidth = true;
@@ -3918,7 +4051,7 @@ namespace Doorstop
 			}
 			for (int i = 0; i < line.Needs.Count; i++)
 			{
-				string text = (i == 0 ? "" : "") + line.Needs[i] + (i < line.Needs.Count - 1 ? line.Seps[i].TrimEnd() : ")");
+				string text = line.Needs[i] + (i < line.Needs.Count - 1 ? line.Seps[i].TrimEnd() : "");
 				string[] words = text.Split(' ');
 				for (int j = 0; j < words.Length; j++)
 				{
@@ -3932,6 +4065,12 @@ namespace Doorstop
 						i == 0 && j == 0 ? "\u0001" + word : word));
 					greens.Add(i < line.NeedMet.Count && line.NeedMet[i]);
 				}
+			}
+			if (line.Needs.Count > 0)
+			{
+				// ")" glued to the last need, in the line's own style
+				tokens.Add(new KeyValuePair<Sprite, string>(null, "\u0002)"));
+				greens.Add(false);
 			}
 
 			float x0 = stub ? FlowStub : 0f;
@@ -3957,7 +4096,15 @@ namespace Doorstop
 					runGreen = greens[ti];
 				}
 				bool open = t.Value.StartsWith("\u0001", StringComparison.Ordinal);
-				string word = open ? t.Value.Substring(1) : t.Value;
+				bool glue = t.Value.StartsWith("\u0002", StringComparison.Ordinal);
+				string word = open || glue ? t.Value.Substring(1) : t.Value;
+				if (glue)
+				{
+					// no space before it: back over the one the word before took
+					flush();
+					x -= SpaceWidth();
+					runX = x;
+				}
 				float pre = open ? Measure("(") : 0f;
 				float iw = t.Key != null ? FlowIcon + 3f : 0f;
 				// TMP leaves trailing spaces out of a measure: the space apart
@@ -3974,8 +4121,16 @@ namespace Doorstop
 				}
 				if (open)
 				{
+					// "(" in the line's own style, not the need's green
+					flush();
+					bool g = runGreen;
+					runGreen = false;
+					runX = x;
 					run.Append("(");
+					flush();
 					x += pre;
+					runX = x;
+					runGreen = g;
 				}
 				if (t.Key != null)
 				{
@@ -4021,6 +4176,25 @@ namespace Doorstop
 		}
 
 		private static TextMeshProUGUI _measure;
+
+		// `text`'s size in the pop-up's font at `size` and `style`, wrapped
+		// at `wrap` units (0: one line). A text object made the same frame
+		// measured short ("Orator" then broke in two); this one is settled.
+		private static Vector2 MeasureAt(string text, float size, FontStyles style, float wrap)
+		{
+			Measure("");
+			float keepSize = _measure.fontSize;
+			FontStyles keepStyle = _measure.fontStyle;
+			_measure.fontSize = size;
+			_measure.fontStyle = style;
+			_measure.enableWordWrapping = wrap > 0f;
+			// a height limit of 0 squeezed it to ~1/10: room both ways
+			Vector2 v = _measure.GetPreferredValues(text, wrap > 0f ? wrap : 10000f, 10000f);
+			_measure.fontSize = keepSize;
+			_measure.fontStyle = keepStyle;
+			_measure.enableWordWrapping = false;
+			return v;
+		}
 		private static float _space = -1f;
 
 		private static float SpaceWidth()

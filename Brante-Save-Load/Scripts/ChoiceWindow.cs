@@ -2956,6 +2956,8 @@ namespace Doorstop
 						StatPanel.Ghosts(after);   // characters met by then, not yet listed
 						StatPanel.HighlightChanges(before, after);
 					}
+					// and what it requires, outlined in the panel (stats, people)
+					StatPanel.MarkNeeds(effects);
 					// and the story objectives it brings or rules out (Destiny tab)
 					StatPanel.HighlightDestiny(n.Col.Scene, n.Col.Event ? 0 : SceneEffects.ButtonIndex(c.Name), before);
 				}
