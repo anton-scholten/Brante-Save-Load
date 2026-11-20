@@ -390,8 +390,8 @@ community event sheet (`data/events.json`).
   (`FillRequires`): a bullet, the icon of what the part tests
   (`ConditionIcon`, from `RealCondition` - the operand is a translation
   key such as `GregorBronte`, not an asset name; key-parameter parts have
-  none), the text; "One of:" with its options under a bracket
-  (`DrawSpines`, after layout). Requires is at least as wide as its
+  none), the text; "One of:" with its options each under a dash
+  (`IndentBox`). Requires is at least as wide as its
   longest line (up to half the box, then its lines wrap): unsized, it was
   squeezed and its lines ran into Comes from. Both its `LayoutElement`
   sizes are cleared before measuring: a `LayoutElement` outranks the
@@ -409,9 +409,25 @@ community event sheet (`data/events.json`).
   stays. True Death's "Accept True Death" is set by no scene, and every
   answer that earns it sets Deaths to 4: it reads "Deaths = 4". Comes
   from is one row per scene, "Scene: answer (needs)", a scene's several
-  earning answers bracketed under it (`FromLine.Option`). A need equal to
-  one of the destiny's own required parts (`Plain` text) is left to
-  Requires (Nobleman's Sacrament, Sophia Saved: Willpower). Each need
+  earning answers each under a dash below it (`FromLine.Option`). Needs
+  are joined by the words, not commas: "A and B", the or-group "and one
+  of: C or D" (`NeedParts`, `Loc.K.AndWord`/`OneOf`/`OrWord`), the words
+  in the line's own colour, never a met need's green. Besides the
+  answer's needs a line carries the scene's own flow gate
+  (`SceneGate` <- `SceneFlow.Gate`): the top-level parts of its
+  `scene-flow.tsv` condition that test one thing (a stat or relation
+  against a number, a status, a destiny held or not, a scene shown), one
+  top-level "or" of such parts, and for each key parameter its switches
+  need, the answer that sets it (`SceneParams.Setters(name, value)`),
+  only what every flow row of every version of the scene asks.
+  Negated compounds are the earlier scenes' gates (the flow tests them
+  in turn) and are left out, as are "not shown yet", `Post`, default
+  labels and `TriggerBlock` (the flow's lock while a sequence plays),
+  and the "not" of the other chapter-3 paths when one is required. A
+  scene that earns a destiny by opening has nothing else to show: A
+  Glorious Bloodline is "Reputation = 10 and not Branded by Dishonor",
+  Otton's Sentence "The Hour Has Come: Charge Otton with crimes or ...:
+  Summon Otton to trial"; before, such lines were the title alone. Each need
   has its icon, so the lines are laid out by hand (`FlowLine`: words and
   icons placed and wrapped to the column, explicit line heights - wrapped
   TextMesh Pro rows in layout groups overlapped). TMP leaves trailing

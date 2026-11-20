@@ -1478,23 +1478,29 @@ namespace Doorstop
 						|| (DestinyPlayed.TryGetValue(e.Key, out b) && (b == e.Value || WholeScene(e.Key, list))));
 				}
 				List<FromLine> mine = new List<FromLine>();
+				List<SceneEffects.Effect> gate = SceneGate(list);
 				if (whole)
 				{
-					mine.Add(new FromLine { Head = "\u2022 " + title });
+					FromLine w = new FromLine { Head = "\u2022 " + title };
+					NeedParts(gate, w);
+					mine.Add(w);
 				}
 				else
 				{
-					// one answer: "Scene: answer (needs)"; several: the scene,
-					// then each answer as an option (bracketed). A need the
-					// destiny itself requires is left to Requires.
+					// one answer: "Scene: answer (needs)", the scene's own
+					// gate among the needs; several: the scene (its gate),
+					// then each answer as an option under a dash
 					List<FromLine> answers = new List<FromLine>();
+					Dictionary<FromLine, List<SceneEffects.Effect>> needs = new Dictionary<FromLine, List<SceneEffects.Effect>>();
 					foreach (KeyValuePair<string, int> e in list)
 					{
 						string choice = "ButtonDescription" + e.Value;
 						int took;
-						FromLine a = new FromLine { Head = SceneEffects.NobleParticle(SceneTexts.Name(e.Key, choice)),
+						FromLine a = new FromLine { Head = SceneEffects.NobleParticle(SceneTexts.Name(e.Key, choice)).Trim(),
 							Played = DestinyDone.Contains(e.Key) && DestinyPlayed.TryGetValue(e.Key, out took) && took == e.Value };
-						NeedParts(SceneEffects.For(e.Key, choice), a);
+						List<SceneEffects.Effect> own = SceneEffects.For(e.Key, choice);
+						NeedParts(own, a);
+						needs[a] = own;
 						FromLine same = answers.Find(x => x.Text() == a.Text() || SameAnswer(x, a));
 						if (same != null)
 						{
@@ -1507,12 +1513,22 @@ namespace Doorstop
 					}
 					if (answers.Count == 1)
 					{
-						answers[0].Head = "\u2022 " + title + ": " + answers[0].Head;
-						mine.Add(answers[0]);
+						FromLine one = new FromLine { Head = "\u2022 " + title + ": " + answers[0].Head, Played = answers[0].Played };
+						List<SceneEffects.Effect> all = new List<SceneEffects.Effect>(gate);
+						all.AddRange(needs[answers[0]]);
+						NeedParts(all, one);
+						mine.Add(one);
 					}
 					else
 					{
-						mine.Add(new FromLine { Head = "\u2022 " + title + ":", Played = answers.Exists(x => x.Played) });
+						FromLine head = new FromLine { Head = "\u2022 " + title + ":", Played = answers.Exists(x => x.Played) };
+						NeedParts(gate, head);
+						if (head.Needs.Count > 0)
+						{
+							head.Head = "\u2022 " + title;
+							head.Tail = ":";
+						}
+						mine.Add(head);
 						foreach (FromLine a in answers)
 						{
 							a.Option = true;
@@ -1591,6 +1607,7 @@ namespace Doorstop
 			public bool Option;
 			public bool Played;   // the answer taken on the path played (or its scene's head)
 			public string Head = "";
+			public string Tail = "";   // after the needs' ")": a scene head's ":"
 			public readonly List<bool> NeedMet = new List<bool>();   // each need met by the hero shown
 			public readonly List<Sprite> Icons = new List<Sprite>();
 			public readonly List<string> Needs = new List<string>();
@@ -1608,7 +1625,7 @@ namespace Doorstop
 				{
 					sb.Append(Needs[i]).Append(i < Needs.Count - 1 ? Seps[i] : "");
 				}
-				return sb.Append(")").ToString();
+				return sb.Append(")").Append(Tail).ToString();
 			}
 
 			public string Styled(string text)
@@ -1619,7 +1636,7 @@ namespace Doorstop
 		}
 
 		// Marks a "Comes from" line that is one of several answers of the
-		// scene above it (drawn under a bracket in the wide pop-up).
+		// scene above it (drawn under a dash in the wide pop-up).
 		private const string OptionMark = "\t";
 
 		// Whether a condition part only names the answer that earns the
@@ -1868,19 +1885,23 @@ namespace Doorstop
 			return true;
 		}
 
-		// An answer's requirements into `into`: the "and" ones joined by
-		// commas, then the "or" group joined by "or", each with its icon.
-		// Two "and" bounds on one stat or relation are one range
-		// ("Power > -5" and "Power <= -3": "Power = -4...-3").
+		// Requirements into `into`: the "and" ones joined by "and", then the
+		// "or" group ("and one of: A or B"), each with its icon. Two "and"
+		// bounds on one stat or relation are one range ("Power > -5" and
+		// "Power <= -3": "Power = -4...-3"). Besides the answer's own (Q W T
+		// O), a scene's gate (SceneGate) brings H (a scene shown) and A (an
+		// answer that sets a key parameter the flow switches on).
 		private static void NeedParts(List<SceneEffects.Effect> effects, FromLine into)
 		{
-			bool prevOr = false;
 			HashSet<string> merged = new HashSet<string>();
+			HashSet<string> seen = new HashSet<string>();
+			List<bool> isOr = new List<bool>();
 			foreach (bool orGroup in new[] { false, true })
 			{
 				foreach (SceneEffects.Effect e in effects)
 				{
-					if (!e.IsRequirement || e.Or != orGroup || (e.Kind == 'Q' && LeftOut.Contains(e.Name)))
+					bool gatePart = e.Kind == 'A' || e.Kind == 'H';
+					if (!(e.IsRequirement || gatePart) || e.Or != orGroup || (e.Kind == 'Q' && LeftOut.Contains(e.Name)))
 					{
 						continue;
 					}
@@ -1889,10 +1910,33 @@ namespace Doorstop
 					{
 						continue;   // drawn as part of its range
 					}
-					Sprite icon;
-					// the game's own signs, as in the condition lines
-					string text = SceneEffects.Label(e, out icon).Replace(">=", "\u2265").Replace("<=", "\u2264");
-					bool met = _lastShown != null && _lastShown.Meets(e) == true;
+					if (!seen.Add(key + "|" + e.Op + "|" + e.Value + "|" + e.Or))
+					{
+						continue;   // the gate and the answer ask the same
+					}
+					Sprite icon = null;
+					string text;
+					bool met;
+					if (gatePart)
+					{
+						text = GateLabel(e);
+						met = DestinyDone.Contains(e.Name);
+						int took;
+						if (e.Kind == 'A' && e.Value > 0)
+						{
+							met &= DestinyPlayed.TryGetValue(e.Name, out took) && took == e.Value;
+						}
+						if (string.IsNullOrEmpty(text))
+						{
+							continue;
+						}
+					}
+					else
+					{
+						// the game's own signs, as in the condition lines
+						text = SceneEffects.Label(e, out icon).Replace(">=", "\u2265").Replace("<=", "\u2264");
+						met = _lastShown != null && _lastShown.Meets(e) == true;
+					}
 					if (!orGroup && (e.Kind == 'Q' || e.Kind == 'W'))
 					{
 						List<SceneEffects.Effect> bounds = effects.FindAll(x => x.IsRequirement && !x.Or && x.Kind == e.Kind && x.Name == e.Name);
@@ -1906,18 +1950,104 @@ namespace Doorstop
 							met = _lastShown != null && bounds.TrueForAll(x => _lastShown.Meets(x) == true);
 						}
 					}
-					if (into.Needs.Count > 0)
-					{
-						// between two of the "or" group: "or"; else a comma
-						into.Seps[into.Seps.Count - 1] = orGroup && prevOr ? " " + Loc.T(Loc.K.OrWord) + " " : ", ";
-					}
 					into.Icons.Add(icon);
 					into.Needs.Add(text);
 					into.Seps.Add("");
 					into.NeedMet.Add(met);
-					prevOr = orGroup;
+					isOr.Add(orGroup);
 				}
 			}
+			int ors = isOr.FindAll(x => x).Count;
+			string and = " " + Loc.T(Loc.K.AndWord) + " ";
+			string oneOf = Loc.T(Loc.K.OneOf);
+			oneOf = oneOf.Length > 0 ? char.ToLowerInvariant(oneOf[0]) + oneOf.Substring(1) : oneOf;
+			for (int i = 0; i + 1 < isOr.Count; i++)
+			{
+				into.Seps[i] = !isOr[i + 1] ? and
+					: !isOr[i] ? (ors > 1 ? and + oneOf + ": " : and)
+					: " " + Loc.T(Loc.K.OrWord) + " ";
+			}
+		}
+
+		// The scene's own flow gate (SceneFlow.Gate), what every version of
+		// it in `list` asks: its tests, and for each key parameter value its
+		// switches need, the answer that sets it (several: one of them).
+		private static List<SceneEffects.Effect> SceneGate(List<KeyValuePair<string, int>> list)
+		{
+			List<SceneEffects.Effect> common = null;
+			HashSet<string> scenes = new HashSet<string>();
+			foreach (KeyValuePair<string, int> e in list)
+			{
+				if (!scenes.Add(e.Key))
+				{
+					continue;
+				}
+				List<KeyValuePair<string, string>> labels;
+				List<SceneEffects.Effect> g = SceneFlow.Gate(e.Key, out labels);
+				bool hasOr = g.Exists(x => x.Or);
+				// one chapter-3 path held: the others are out anyway (the
+				// flow tests them in turn, so later tracks say "not" the
+				// earlier ones)
+				if (g.Exists(x => x.Kind == 'O' && x.Op == 0 && Array.IndexOf(PathObjectives, x.Name) >= 0))
+				{
+					g.RemoveAll(x => x.Kind == 'O' && x.Op == 1 && Array.IndexOf(PathObjectives, x.Name) >= 0);
+				}
+				foreach (KeyValuePair<string, string> l in labels)
+				{
+					if (l.Key == "TriggerBlock")
+					{
+						// the flow's own lock while a sequence plays (the
+						// text pages set it), not something the player does
+						continue;
+					}
+					List<KeyValuePair<string, int>> setters = SceneParams.Setters(l.Key, l.Value).FindAll(x => !scenes.Contains(x.Key));
+					// a scene opening or any answer (button 0 / -1): the scene
+					List<SceneEffects.Effect> by = new List<SceneEffects.Effect>();
+					foreach (KeyValuePair<string, int> st in setters)
+					{
+						int b = Math.Max(0, st.Value);
+						if (!by.Exists(x => x.Name == st.Key && x.Value == b))
+						{
+							by.Add(new SceneEffects.Effect { Kind = 'A', Name = st.Key, Value = b });
+						}
+					}
+					if (by.Count == 1)
+					{
+						g.Add(by[0]);
+					}
+					else if (by.Count > 1 && !hasOr)
+					{
+						hasOr = true;
+						foreach (SceneEffects.Effect x in by)
+						{
+							x.Or = true;
+							g.Add(x);
+						}
+					}
+				}
+				common = common == null ? g : common.FindAll(x => g.Exists(y => x.Kind == y.Kind && x.Name == y.Name
+					&& x.Op == y.Op && x.Value == y.Value && x.Or == y.Or));
+			}
+			return common ?? new List<SceneEffects.Effect>();
+		}
+
+		private static readonly string[] PathObjectives = { "Noble", "Cleric", "Bourgeois" };
+
+		// A gate part's words: a scene shown (its title), an answer that sets
+		// a key parameter ("Scene: answer", or the scene for its opening).
+		private static string GateLabel(SceneEffects.Effect e)
+		{
+			string title = SceneTexts.Title(e.Name);
+			if (string.IsNullOrEmpty(title))
+			{
+				return null;
+			}
+			if (e.Kind == 'A' && e.Value > 0)
+			{
+				string name = SceneEffects.NobleParticle(SceneTexts.Name(e.Name, "ButtonDescription" + e.Value));
+				return string.IsNullOrEmpty(name) ? title : title + ": " + name;
+			}
+			return title;
 		}
 
 		// Bounds on one value (the game's Operations: > < = >= <=) as one
@@ -3746,8 +3876,7 @@ namespace Doorstop
 		private static GameObject _wide;
 		private static Image _wideIcon;
 		private static TextMeshProUGUI _wideTitle, _wideText;
-		private static RectTransform _wideFromBox;   // "Comes from": one row per scene, options bracketed
-		private static readonly List<RectTransform> _wideBrackets = new List<RectTransform>();
+		private static RectTransform _wideFromBox;   // "Comes from": one row per scene, options under dashes
 		private static RectTransform _wideReqBox;   // "Requires": one row per part
 		private static TMP_FontAsset _wideFont;
 		private const float WideLine = 20f, WideIcon = 26f;
@@ -3772,7 +3901,6 @@ namespace Doorstop
 			SetPicture(o.Picture);
 			_wideScale.gameObject.SetActive(false);
 			bool requires = conds.Count + ors.Count > 0;
-			_wideBrackets.Clear();
 			FillRequires(conds, condIcons, ors, orIcons);
 			_wideReqBox.gameObject.SetActive(requires);
 			_wideFromBox.gameObject.SetActive(comes.Count > 0);
@@ -3814,7 +3942,6 @@ namespace Doorstop
 			FillComesFrom(comes, fromW);
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);   // wrapped heights settle on the second pass
-			DrawSpines();
 			PlaceWide(box, rt, lo, hi, w);
 			CheckOverlap(title);
 			return true;
@@ -4249,7 +4376,7 @@ namespace Doorstop
 
 		// The Requires column's rows: the heading, a bullet line per required
 		// part (its stat's, person's or destiny's icon first), then "One
-		// of:" and the options under a bracket, as a scene's answers.
+		// of:" and the options each under a dash, as a scene's answers.
 		private static void FillRequires(List<string> conds, List<Sprite> condIcons, List<string> ors, List<Sprite> orIcons)
 		{
 			Clear(_wideReqBox);
@@ -4267,7 +4394,7 @@ namespace Doorstop
 				return;
 			}
 			WideLineRow(_wideReqBox, null, "\u2022 <i>" + Loc.T(Loc.K.OneOf) + ":</i>", false, false);
-			RectTransform box = BracketBox(_wideReqBox);
+			RectTransform box = IndentBox(_wideReqBox);
 			for (int i = 0; i < ors.Count; i++)
 			{
 				WideLineRow(box, orIcons[i], ors[i], false, true);
@@ -4275,7 +4402,7 @@ namespace Doorstop
 		}
 
 		// "Comes from": a row per scene ("• Scene: answer (needs)", or the
-		// scene alone), a scene's several earning answers under a bracket.
+		// scene alone), a scene's several earning answers each under a dash.
 		// Each need has its icon, so the lines are laid out by hand
 		// (FlowLine), wrapped to `width`.
 		private static void FillComesFrom(List<FromLine> lines, float width)
@@ -4293,9 +4420,9 @@ namespace Doorstop
 				{
 					if (box == null)
 					{
-						box = BracketBox(_wideFromBox);
+						box = IndentBox(_wideFromBox);
 					}
-					FlowLine(box, line, width - 14f, true);
+					FlowLine(box, line, width - 18f, true);
 					continue;
 				}
 				box = null;
@@ -4305,10 +4432,9 @@ namespace Doorstop
 
 		private const float FlowLineH = 28f;      // a "Comes from" line's height (an icon fits)
 		private const float FlowIcon = 24f;
-		private const float FlowStub = 18f;       // a bracketed line's room for its stub
 
 		// One "Comes from" line, its words and need icons placed left to
-		// right and wrapped at `width`; `stub`: a bracketed option, its stub
+		// right and wrapped at `width`; `stub`: an option, a dash first
 		// on the first line.
 		private static void FlowLine(Transform parent, FromLine line, float width, bool stub)
 		{
@@ -4322,6 +4448,11 @@ namespace Doorstop
 			// the tokens: (icon or null, word); a word glued to the next has no space
 			List<KeyValuePair<Sprite, string>> tokens = new List<KeyValuePair<Sprite, string>>();
 			List<bool> greens = new List<bool>();   // a need met by the hero shown (drawn green)
+			if (stub)
+			{
+				tokens.Add(new KeyValuePair<Sprite, string>(null, "\u2013"));
+				greens.Add(false);
+			}
 			foreach (string w in line.Head.Split(' '))
 			{
 				if (w.Length > 0)
@@ -4332,8 +4463,7 @@ namespace Doorstop
 			}
 			for (int i = 0; i < line.Needs.Count; i++)
 			{
-				string text = line.Needs[i] + (i < line.Needs.Count - 1 ? line.Seps[i].TrimEnd() : "");
-				string[] words = text.Split(' ');
+				string[] words = line.Needs[i].Split(' ');
 				for (int j = 0; j < words.Length; j++)
 				{
 					if (words[j].Length == 0)
@@ -4341,20 +4471,29 @@ namespace Doorstop
 						continue;
 					}
 					// "(" opens the first need, before its icon
-					string word = (i == 0 && j == 0 ? "" : "") + words[j];
 					tokens.Add(new KeyValuePair<Sprite, string>(j == 0 ? line.Icons[i] : null,
-						i == 0 && j == 0 ? "\u0001" + word : word));
+						i == 0 && j == 0 ? "\u0001" + words[j] : words[j]));
 					greens.Add(i < line.NeedMet.Count && line.NeedMet[i]);
+				}
+				// "and", "or", "and one of:" in the line's own style
+				string sep = i < line.Needs.Count - 1 ? line.Seps[i].Trim() : "";
+				foreach (string w in sep.Split(' '))
+				{
+					if (w.Length > 0)
+					{
+						tokens.Add(new KeyValuePair<Sprite, string>(null, w));
+						greens.Add(false);
+					}
 				}
 			}
 			if (line.Needs.Count > 0)
 			{
 				// ")" glued to the last need, in the line's own style
-				tokens.Add(new KeyValuePair<Sprite, string>(null, "\u0002)"));
+				tokens.Add(new KeyValuePair<Sprite, string>(null, "\u0002)" + line.Tail));
 				greens.Add(false);
 			}
 
-			float x0 = stub ? FlowStub : 0f;
+			float x0 = 0f;
 			float x = x0, y = 0f;
 			StringBuilder run = new StringBuilder();
 			float runX = x;
@@ -4424,15 +4563,6 @@ namespace Doorstop
 				x += ww;
 			}
 			flush();
-			if (stub)
-			{
-				GameObject sg = new GameObject("Stub", typeof(RectTransform));
-				sg.transform.SetParent(frt, false);
-				Image si = sg.AddComponent<Image>();
-				si.color = Palette.Fade(Palette.Muted, 0.55f);
-				si.raycastTarget = false;
-				Pin(si.rectTransform, new Vector2(0f, -FlowLineH * 0.5f + 1.5f), new Vector2(12f, 3f), new Vector2(0f, 1f));
-			}
 			le.minHeight = le.preferredHeight = -y + FlowLineH;
 		}
 
@@ -4510,12 +4640,11 @@ namespace Doorstop
 			}
 		}
 
-		// A box for bracketed options, indented for the spine (DrawSpines).
-		private static RectTransform BracketBox(Transform parent)
+		// A box for options, indented under their head, each under a dash.
+		private static RectTransform IndentBox(Transform parent)
 		{
 			GameObject box = WideGroup("OneOf", parent, false, 2f);
-			((VerticalLayoutGroup)box.GetComponent<HorizontalOrVerticalLayoutGroup>()).padding = new RectOffset(14, 0, 0, 0);
-			_wideBrackets.Add((RectTransform)box.transform);
+			((VerticalLayoutGroup)box.GetComponent<HorizontalOrVerticalLayoutGroup>()).padding = new RectOffset(18, 0, 0, 0);
 			return (RectTransform)box.transform;
 		}
 
@@ -4536,15 +4665,13 @@ namespace Doorstop
 			row.GetComponent<HorizontalOrVerticalLayoutGroup>().childAlignment = TextAnchor.MiddleLeft;
 			if (stub)
 			{
-				// the bracket's stub, from the spine (DrawOneOfSpine) to the line
-				GameObject sg = new GameObject("Stub", typeof(RectTransform));
-				sg.transform.SetParent(row.transform, false);
-				Image si = sg.AddComponent<Image>();
-				si.color = Palette.Fade(Palette.Muted, 0.55f);
-				si.raycastTarget = false;
-				LayoutElement sl = sg.AddComponent<LayoutElement>();
-				sl.preferredWidth = sl.minWidth = 12f;
-				sl.preferredHeight = sl.minHeight = 3f;
+				// an option under "One of": a dash
+				TextMeshProUGUI d = WideText(row.transform, "Dash", _wideFont, WideLine, FontStyles.Normal);
+				d.text = "\u2013";
+				d.enableWordWrapping = false;
+				d.alignment = TextAlignmentOptions.Center;
+				LayoutElement dl = d.gameObject.AddComponent<LayoutElement>();
+				dl.preferredWidth = dl.minWidth = 12f;
 			}
 			if (bullet)
 			{
@@ -4571,53 +4698,6 @@ namespace Doorstop
 			t.enableWordWrapping = false;   // one line each
 			t.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
 			return t;
-		}
-
-		// Each bracket's spine: from its first option's middle to its last's,
-		// where their stubs start (after layout).
-		private static void DrawSpines()
-		{
-			foreach (RectTransform box in _wideBrackets)
-			{
-				if (box == null)
-				{
-					continue;
-				}
-				// the stubs of its options, top to bottom
-				List<RectTransform> stubs = new List<RectTransform>();
-				foreach (Transform t in box.GetComponentsInChildren<Transform>(false))
-				{
-					if (t.name == "Stub")
-					{
-						stubs.Add((RectTransform)t);
-					}
-				}
-				if (stubs.Count == 0)
-				{
-					continue;
-				}
-				float top = float.MinValue, bottom = float.MaxValue, x = 0f;
-				foreach (RectTransform st in stubs)
-				{
-					Vector3 p = box.InverseTransformPoint(st.TransformPoint(st.rect.center));
-					top = Mathf.Max(top, p.y);
-					bottom = Mathf.Min(bottom, p.y);
-					x = box.InverseTransformPoint(st.TransformPoint(new Vector3(st.rect.xMin, 0f, 0f))).x;
-				}
-				GameObject go = new GameObject("Spine", typeof(RectTransform));
-				go.transform.SetParent(box, false);
-				go.AddComponent<LayoutElement>().ignoreLayout = true;
-				Image img = go.AddComponent<Image>();
-				img.color = Palette.Fade(Palette.Muted, 0.55f);
-				img.raycastTarget = false;
-				RectTransform rt = img.rectTransform;
-				rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-				rt.pivot = new Vector2(0f, 1f);
-				rt.sizeDelta = new Vector2(3f, top - bottom + 3f);
-				// the anchored position is from the box's centre
-				Vector2 c = box.rect.center;
-				rt.anchoredPosition = new Vector2(x - c.x, top + 1.5f - c.y);
-			}
 		}
 
 		// The icon for a condition line, from what it tests: a stat's, a

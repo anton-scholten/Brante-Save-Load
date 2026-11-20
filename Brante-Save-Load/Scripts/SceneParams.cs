@@ -93,6 +93,24 @@ namespace Doorstop
 			return all;
 		}
 
+		// Every (scene, button) that sets key parameter `name` to `value`.
+		public static List<KeyValuePair<string, int>> Setters(string name, string value)
+		{
+			Load();
+			List<KeyValuePair<string, int>> all = new List<KeyValuePair<string, int>>();
+			foreach (KeyValuePair<string, List<Change>> s in _byScene)
+			{
+				foreach (Change c in s.Value)
+				{
+					if (c.Name == name && string.Equals(c.Value, value, StringComparison.OrdinalIgnoreCase))
+					{
+						all.Add(new KeyValuePair<string, int>(s.Key, c.Button));
+					}
+				}
+			}
+			return all;
+		}
+
 		// Whether the scene sets GoToFinals=Yes as it opens: the game leaves
 		// the chapter flow for its finale ("Glory to the Empire!", the
 		// chapter-5 endings).

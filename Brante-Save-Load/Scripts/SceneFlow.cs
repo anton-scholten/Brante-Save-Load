@@ -567,6 +567,209 @@ namespace Doorstop
 
 		// Dev (dev-book.txt): parses and evaluates every row against the live
 		// game and logs how many conditions hold, fail or stay undecided.
+		// What a scene's own flow gate asks for, as requirements a pop-up can
+		// list (Q stat, W relation, T status, O destiny, H a scene shown),
+		// plus the key parameter values its switches need. Only what every
+		// flow row of the scene asks: the top-level "and" parts that test one
+		// thing, and one top-level "or" of such parts (Or set). Negated
+		// compounds (the gates of the scenes before it in flow order) and
+		// "not shown yet" guards are left out; so are Post and default labels.
+		public static List<SceneEffects.Effect> Gate(string scene, out List<KeyValuePair<string, string>> labels)
+		{
+			Load();
+			labels = new List<KeyValuePair<string, string>>();
+			List<SceneEffects.Effect> common = null;
+			List<KeyValuePair<string, string>> commonLabels = null;
+			if (_rows == null)
+			{
+				return new List<SceneEffects.Effect>();
+			}
+			foreach (Row r in _rows)
+			{
+				if (r.Scene != scene)
+				{
+					continue;
+				}
+				List<SceneEffects.Effect> parts = new List<SceneEffects.Effect>();
+				if (!string.IsNullOrEmpty(r.Condition))
+				{
+					try
+					{
+						Node n;
+						if (!_parsed.TryGetValue(r, out n))
+						{
+							n = new Parser(r.Condition).Parse();
+							_parsed[r] = n;
+						}
+						List<Node> ands = new List<Node>();
+						Flatten(n, ands);
+						bool hadOr = false;
+						foreach (Node a in ands)
+						{
+							SceneEffects.Effect e = Simple(a);
+							if (e != null)
+							{
+								parts.Add(e);
+								continue;
+							}
+							Logic l = a as Logic;
+							if (l == null || l.IsAnd || hadOr)
+							{
+								continue;
+							}
+							List<SceneEffects.Effect> ors = new List<SceneEffects.Effect>();
+							foreach (Node o in l.Parts)
+							{
+								SceneEffects.Effect oe = Simple(o);
+								if (oe == null)
+								{
+									ors = null;
+									break;
+								}
+								oe.Or = true;
+								ors.Add(oe);
+							}
+							if (ors != null)
+							{
+								hadOr = true;
+								parts.AddRange(ors);
+							}
+						}
+					}
+					catch (Exception)
+					{
+					}
+				}
+				// the labels every alternative of this row needs
+				List<KeyValuePair<string, string>> labs = null;
+				foreach (List<KeyValuePair<string, string>> alt in r.Labels ?? new List<List<KeyValuePair<string, string>>>())
+				{
+					labs = labs == null ? new List<KeyValuePair<string, string>>(alt) : labs.FindAll(alt.Contains);
+				}
+				labs = labs ?? new List<KeyValuePair<string, string>>();
+				common = common == null ? parts : common.FindAll(x => parts.Exists(y => SameEffect(x, y)));
+				commonLabels = commonLabels == null ? labs : commonLabels.FindAll(labs.Contains);
+			}
+			foreach (KeyValuePair<string, string> l in commonLabels ?? labels)
+			{
+				if (l.Key != "Post" && !l.Value.StartsWith("!", StringComparison.Ordinal))
+				{
+					labels.Add(l);
+				}
+			}
+			return common ?? new List<SceneEffects.Effect>();
+		}
+
+		private static bool SameEffect(SceneEffects.Effect a, SceneEffects.Effect b)
+		{
+			return a.Kind == b.Kind && a.Name == b.Name && a.Op == b.Op && a.Value == b.Value && a.Or == b.Or;
+		}
+
+		private static void Flatten(Node n, List<Node> into)
+		{
+			Logic l = n as Logic;
+			if (l != null && l.IsAnd)
+			{
+				foreach (Node p in l.Parts)
+				{
+					Flatten(p, into);
+				}
+				return;
+			}
+			into.Add(n);
+		}
+
+		// One test as a requirement, or null: a stat or relation against a
+		// number, a status, a destiny held or not, a scene shown.
+		private static SceneEffects.Effect Simple(Node n)
+		{
+			bool not = false;
+			while (n is Not)
+			{
+				not = !not;
+				n = ((Not)n).Inner;
+			}
+			Call c = n as Call;
+			if (c != null)
+			{
+				string arg = ArgName(c);
+				if (arg == null)
+				{
+					return null;
+				}
+				if (c.Member == "GetObjectiveStatus")
+				{
+					return new SceneEffects.Effect { Kind = 'O', Name = arg, Op = not ? 1 : 0 };
+				}
+				if (c.Member == "GetSceneShowStatus" && !not)
+				{
+					return new SceneEffects.Effect { Kind = 'H', Name = arg };
+				}
+				return null;
+			}
+			Cmp m = n as Cmp;
+			if (m == null || not)
+			{
+				return null;
+			}
+			Call call = m.A as Call;
+			Const k = m.B as Const;
+			string op = m.Op;
+			if (call == null)
+			{
+				call = m.B as Call;
+				k = m.A as Const;
+				op = op == "<" ? ">" : op == ">" ? "<" : op == "<=" ? ">=" : op == ">=" ? "<=" : op;
+			}
+			string name = call != null ? ArgName(call) : null;
+			if (name == null || k == null || k.Value == null)
+			{
+				return null;
+			}
+			if (call.Member == "GetCharacterStatus")
+			{
+				if (op != "==" && op != "!=")
+				{
+					return null;
+				}
+				try
+				{
+					int st = (int)Enum.Parse(typeof(CharacterStatus), k.Value.ToString());
+					return new SceneEffects.Effect { Kind = 'T', Name = name, Value = st, Op = op == "==" ? 0 : 1 };
+				}
+				catch (Exception)
+				{
+					return null;
+				}
+			}
+			if (!(k.Value is double))
+			{
+				return null;
+			}
+			char kind = call.Member == "GetParameterValue" ? 'Q' : call.Member == "GetCharacterRelation" ? 'W' : '\0';
+			if (kind == '\0')
+			{
+				return null;
+			}
+			int code = op == ">" ? 0 : op == "<" ? 1 : op == "==" ? 2 : op == ">=" ? 3 : op == "<=" ? 4 : 5;
+			return new SceneEffects.Effect { Kind = kind, Name = name, Value = (int)Math.Round((double)k.Value), Op = code };
+		}
+
+		private static string ArgName(Call c)
+		{
+			if (c.Args == null || c.Args.Count != 1)
+			{
+				return null;
+			}
+			ObjRef o = c.Args[0] as ObjRef;
+			if (o != null)
+			{
+				return o.Name;
+			}
+			Const k = c.Args[0] as Const;
+			return k != null && k.Value is string ? (string)k.Value : null;
+		}
+
 		public static void DevCheck()
 		{
 			Load();

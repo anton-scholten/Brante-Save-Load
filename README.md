@@ -134,6 +134,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
   - Endings show what the game plays next: True Death, then the Outcome of the Revolt (none after The Judgment of the Twins).
   - Relations lists the people your path can change, or whose fate a later scene asks about (Aylis, the Archduke); Felipe no longer shows for the judge.
   - The family's fortune and fate are listed best to worst.
+  - Destiny pop-ups join requirements with "and" / "or", list a scene's several choices under dashes, and show what a scene needs to happen at all (A Glorious Bloodline: Reputation 10 and not Branded by Dishonor; Otton's Sentence: the choice at The Hour Has Come).
 - **19 Nov 2026:**
   - Destinies are listed in the order they can happen; those of which only one can happen are bracketed together.
   - Destiny pop-ups: a choice that earns the destiny is listed once, under "Comes from", a scene's several choices bracketed.
