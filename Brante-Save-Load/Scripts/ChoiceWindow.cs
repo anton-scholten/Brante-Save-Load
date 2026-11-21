@@ -379,7 +379,7 @@ namespace Doorstop
 
 		// Preferred widths in reference px; Choice takes whatever is left.
 		private static readonly float[] ColWidths =
-		{ 220f, 180f, 160f, 80f, 110f, 120f, 100f, 300f, 240f };   // the choice column takes the rest
+		{ 250f, 180f, 170f, 110f, 100f, 140f, 100f, 300f, 240f };   // the choice column takes the rest
 
 		private const float RowHeight = 44f;
 		private const float HeaderHeight = 36f;
@@ -419,6 +419,17 @@ namespace Doorstop
 					if (!string.IsNullOrEmpty(live))
 					{
 						return live;
+					}
+					if (string.IsNullOrEmpty(Title) && (Scene ?? "").EndsWith("FinishScreen", StringComparison.Ordinal)
+						&& !string.IsNullOrEmpty(ChapterKey))
+					{
+						// a chapter's end screen has no title: the chapter's
+						// name, in the game's language, not the scene's id
+						string ch = Loc.Game(ChapterKey, "");
+						if (ch.Length > 0 && ch != ChapterKey)
+						{
+							return ch;
+						}
 					}
 					return string.IsNullOrEmpty(Title) ? Scene : Title;
 				}
@@ -3565,6 +3576,17 @@ namespace Doorstop
 			return go;
 		}
 
+		// A label that shrinks to fit its box (down to `min` of `size`)
+		// before it is cut with "...": a column made for the English word
+		// cut the longer ones of other languages.
+		private static void ShrinkToFit(TextMeshProUGUI t, float size, float min)
+		{
+			float floor = t.enableAutoSizing ? Mathf.Min(t.fontSizeMin, size * min) : size * min;   // AddLabel's CJK floor too
+			t.enableAutoSizing = true;
+			t.fontSizeMax = size;
+			t.fontSizeMin = floor;
+		}
+
 		// dev-pick: scroll the tree so drawn column `ci` is in view
 		private static void DevScrollTo(int ci)
 		{
@@ -4963,6 +4985,7 @@ namespace Doorstop
 					col != Col.Choice);
 				label.overflowMode = TextOverflowModes.Ellipsis;
 				label.enableWordWrapping = false;
+				ShrinkToFit(label, 19f, 0.6f);   // "Возраст", "Jahreszeit": smaller, not cut
 				RectTransform lrt = label.rectTransform;
 				Stretch(lrt);
 				// room for the triangle on the right; centred titles get the
@@ -5820,12 +5843,16 @@ namespace Doorstop
 		// in ". ". Names without one are returned as they are.
 		private static string WithoutChapterNumber(string name)
 		{
-			int dot = name.IndexOf(". ", StringComparison.Ordinal);
-			if (dot <= 0 || dot > 24 || dot + 2 >= name.Length)
+			// ". " (most), " : " (French), "\uFF1A" / "\u3002" (Chinese)
+			foreach (string sep in new[] { ". ", " : ", "\uFF1A", "\u3002" })
 			{
-				return name;
+				int dot = name.IndexOf(sep, StringComparison.Ordinal);
+				if (dot > 0 && dot <= 24 && dot + sep.Length < name.Length)
+				{
+					return name.Substring(dot + sep.Length).Trim();
+				}
 			}
-			return name.Substring(dot + 2).Trim();
+			return name;
 		}
 
 		// The chapter, translated from its key ("Chapter1.Childhood"), with
@@ -6064,6 +6091,10 @@ namespace Doorstop
 					!scrolls);
 				cell.overflowMode = TextOverflowModes.Ellipsis;
 				cell.enableWordWrapping = false;
+				if (!scrolls)
+				{
+					ShrinkToFit(cell, 19f, 0.7f);   // "Salvamento automático do jogo"
+				}
 				if (scrolls)
 				{
 					RectTransform crt = cell.rectTransform;
@@ -6881,6 +6912,18 @@ namespace Doorstop
 						DevScrollTo(ci);
 						hit.Img.GetComponent<TreeHover>().OnHover(true);
 						ModLog.Info("DEV PICK: hovering " + l.Substring(6));
+						continue;
+					}
+					else if (l.StartsWith("scrollto ", StringComparison.Ordinal))
+					{
+						// scroll the tree to that scene's column, no hover
+						string sc = l.Substring(9).Trim();
+						int want;
+						int at = sc.StartsWith("chapter ", StringComparison.Ordinal) && int.TryParse(sc.Substring(8), out want)
+							? _drawCols.FindIndex(c => SceneFlow.ChapterOf(c.Scene) == want)   // "chapter N": its first column
+							: _drawCols.FindIndex(c => c.Scene == sc);
+						DevScrollTo(Math.Max(1, at));
+						ModLog.Info("DEV PICK: scrolled to " + sc);
 						continue;
 					}
 					else if (l.StartsWith("hoverhead ", StringComparison.Ordinal))
@@ -8382,6 +8425,16 @@ namespace Doorstop
 			}
 			tmp.text = text;
 			tmp.fontSize = size;
+			if (StatPanel.CjkLanguage())
+			{
+				// a Korean, Japanese or Chinese line is taller than the
+				// boxes made for the Latin font: cut with "..." it showed
+				// nothing (the chapter names over the tree). It shrinks to
+				// fit instead, down to 70%
+				tmp.enableAutoSizing = true;
+				tmp.fontSizeMax = size;
+				tmp.fontSizeMin = size * 0.7f;
+			}
 			tmp.color = color;
 			tmp.alignment = centered ? TextAlignmentOptions.Center : TextAlignmentOptions.MidlineLeft;
 			tmp.raycastTarget = false;

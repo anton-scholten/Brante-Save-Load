@@ -139,6 +139,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
   - Destinies whose scenes can only open in turns that are already over are crossed out (A Family of Means at the end of chapter 4).
   - A choice that appears in several versions of a scene (The Battle for Anizotte) is one line, with each version's requirements joined by "or"; joining words are in italics and wrapped lines are indented.
   - The stat panel, its tabs and the pop-ups read in every language: Korean, Japanese and Chinese text shows (it was blank), lines wrap between characters, and "not" goes where the language puts it.
+  - The tree's chapter names and the save table read in every language; headers and cells are no longer cut short.
   - `Brante-Save-Load/scene-list.tsv`: every scene and choice of the game with its text, when it happens, what it requires, changes and earns.
 - **19 Nov 2026:**
   - Destinies are listed in the order they can happen; those of which only one can happen are bracketed together.

@@ -5211,6 +5211,19 @@ namespace Doorstop
 		// the Latin and Cyrillic ones, else the one the game's
 		// ChangeFontAsset gives Korean, Japanese and the two Chineses - the
 		// tooltip's has none of their letters (the pop-ups came out blank).
+		// Whether the game's language uses one of its Korean, Japanese or
+		// Chinese fonts (taller lines than the Latin one).
+		public static bool CjkLanguage()
+		{
+			GameManager gm = GameManager.Instance;
+			if (gm == null || gm.GameSettings == null)
+			{
+				return false;
+			}
+			Languages l = gm.GameSettings.Language;
+			return l == Languages.Ko || l == Languages.Jap || l == Languages.Chin || l == Languages.Zh_Tw;
+		}
+
 		private static TMP_FontAsset LanguageFont(TMP_FontAsset latin)
 		{
 			GameManager gm = GameManager.Instance;
