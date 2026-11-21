@@ -855,7 +855,7 @@ namespace Doorstop
 		public static string Label(Effect e, out Sprite icon)
 		{
 			icon = null;
-			string not = e.Op == 1 && (e.Kind == 'T' || e.Kind == 'O') ? Loc.T(Loc.K.NotWord) + " " : "";
+			bool not = e.Op == 1 && (e.Kind == 'T' || e.Kind == 'O');
 			switch (e.Kind)
 			{
 				case 'P':
@@ -872,11 +872,12 @@ namespace Doorstop
 					Objective o = ObjectiveAsset(e.Name);
 					if (o == null)
 					{
-						return not + e.Name;
+						return not ? Loc.Not(e.Name) : e.Name;
 					}
 					icon = o.Icon;
 					string key = o.Name == _Scripts.AMVCC.Views.Windows.ObjectiveEnum.None ? o.name : o.Name.ToString();
-					return not + Translated(key + ".Title", e.Name);
+					string title = Translated(key + ".Title", e.Name);
+					return not ? Loc.Not(title) : title;
 				}
 				default:
 				{
@@ -891,7 +892,8 @@ namespace Doorstop
 					if (e.Kind == 'S' || e.Kind == 'T')
 					{
 						string status = Enum.GetName(typeof(CharacterStatus), e.Value) ?? e.Value.ToString();
-						return person + ": " + not + Translated(key + "." + status, Translated(status, status));
+						string word = Translated(key + "." + status, Translated(status, status));
+						return person + ": " + (not ? Loc.Not(word) : word);
 					}
 					return person;
 				}
@@ -904,8 +906,10 @@ namespace Doorstop
 		{
 			foreach (string k in new[] { key, fallbackKey })
 			{
-				string t = Loc.Game(k, "");
-				if (t.Trim().Length > 1)
+				string t = Loc.Game(k, "").Trim();
+				// a one-character term is a placeholder ("—"), unless a
+				// letter: Wealth is 부 in Korean, 富 in Japanese
+				if (t.Length > 1 || (t.Length == 1 && char.IsLetter(t[0])))
 				{
 					return NobleParticle(t);
 				}

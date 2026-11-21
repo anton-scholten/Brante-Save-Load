@@ -139,6 +139,15 @@ namespace Doorstop
 			return SceneEffects.NobleParticle(text.Replace("<username>", string.IsNullOrEmpty(hero) ? "Brante" : hero));
 		}
 
+		// The scene's title as scene-texts.tsv has it (English), "" if none:
+		// the same for every version of a scene, whatever the language.
+		public static string BaseTitle(string scene)
+		{
+			Load();
+			Scene s;
+			return scene != null && _scenes != null && _scenes.TryGetValue(scene, out s) ? s.Title ?? "" : "";
+		}
+
 		public static string Title(string scene)
 		{
 			Load();
@@ -153,6 +162,20 @@ namespace Doorstop
 
 		// An answer's name, as its button shows it ("Charge the attackers"), in
 		// the game's language; "" when the game has none.
+		// The answer's name in English, "" when it has none: one answer in a
+		// scene's several versions is told by it (the translations name it
+		// differently: "Muere por la Revuelta" / "Morir por la Revuelta").
+		public static string EnglishName(string scene, string choiceName)
+		{
+			string key = SceneEffects.AnswerNameKey(scene, choiceName);
+			if (key == null)
+			{
+				return "";
+			}
+			string t = Loc.GameEnglish(key, "");
+			return t == key ? "" : t.Trim();
+		}
+
 		public static string Name(string scene, string choiceName)
 		{
 			string key = SceneEffects.AnswerNameKey(scene, choiceName);

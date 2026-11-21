@@ -785,6 +785,21 @@ namespace Doorstop
 		// The translation for the game's current language, English if there
 		// is none.
 		// The game's own translation of one of its keys, or `fallback`.
+		// The game's English for `key` (whatever language is set), or
+		// `fallback`: the same for every version of a scene.
+		public static string GameEnglish(string key, string fallback)
+		{
+			try
+			{
+				string t = LocalizationManager.GetTranslation(key, true, 0, true, false, null, "English");
+				return string.IsNullOrEmpty(t) ? fallback : t;
+			}
+			catch
+			{
+				return fallback;
+			}
+		}
+
 		public static string Game(string key, string fallback)
 		{
 			try
@@ -833,6 +848,15 @@ namespace Doorstop
 		}
 
 		// "English", "Russian", ... (I2's language name), "" if not up yet.
+		// `text` negated: "not X", or "X ではない" / "X 아님" / "X değil" in
+		// Japanese, Korean and Turkish, which put the negation after.
+		public static string Not(string text)
+		{
+			Dictionary<K, string> t = Table(Language());
+			string not = T(K.NotWord);
+			return t == _ja || t == _ko || t == _tr ? text + " " + not : not + " " + text;
+		}
+
 		public static string Language()
 		{
 			try

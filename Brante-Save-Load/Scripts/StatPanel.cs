@@ -9,6 +9,8 @@ using _Scripts.AMVCC.Models.Static;
 using _Scripts.AMVCC.Views.Windows;
 using _Scripts.AMVCC.Views.Windows.Components;
 using _Scripts.AMVCC.Views.Windows.Destiny;
+using _Scripts.Helpers;
+using _Scripts.Managers;
 
 namespace Doorstop
 {
@@ -1412,7 +1414,7 @@ namespace Doorstop
 						if (string.IsNullOrEmpty(c.Operand2) && (op == "!=" || op == "\u2260"))
 						{
 							// "The Family in Ruins !=": the objective must not be had
-							line = Loc.T(Loc.K.NotWord) + " " + Operand(c.Operand1);
+							line = Loc.Not(Operand(c.Operand1));
 						}
 						if (line.Length > 0 && f != Fate.Earned && PartRuledOut(c.RealCondition, _lastShown, _lastChapter, 0))
 						{
@@ -1497,27 +1499,36 @@ namespace Doorstop
 		// Grey: the scene is behind the scene shown.
 		private static List<FromLine> EarnedBy(Objective o, Fate fate)
 		{
+			// a scene's versions by their English title (shipped in
+			// scene-texts.tsv), shown under the first one's own: the
+			// translations name The Battle for Anizotte's three versions
+			// three ways (Traditional Chinese) or in two cases (Spanish)
 			List<string> titles = new List<string>();
+			Dictionary<string, string> shownTitle = new Dictionary<string, string>();
 			Dictionary<string, List<KeyValuePair<string, int>>> byTitle = new Dictionary<string, List<KeyValuePair<string, int>>>();
 			foreach (KeyValuePair<string, int> e in SceneObjectives.Earners((int)o.Name))
 			{
-				string title = SceneTexts.Title(e.Key);
-				if (string.IsNullOrEmpty(title))
+				string shown = SceneTexts.Title(e.Key);
+				if (string.IsNullOrEmpty(shown))
 				{
 					continue;
 				}
+				string group = SceneTexts.BaseTitle(e.Key);
+				group = (group.Length > 0 ? group : shown).ToLowerInvariant();
 				List<KeyValuePair<string, int>> list;
-				if (!byTitle.TryGetValue(title, out list))
+				if (!byTitle.TryGetValue(group, out list))
 				{
-					list = byTitle[title] = new List<KeyValuePair<string, int>>();
-					titles.Add(title);
+					list = byTitle[group] = new List<KeyValuePair<string, int>>();
+					titles.Add(group);
+					shownTitle[group] = shown;
 				}
 				list.Add(e);
 			}
 			List<FromLine> lines = new List<FromLine>();
-			foreach (string title in titles)
+			foreach (string group in titles)
 			{
-				List<KeyValuePair<string, int>> list = byTitle[title];
+				string title = shownTitle[group];
+				List<KeyValuePair<string, int>> list = byTitle[group];
 				bool done = false;
 				bool whole = false;
 				bool open = false;
@@ -1573,8 +1584,10 @@ namespace Doorstop
 						List<SceneEffects.Effect> own = new List<SceneEffects.Effect>(vg);
 						own.AddRange(SceneEffects.For(e.Key, choice));
 						string name = SceneEffects.NobleParticle(SceneTexts.Name(e.Key, choice)).Trim();
+						string english = SceneTexts.EnglishName(e.Key, choice);
+						english = english.Length > 0 ? english : name;
 						bool played = DestinyDone.Contains(e.Key) && DestinyPlayed.TryGetValue(e.Key, out took) && took == e.Value;
-						FromLine same = answers.Find(x => SameName(x.Head, name));
+						FromLine same = answers.Find(x => SameName(x.Key, english));
 						if (same != null)
 						{
 							same.Played |= played;   // one line for both
@@ -1585,7 +1598,7 @@ namespace Doorstop
 						}
 						else if (name.Length > 0)
 						{
-							FromLine a = new FromLine { Head = name, Played = played };
+							FromLine a = new FromLine { Head = name, Key = english, Played = played };
 							alts[a] = new List<List<SceneEffects.Effect>> { own };
 							answers.Add(a);
 						}
@@ -1689,6 +1702,7 @@ namespace Doorstop
 			public bool Played;   // the answer taken on the path played (or its scene's head)
 			public string Head = "";
 			public string Tail = "";   // after the needs' ")": a scene head's ":"
+			public string Key = "";    // an answer's English name: versions of it are one line
 			public readonly List<bool> NeedMet = new List<bool>();   // each need met by the hero shown
 			public readonly List<Sprite> Icons = new List<Sprite>();
 			public readonly List<string> Needs = new List<string>();
@@ -4468,8 +4482,17 @@ namespace Doorstop
 			return true;
 		}
 
+		private static string _wideLang;   // the language its texts' fonts are for
+
 		private static bool EnsureWide()
 		{
+			if (_wide != null && _wideLang != Loc.Language())
+			{
+				// built for another language: its texts keep their fonts
+				UnityEngine.Object.Destroy(_wide);
+				_wide = null;
+				_measure = null;
+			}
 			if (_wide != null)
 			{
 				return true;
@@ -4479,8 +4502,9 @@ namespace Doorstop
 				return false;
 			}
 			Image paper = PaperImage();
-			TMP_FontAsset font = _tipComp.Description != null ? _tipComp.Description.font : null;
-			TMP_FontAsset titleFont = _tipComp.Title != null ? _tipComp.Title.font : font;
+			TMP_FontAsset font = LanguageFont(_tipComp.Description != null ? _tipComp.Description.font : null);
+			TMP_FontAsset titleFont = _tipComp.Title != null ? LanguageFont(_tipComp.Title.font) : font;
+			_wideLang = Loc.Language();
 
 			_wide = new GameObject("BranteSaveLoad_DestinyTip", typeof(RectTransform));
 			_wide.transform.SetParent(TooltipParent, false);
@@ -4642,9 +4666,9 @@ namespace Doorstop
 			}
 			foreach (string w in line.Head.Split(' '))
 			{
-				if (w.Length > 0)
+				foreach (string piece in BreakCjk(w))
 				{
-					tokens.Add(new KeyValuePair<Sprite, string>(null, w));
+					tokens.Add(new KeyValuePair<Sprite, string>(null, piece));
 					greens.Add(false);
 				}
 			}
@@ -4658,9 +4682,14 @@ namespace Doorstop
 						continue;
 					}
 					// "(" opens the first need, before its icon
-					tokens.Add(new KeyValuePair<Sprite, string>(j == 0 ? line.Icons[i] : null,
-						i == 0 && j == 0 ? "\u0001" + words[j] : words[j]));
-					greens.Add(i < line.NeedMet.Count && line.NeedMet[i]);
+					List<string> pieces = BreakCjk(words[j]);
+					for (int pi = 0; pi < pieces.Count; pi++)
+					{
+						bool first = j == 0 && pi == 0;
+						tokens.Add(new KeyValuePair<Sprite, string>(first ? line.Icons[i] : null,
+							i == 0 && first ? "\u0001" + pieces[pi] : pieces[pi]));
+						greens.Add(i < line.NeedMet.Count && line.NeedMet[i]);
+					}
 				}
 				// "and", "or", "and one of:" in the line's own style
 				string sep = i < line.Needs.Count - 1 ? line.Seps[i].Trim() : "";
@@ -4711,7 +4740,18 @@ namespace Doorstop
 				}
 				bool open = t.Value.StartsWith("\u0001", StringComparison.Ordinal);
 				bool glue = t.Value.StartsWith("\u0002", StringComparison.Ordinal);
-				string word = open || glue ? t.Value.Substring(1) : t.Value;
+				bool soft = t.Value.StartsWith(Soft, StringComparison.Ordinal);
+				string word = open || glue || soft ? t.Value.Substring(1) : t.Value;
+				if (soft && x > x0)
+				{
+					// a piece of a word without spaces (Chinese, Japanese):
+					// no space before it, but a line may break here
+					if (run.Length > 0 && run[run.Length - 1] == ' ')
+					{
+						run.Length--;
+					}
+					x -= SpaceWidth();
+				}
 				if (glue)
 				{
 					// no space before it: back over the one the word before took
@@ -4788,6 +4828,44 @@ namespace Doorstop
 			float w = Mathf.Min(hi.x - lo.x, WideMax);
 			rt.sizeDelta = new Vector2(w, rt.sizeDelta.y);
 			return w;
+		}
+
+		// kana that never start a line: the long vowel mark, the middle dot,
+		// the small ones
+		private const string NoLineStart = "\u30FC\u30FB\u3041\u3043\u3045\u3047\u3049\u3063\u3083\u3085\u3087\u30A1\u30A3\u30A5\u30A7\u30A9\u30C3\u30E3\u30E5\u30E7";
+		private const string Soft = "\u0003";   // a FlowLine token joined to the one before, a line break allowed
+
+		// A word cut where Chinese and Japanese may break a line: before each
+		// ideograph or kana (punctuation that must not start a line stays
+		// with the piece before). The pieces after the first carry Soft.
+		// Other words come back whole.
+		private static List<string> BreakCjk(string word)
+		{
+			List<string> pieces = new List<string>();
+			if (string.IsNullOrEmpty(word))
+			{
+				return pieces;
+			}
+			StringBuilder cur = new StringBuilder();
+			foreach (char ch in word)
+			{
+				bool cjk = (ch >= '\u3040' && ch <= '\u30FF') || (ch >= '\u3400' && ch <= '\u9FFF') || (ch >= '\uF900' && ch <= '\uFAFF');
+				if (cjk && cur.Length > 0 && NoLineStart.IndexOf(ch) < 0)
+				{
+					pieces.Add(cur.ToString());
+					cur.Length = 0;
+				}
+				cur.Append(ch);
+			}
+			if (cur.Length > 0)
+			{
+				pieces.Add(cur.ToString());
+			}
+			for (int i = 1; i < pieces.Count; i++)
+			{
+				pieces[i] = Soft + pieces[i];
+			}
+			return pieces;
 		}
 
 		private static void FlowText(RectTransform parent, string text, float x, float y)
@@ -5028,6 +5106,28 @@ namespace Doorstop
 			g.childForceExpandHeight = false;
 			g.childAlignment = TextAnchor.UpperLeft;
 			return go;
+		}
+
+		// The font for the game's language: the tooltip's own (`latin`) for
+		// the Latin and Cyrillic ones, else the one the game's
+		// ChangeFontAsset gives Korean, Japanese and the two Chineses - the
+		// tooltip's has none of their letters (the pop-ups came out blank).
+		private static TMP_FontAsset LanguageFont(TMP_FontAsset latin)
+		{
+			GameManager gm = GameManager.Instance;
+			if (gm == null || gm.GameSettings == null)
+			{
+				return latin;
+			}
+			TMP_FontAsset f = null;
+			switch (gm.GameSettings.Language)
+			{
+				case Languages.Ko: f = gm.KoreanMaterial; break;
+				case Languages.Jap: f = gm.JapaneseMaterial; break;
+				case Languages.Chin: f = gm.ChineseMaterial; break;
+				case Languages.Zh_Tw: f = gm.ChineseTraditionalMaterial; break;
+			}
+			return f != null ? f : latin;
 		}
 
 		private static TextMeshProUGUI WideText(Transform parent, string name, TMP_FontAsset font, float size, FontStyles style)

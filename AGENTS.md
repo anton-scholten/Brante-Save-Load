@@ -579,8 +579,26 @@ community event sheet (`data/events.json`).
   Genuína", "真正的死亡"). Fonts come from the game's `ChangeFontAsset`,
   which follows `GameSettings.Language`, not I2's language:
   `dev-pick.txt` `lang <game language name>` sets both (not remembered),
-  else Traditional Chinese renders blank. Path ID refusal reasons are
-  `Loc.K.Pid*`. Adding a key: give it all 13 tables.
+  else Traditional Chinese renders blank. The wide pop-ups take the game
+  tooltip's font, which has no Korean, Japanese or Chinese letters: for
+  those `StatPanel.LanguageFont` takes the font `ChangeFontAsset` would
+  (`GameManager.KoreanMaterial`, ...), and the pop-up is rebuilt when the
+  language changes (`_wideLang`); they came out blank. Japanese and
+  Chinese have no spaces, so `FlowLine` breaks a line before any
+  ideograph or kana (`BreakCjk`, a `Soft` token: no space before it, a
+  break allowed), never before small kana, the long vowel mark or CJK
+  punctuation. "Not" goes after its word in Japanese, Korean and Turkish
+  (`Loc.Not`: "反乱軍 ではない", "반란군 아님", "İsyancı değil"). A one-letter
+  game term is a real name when it is a letter (Wealth: 부, 富), else a
+  placeholder ("—"). A scene's versions are grouped by their English
+  title (`SceneTexts.BaseTitle`): translations name The Battle for
+  Anizotte's three ways (Traditional Chinese, Turkish) or differ in case
+  (Spanish), and an answer's versions by its English name
+  (`SceneTexts.EnglishName`, I2's `overrideLanguage`: "Muere por la
+  Revuelta" / "Morir por la Revuelta"). All 14 languages were checked on
+  Dark Times' pop-up. Path
+  ID refusal reasons are `Loc.K.Pid*`. Adding a key: give it all 13
+  tables.
 - **Path IDs never reach BinaryFormatter.** The tree header's paste and
   copy buttons (left of reset) turn the live state into
   `BSL1:<n>:<base64url>:<CRC-32>` and back (`PathId`). The record is the
