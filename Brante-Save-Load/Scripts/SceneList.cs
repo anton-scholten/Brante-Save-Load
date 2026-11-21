@@ -37,7 +37,7 @@ namespace Doorstop
 			order.AddRange(rest);
 
 			StringBuilder sb = new StringBuilder();
-			sb.Append("Chapter\tScene\tKind\tTitle\tText\tOpens when\tOn opening\tAnswer\tName\tAnswer text\tRequires\tChanges\tDestinies\tKey parameters\n");
+			sb.Append("Chapter\tScene\tKind\tTitle\tText\tOpens when\tOn opening\tAnswer\tName\tAnswer text\tRequires\tChanges\tDestinies\tKey parameters\tWhen\tTrack\tOrder\n");
 			int rows = 0;
 			foreach (string scene in order)
 			{
@@ -57,7 +57,8 @@ namespace Doorstop
 				Row(sb, ch > 0 ? ch.ToString() : "", scene, kind, title, text,
 					StatPanel.NeedsText(StatPanel.GateOf(scene)),
 					Changes(opening.FindAll(e => e.Kind != 'E')), "", "", "", "", "",
-					Destinies(opening), string.Join(", ", keys.ToArray()));
+					Destinies(opening), string.Join(", ", keys.ToArray()),
+					When(scene), Track(scene), FirstOrder(scene));
 				rows++;
 				foreach (KeyValuePair<string, string> b in buttons)
 				{
@@ -69,13 +70,78 @@ namespace Doorstop
 						StatPanel.NeedsText(all),
 						Changes(all.FindAll(e => !e.IsRequirement && e.Kind != 'E')),
 						Destinies(all),
-						string.Join(", ", SceneParams.Changes(scene, n).ToArray()));
+						string.Join(", ", SceneParams.Changes(scene, n).ToArray()), "", "", "");
 					rows++;
 				}
 			}
 			File.WriteAllText(path, sb.ToString(), new UTF8Encoding(false));
 			ModLog.Info("SceneList: " + rows + " row(s), " + order.Count + " scene(s) -> " + path);
 			return path;
+		}
+
+		// When the scene can open: its time slots ("turn 3, season 2",
+		// "turns 2-7", "turn 5+"), one per distinct slot of its flow rows;
+		// "" when the flow does not wait for a time (it follows in order,
+		// or is triggered by a condition).
+		private static string When(string scene)
+		{
+			List<string> slots = new List<string>();
+			foreach (SceneFlow.Row r in SceneFlow.Rows())
+			{
+				if (r.Scene != scene || !r.Timed)
+				{
+					continue;
+				}
+				string t = r.TurnMax == r.Turn ? "turn " + r.Turn
+					: r.TurnMax == int.MaxValue ? "turn " + r.Turn + "+"
+					: r.Turn <= 0 ? "until turn " + r.TurnMax
+					: "turns " + r.Turn + "-" + r.TurnMax;
+				if (r.Season > 0)
+				{
+					t += ", season " + r.Season;
+				}
+				if (!slots.Contains(t))
+				{
+					slots.Add(t);
+				}
+			}
+			return string.Join(" / ", slots.ToArray());
+		}
+
+		// The switches (key chapter parameters) the scene's flow rows sit
+		// under, one set per row ("Post=Judge; TheHourHasCome=BurnTheCase"),
+		// distinct sets joined by " | "; "!A,B" is "none of A, B".
+		private static string Track(string scene)
+		{
+			List<string> sets = new List<string>();
+			foreach (SceneFlow.Row r in SceneFlow.Rows())
+			{
+				if (r.Scene != scene || r.Labels == null)
+				{
+					continue;
+				}
+				foreach (List<KeyValuePair<string, string>> alt in r.Labels)
+				{
+					string set = string.Join("; ", alt.ConvertAll(kv => kv.Key + "=" + kv.Value).ToArray());
+					if (set.Length > 0 && !sets.Contains(set))
+					{
+						sets.Add(set);
+					}
+				}
+			}
+			return string.Join(" | ", sets.ToArray());
+		}
+
+		private static string FirstOrder(string scene)
+		{
+			foreach (SceneFlow.Row r in SceneFlow.Rows())
+			{
+				if (r.Scene == scene)
+				{
+					return r.Order.ToString();
+				}
+			}
+			return "";
 		}
 
 		private static void Row(StringBuilder sb, params string[] cells)

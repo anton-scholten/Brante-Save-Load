@@ -3,7 +3,8 @@
 <img src="Thumbnail.png" alt="thumbnail" width="200" align="right">
 
 A mod for [The Life and Suffering of Sir Brante](https://store.steampowered.com/app/1272160/) that lets you save scum.
-It also features a "tree view" visual of your playthrough so you can see your mistakes and poor life decisions (in the game, that is).
+It also features a "tree view" visual of your playthrough so you can see your mistakes and poor life decisions (in the game, that is).  
+Available in all languages supported by the game + Polish, Turkish, and Traditional Chinese.
 
 <br clear="right">
 
@@ -126,8 +127,8 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 
 ![The tree view and its Destiny tab with a choice's pop-up, cut into fourteen tilted bands, one for each of the game's languages: English, Russian, German, French, Spanish, Latin American Spanish, Italian, Brazilian Portuguese, Polish, Turkish, Japanese, Korean, Simplified and Traditional Chinese.](Languages.jpg)
 
-- The mod speaks all 14 of the game's languages, and names the game's things in the game's own words.
-- The game's settings now offer all 14: Traditional Chinese, Polish and Turkish were translated in full but missing from its language list.
+- The mod works in all 14 of the game's languages, with names matching the game's own translations.
+- The game's settings now offers all 14 languages: Traditional Chinese, Polish and Turkish were translated in full but missing from the language list.
 
 ## Update notes
 
@@ -215,6 +216,8 @@ delete that folder too to remove them.
 ```
 
 ## More
+
+[docs/story](docs/story/README.md) is the whole story scene by scene, from the game's own data: when each scene plays, what it needs and says, every choice with its requirements, effects and destinies, and a flow chart per chapter.
 
 [docs/FINDINGS.md](docs/FINDINGS.md) explains how the game and the mod work, [MODDING.md](MODDING.md) is a compact how-to, and [AGENTS.md](AGENTS.md) covers working on the mod (build with `./tools/build.sh`).
 

@@ -65,6 +65,7 @@ tools/scene_effects.py       answer effects from the scene files -> shipped TSV
 tools/scene_params.py        key chapter parameter changes from scenes/answers -> shipped TSV
 tools/scene_objectives.py    the objectives scenes/answers unlock -> shipped TSV
 tools/build_graph.py         merge traces + snapshots + event sheet
+tools/story_doc.py           docs/story/: the story scene by scene + chapter flow charts, from scene-list.tsv
 tools/language_shots.sh      the README's Languages.jpg: one game session, a screenshot per language
 tools/language_bands.py      cut those screenshots into tilted bands, a flag and name each (ImageMagick + Pango)
 data/                        extracted game data (see docs/BRANCHES.md)
@@ -110,7 +111,8 @@ python3 tools/scene_params.py     # scene-params.tsv (needs UnityPy)
 python3 tools/scene_objectives.py # scene-objectives.tsv (needs UnityPy)
 ```
 
-then `scene-list.tsv` from them, inside the game (it needs the game's assets
+then `scene-list.tsv` from them (and `python3 tools/story_doc.py` from that
+for `docs/story/`), inside the game (it needs the game's assets
 for the names of stats, people and destinies): `dev-autoload.txt` plus
 `dev-pick.txt` holding `scenelist`. One row per scene (kind choice / event /
 page, its text pages, "Opens when" = `StatPanel.GateOf`, the opening's
