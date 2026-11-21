@@ -6810,6 +6810,43 @@ namespace Doorstop
 		}
 
 		// dev-pick "lang": the game's language names -> its settings enum
+		// The game's 14 languages, in the order the language screenshots
+		// (dev-pick "shots", tools/language_bands.py) show them.
+		private static readonly string[] ShotLanguages =
+		{
+			"English", "Russian", "German", "French (France)", "Spanish (Spain)", "Spanish (Latin Americas)",
+			"Italian", "Portuguese - Brazil", "Polish", "Turkish", "Japanese", "Korean",
+			"Chinese (Simplified)", "Chinese (Traditional)",
+		};
+
+		// dev-pick "shots": the other lines (picks, mode, hold, ...) in each
+		// of the game's languages, the window rebuilt each time, and the
+		// screen saved by Unity itself (no overlay, no relaunch) to
+		// Brante-Save-Load/Shots/<NN>_<language>.png; then the language the
+		// game had. tools/language_bands.py makes the README image of them.
+		private static IEnumerator DevShots(List<string> lines)
+		{
+			string dir = Path.Combine(Path.Combine(Application.persistentDataPath, "Brante-Save-Load"), "Shots");
+			Directory.CreateDirectory(dir);
+			string had = I2.Loc.LocalizationManager.CurrentLanguage;
+			for (int i = 0; i < ShotLanguages.Length; i++)
+			{
+				string lang = ShotLanguages[i];
+				Close();
+				List<string> run = new List<string> { "lang " + lang };
+				run.AddRange(lines);
+				DevPick(run.ToArray());
+				yield return new WaitForSecondsRealtime(2.5f);   // fonts, layout, pop-up placed
+				string name = (i + 1).ToString("00") + "_" + System.Text.RegularExpressions.Regex.Replace(lang, "[^A-Za-z]", "") + ".png";
+				ScreenCapture.CaptureScreenshot(Path.Combine(dir, name), 2);   // twice the game's size: sharp when scaled down
+				yield return new WaitForSecondsRealtime(1.5f);   // written at the end of a frame
+				ModLog.Info("DEV SHOT: " + lang + " -> " + name);
+			}
+			Close();
+			DevPick(new[] { "lang " + (string.IsNullOrEmpty(had) ? "English" : had) });
+			ModLog.Info("DEV SHOTS: done, " + ShotLanguages.Length + " in " + dir);
+		}
+
 		private static readonly Dictionary<string, Languages> DevLanguages = new Dictionary<string, Languages>
 		{
 			{ "English", Languages.Eng }, { "Russian", Languages.Rus }, { "Korean", Languages.Ko },
@@ -6822,6 +6859,26 @@ namespace Doorstop
 
 		public static void DevPick(string[] picks)
 		{
+			// "shots": the rest once per language, a screenshot of each
+			List<string> rest = new List<string>();
+			bool shots = false;
+			foreach (string line in picks)
+			{
+				string t = line.Trim();
+				if (t == "shots")
+				{
+					shots = true;
+				}
+				else if (t.Length > 0 && !t.StartsWith("lang ", StringComparison.Ordinal))
+				{
+					rest.Add(t);
+				}
+			}
+			if (shots && ModHost.Current != null)
+			{
+				ModHost.Current.StartCoroutine(DevShots(rest));
+				return;
+			}
 			try
 			{
 				// "lang <game language name>" lines first: the window is built
@@ -6898,9 +6955,12 @@ namespace Doorstop
 						}
 						continue;
 					}
-					else if (l.StartsWith("hover ", StringComparison.Ordinal))
+					else if (l.StartsWith("hover ", StringComparison.Ordinal) || l.StartsWith("hold ", StringComparison.Ordinal))
 					{
 						// scroll the tree to that answer and hold its hover
+						// ("hold": where the tree is, no scrolling)
+						bool scroll = l.StartsWith("hover ", StringComparison.Ordinal);
+						l = "hover " + l.Substring(l.IndexOf(' ') + 1).Trim();
 						string[] sc = l.Substring(6).Split('=');
 						NodeRef hit = _nodes.Find(n => n.Col.Scene == sc[0].Trim() && n.Choice.Name == sc[1].Trim());
 						if (hit == null)
@@ -6909,7 +6969,10 @@ namespace Doorstop
 							continue;
 						}
 						int ci = _drawCols.FindIndex(c => c.Scene == hit.Col.Scene);   // drawn index: events take columns
-						DevScrollTo(ci);
+						if (scroll)
+						{
+							DevScrollTo(ci);
+						}
 						hit.Img.GetComponent<TreeHover>().OnHover(true);
 						ModLog.Info("DEV PICK: hovering " + l.Substring(6));
 						continue;

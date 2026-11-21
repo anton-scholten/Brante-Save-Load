@@ -122,6 +122,12 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 - **Load scene** plays your picked path at high speed, about 2-3 s a scene, with progress and time left.
 - **Stop** drops you into the scene it has reached.
 
+### Every language
+
+![The tree view and its Destiny tab with a choice's pop-up, cut into fourteen tilted bands, one for each of the game's languages: English, Russian, German, French, Spanish, Latin American Spanish, Italian, Brazilian Portuguese, Polish, Turkish, Japanese, Korean, Simplified and Traditional Chinese.](Languages.jpg)
+
+- The mod speaks all 14 of the game's languages, and names the game's things in the game's own words.
+
 ## Update notes
 
 - **20 Nov 2026:**
