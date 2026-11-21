@@ -43,6 +43,25 @@ FLAGS = {
 }
 
 
+# The name under each flag: the language's own name.
+NAMES = {
+    "English": "English",
+    "Russian": "Русский",
+    "German": "Deutsch",
+    "FrenchFrance": "Français",
+    "SpanishSpain": "Español",
+    "SpanishLatinAmericas": "Español (LatAm)",
+    "Italian": "Italiano",
+    "PortugueseBrazil": "Português (BR)",
+    "Polish": "Polski",
+    "Turkish": "Türkçe",
+    "Japanese": "日本語",
+    "Korean": "한국어",
+    "ChineseSimplified": "简体中文",
+    "ChineseTraditional": "繁體中文",
+}
+
+
 def run(args):
     subprocess.run(args, check=True)
 
@@ -84,8 +103,9 @@ def main():
     band = (W + lean) / n
     top = [k * band for k in range(n + 1)]
     bot = [x - lean for x in top]
-    ink = "rgba(24,22,20,0.5)"                          # the seams, half see-through
+    ink = "rgba(24,22,20,0.2)"                          # the seams, faint
     seam = max(2, round(W / 640))
+    inset = 50 * W / 1920                               # the seams stop this far from the edges
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp = pathlib.Path(tmp)
@@ -99,14 +119,20 @@ def main():
             cmd += ["(", str(shot), "-resize", "%dx%d!" % (W, H), str(mask),
                     "-alpha", "off", "-compose", "CopyOpacity", "-composite", ")",
                     "-compose", "over", "-composite"]
-        # a dark seam along each boundary
+        # a faint seam along each boundary, inside a margin of the picture
         for k in range(1, n):
-            cmd += ["-stroke", ink, "-strokewidth", str(seam),
-                    "-draw", "line %.1f,0 %.1f,%d" % (top[k], bot[k], H)]
+            x = lambda y: top[k] - lean * y / H
+            y0, y1 = inset, H - inset
+            # where the line leaves the margin at the sides: x(y) = W - inset, inset
+            y0 = max(y0, (top[k] - (W - inset)) * H / lean)
+            y1 = min(y1, (top[k] - inset) * H / lean)
+            if y1 - y0 > seam:
+                cmd += ["-stroke", ink, "-strokewidth", str(seam),
+                        "-draw", "line %.1f,%.1f %.1f,%.1f" % (x(y0), y0, x(y1), y1)]
         # each band's flag where its middle line meets the diagonal from
         # the top left to the bottom right: x = W*y/H and x = mid - lean*y/H
         if not args.no_flags:
-            fw = round(band * 0.7)
+            fw = round(band * 0.55)
             for k, shot in enumerate(shots):
                 flag = FLAGS.get(re.sub(r"^\d\d_", "", shot.stem))
                 if not flag:
@@ -116,14 +142,30 @@ def main():
                      "pango:<span font=\"Noto Color Emoji\" size=\"96000\">" + flag + "</span>",
                      "-trim", "+repage", "-resize", "%dx" % fw, str(img)])
                 iw, ih = size_of(img)
+                # its name under it, upright, on a soft halo of the paper's
+                # colour so it reads over the game's own text
+                key = re.sub(r"^\d\d_", "", shot.stem)
+                lbl = tmp / ("name%02d.png" % k)
+                run(["magick", "-background", "none",
+                     "pango:<span font=\"Noto Sans Medium\" size=\"%d\" foreground=\"#2a221c\">%s</span>"
+                     % (round(band * 0.1 * 1024), NAMES.get(key, key)),
+                     "-trim", "+repage",
+                     "(", "+clone", "-background", "rgb(239,228,205)", "-shadow", "100x3+0+0", ")",
+                     "+swap", "-background", "none", "-layers", "merge", "+repage", str(lbl)])
+                lw, lh = size_of(lbl)
+                gap = band * 0.04
+                gh = ih + gap + lh                          # flag and name together
                 mid = (top[k] + top[k + 1]) / 2
                 cy = mid * H / (W + lean)
                 cx = W * cy / H
-                # the corner flags kept whole, a little in from the edges
+                # the corner ones kept whole, a little in from the edges
                 edge = band * 0.08
-                cx = min(max(cx, iw / 2 + edge), W - iw / 2 - edge)
-                cy = min(max(cy, ih / 2 + edge), H - ih / 2 - edge)
+                half = max(iw, lw) / 2
+                cx = min(max(cx, half + edge), W - half - edge)
+                cy = min(max(cy, ih / 2 + edge), H - (gh - ih / 2) - edge)
                 cmd += [str(img), "-geometry", "+%d+%d" % (round(cx - iw / 2), round(cy - ih / 2)),
+                        "-compose", "over", "-composite",
+                        str(lbl), "-geometry", "+%d+%d" % (round(cx - lw / 2), round(cy + ih / 2 + gap)),
                         "-compose", "over", "-composite"]
         cmd += ["-quality", "86", args.out]
         run(cmd)
