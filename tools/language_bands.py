@@ -87,16 +87,15 @@ def main():
     W, H = args.width, round(h * scale)
     n = len(shots)
     # boundary k runs from (top[k], 0) down to (top[k] - lean, H), leaning
-    # right; the boundaries cross the labels' line at equal steps, so every
-    # band is as wide there and its label sits in its middle
+    # right. Every band is as wide (band): the first starts left of the
+    # picture at its foot, the last ends right of it at its head, so the
+    # outer two show a little less of themselves, none more
     lean = H * math.tan(math.radians(args.tilt))
-    size = max(11, round(W / n / 10))                   # the labels' size
-    label_y = H - size * 2.4
-    at_label = lean * (label_y + size / 2) / H          # how far a boundary leans by then
-    top = [k * W / n + at_label for k in range(n + 1)]
+    band = (W + lean) / n
+    top = [k * band for k in range(n + 1)]
     bot = [x - lean for x in top]
-    top[0], bot[0] = -lean * 2, -lean * 2          # the outer bands reach the edges
-    top[n], bot[n] = W + lean * 2, W + lean * 2
+    ink = "rgb(24,22,20)"                               # seams and names
+    seam = max(2, round(W / 640))
 
     font = None if args.no_labels else label_font()
     with tempfile.TemporaryDirectory() as tmp:
@@ -111,30 +110,35 @@ def main():
             cmd += ["(", str(shot), "-resize", "%dx%d!" % (W, H), str(mask),
                     "-alpha", "off", "-compose", "CopyOpacity", "-composite", ")",
                     "-compose", "over", "-composite"]
-        # a thin light seam along each boundary
+        # a dark seam along each boundary
         for k in range(1, n):
-            cmd += ["-stroke", "rgba(255,250,235,0.85)", "-strokewidth", "2",
+            cmd += ["-stroke", ink, "-strokewidth", str(seam),
                     "-draw", "line %.1f,0 %.1f,%d" % (top[k], bot[k], H)]
-        # each band's language near the bottom, on a dark tag
+        # each band's language written along it, leaning as it does: its
+        # letters about a quarter of the band's width
         if font:
-            y = label_y
+            size = round(band * 0.3)
             for k, shot in enumerate(shots):
                 key = re.sub(r"^\d\d_", "", shot.stem)
                 lbl = tmp / ("label%02d.png" % k)
                 run(["magick", "-background", "none", "-font", font, "-pointsize", str(size),
-                     "-fill", "rgb(255,250,235)", "label:" + NAMES.get(key, key), str(lbl)])
+                     "-fill", ink, "label:" + NAMES.get(key, key),
+                     "-rotate", "%.2f" % -(90 - args.tilt), "+repage", str(lbl)])
                 lw, lh = size_of(lbl)
-                # the band's middle at the label's height (the outer bands:
-                # between their inner edge and the picture's edge)
-                at = lambda xs: xs[0] + (xs[1] - xs[0]) * ((y + lh / 2) / H)
-                left = at((top[k], bot[k])) if k > 0 else 0.0
-                right = at((top[k + 1], bot[k + 1])) if k < n - 1 else float(W)
-                cx = (left + right) / 2
-                pad = size * 0.45
-                cmd += ["-fill", "rgba(40,30,25,0.8)", "-stroke", "none", "-draw",
-                        "roundrectangle %.1f,%.1f %.1f,%.1f 5,5" % (
-                            cx - lw / 2 - pad, y - pad * 0.5, cx + lw / 2 + pad, y + lh + pad * 0.5),
-                        str(lbl), "-geometry", "+%d+%d" % (round(cx - lw / 2), round(y)),
+                # low in the band, where the stat panel is quiet; raised or
+                # lowered where the band's middle there is off the picture
+                mid = (top[k] + top[k + 1]) / 2             # the band's middle at the head
+                cy = H * 0.72
+                lo, hi = lh / 2 + seam, H - lh / 2 - seam
+                margin = lw / 2 + band * 0.1
+                cx = mid - lean * cy / H
+                if cx < margin:
+                    cy = (mid - margin) * H / lean
+                elif cx > W - margin:
+                    cy = (mid - (W - margin)) * H / lean
+                cy = min(max(cy, lo), hi)
+                cx = mid - lean * cy / H
+                cmd += [str(lbl), "-geometry", "+%d+%d" % (round(cx - lw / 2), round(cy - lh / 2)),
                         "-compose", "over", "-composite"]
         cmd += ["-quality", "86", args.out]
         run(cmd)
