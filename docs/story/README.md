@@ -19,10 +19,12 @@ How to read a scene:
 - Each choice's **Requires** must hold for it to be picked; **Effects** and
   **Destinies** follow when it is; **Sets** are the switches it turns.
 
-In the charts each box is a time slot, top to bottom in time; ◇ marks a scene with a condition,
+Click a chapter's 'Flow chart' to open it. In the charts each box is a time slot, top to bottom in time; ◇ marks a scene with a condition,
 rounded boxes are events (no choice).
 
 ## [Chapter I. Childhood](chapter-1.md)
+
+<details><summary>Flow chart (17 scenes)</summary>
 
 ```mermaid
 flowchart TD
@@ -88,7 +90,11 @@ flowchart TD
   G9 --> G10
 ```
 
+</details>
+
 ## [Chapter II. Adolescence](chapter-2.md)
+
+<details><summary>Flow chart (20 scenes)</summary>
 
 ```mermaid
 flowchart TD
@@ -156,7 +162,11 @@ flowchart TD
   G8 --> G10
 ```
 
+</details>
+
 ## [Chapter III. Youth](chapter-3.md)
+
+<details><summary>Flow chart (28 scenes)</summary>
 
 ```mermaid
 flowchart TD
@@ -213,9 +223,11 @@ flowchart TD
   G4 --> G5
 ```
 
+</details>
+
 ## [Chapter IV. Peace Time](chapter-4.md)
 
-**Every post**
+<details><summary>Flow chart: every post (31 scenes)</summary>
 
 ```mermaid
 flowchart TD
@@ -329,7 +341,9 @@ flowchart TD
   G16 --> G17
 ```
 
-**[Inquisitor (Priest track)](chapter-4-inquisitor.md)**
+</details>
+
+<details><summary>Flow chart: Inquisitor (Priest track) (39 scenes) - <a href="chapter-4-inquisitor.md">its scenes</a></summary>
 
 ```mermaid
 flowchart TD
@@ -440,7 +454,9 @@ flowchart TD
   G14 --> G16
 ```
 
-**[Judge (Noble track)](chapter-4-judge.md)**
+</details>
+
+<details><summary>Flow chart: Judge (Noble track) (45 scenes) - <a href="chapter-4-judge.md">its scenes</a></summary>
 
 ```mermaid
 flowchart TD
@@ -588,7 +604,9 @@ flowchart TD
   G21 --> G24
 ```
 
-**[Rebel (Lotless track)](chapter-4-rebel.md)**
+</details>
+
+<details><summary>Flow chart: Rebel (Lotless track) (40 scenes) - <a href="chapter-4-rebel.md">its scenes</a></summary>
 
 ```mermaid
 flowchart TD
@@ -716,7 +734,11 @@ flowchart TD
   G18 --> G20
 ```
 
+</details>
+
 ## [Chapter V. The Revolt](chapter-5.md)
+
+<details><summary>Flow chart (39 scenes)</summary>
 
 ```mermaid
 flowchart TD
@@ -767,6 +789,8 @@ flowchart TD
   end
   G0 --> G1
 ```
+
+</details>
 
 ## [The finale and other pages](finale.md)
 

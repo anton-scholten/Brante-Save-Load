@@ -184,6 +184,12 @@ def mermaid(scenes, title):
     return "\n".join(lines)
 
 
+def folded(summary, body):
+    """A block shown when its summary is clicked (the charts are tall)."""
+    summary = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', summary)
+    return "<details><summary>%s</summary>\n\n%s\n\n</details>\n" % (summary, body)
+
+
 def scene_md(s, set_by):
     out = ['<a id="%s"></a>' % anchor(s), "### %s" % s["title"], ""]
     facts = ["`%s` · %s" % (s["id"], {"choice": "choice", "event": "event", "page": "page"}.get(s["kind"], s["kind"]))]
@@ -387,7 +393,7 @@ def main():
              "- **On opening / Earns**: what the scene does by itself, whatever is chosen.",
              "- Each choice's **Requires** must hold for it to be picked; **Effects** and",
              "  **Destinies** follow when it is; **Sets** are the switches it turns.", "",
-             "In the charts each box is a time slot, top to bottom in time; ◇ marks a scene with a condition,",
+             "Click a chapter's 'Flow chart' to open it. In the charts each box is a time slot, top to bottom in time; ◇ marks a scene with a condition,",
              "rounded boxes are events (no choice).", ""]
     for ch in sorted(c for c in by_chapter if c):
         title = names.get(ch, "Chapter %s" % ROMAN.get(ch, ch))
@@ -400,13 +406,13 @@ def main():
         if posts:
             common = [s for s in members if not own(s)]
             if common:
-                index.append("**Every post**\n")
-                index.append(mermaid(common, title) + "\n")
+                index.append(folded("Flow chart: every post (%d scenes)" % len(common), mermaid(common, title)))
             for post in posts:
-                index.append("**[%s](chapter-%d-%s.md)**\n" % (POSTS.get(post, post), ch, post.lower()))
-                index.append(mermaid([s for s in members if post in own(s)], title) + "\n")
+                group = [s for s in members if post in own(s)]
+                index.append(folded("Flow chart: %s (%d scenes) - [its scenes](chapter-%d-%s.md)"
+                                    % (POSTS.get(post, post), len(group), ch, post.lower()), mermaid(group, title)))
         else:
-            index.append(mermaid(members, title) + "\n")
+            index.append(folded("Flow chart (%d scenes)" % len(members), mermaid(members, title)))
         # one file for the scenes every post sees, one per post
         body = ["# %s" % title, "", "[All chapters](README.md)", ""]
         if posts:
