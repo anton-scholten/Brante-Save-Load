@@ -81,15 +81,6 @@ Close the game first.
 
 Two tabs appear on top of the book: **save / load** (the arrows) and **tree view** (the linked boxes).
 
-### Save / Load
-
-![The save / load screen: a table of saves (game autosaves and snapshots taken before each load), with the save type, date saved, chapter, age, year, season, turn, scene and choice of each, and a button to delete the save.](Screenshot_2a.jpg)
-![The same screen showing the confirmation dialogue after clicking a save to load it. The clicked row stays bright with a red dashed outline while the rest is dimmed.](Screenshot_2b.jpg)
-
-- Click a save to load it; the bin deletes it. **Save now** adds a save of your own.
-- **Save type** (first header) filters: game autosaves, saves made before each load, your own saves, and the backup of your original save. Other headers sort.
-- Every load first saves where you were, so any load can be undone.
-
 ### Tree view
 
 ![The tree view on its Stats tab: each scene is a column with its choices under it, the player's path in red with the choices made in yellow. Hovering a choice shows what it changes and requires; below, the stats it changes are marked green or red and the stats it requires are outlined in amber. Personality is laid out by chapter, with arrows showing which two stats make each chapter-3 skill.](Screenshot_3a.jpg)
@@ -106,6 +97,15 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 - Greyed choices aren't open to you; red ones clash with an earlier pick.
 - Faded stats unlock in a later chapter; the arrows show which two stats make each chapter-3 skill.
 - A true death, or an ending that finishes the game, ends the path: no choices follow it.
+
+### Save / Load
+
+![The save / load screen: a table of saves (game autosaves and snapshots taken before each load), with the save type, date saved, chapter, age, year, season, turn, scene and choice of each, and a button to delete the save.](Screenshot_2a.jpg)
+![The same screen showing the confirmation dialogue after clicking a save to load it. The clicked row stays bright with a red dashed outline while the rest is dimmed.](Screenshot_2b.jpg)
+
+- Click a save to load it; the bin deletes it. **Save now** adds a save of your own.
+- **Save type** (first header) filters: game autosaves, saves made before each load, your own saves, and the backup of your original save. Other headers sort.
+- Every load first saves where you were, so any load can be undone.
 
 ### Path ID
 
