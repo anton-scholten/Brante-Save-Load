@@ -583,7 +583,14 @@ community event sheet (`data/events.json`).
   tooltip's font, which has no Korean, Japanese or Chinese letters: for
   those `StatPanel.LanguageFont` takes the font `ChangeFontAsset` would
   (`GameManager.KoreanMaterial`, ...), and the pop-up is rebuilt when the
-  language changes (`_wideLang`); they came out blank. Japanese and
+  language changes (`_wideLang`); they came out blank. The panel's own
+  texts (cloned game rows, tabs, chapter buttons, legend, people) had the
+  same Latin font: `ApplyLanguageFont` gives each the language's font when
+  made (`Label`, `MakeRow`) and again after every `Show`/`ShowPeople`/
+  `ShowDestiny`, and with a CJK font lets a text overflow instead of
+  being cut (their lines are taller than the boxes: a cut tab or "I"
+  showed nothing, the Revolt header "反..."); its own font and overflow
+  come back for other languages. Japanese and
   Chinese have no spaces, so `FlowLine` breaks a line before any
   ideograph or kana (`BreakCjk`, a `Soft` token: no space before it, a
   break allowed), never before small kana, the long vowel mark or CJK

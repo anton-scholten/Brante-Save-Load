@@ -1097,6 +1097,12 @@ namespace Doorstop
 
 		private static void ShowDestiny(SceneEffects.Hero shown, int heroChapter)
 		{
+			ShowDestinyCore(shown, heroChapter);
+			ApplyLanguageFonts(_area);
+		}
+
+		private static void ShowDestinyCore(SceneEffects.Hero shown, int heroChapter)
+		{
 			int chapter = _destinyPick > 0 ? _destinyPick : Mathf.Clamp(heroChapter, 1, 5);
 			List<Objective> list = ChapterObjectives(chapter, DestinyPost);
 			string key = chapter + "|" + DestinyPost + "|" + list.Count + "|" + (_content != null ? _content.rect.size.ToString() : "");
@@ -3050,6 +3056,7 @@ namespace Doorstop
 				UnityEngine.Object.Destroy(go);
 				return null;
 			}
+			ApplyLanguageFonts(go.transform);
 			bool twoSided = person != null || (p != null && p.MinValue < 0f && Math.Abs(p.MinValue) == p.MaxValue);
 			GameObject slider = twoSided ? pc.TwoSideSlider : pc.SimpleSlider;
 			GameObject other = twoSided ? pc.SimpleSlider : pc.TwoSideSlider;
@@ -3167,6 +3174,7 @@ namespace Doorstop
 			t.alignment = TextAlignmentOptions.Center;
 			t.enableWordWrapping = false;
 			t.overflowMode = TextOverflowModes.Ellipsis;
+			ApplyLanguageFont(t);   // before anything measures it
 			t.raycastTarget = false;
 			return t;
 		}
@@ -3183,6 +3191,90 @@ namespace Doorstop
 		public static SceneEffects.Hero Baseline;
 
 		public static void Show(SceneEffects.Hero shown, SceneEffects.Hero now, int chapter)
+		{
+			ShowCore(shown, now, chapter);
+			ApplyLanguageFonts(_area);
+			ApplyLanguageFonts(_tip != null ? _tip.transform : null);
+		}
+
+		// The panel's texts are the game's stat rows cloned (and texts of
+		// its own made with their font): the Latin font, whatever the
+		// language. In Korean, Japanese and Chinese every one gets the font
+		// the game's ChangeFontAsset gives (LanguageFont) - else the tabs,
+		// rows, family, relations and destinies were blank - and gets its
+		// own back when the language changes again.
+		private static readonly Dictionary<TextMeshProUGUI, TMP_FontAsset> _ownFont = new Dictionary<TextMeshProUGUI, TMP_FontAsset>();
+		// the texts set to overflow for a Korean/Japanese/Chinese font, with
+		// the mode they had
+		private static readonly Dictionary<TextMeshProUGUI, TextOverflowModes> _ownOverflow = new Dictionary<TextMeshProUGUI, TextOverflowModes>();
+
+		private static void ApplyLanguageFonts(Transform root)
+		{
+			if (root == null)
+			{
+				return;
+			}
+			if (_ownFont.Count > 3000)
+			{
+				// texts of rows rebuilt since: gone
+				List<TextMeshProUGUI> dead = new List<TextMeshProUGUI>();
+				foreach (TextMeshProUGUI k in _ownFont.Keys)
+				{
+					if (k == null)
+					{
+						dead.Add(k);
+					}
+				}
+				foreach (TextMeshProUGUI k in dead)
+				{
+					_ownFont.Remove(k);
+					_ownOverflow.Remove(k);
+				}
+			}
+			foreach (TextMeshProUGUI t in root.GetComponentsInChildren<TextMeshProUGUI>(true))
+			{
+				ApplyLanguageFont(t);
+			}
+		}
+
+		// One text: the language's font; with a Korean, Japanese or Chinese
+		// one it overflows instead of being cut with "...": their lines are
+		// taller than the boxes made for the Latin font, and a cut text
+		// showed nothing (the tabs, the chapter buttons) or one letter
+		// ("反..."). Its own font and overflow come back for other languages.
+		private static void ApplyLanguageFont(TextMeshProUGUI t)
+		{
+			if (t == null)
+			{
+				return;
+			}
+			TMP_FontAsset own;
+			if (!_ownFont.TryGetValue(t, out own))
+			{
+				own = _ownFont[t] = t.font;
+			}
+			TMP_FontAsset want = LanguageFont(own);
+			if (t.font != want)
+			{
+				t.font = want;
+			}
+			TextOverflowModes was;
+			if (want != own)
+			{
+				if (t.overflowMode == TextOverflowModes.Ellipsis || t.overflowMode == TextOverflowModes.Truncate)
+				{
+					_ownOverflow[t] = t.overflowMode;
+					t.overflowMode = TextOverflowModes.Overflow;
+				}
+			}
+			else if (_ownOverflow.TryGetValue(t, out was))
+			{
+				t.overflowMode = was;
+				_ownOverflow.Remove(t);
+			}
+		}
+
+		private static void ShowCore(SceneEffects.Hero shown, SceneEffects.Hero now, int chapter)
 		{
 			if (shown == null || now == null)
 			{
@@ -3266,6 +3358,12 @@ namespace Doorstop
 		// The characters' relations along the path; the rows are rebuilt when
 		// the hero shown has met someone else.
 		private static void ShowPeople(SceneEffects.Hero shown, SceneEffects.Hero now, int chapter)
+		{
+			ShowPeopleCore(shown, now, chapter);
+			ApplyLanguageFonts(_area);
+		}
+
+		private static void ShowPeopleCore(SceneEffects.Hero shown, SceneEffects.Hero now, int chapter)
 		{
 			List<Character> people = People(shown, now);
 			if (PeopleKey(people) != _peopleKey && _content != null)
@@ -3746,6 +3844,7 @@ namespace Doorstop
 					{
 						plus.font = pc.Name.font;
 					}
+					ApplyLanguageFont(plus);
 					plus.text = "+";
 					plus.fontSize = icon * 0.9f;
 					plus.color = ink;
