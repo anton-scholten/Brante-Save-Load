@@ -75,8 +75,9 @@ namespace Doorstop
 			}
 		}
 
-		// Every (scene, button) that sets key parameter `name` (any value).
-		public static List<KeyValuePair<string, int>> Setters(string name)
+		// Every (scene, button) that sets key parameter `name` (to `value`;
+		// null: any value).
+		public static List<KeyValuePair<string, int>> Setters(string name, string value = null)
 		{
 			Load();
 			List<KeyValuePair<string, int>> all = new List<KeyValuePair<string, int>>();
@@ -84,25 +85,7 @@ namespace Doorstop
 			{
 				foreach (Change c in s.Value)
 				{
-					if (c.Name == name)
-					{
-						all.Add(new KeyValuePair<string, int>(s.Key, c.Button));
-					}
-				}
-			}
-			return all;
-		}
-
-		// Every (scene, button) that sets key parameter `name` to `value`.
-		public static List<KeyValuePair<string, int>> Setters(string name, string value)
-		{
-			Load();
-			List<KeyValuePair<string, int>> all = new List<KeyValuePair<string, int>>();
-			foreach (KeyValuePair<string, List<Change>> s in _byScene)
-			{
-				foreach (Change c in s.Value)
-				{
-					if (c.Name == name && string.Equals(c.Value, value, StringComparison.OrdinalIgnoreCase))
+					if (c.Name == name && (value == null || string.Equals(c.Value, value, StringComparison.OrdinalIgnoreCase)))
 					{
 						all.Add(new KeyValuePair<string, int>(s.Key, c.Button));
 					}

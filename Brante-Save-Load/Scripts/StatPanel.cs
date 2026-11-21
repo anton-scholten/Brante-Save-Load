@@ -1455,19 +1455,17 @@ namespace Doorstop
 				{
 					conds.Add("<i>" + Loc.T(Loc.K.OneOf) + ":</i> " + string.Join(" / ", ors.ToArray()));
 				}
-				string requires = "", comes = "";
 				if (conds.Count > 0)
 				{
 					// headed like "Comes from:" below, so the two lists read apart
-					requires = "<b>" + Loc.T(Loc.K.Requires) + ":</b>\n" + string.Join("\n", conds.ToArray());
-					sb.Append("\n\n<size=85%>").Append(requires).Append("</size>");
+					sb.Append("\n\n<size=85%><b>").Append(Loc.T(Loc.K.Requires)).Append(":</b>\n")
+						.Append(string.Join("\n", conds.ToArray())).Append("</size>");
 				}
-				List<string> from = fromLines.ConvertAll(l => (l.Option ? OptionMark : "") + l.Styled(l.Text()));
-				if (from.Count > 0)
+				if (fromLines.Count > 0)
 				{
-					comes = "<b>" + Loc.T(Loc.K.DestEarnedBy) + ":</b>\n"
-						+ string.Join("\n", from.ConvertAll(l => l.Replace(OptionMark, "    \u2013 ")).ToArray());
-					sb.Append("\n\n<size=85%>").Append(comes).Append("</size>");
+					List<string> from = fromLines.ConvertAll(l => (l.Option ? "    \u2013 " : "") + l.Styled(l.Text()));
+					sb.Append("\n\n<size=85%><b>").Append(Loc.T(Loc.K.DestEarnedBy)).Append(":</b>\n")
+						.Append(string.Join("\n", from.ToArray())).Append("</size>");
 				}
 				_lastTipText = sb.ToString();
 				if (ShowWideTip(o, Loc.Game(k + ".Title", k), state, descr, wideConds, condIcons, wideOrs, orIcons, fromLines))
@@ -1650,19 +1648,14 @@ namespace Doorstop
 			return a.Length >= 8 && b.Length >= 8 && Distance(a.ToLowerInvariant(), b.ToLowerInvariant()) <= 2;
 		}
 
-		private static bool SameNeed(SceneEffects.Effect x, SceneEffects.Effect y)
-		{
-			return x.Kind == y.Kind && x.Name == y.Name && x.Op == y.Op && x.Value == y.Value && x.Or == y.Or;
-		}
-
 		private static bool SameNeeds(List<SceneEffects.Effect> a, List<SceneEffects.Effect> b)
 		{
-			return a.TrueForAll(x => b.Exists(y => SameNeed(x, y))) && b.TrueForAll(x => a.Exists(y => SameNeed(x, y)));
+			return a.TrueForAll(x => b.Exists(x.Same)) && b.TrueForAll(x => a.Exists(x.Same));
 		}
 
 		private static List<SceneEffects.Effect> Minus(List<SceneEffects.Effect> a, List<SceneEffects.Effect> b)
 		{
-			return a.FindAll(x => !b.Exists(y => SameNeed(x, y)));
+			return a.FindAll(x => !b.Exists(x.Same));
 		}
 
 		private static int Distance(string a, string b)
@@ -1687,7 +1680,7 @@ namespace Doorstop
 		}
 
 		// One "Comes from" line: its head ("• Scene: answer"), what the
-		// answer needs (icon, text, what follows it: ", " or " or "), its
+		// answer needs (icon, text, the words after it: "and", "or", "and one of:"), its
 		// style (0 plain, 1 grey: earned and behind, 2 struck: out of reach)
 		// and whether it is one of several answers of the scene above.
 		private sealed class FromLine
@@ -1722,10 +1715,6 @@ namespace Doorstop
 					: Style == 2 ? Struck(text) : Style == 3 ? Met(text) : text;
 			}
 		}
-
-		// Marks a "Comes from" line that is one of several answers of the
-		// scene above it (drawn under a dash in the wide pop-up).
-		private const string OptionMark = "\t";
 
 		// Whether a condition part only names the answer that earns the
 		// destiny - a key parameter ("KissTheSword") that only the earning
@@ -2004,7 +1993,7 @@ namespace Doorstop
 			List<SceneEffects.Effect> inAll = null;
 			foreach (List<SceneEffects.Effect> l in alts)
 			{
-				inAll = inAll == null ? new List<SceneEffects.Effect>(l) : inAll.FindAll(x => l.Exists(y => SameNeed(x, y)));
+				inAll = inAll == null ? new List<SceneEffects.Effect>(l) : inAll.FindAll(x => l.Exists(x.Same));
 			}
 			shared.AddRange(inAll ?? new List<SceneEffects.Effect>());
 			List<List<Part>> rests = new List<List<Part>>();
@@ -2030,8 +2019,8 @@ namespace Doorstop
 			List<Part> head = Parts(shared);
 			List<string> seps = Seps(head);
 			List<Part> all = new List<Part>(head);
-			string and = " " + Loc.T(Loc.K.AndWord) + " ";
-			string or = ", " + Loc.T(Loc.K.OrWord) + " ";
+			string and = AndSep();
+			string or = "," + OrSep();
 			for (int g = 0; g < rests.Count; g++)
 			{
 				if (all.Count > 0)
@@ -2042,6 +2031,16 @@ namespace Doorstop
 				seps.AddRange(Seps(rests[g]));
 			}
 			Append(into, all, seps);
+		}
+
+		private static string AndSep()
+		{
+			return " " + Loc.T(Loc.K.AndWord) + " ";
+		}
+
+		private static string OrSep()
+		{
+			return " " + Loc.T(Loc.K.OrWord) + " ";
 		}
 
 		private static string OneOfWord()
@@ -2056,7 +2055,7 @@ namespace Doorstop
 			{
 				if (into.Needs.Count > 0 && i == 0)
 				{
-					into.Seps[into.Seps.Count - 1] = " " + Loc.T(Loc.K.AndWord) + " ";
+					into.Seps[into.Seps.Count - 1] = AndSep();
 				}
 				into.Icons.Add(parts[i].Icon);
 				into.Needs.Add(parts[i].Text);
@@ -2070,14 +2069,14 @@ namespace Doorstop
 		private static List<string> Seps(List<Part> parts)
 		{
 			int ors = parts.FindAll(x => x.Or).Count;
-			string and = " " + Loc.T(Loc.K.AndWord) + " ";
+			string and = AndSep();
 			List<string> seps = new List<string>();
 			for (int i = 0; i < parts.Count; i++)
 			{
 				seps.Add(i + 1 >= parts.Count ? ""
 					: !parts[i + 1].Or ? and
 					: !parts[i].Or ? (ors > 1 ? and + OneOfWord() + ": " : and)
-					: " " + Loc.T(Loc.K.OrWord) + " ");
+					: OrSep());
 			}
 			return seps;
 		}
@@ -2203,8 +2202,7 @@ namespace Doorstop
 						}
 					}
 				}
-				common = common == null ? g : common.FindAll(x => g.Exists(y => x.Kind == y.Kind && x.Name == y.Name
-					&& x.Op == y.Op && x.Value == y.Value && x.Or == y.Or));
+				common = common == null ? g : common.FindAll(x => g.Exists(x.Same));
 			}
 			return common ?? new List<SceneEffects.Effect>();
 		}
@@ -4105,14 +4103,8 @@ namespace Doorstop
 			Transform bottom = _wideReqBox.parent;
 			bottom.gameObject.SetActive(requires || comes.Count > 0);
 
-			RectTransform box = (RectTransform)TooltipParent;
 			RectTransform rt = (RectTransform)_wide.transform;
-			Vector3[] c = new Vector3[4];
-			TreeArea.GetWorldCorners(c);
-			Vector2 lo = box.InverseTransformPoint(c[0]);
-			Vector2 hi = box.InverseTransformPoint(c[2]);
-			float w = Mathf.Min(hi.x - lo.x, WideMax);
-			rt.sizeDelta = new Vector2(w, rt.sizeDelta.y);
+			float w = SizeWide(rt);
 			_wide.SetActive(true);
 			_wide.transform.SetAsLastSibling();
 			// Requires keeps its lines whole: at least as wide as its longest
@@ -4140,7 +4132,7 @@ namespace Doorstop
 			FillComesFrom(comes, fromW);
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);   // wrapped heights settle on the second pass
-			PlaceWide(box, rt, lo, hi, w);
+			PlaceWide(rt, w);
 			CheckOverlap(title);
 			return true;
 		}
@@ -4181,8 +4173,11 @@ namespace Doorstop
 
 		// Centred over the tree, from its top (down over the stats when it
 		// says more than the tree is tall).
-		private static void PlaceWide(RectTransform box, RectTransform rt, Vector2 lo, Vector2 hi, float w)
+		private static void PlaceWide(RectTransform rt, float w)
 		{
+			RectTransform box = (RectTransform)TooltipParent;
+			Vector2 lo, hi;
+			TreeSpan(box, out lo, out hi);
 			Rect area = box.rect;
 			float h = rt.rect.height;
 			float x = (lo.x + hi.x - w) * 0.5f;
@@ -4225,14 +4220,8 @@ namespace Doorstop
 			_wideText.text = text;
 			SetPicture(null);
 			_wideReqBox.parent.gameObject.SetActive(false);
-			RectTransform box = (RectTransform)TooltipParent;
 			RectTransform rt = (RectTransform)_wide.transform;
-			Vector3[] c = new Vector3[4];
-			TreeArea.GetWorldCorners(c);
-			Vector2 lo = box.InverseTransformPoint(c[0]);
-			Vector2 hi = box.InverseTransformPoint(c[2]);
-			float w = Mathf.Min(hi.x - lo.x, WideMax);
-			rt.sizeDelta = new Vector2(w, rt.sizeDelta.y);
+			float w = SizeWide(rt);
 			_wideScale.gameObject.SetActive(ranges.Count > 0);
 			// shown first: text measured while the box is hidden came out
 			// ~1/3 of its size ("Orator" broke in two)
@@ -4241,7 +4230,7 @@ namespace Doorstop
 			_wide.transform.SetAsLastSibling();
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
-			PlaceWide(box, rt, lo, hi, w);
+			PlaceWide(rt, w);
 			return true;
 		}
 
@@ -4780,6 +4769,25 @@ namespace Doorstop
 			}
 			flush();
 			le.minHeight = le.preferredHeight = -y + FlowLineH;
+		}
+
+		// The tree's corners in `box`'s space.
+		private static void TreeSpan(RectTransform box, out Vector2 lo, out Vector2 hi)
+		{
+			Vector3[] c = new Vector3[4];
+			TreeArea.GetWorldCorners(c);
+			lo = box.InverseTransformPoint(c[0]);
+			hi = box.InverseTransformPoint(c[2]);
+		}
+
+		// The wide pop-up as wide as the tree (at most WideMax); its width.
+		private static float SizeWide(RectTransform rt)
+		{
+			Vector2 lo, hi;
+			TreeSpan((RectTransform)TooltipParent, out lo, out hi);
+			float w = Mathf.Min(hi.x - lo.x, WideMax);
+			rt.sizeDelta = new Vector2(w, rt.sizeDelta.y);
+			return w;
 		}
 
 		private static void FlowText(RectTransform parent, string text, float x, float y)

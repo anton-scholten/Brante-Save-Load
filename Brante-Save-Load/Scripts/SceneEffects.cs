@@ -40,6 +40,12 @@ namespace Doorstop
 			{
 				get { return Kind == 'Q' || Kind == 'W' || Kind == 'T' || Kind == 'O'; }
 			}
+
+			// The same test or change (kind, object, value, op, group).
+			public bool Same(Effect o)
+			{
+				return o != null && Kind == o.Kind && Name == o.Name && Op == o.Op && Value == o.Value && Or == o.Or;
+			}
 		}
 
 		private static Dictionary<string, Dictionary<int, List<Effect>>> _effects;

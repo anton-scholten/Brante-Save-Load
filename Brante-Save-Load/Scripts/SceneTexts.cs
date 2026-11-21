@@ -96,6 +96,49 @@ namespace Doorstop
 			return _scenes == null ? new List<string>() : new List<string>(_scenes.Keys);
 		}
 
+		// A scene's text pages in the game's language, in order: the keys
+		// "<prefix>_Text_N" under the scene's id, else under its title key's
+		// prefix (`053.100.140_Profitableyear_Text_1` for
+		// `053.100.140_ProfitableYear`); a gap of up to 8 numbers is
+		// skipped, untranslated placeholders are left out.
+		public static List<string> Pages(string scene)
+		{
+			List<string> prefixes = new List<string> { scene };
+			string key = SceneEffects.TitleKey(scene);
+			if (!string.IsNullOrEmpty(key) && key.EndsWith("_Title", StringComparison.Ordinal))
+			{
+				prefixes.Add(key.Substring(0, key.Length - "_Title".Length));
+			}
+			foreach (string prefix in prefixes)
+			{
+				List<string> pages = new List<string>();
+				int misses = 0;
+				for (int i = 1; i <= 150 && misses < 8; i++)
+				{
+					string k = prefix + "_Text_" + i;
+					string t = Loc.Game(k, "");
+					if (t == k || t.Trim().Length == 0 || t.IndexOf("need translation", StringComparison.OrdinalIgnoreCase) >= 0)
+					{
+						misses++;
+						continue;
+					}
+					misses = 0;
+					pages.Add(t.Trim());
+				}
+				if (pages.Count > 0)
+				{
+					return pages;
+				}
+			}
+			return new List<string>();
+		}
+
+		// A page with the hero's name in place of "<username>".
+		public static string WithHero(string text, string hero)
+		{
+			return SceneEffects.NobleParticle(text.Replace("<username>", string.IsNullOrEmpty(hero) ? "Brante" : hero));
+		}
+
 		public static string Title(string scene)
 		{
 			Load();

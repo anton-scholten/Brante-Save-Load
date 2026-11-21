@@ -355,7 +355,10 @@ community event sheet (`data/events.json`).
   every scene/answer that earns it in scene-objectives.tsv is in
   `DestinyDone` - the scenes passed by the scene shown - or on another post's
   track, `SceneFlow.SceneFits`, or after the path's early end: when the
-  path shown ends in a true death or a finale before chapter 5,
+  path shown ends in a true death or a finale before chapter 5 and the
+  answer leading into that end (the last column's) was played or picked -
+  never a predicted one: the default prediction from an early save often
+  dies, and struck all of chapter 5 -
   `ChoiceWindow.ShowStats` sets `DestinyStop` to its last scene and
   `AfterStop` rules out a scene off the path in a later chapter or, in that
   chapter, at the end's turn or later - Broken Chains after A Lesson Writ

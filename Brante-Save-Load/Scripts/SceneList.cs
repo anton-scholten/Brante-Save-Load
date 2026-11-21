@@ -96,38 +96,10 @@ namespace Doorstop
 			return s.Replace("\t", " ").Replace("\r", "").Replace("\n", " / ").Trim();
 		}
 
-		// The scene's text pages, in order ("<scene>_Text_N", or under its
-		// title key's prefix), joined by " | ".
+		// The scene's text pages, joined by " | ".
 		private static string Pages(string scene)
 		{
-			List<string> prefixes = new List<string> { scene };
-			string key = SceneEffects.TitleKey(scene);
-			if (!string.IsNullOrEmpty(key) && key.EndsWith("_Title", StringComparison.Ordinal))
-			{
-				prefixes.Add(key.Substring(0, key.Length - "_Title".Length));
-			}
-			foreach (string prefix in prefixes)
-			{
-				List<string> pages = new List<string>();
-				int misses = 0;
-				for (int i = 1; i <= 150 && misses < 8; i++)
-				{
-					string k = prefix + "_Text_" + i;
-					string t = Loc.Game(k, "");
-					if (t == k || t.Trim().Length == 0 || t.IndexOf("need translation", StringComparison.OrdinalIgnoreCase) >= 0)
-					{
-						misses++;
-						continue;
-					}
-					misses = 0;
-					pages.Add(SceneEffects.NobleParticle(t.Trim().Replace("<username>", "[name]")));
-				}
-				if (pages.Count > 0)
-				{
-					return string.Join(" | ", pages.ToArray());
-				}
-			}
-			return "";
+			return string.Join(" | ", SceneTexts.Pages(scene).ConvertAll(t => SceneTexts.WithHero(t, "[name]")).ToArray());
 		}
 
 		private static string Changes(List<SceneEffects.Effect> effects)

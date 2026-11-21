@@ -1174,6 +1174,15 @@ namespace Doorstop
 			}
 		}
 
+		// The run's Autosave.dat (the bare Saves/ one for no id), read; null
+		// when there is none or it does not read.
+		private static SaveLoadHelper ReadRunAutosave(string runId)
+		{
+			string file = runId == "" ? Path.Combine(SavesDir, "Autosave.dat")
+				: Path.Combine(SavesDir, runId, "Autosave.dat");
+			return File.Exists(file) ? (SaveLoadHelper)Deserialize(File.ReadAllBytes(file)) : null;
+		}
+
 		// Before a load from the game's own menu: at the main menu there is no
 		// live state, so the run's Autosave.dat - the file the load replaces -
 		// is the state to keep.
@@ -1183,14 +1192,7 @@ namespace Doorstop
 			{
 				runId = RealOrEmpty(runId);
 				EnsureBaseline(runId);
-				string file = runId == "" ? Path.Combine(SavesDir, "Autosave.dat")
-					: Path.Combine(SavesDir, runId, "Autosave.dat");
-				if (!File.Exists(file))
-				{
-					return;
-				}
-				byte[] bytes = File.ReadAllBytes(file);
-				SaveLoadHelper h = (SaveLoadHelper)Deserialize(bytes);
+				SaveLoadHelper h = ReadRunAutosave(runId);
 				if (h == null)
 				{
 					return;
@@ -1282,14 +1284,7 @@ namespace Doorstop
 					return;   // a replay gets one checkpoint, not one per scene
 				}
 				string runId = CurrentRunId();
-				string file = runId == "" ? Path.Combine(SavesDir, "Autosave.dat")
-					: Path.Combine(SavesDir, runId, "Autosave.dat");
-				if (!File.Exists(file))
-				{
-					return;
-				}
-				byte[] bytes = File.ReadAllBytes(file);
-				SaveLoadHelper h = (SaveLoadHelper)Deserialize(bytes);
+				SaveLoadHelper h = ReadRunAutosave(runId);
 				if (h == null)
 				{
 					return;

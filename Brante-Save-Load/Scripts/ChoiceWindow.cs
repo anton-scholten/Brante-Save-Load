@@ -847,15 +847,7 @@ namespace Doorstop
 			pimg.color = Palette.Paper;
 
 			// Title.
-			TextMeshProUGUI title = AddLabel(panel.transform, "Title",
-				Loc.T(Loc.K.Title), 34f, Palette.Ink, false);
-			title.alignment = TextAlignmentOptions.MidlineLeft;
-			RectTransform trt = title.rectTransform;
-			trt.anchorMin = new Vector2(0f, 1f);
-			trt.anchorMax = new Vector2(1f, 1f);
-			trt.pivot = new Vector2(0.5f, 1f);
-			trt.anchoredPosition = new Vector2(0f, -20f);
-			trt.sizeDelta = new Vector2(-120f, 52f);
+			TextMeshProUGUI title = WindowTitle(panel.transform, Loc.T(Loc.K.Title), 34f, 52f);
 
 			// Close [x].
 			GameObject closeBtn = CreateUiObject("Close", panel.transform);
@@ -1020,15 +1012,7 @@ namespace Doorstop
 			bimg.color = Palette.Paper;
 			_historyBox = brt;
 
-			TextMeshProUGUI title = AddLabel(box.transform, "Title",
-				Loc.T(Loc.K.Playthrough), 32f, Palette.Ink, false);
-			title.alignment = TextAlignmentOptions.MidlineLeft;
-			RectTransform trt = title.rectTransform;
-			trt.anchorMin = new Vector2(0f, 1f);
-			trt.anchorMax = new Vector2(1f, 1f);
-			trt.pivot = new Vector2(0.5f, 1f);
-			trt.anchoredPosition = new Vector2(0f, -20f);
-			trt.sizeDelta = new Vector2(-120f, 46f);
+			TextMeshProUGUI title = WindowTitle(box.transform, Loc.T(Loc.K.Playthrough), 32f, 46f);
 
 			// Scrollable list.
 			GameObject scroll = CreateUiObject("Scroll", box.transform);
@@ -3059,10 +3043,16 @@ namespace Doorstop
 					}
 				}
 			}
-			// the whole path, and where it stops when the story ends early
+			// the whole path, and where it stops when the story ends early -
+			// only when the answer that leads into that end (the last
+			// column's) was played or picked: "Burn the case" picked at the
+			// judge's Court; not a predicted answer (the default prediction
+			// from an early save often runs into a true death, and struck
+			// all of chapter 5)
 			HashSet<string> path = new HashSet<string>();
 			string lastScene = null;
 			bool early = false;
+			bool known = true;
 			System.Action<string> walk = delegate(string sc)
 			{
 				if (string.IsNullOrEmpty(sc))
@@ -3088,6 +3078,7 @@ namespace Doorstop
 						walk(sc);
 					}
 					walk(c.Scene);
+					known = !(c.Upcoming || c.Current) || _overrides.ContainsKey(c.Scene);
 				}
 				foreach (string sc in _tailBetween ?? new List<string>())
 				{
@@ -3102,7 +3093,7 @@ namespace Doorstop
 			}
 			StatPanel.DestinyAt = at;
 			StatPanel.DestinyPath = path;
-			StatPanel.DestinyStop = early ? lastScene : null;
+			StatPanel.DestinyStop = early && known ? lastScene : null;
 			StatPanel.DestinyDone = done;
 			StatPanel.DestinyPlayed = played;
 			StatPanel.DestinyEnd = end;
@@ -3521,49 +3512,87 @@ namespace Doorstop
 			{
 				return cached;
 			}
-			List<string> prefixes = new List<string> { scene };
-			string key = SceneEffects.TitleKey(scene);
-			if (!string.IsNullOrEmpty(key) && key.EndsWith("_Title", StringComparison.Ordinal))
-			{
-				prefixes.Add(key.Substring(0, key.Length - "_Title".Length));
-			}
-			string text = "";
-			foreach (string prefix in prefixes)
-			{
-				int misses = 0;
-				for (int i = 1; i <= 150 && misses < 8; i++)
-				{
-					string k = prefix + "_Text_" + i;
-					string t = Loc.Game(k, "");
-					if (t == k || t.Trim().Length == 0 || t.IndexOf("need translation", StringComparison.OrdinalIgnoreCase) >= 0)
-					{
-						misses++;
-						continue;
-					}
-					misses = 0;
-					text = t.Trim();
-				}
-				if (text.Length > 0)
-				{
-					break;
-				}
-			}
+			List<string> pages = SceneTexts.Pages(scene);
+			string text = pages.Count > 0 ? pages[pages.Count - 1] : "";
 			if (SceneTexts.Buttons(scene).Count == 0 || text.Length == 0)
 			{
 				text = EventText(scene);   // no answers: how it opens
 			}
 			else
 			{
-				string hero = ParametersManager.Instance != null ? ParametersManager.Instance.HeroName : null;
-				text = text.Replace("<username>", string.IsNullOrEmpty(hero) ? "Brante" : hero);
-				if (text.Length > 600)
-				{
-					int cut = text.LastIndexOfAny(new[] { '.', '!', '?', '\u2026' }, 600);
-					text = cut > 150 ? text.Substring(0, cut + 1) : text.Substring(0, 600) + "\u2026";
-				}
+				text = CutAtSentence(SceneTexts.WithHero(text, HeroName()), 600, 150);
 			}
 			_sceneTexts[scene + "|" + Loc.Language()] = text;
 			return text;
+		}
+
+		// A window's title along its top.
+		private static TextMeshProUGUI WindowTitle(Transform parent, string text, float size, float height)
+		{
+			TextMeshProUGUI title = AddLabel(parent, "Title", text, size, Palette.Ink, false);
+			title.alignment = TextAlignmentOptions.MidlineLeft;
+			RectTransform trt = title.rectTransform;
+			trt.anchorMin = new Vector2(0f, 1f);
+			trt.anchorMax = new Vector2(1f, 1f);
+			trt.pivot = new Vector2(0.5f, 1f);
+			trt.anchoredPosition = new Vector2(0f, -20f);
+			trt.sizeDelta = new Vector2(-120f, height);
+			return title;
+		}
+
+		// A pop-up box, top-left pivoted, outlined, its children stacked and
+		// its height their sum.
+		private static GameObject PopupBox(string name, Transform parent, Vector2 size, RectOffset padding, float spacing)
+		{
+			GameObject go = CreateUiObject(name, parent);
+			RectTransform rt = go.GetComponent<RectTransform>();
+			rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
+			rt.sizeDelta = size;
+			Image bg = go.AddComponent<Image>();
+			bg.color = Palette.PaperLight;
+			bg.raycastTarget = false;
+			Outline outline = go.AddComponent<Outline>();
+			outline.effectColor = Palette.Dark;
+			outline.effectDistance = new Vector2(2f, -2f);
+			VerticalLayoutGroup v = go.AddComponent<VerticalLayoutGroup>();
+			v.padding = padding;
+			v.spacing = spacing;
+			v.childControlWidth = true;
+			v.childControlHeight = true;
+			v.childForceExpandWidth = true;
+			v.childForceExpandHeight = false;
+			go.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+			return go;
+		}
+
+		// dev-pick: scroll the tree so drawn column `ci` is in view
+		private static void DevScrollTo(int ci)
+		{
+			RectTransform content = _historyList as RectTransform;
+			float vw = _historyScroll.viewport != null ? _historyScroll.viewport.rect.width : 1000f;
+			float range = content.rect.width - vw;
+			if (range > 1f)
+			{
+				_historyScroll.horizontalNormalizedPosition = Mathf.Clamp01((30f + (ci - 1) * TreeColW) / range);
+			}
+			Canvas.ForceUpdateCanvases();
+		}
+
+		private static string HeroName()
+		{
+			return ParametersManager.Instance != null ? ParametersManager.Instance.HeroName : null;
+		}
+
+		// `text` cut at the last sentence end before `max` characters (one
+		// at least `min` in), else at `max` with an ellipsis.
+		private static string CutAtSentence(string text, int max, int min)
+		{
+			if (text.Length <= max)
+			{
+				return text;
+			}
+			int cut = text.LastIndexOfAny(new[] { '.', '!', '?', '\u2026' }, max);
+			return cut > min ? text.Substring(0, cut + 1) : text.Substring(0, max) + "\u2026";
 		}
 
 		// What an event says when it opens, for its box's pop-up: its first
@@ -3588,41 +3617,12 @@ namespace Doorstop
 				return "<i>" + Loc.T(Loc.K.OutcomeNote) + "</i>";
 			}
 			string happens = "<i>" + Loc.T(Loc.K.EventHappens) + "</i>";
-			List<string> prefixes = new List<string> { scene };
-			string key = SceneEffects.TitleKey(scene);
-			if (!string.IsNullOrEmpty(key) && key.EndsWith("_Title", StringComparison.Ordinal))
-			{
-				prefixes.Add(key.Substring(0, key.Length - "_Title".Length));
-			}
-			string text = "";
-			foreach (string prefix in prefixes)
-			{
-				for (int i = 1; i <= 3 && text.Length == 0; i++)
-				{
-					string k = prefix + "_Text_" + i;
-					string t = Loc.Game(k, "");
-					if (t != k && t.IndexOf("need translation", StringComparison.OrdinalIgnoreCase) < 0)
-					{
-						text = t.Trim();
-					}
-				}
-				if (text.Length > 0)
-				{
-					break;
-				}
-			}
-			if (text.Length == 0)
+			List<string> pages = SceneTexts.Pages(scene);
+			if (pages.Count == 0)
 			{
 				return happens;
 			}
-			string hero = ParametersManager.Instance != null ? ParametersManager.Instance.HeroName : null;
-			text = text.Replace("<username>", string.IsNullOrEmpty(hero) ? "Brante" : hero);
-			text = SceneEffects.NobleParticle(text);
-			if (text.Length > 420)
-			{
-				int cut = text.LastIndexOfAny(new[] { '.', '!', '?', '\u2026' }, 420);
-				text = cut > 120 ? text.Substring(0, cut + 1) : text.Substring(0, 420) + "\u2026";
-			}
+			string text = CutAtSentence(SceneTexts.WithHero(pages[0], HeroName()), 420, 120);
 			return text + "\n" + happens;
 		}
 
@@ -4462,26 +4462,8 @@ namespace Doorstop
 		private static void BuildTablePopup(Transform panel)
 		{
 			_tableBox = panel as RectTransform;
-			GameObject go = CreateUiObject("TablePopup", panel);
+			GameObject go = PopupBox("TablePopup", panel, new Vector2(380f, 60f), new RectOffset(14, 14, 10, 12), 0f);
 			_tablePopup = go.GetComponent<RectTransform>();
-			_tablePopup.anchorMin = new Vector2(0f, 1f);
-			_tablePopup.anchorMax = new Vector2(0f, 1f);
-			_tablePopup.pivot = new Vector2(0f, 1f);
-			_tablePopup.sizeDelta = new Vector2(380f, 60f);
-			Image bg = go.AddComponent<Image>();
-			bg.color = Palette.PaperLight;
-			bg.raycastTarget = false;
-			Outline outline = go.AddComponent<Outline>();
-			outline.effectColor = Palette.Dark;
-			outline.effectDistance = new Vector2(2f, -2f);
-			VerticalLayoutGroup v = go.AddComponent<VerticalLayoutGroup>();
-			v.padding = new RectOffset(14, 14, 10, 12);
-			v.childControlWidth = true;
-			v.childControlHeight = true;
-			v.childForceExpandWidth = true;
-			v.childForceExpandHeight = false;
-			ContentSizeFitter fit = go.AddComponent<ContentSizeFitter>();
-			fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 			_tablePopupText = AddLabel(go.transform, "Text", "", 18f, Palette.Ink, false);
 			_tablePopupText.enableWordWrapping = true;
 			_tablePopupText.overflowMode = TextOverflowModes.Overflow;
@@ -4566,27 +4548,8 @@ namespace Doorstop
 		// cannot steal the hover from the node under it.
 		private static void BuildPopup(Transform box)
 		{
-			GameObject go = CreateUiObject("Popup", box);
+			GameObject go = PopupBox("Popup", box, new Vector2(PopupWidth, 100f), new RectOffset(16, 16, 12, 14), 6f);
 			_popup = go.GetComponent<RectTransform>();
-			_popup.anchorMin = new Vector2(0f, 1f);
-			_popup.anchorMax = new Vector2(0f, 1f);
-			_popup.pivot = new Vector2(0f, 1f);
-			_popup.sizeDelta = new Vector2(PopupWidth, 100f);
-			Image bg = go.AddComponent<Image>();
-			bg.color = Palette.PaperLight;
-			bg.raycastTarget = false;
-			Outline outline = go.AddComponent<Outline>();
-			outline.effectColor = Palette.Dark;
-			outline.effectDistance = new Vector2(2f, -2f);
-			VerticalLayoutGroup v = go.AddComponent<VerticalLayoutGroup>();
-			v.padding = new RectOffset(16, 16, 12, 14);
-			v.spacing = 6f;
-			v.childControlWidth = true;
-			v.childControlHeight = true;
-			v.childForceExpandWidth = true;
-			v.childForceExpandHeight = false;
-			ContentSizeFitter fit = go.AddComponent<ContentSizeFitter>();
-			fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
 			_popupText = AddLabel(go.transform, "Text", "", 19f, Palette.Ink, false);
 			_popupText.enableWordWrapping = true;
@@ -6915,14 +6878,7 @@ namespace Doorstop
 							continue;
 						}
 						int ci = _drawCols.FindIndex(c => c.Scene == hit.Col.Scene);   // drawn index: events take columns
-						RectTransform content = _historyList as RectTransform;
-						float vw = _historyScroll.viewport != null ? _historyScroll.viewport.rect.width : 1000f;
-						float range = content.rect.width - vw;
-						if (range > 1f)
-						{
-							_historyScroll.horizontalNormalizedPosition = Mathf.Clamp01((30f + (ci - 1) * TreeColW) / range);
-						}
-						Canvas.ForceUpdateCanvases();
+						DevScrollTo(ci);
 						hit.Img.GetComponent<TreeHover>().OnHover(true);
 						ModLog.Info("DEV PICK: hovering " + l.Substring(6));
 						continue;
@@ -6938,14 +6894,7 @@ namespace Doorstop
 							continue;
 						}
 						int ci = _drawCols.FindIndex(c => c.Scene == sc);
-						RectTransform content = _historyList as RectTransform;
-						float vw = _historyScroll.viewport != null ? _historyScroll.viewport.rect.width : 1000f;
-						float range = content.rect.width - vw;
-						if (range > 1f)
-						{
-							_historyScroll.horizontalNormalizedPosition = Mathf.Clamp01((30f + (ci - 1) * TreeColW) / range);
-						}
-						Canvas.ForceUpdateCanvases();
+						DevScrollTo(ci);
 						th.OnHover(true);
 						ModLog.Info("DEV PICK: hovering title of " + sc);
 						continue;

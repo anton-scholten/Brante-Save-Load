@@ -583,6 +583,24 @@ namespace Doorstop
 		// "not shown yet" guards are left out; so are Post and default labels.
 		public static List<SceneEffects.Effect> Gate(string scene, out List<KeyValuePair<string, string>> labels)
 		{
+			// fixed data: worked out once per scene (the destiny pop-ups ask
+			// on every hover), handed out as copies the caller may change
+			KeyValuePair<List<SceneEffects.Effect>, List<KeyValuePair<string, string>>> hit;
+			if (!_gates.TryGetValue(scene ?? "", out hit))
+			{
+				List<KeyValuePair<string, string>> labs;
+				List<SceneEffects.Effect> parts = GateCore(scene, out labs);
+				hit = _gates[scene ?? ""] = new KeyValuePair<List<SceneEffects.Effect>, List<KeyValuePair<string, string>>>(parts, labs);
+			}
+			labels = new List<KeyValuePair<string, string>>(hit.Value);
+			return new List<SceneEffects.Effect>(hit.Key);
+		}
+
+		private static readonly Dictionary<string, KeyValuePair<List<SceneEffects.Effect>, List<KeyValuePair<string, string>>>> _gates =
+			new Dictionary<string, KeyValuePair<List<SceneEffects.Effect>, List<KeyValuePair<string, string>>>>();
+
+		private static List<SceneEffects.Effect> GateCore(string scene, out List<KeyValuePair<string, string>> labels)
+		{
 			Load();
 			labels = new List<KeyValuePair<string, string>>();
 			List<SceneEffects.Effect> common = null;
@@ -659,7 +677,7 @@ namespace Doorstop
 										simple.Add(be);
 									}
 								}
-								shared = shared == null ? simple : shared.FindAll(x => simple.Exists(y => SameEffect(x, y)));
+								shared = shared == null ? simple : shared.FindAll(x => simple.Exists(y => x.Same(y)));
 							}
 							parts.AddRange(shared ?? new List<SceneEffects.Effect>());
 						}
@@ -675,7 +693,7 @@ namespace Doorstop
 					labs = labs == null ? new List<KeyValuePair<string, string>>(alt) : labs.FindAll(alt.Contains);
 				}
 				labs = labs ?? new List<KeyValuePair<string, string>>();
-				common = common == null ? parts : common.FindAll(x => parts.Exists(y => SameEffect(x, y)));
+				common = common == null ? parts : common.FindAll(x => parts.Exists(y => x.Same(y)));
 				commonLabels = commonLabels == null ? labs : commonLabels.FindAll(labs.Contains);
 			}
 			foreach (KeyValuePair<string, string> l in commonLabels ?? labels)
@@ -686,11 +704,6 @@ namespace Doorstop
 				}
 			}
 			return common ?? new List<SceneEffects.Effect>();
-		}
-
-		private static bool SameEffect(SceneEffects.Effect a, SceneEffects.Effect b)
-		{
-			return a.Kind == b.Kind && a.Name == b.Name && a.Op == b.Op && a.Value == b.Value && a.Or == b.Or;
 		}
 
 		private static void Flatten(Node n, List<Node> into)
