@@ -557,7 +557,7 @@ community event sheet (`data/events.json`).
   that ending earns only the true death, in the game too.
 - **"Comes from" is one line per scene.** `StatPanel.EarnedByLines` groups
   a destiny's earners by scene title: a scene that earns it by itself or
-  with every answer (Father's Sword, The Ant Farm, Forbidden Love) is its
+  with every answer (Forbidden Love) is its
   title alone - listed per answer it read as the same line twice - else
   each earning answer with what it needs (`Needs`: and-requirements, then
   the or-group; Last Respects: the Nobleman's Sacrament, or Nobility >= 6
@@ -821,6 +821,15 @@ community event sheet (`data/events.json`).
   not run the interludes - and their stat changes - a second time.
   `Hero.Opened` (from the save's `SceneState`) tells the tree which one it
   has.
+- **A consequence page's "Next" button earns nothing unless it is wired.**
+  `ConsequenceNextButton.NextButton()` earns its objective only when a
+  button's click calls it; every consequence page's button calls the
+  generator's `NPS_PanelNextButton_Click` instead. `tools/scene_objectives.py`
+  counts a `ConsequenceNextButton` only when some component's persistent
+  call names `NextButton` and targets it: unchecked, "Keep playing with
+  Mother" (The Ant Farm) and "Agree with Father" (Father's Sword) were
+  shown earning An Epiphany and The Fencing Lesson, which only the other
+  answer earns. Those two were the only such rows (201 -> 199).
 - **Objectives unlocked by an answer or a scene are simulated too.**
   `scene-objectives.tsv` (from `tools/scene_objectives.py`) lists every
   `KeyChapterParametersController.EarnObjective` target by scene and button

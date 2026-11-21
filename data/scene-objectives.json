@@ -18,24 +18,10 @@
   },
   {
    "scene": "01.N.01_Mama",
-   "button": 1,
-   "order": 0,
-   "objective": "Curiosity",
-   "enum": 10
-  },
-  {
-   "scene": "01.N.01_Mama",
    "button": 2,
    "order": 0,
    "objective": "Curiosity",
    "enum": 10
-  },
-  {
-   "scene": "01.N2.01_Papa",
-   "button": 1,
-   "order": 0,
-   "objective": "Activity",
-   "enum": 9
   },
   {
    "scene": "01.N2.01_Papa",

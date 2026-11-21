@@ -179,10 +179,12 @@ def main():
             return None
 
         generators, nexts, answers = [], [], []
+        raws = []                              # every MonoBehaviour's raw data (click targets)
         for obj in env.objects:
             if obj.type.name != "MonoBehaviour":
                 continue
             data = obj.get_raw_data()
+            raws.append(data)
             file_id, path_id = struct.unpack_from("<iq", data, 16)
             if not (file_id > 0 and file_id <= len(externals)
                     and externals[file_id - 1].endswith("globalgamemanagers.assets")):
@@ -197,7 +199,7 @@ def main():
             if cls == "ConsequenceNextButton":
                 show = rd.boolean()
                 target = objective(*rd.pptr())
-                nexts.append({"go": go_id, "show": show, "objective": target})
+                nexts.append({"go": go_id, "id": obj.path_id, "show": show, "objective": target})
                 continue
             if cls in ("SceneConsequenceGenerator", "UniversalParametersGenerator"):
                 for _ in range(6 if cls == "UniversalParametersGenerator" else 8):
@@ -272,8 +274,22 @@ def main():
             rows.append({"scene": scene, "button": button,
                          "key": answer["key"] if answer else "",
                          "objectives": targets})
+        # A ConsequenceNextButton earns only from its NextButton(), called
+        # by a button's click: a persistent call naming it and that method.
+        # The consequence pages' buttons call the generator's
+        # NPS_PanelNextButton_Click instead, so most of these never run
+        # (Father's Sword's "Agree with Father", The Ant Farm's "Keep
+        # playing with Mother" named a destiny they do not earn).
+        method = struct.pack("<i", len(b"NextButton")) + b"NextButton"
+
+        def wired(nxt):
+            target = struct.pack("<iq", 0, nxt["id"])
+            return any(method in raw and target in raw for raw in raws)
+
         for nxt in nexts:
             if not nxt["show"] or not nxt["objective"]:
+                continue
+            if not wired(nxt):
                 continue
             answer = owner(nxt["go"])
             button = (answer.get("button_name") or answer["button"]) if answer else 0

@@ -1631,3 +1631,18 @@ scenes) was compared with the tables the mod extracts from the game.
   translation key `Arianna` reads "Aylis"), the Archduke is
   `TarkviniyMilanid` (asset `TMilanid`). Aylis's relation never changes;
   her status does (the chapter-3 tracks) and `052.040.010_Case5` tests it.
+
+## Unwired consequence buttons (21 Nov 2026)
+
+- `ConsequenceNextButton` (`ShowObjective`, `Objective`) earns its objective
+  in `NextButton()`, which nothing in code calls: only a button's persistent
+  `onClick` could. In every scene the consequence pages' buttons call
+  `SceneConsequenceGenerator.NPS_PanelNextButton_Click`; no `onClick`
+  targets a `ConsequenceNextButton`. Two of them still name an objective
+  with `ShowObjective` on - `01.N.01_Mama` answer 1 (Curiosity, "An
+  Epiphany") and `01.N2.01_Papa` answer 1 (Activity, "The Fencing
+  Lesson") - and in the game neither answer earns it: only answer 2's
+  `SceneConsequenceGenerator` does. `tools/scene_objectives.py` now drops
+  unwired ones (a persistent call is the method name, length-prefixed, and
+  the target's PPtr in the button's raw data).
+
