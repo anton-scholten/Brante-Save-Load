@@ -43,7 +43,7 @@ namespace Doorstop
 			{
 				List<KeyValuePair<string, string>> buttons = SceneTexts.Buttons(scene);
 				List<SceneEffects.Effect> opening = SceneEffects.SceneChanges(scene);
-				string title = SceneTexts.Title(scene) ?? "";
+				string title = Placeholders(SceneTexts.Title(scene));
 				string text = Pages(scene);
 				if (buttons.Count == 0 && opening.Count == 0 && title.Length == 0 && text.Length == 0)
 				{
@@ -65,8 +65,8 @@ namespace Doorstop
 					int n = SceneParams.ButtonOf(b.Key);
 					List<SceneEffects.Effect> all = SceneEffects.Shown(scene, b.Key);
 					Row(sb, "", "", "", "", "", "", "", n.ToString(),
-						SceneEffects.NobleParticle(SceneTexts.Name(scene, b.Key) ?? "").Trim(),
-						SceneEffects.NobleParticle(b.Value ?? "").Trim(),
+						Placeholders(SceneTexts.Name(scene, b.Key)),
+						Placeholders(b.Value),
 						StatPanel.NeedsText(all),
 						Changes(all.FindAll(e => !e.IsRequirement && e.Kind != 'E')),
 						Destinies(all),
@@ -165,7 +165,15 @@ namespace Doorstop
 		// The scene's text pages, joined by " | ".
 		private static string Pages(string scene)
 		{
-			return string.Join(" | ", SceneTexts.Pages(scene).ConvertAll(t => SceneTexts.WithHero(t, "[name]")).ToArray());
+			return string.Join(" | ", SceneTexts.Pages(scene).ConvertAll(Placeholders).ToArray());
+		}
+
+		// The game's placeholders kept visible for a reader: the hero's name
+		// and the "El" of a family ennobled by the sword, which the game
+		// fills in as it plays.
+		private static string Placeholders(string text)
+		{
+			return (text ?? "").Replace("<username>", "[name]").Replace("<el>", "[El]").Trim();
 		}
 
 		private static string Changes(List<SceneEffects.Effect> effects)

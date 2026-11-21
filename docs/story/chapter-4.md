@@ -4,6 +4,41 @@
 
 The scenes of every post are below; each post's own: [Inquisitor (Priest track)](chapter-4-inquisitor.md), [Judge (Noble track)](chapter-4-judge.md), [Rebel (Lotless track)](chapter-4-rebel.md).
 
+<a id="peacepicture"></a>
+### Chapter IV. Peace Time
+
+`PeacePicture` · page
+
+> The illegitimate daughter of your mother Lydia. She has never met her real father.  
+> Grew up in a difficult position of an unacknowledged child. Since your departure she has got involved in social struggle in Anizotte.
+
+<details><summary>All 7 text pages</summary>
+
+The illegitimate daughter of your mother Lydia. She has never met her real father.  
+Grew up in a difficult position of an unacknowledged child. Since your departure she has got involved in social struggle in Anizotte.
+
+A priestess who serves the Inquisition in her native Anizotte.  
+A zealous adversary of witchcraft and heresies. She relentlessly follows the canons of the Old Faith.
+
+A humble commoner from the outskirts of Anizotte.  
+Neither her lowly origins nor the fact that your grandfather directly forbade the marriage stopped your father from taking her into his home.  
+Mother's health got noticeably worse during your absence.
+
+The youngest child in the family and your only full sibling.  
+He has been secretive, inept, and aloof since he was a little boy. Started reading sacred texts at a very young age.  
+Still hasn't found a place for himself in society.
+
+Daughter of Tarquinius Milanidas, the Archduke of the Magra province. She is the embodiment of Arknian beauty and pride.  
+Octavia has great influence over Anizotte's high society.
+
+Your former neighbor.  
+Sophia is waging a struggle against the Empire’s order. She is the leader of the secret society named the Last Straw.
+
+Your childhood friend.  
+After returning from the capital, he serves in the Imperial Legion of Magra under the command of Dorius Otton.
+
+</details>
+
 <a id="051-010-010-scene-1"></a>
 ### A Reception at the Brante Residence
 
@@ -178,12 +213,12 @@ There is no place like home.
 
 Over the past few years, your family has grown wealthy beyond imagination.  
 Whatever money you had, you took good care of and made more — all thanks to your uncanny aptitude for profit. The word “hardship” is long forgotten at home. Whatever luxury you crave, you can afford it.  
-The entire city knows that the Brante family is an affluent one.
+The entire city knows that the [El] Brante family is an affluent one.
 
 It is late in the evening on a sultry summer day. The sun has set, but the heat still lingers in the garden.  
 Father slowly measures the porch with his steps, striding from one corner to the other.
 
-“My son! Look how we’ve prospered! If you ask me, we Brantes have grown too used to our humble way of life. We don’t have to be thrifty anymore. Let’s invest our wealth in the family — we won’t run out of money anytime soon!
+“My son! Look how we’ve prospered! If you ask me, we [El] Brantes have grown too used to our humble way of life. We don’t have to be thrifty anymore. Let’s invest our wealth in the family — we won’t run out of money anytime soon!
 
 “You’ve done so much to ensure our prosperity, son — it’s only fair for you to decide where we should invest our fortune.”
 
@@ -195,7 +230,7 @@ How will you spend your wealth?
 | # | Choice | Requires | Effects | Destinies | Sets |
 |---|---|---|---|---|---|
 | 1 | **Invest in the house**<br>It is time your family estate gets the maintenance it deserves. | - | Unity +1, Willpower +5, Wealth -2 | A Family of Means | - |
-| 2 | **Host a gala**<br>It is time you show the nobles of the city how the Brantes have flourished. | not Branded by Dishonor | Reputation +1, Willpower +5, Wealth -2 | A Family of Means | - |
+| 2 | **Host a gala**<br>It is time you show the nobles of the city how the [El] Brantes have flourished. | not Branded by Dishonor | Reputation +1, Willpower +5, Wealth -2 | A Family of Means | - |
 | 3 | **Expand the library**<br>The books will preserve precious knowledge within your estate for centuries to come. | - | Theology +1, Diplomacy +1, Manipulation +1, Scheming +1, Eloquence +1, Valor +1, Wealth -1 | A Family of Means | - |
 
 <a id="051-090-060-gloriousfamily"></a>
@@ -1552,7 +1587,7 @@ The impending bankruptcy has driven your father to desperation.
 “My son, don’t you understand? We can’t afford to tighten our belts! Our status demands that we look the part. We have to attend balls, host parties…”
 
 You grimly promise to rescue the family finances. After all, this was your doing.  
-You have no choice but to turn to moneylenders from the Silver District. They eagerly offer a large loan to the noble Brante family.
+You have no choice but to turn to moneylenders from the Silver District. They eagerly offer a large loan to the noble [El] Brante family.
 
 Before long, the family is swimming in debt. Your desk disappears beneath piles of receipts and promissory notes.
 

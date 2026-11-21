@@ -2,6 +2,30 @@
 
 [All chapters](README.md)
 
+<a id="cutscene-6-revoltbegins"></a>
+### Cutscene: the Revolt begins
+
+`Cutscene_6_RevoltBegins` · page
+
+> At last, the day has come which would decide my fate
+
+<details><summary>All 3 text pages</summary>
+
+At last, the day has come which would decide my fate
+
+as well as that of my family and, perhaps, the entire Empire.
+
+The day of the Revolt.
+
+</details>
+
+<a id="insurrectionpicture"></a>
+### InsurrectionPicture
+
+`InsurrectionPicture` · page
+
+> Chapter V. The Revolt
+
 <a id="insurrectionchapterstart"></a>
 ### Chapter V. The Revolt
 
@@ -177,7 +201,7 @@ How will you use their support at this crucial moment?
 The Court of Honor has meted out its justice. Victorious, you return from the Overseer’s headquarters to Anizotte, accompanied by a squadron of Legion soldiers.  
 The soldiers have been assigned to you for the purpose of carrying out Gaius Tempest’s personal orders.
 
-“ Brante, I’m entrusting you with an affair of the utmost importance. During the last year, Anizotte has veered dangerously close to a revolt. Commoners who refuse to know their place, conspirators, New Faith fanatics...  
+“[El] Brante, I’m entrusting you with an affair of the utmost importance. During the last year, Anizotte has veered dangerously close to a revolt. Commoners who refuse to know their place, conspirators, New Faith fanatics...  
 “I have no choice — I must build an army and put an end to these disturbances.
 
 “Sadly, Sir El Borne appears to be too merciful and incapable of dealing with the unrest. Prove to me that you can take his place. Maintain order in the city until my arrival.”
@@ -522,7 +546,7 @@ And soon your city will be free as well.
 
 The first rays of the morning sun reach the windows of your family home. It would be so easy to forget about the impending Revolt here within these old, familiar walls...  
 But the calm before the storm will soon be over, and yesterday’s turmoil will return.  
-There are only a handful of hours left. The Brantes have to decide what to do. Should the family stay in the city and prepare to weather the storm? Should they join the struggle? Or should they simply avoid it?
+There are only a handful of hours left. The [El] Brantes have to decide what to do. Should the family stay in the city and prepare to weather the storm? Should they join the struggle? Or should they simply avoid it?
 
 After a sleepless night, you gather in the sitting room as a family once again.  
 Father is the first to speak. His determined, yet surprisingly calm voice fills the room.
@@ -543,10 +567,10 @@ Father is silent for a while. Then he takes his sword off the wall and places it
 His voice rings with the coldness of steel.
 
 “We will stay in our city and protect our home.  
-”Whatever danger we might face today, the Brantes will not surrender their home, their status, or their place in this world!”
+”Whatever danger we might face today, the [El] Brantes will not surrender their home, their status, or their place in this world!”
 
 None of you have ever seen Father so filled with resolve. But he still seeks your support.  
-Robert, the patriarch of the Brante family, meets your gaze.
+Robert, the patriarch of the [El] Brante family, meets your gaze.
 
 “My son... I know you’re going to make your own decision. You’re too deeply involved in this conflict to just stand aside.  
 “But right now, I’m talking about our family here, [name]. Our family must remain out of harm’s way, no matter what you decide to do!”
@@ -556,9 +580,9 @@ Robert, the patriarch of the Brante family, meets your gaze.
 | # | Choice | Requires | Effects | Destinies | Sets |
 |---|---|---|---|---|---|
 | 1 | **Agree with Father and protect your home**<br>Father is right. The family must remain in the city and protect their home. | - | Willpower +5 | The Family is in the City | ОставитьСемьюВГороде=Yes |
-| 2 | **The Brantes will flee the city**<br>You insist that Anizotte has grown too dangerous. Your family cannot stay here. Regardless of what you decide to do, they must flee the city before it is too late. | Unity ≥ 6 or Robert Brante ≥ 2 | Willpower -5, Robert Brante: FLED | - | - |
-| 3 | **The Brantes will oppose the Revolt**<br>You and Stephan convince Father to openly side with the Overseer and work to quash the Revolt. | Reputation ≥ 5 and Robert Brante ≥ 2 and Stephan Brante: AT HOME and not The Rebel | Nobles +1, Robert Brante: DEFENDER OF THE EMPIRE | The Defender of the Empire, The Family is in the City | ВыступитьЗаИмперию=Yes, ОставитьСемьюВГороде=Yes |
-| 4 | **The Brantes will side with the Revolt**<br>You and Gloria convince Father to support the rebels and fight the powers that be. | Unity ≥ 5 and Robert Brante ≥ 2 and Gloria: AT HOME and Stephan Brante: not AT HOME and not The Defender of the Empire | Common Folk +1, Robert Brante: REBEL | The Rebel, The Family is in the City | ВысступитьЗаВосстание=Yes, ОставитьСемьюВГороде=Yes |
+| 2 | **The [El] Brantes will flee the city**<br>You insist that Anizotte has grown too dangerous. Your family cannot stay here. Regardless of what you decide to do, they must flee the city before it is too late. | Unity ≥ 6 or Robert Brante ≥ 2 | Willpower -5, Robert Brante: FLED | - | - |
+| 3 | **The [El] Brantes will oppose the Revolt**<br>You and Stephan convince Father to openly side with the Overseer and work to quash the Revolt. | Reputation ≥ 5 and Robert Brante ≥ 2 and Stephan Brante: AT HOME and not The Rebel | Nobles +1, Robert Brante: DEFENDER OF THE EMPIRE | The Defender of the Empire, The Family is in the City | ВыступитьЗаИмперию=Yes, ОставитьСемьюВГороде=Yes |
+| 4 | **The [El] Brantes will side with the Revolt**<br>You and Gloria convince Father to support the rebels and fight the powers that be. | Unity ≥ 5 and Robert Brante ≥ 2 and Gloria: AT HOME and Stephan Brante: not AT HOME and not The Defender of the Empire | Common Folk +1, Robert Brante: REBEL | The Rebel, The Family is in the City | ВысступитьЗаВосстание=Yes, ОставитьСемьюВГороде=Yes |
 
 <a id="060-010-020-godswill"></a>
 ### By Their Will
@@ -825,7 +849,7 @@ The rebelling citizens demand that the prefect take a side.
 This decision must not be made without you. You have to get inside.  
 You push your way through the dense crowd until you reach the gendarmes.
 
-“Oh! Sir Brante! I thought you’d been captured.  
+“Oh! Sir [El] Brante! I thought you’d been captured.  
 “Men! Let the judge through!
 
 “Tell the judges to make up their minds! The people haven’t attacked us yet, but you never know...”
@@ -1105,7 +1129,7 @@ The fate of this moment hangs by a thread.
 The prefect’s voice booms over the square, raspy with tension.  
 The greatest enemy of the rite of single combat has no choice but to announce the duel.
 
-“Dorius of the Otton dynasty and [name] of the Brante bloodline will now cross swords in mortal combat! I summon their ancestors to bear witness to their duel!  
+“Dorius of the Otton dynasty and [name] of the [El] Brante bloodline will now cross swords in mortal combat! I summon their ancestors to bear witness to their duel!  
 “May their Blood Tides meet in sacred battle and determine the truth. May the Younger witness our trial and behold the power of His inevitable Law!”
 
 The mob that surrounds you falls silent. The whispering wind is the only sound you hear.  
@@ -1126,7 +1150,7 @@ Cold steel slices through your jacket and sinks into your flesh.
 But you manage to fight through the pain. With a burst of strength, you shove Otton’s blade away.
 
 The two of you stand face to face, panting loudly. Warm blood drips down onto your clothes.  
-There are whispers in the mob. “ Brante’s done for! Why did he even challenge an Arknian?”
+There are whispers in the mob. “[El] Brante’s done for! Why did he even challenge an Arknian?”
 
 Otton allows himself an arrogant chuckle.
 
@@ -1143,7 +1167,7 @@ The next moment will decide the outcome of the duel.
 |---|---|---|---|---|---|
 | 1 | **Defeat Otton**<br>Your skill with the sword is great — great enough to rival even the most skilled swordsman in Magra. | Valor = 20 | The Revolt -1, Troops +1, Power -1, Nobles +1, Common Folk +1, Willpower -5, Dorius Otton: KILLED IN A DUEL, Augustin El Borne: DEFENDER OF THE EMPIRE | - | - |
 | 2 | **Call upon your forebear**<br>Otton’s bloodline gives him strength, but you are not alone in this battle either. | Valor ≥ 16 and Gregor Brante ≥ 2 and Ennobled by the Sword | The Revolt -1, Troops +1, Power -1, Nobles +1, Common Folk +1, Dorius Otton: KILLED IN A DUEL, Augustin El Borne: DEFENDER OF THE EMPIRE | - | - |
-| 3 | **Die with honor**<br>You cannot win, but you will face your inevitable end with honor, for the sake of the Brante bloodline. | - | Deaths +4 | True Death | - |
+| 3 | **Die with honor**<br>You cannot win, but you will face your inevitable end with honor, for the sake of the [El] Brante bloodline. | - | Deaths +4 | True Death | - |
 | 4 | **Overcome death**<br>You muster all your inner strength to defeat the Arknian. | Valor = 16...19 and Willpower ≥ 10 | The Revolt -1, Willpower -20, Nobles +1, Troops +1, Common Folk +1, Power -1, Dorius Otton: KILLED IN A DUEL, Augustin El Borne: DEFENDER OF THE EMPIRE | - | - |
 
 <a id="060-010-110-newfaithprocession"></a>

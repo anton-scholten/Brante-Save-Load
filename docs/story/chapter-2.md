@@ -2,6 +2,13 @@
 
 [All chapters](README.md)
 
+<a id="teenagerpicture"></a>
+### Chapter II. Adolescence
+
+`TeenagerPicture` · page
+
+*No text of its own: the game fills it in as it plays, or does not use the scene.*
+
 <a id="teenchapterstart"></a>
 ### Chapter II. Adolescence
 
@@ -1099,3 +1106,27 @@ What are you going to tell her?
 |---|---|---|---|---|---|
 | 1 | **Convince Gloria to leave the society**<br>If anyone ever hears about this poets’ gathering, it could be bad for Gloria. | - | Nobility +1, Spirituality +1 | Gloria’s Secret | - |
 | 2 | **Keep Gloria’s secret**<br>You promise to keep your sister’s secret safe and help her. | - | Ingenuity +1, Gloria +1 | Gloria’s Secret | - |
+
+<a id="teenfinishscreen"></a>
+### End of Chapter II. Adolescence
+
+`TeenFinishScreen` · page
+
+> Important life events that had happened to you in this Сhapter.
+
+<details><summary>All 5 text pages</summary>
+
+Important life events that had happened to you in this Сhapter.
+
+Personal qualities that you have accumulated in Adolescence.  
+All your qualities from Childhood and Adolescence will now convert into adult qualities.
+
+You survived your first clashes with the greater world around you and felt the tingle of emotion for the first time.  
+You were taught by the school and the streets. You explored the city of your birth and learned from its tales. You witnessed firsthand the events that will be remembered by history for all time.  
+It is time now for you to leave your family home.
+
+Destiny
+
+Personality
+
+</details>

@@ -2,6 +2,37 @@
 
 [All chapters](README.md) · [the chapter's other scenes](chapter-4.md)
 
+<a id="peacechapterstart-prefect"></a>
+### Chapter IV. Peace Time
+
+`PeaceChapterStart_Prefect` · page  
+**Track:** Judge (Noble track)
+
+> 'Occupation' screen is now available
+
+<details><summary>All 9 text pages</summary>
+
+'Occupation' screen is now available
+
+Judge
+
+Important life events that may happen to you during this Chapter.
+
+Your personal qualities in this Chapter. They will be used for the rest of your life.
+
+The sections that open in this Chapter.
+
+You are back in your home province, but you are no longer the boy who left it by this very road four years ago.  
+You return a nobleman and a judge. You are continuing the family trade. You have returned to serve at the province’s prefecture.
+
+Destiny
+
+Personal Life
+
+New Sections
+
+</details>
+
 <a id="054-100-010-martiallaw"></a>
 ### March of the Desperate
 
@@ -710,7 +741,7 @@ He wears a high-priced frock coat made of light gray fabric. He wears no jewelry
 
 Egmont offers you a broad, suntanned hand. It is hard, work-weary, and eternally calloused. This is a man who has earned his fortune with the sweat of his brow.
 
-“Good afternoon, Judge Brante. We met recently about that newspaper business, but today I need to discuss a different matter with you.
+“Good afternoon, Judge [El] Brante. We met recently about that newspaper business, but today I need to discuss a different matter with you.
 
 “I came to talk to you on behalf of the manufacturers of Magra. As you know, the principal source of income in the province is the silver mines. Our mines provide silver for the sacramental rites conducted in temples all over the Empire.  
 ”But the upper vein of ore is nearly exhausted. We need to process new deposits that are lower down.
@@ -721,7 +752,7 @@ Egmont offers you a broad, suntanned hand. It is hard, work-weary, and eternally
 
 “But this restriction will harm not only the manufacturers and the miners, but the province as a whole! The silver trade will decline. We won’t have enough money to buy grain, and soon even the nobility will be impoverished!
 
-“I know that you, the judges of the Prefecture, are the ones who interpret the decrees from the capital. So I implore you, Sir Brante, to come to the aid of the honest tradesmen of Magra.  
+“I know that you, the judges of the Prefecture, are the ones who interpret the decrees from the capital. So I implore you, Sir [El] Brante, to come to the aid of the honest tradesmen of Magra.  
 ”Pass an amendment allowing the use of gunpowder in the silver mines.”
 
 You give Egmont a speculative glance and ask him why he has asked you, specifically, for help.
@@ -731,7 +762,7 @@ You give Egmont a speculative glance and ask him why he has asked you, specifica
 
 “It’s the only way for our province and for the Empire as a whole. Sure, Prefect El Borne has proclaimed as much himself. But, unfortunately, he’s a nobleman of the Sword first and foremost. He’s bound by the Blood Tide, by the power of the Overseer and the Arknians… so all his undertakings are doomed to failure.
 
-“If you, Sir Brante, truly care for the people, you need some powerful allies among the lowborn. Allies like me.  
+“If you, Sir [El] Brante, truly care for the people, you need some powerful allies among the lowborn. Allies like me.  
 ”Do this for me, and together we’ll change the fate of Magra.”
 
 Egmont extends his hand, hope in his eyes.  
@@ -1699,7 +1730,7 @@ More torch-carrying riders appear from around the corner, bearing standards of b
 The riders stop in front of your home. Their leader is none other than El Verman  
 The elderly Magistrate dismounts, checks his papers, and slowly walks up to your gate.
 
-“Robert and [name] Brante! I see no flag upon your gate, good sirs! That bodes ill on such a night!
+“Robert and [name] [El] Brante! I see no flag upon your gate, good sirs! That bodes ill on such a night!
 
 “You both stand accused of treason for joining El Borne’s plot against the Archduke’s lawful rule over his home province. Come out and face the justice of the nobility.”
 
@@ -1709,9 +1740,9 @@ Swords in hand, you walk to the gate together.
 
 “Ah, there they are, good sirs! You’ve managed to climb rather high since I saw you last, [name]. But I warned you you would never become the new prefect without my aid… I’m afraid you and your father will have to pay the price for your poor decisions. What a pity!”
 
-Calm and collected, you tell the Magistrate that he does not dare assault the Brantes. You hold far too lofty a position to be cut down is such a fashion. The Overseer will protect you.
+Calm and collected, you tell the Magistrate that he does not dare assault the [El] Brantes. You hold far too lofty a position to be cut down is such a fashion. The Overseer will protect you.
 
-“Come now, Sir Brante! The Overseer cannot save so much as a single life tonight. Every name on my long list claims the same protection. But they will all be judged and executed by the order and will of Archduke Milanidas, the one and only true ruler of this land!
+“Come now, Sir [El] Brante! The Overseer cannot save so much as a single life tonight. Every name on my long list claims the same protection. But they will all be judged and executed by the order and will of Archduke Milanidas, the one and only true ruler of this land!
 
 “You should accept defeat. Open the gate and face your sentence, and we’ll spare the rest of your family. After all, unlike you, they never sullied themselves with judicial service…”
 
@@ -1719,7 +1750,7 @@ El Verman strikes the gate with impatience.
 You and Father exchange glances. He sighs and begins walking toward the Magistrate.  
 But, instead of unlatching the gate, he suddenly stabs his sword through the rails.
 
-Robert Brante’s blade runs El Verman through. He collapses.  
+Robert [El] Brante’s blade runs El Verman through. He collapses.  
 Father dislodges his sword and steps to the side, emotionless, ready to defend himself.  
 You stand by his side.  
 The Magistrate’s body lies motionless in a pool of blood. He has died his true death.
@@ -1774,7 +1805,7 @@ Your eyes catch Father’s hunched silhouette beside you. His voice, right next 
 Your career has soared higher than anyone could have expected, and it shows no sign of faltering. You have reasserted the rights of the noble gentry; you have become a pillar of noble tradition, a prominent man within the aristocracy of Anizotte.  
 Overseer Gaius Tempest knows your name. The other judges are aware of your powerful connections and dare not question anything you do.
 
-As your successes mount, the only thing that weighs heavy on your soul is the collapse of the Brante family. But the city’s nobles have not learned of it just yet.  
+As your successes mount, the only thing that weighs heavy on your soul is the collapse of the [El] Brante family. But the city’s nobles have not learned of it just yet.  
 Worrisome thoughts plague your mind. How will this affect your standing when the news breaks?
 
 After another day of work, you return to the hotel suite where you now reside.  
@@ -1797,7 +1828,7 @@ You shout for the driver to steer clear of the threat, but another group of hors
 It is led by none other than Magistrate El Verman on horseback.  
 The aged ruler of the city points at your carriage and sneers.
 
-“Come out, Sir Brante! It’s time to pay for your obstinance!”
+“Come out, Sir [El] Brante! It’s time to pay for your obstinance!”
 
 Then, to your complete surprise, El Borne — whom you thought dead — weakly raises himself up from the cobblestones and groans.
 
@@ -1806,19 +1837,19 @@ Then, to your complete surprise, El Borne — whom you thought dead — weakly r
 But you are surrounded. There is no way out. All you can do now is accept the inevitable with dignity.  
 You calmly leave the carriage and stand tall before the Magistrate.
 
-“You have my thanks, Brante. First you had the audacity to reject my favor and protection, but then you handed the city over to me on a silver platter!
+“You have my thanks, [El] Brante. First you had the audacity to reject my favor and protection, but then you handed the city over to me on a silver platter!
 
 “I must say, I’m impressed — you’ve had an impressive career. But the harder you worked for your own ends, the more you consolidated our authority.  
 “If want to stay on top, you need friends in the right places. You backed the wrong horse, Brante!”
 
 The Magistrate gracefully dismounts.
 
-“[name] Brante, you stand accused of treason. You and the Overseer’s other cronies conspired against the Archduke’s lawful rule over his native province.”
+“[name] [El] Brante, you stand accused of treason. You and the Overseer’s other cronies conspired against the Archduke’s lawful rule over his native province.”
 
 El Borne moans faintly at the feet of his mortal enemy.  
 El Verman refuses to dignify him with so much as a glance.
 
-“The noble court awaits, Brante. A certain Arknian of great honor has a score to settle with you.”
+“The noble court awaits, [El] Brante. A certain Arknian of great honor has a score to settle with you.”
 
 You say nothing, clutching at the hilt of your sword.  
 The flickering light of the torches parts around you. The familiar form of Dorius Otton emerges from the darkness.
@@ -1835,7 +1866,7 @@ The flickering light of the torches parts around you. The familiar form of Doriu
 Otton takes off his jacket and draws his sword. He has clearly done this many times before. A blindfold is placed over his eyes.  
 Your head is covered by the same sack, this time knotted tightly around your neck.
 
-“Dorius of the Otton dynasty and [name] of the Brante bloodline will now cross swords in mortal combat! I summon their ancestors to bear witness to their duel! May their Blood Tides meet in sacred battle and determine the truth. May the Younger witness our trial and behold the power of His inevitable Law!”
+“Dorius of the Otton dynasty and [name] of the [El] Brante bloodline will now cross swords in mortal combat! I summon their ancestors to bear witness to their duel! May their Blood Tides meet in sacred battle and determine the truth. May the Younger witness our trial and behold the power of His inevitable Law!”
 
 A hand shoves a sword into yours.  
 You can barely breathe through the thick sackcloth. Your hands are shaking, unwilling to fight.  
@@ -1857,7 +1888,7 @@ Your head shrinks into your shoulders. You cannot allow yourself to breathe, wai
 Surprised by the voice, you take a deep breath.  
 The steel band you had felt around your chest is suddenly shattered.
 
-“You cannot possibly defeat him. But you can accept your death with dignity. Prove you’re worthy of the Brante name!”
+“You cannot possibly defeat him. But you can accept your death with dignity. Prove you’re worthy of the [El] Brante name!”
 
 You square your shoulders. The rope around your neck bothers you no longer.  
 You still cannot see a thing, but you have no need for sight now.
@@ -1953,9 +1984,9 @@ El Borne watches it all unfold, terrified.
 
 “What have we done, [name]?! This is how the common people use the freedom we’ve given them?! All our plans and good intentions — they’re going to drown it all in blood! No… no, I’m not letting any of those lunatics ruin my life’s work!
 
-“We must act, Brante — you and I. We started all this. Now we must end this calamity and save the city — even if it means violating our oaths and sacrificing our honor.
+“We must act, [El] Brante — you and I. We started all this. Now we must end this calamity and save the city — even if it means violating our oaths and sacrificing our honor.
 
-“Prepare yourself, Judge Brante. A storm is coming.”
+“Prepare yourself, Judge [El] Brante. A storm is coming.”
 
 </details>
 
@@ -2002,7 +2033,7 @@ Never before have the lowborn had such a dangerous weapon at their disposal.
 **Track:** Judge (Noble track)  
 **Opens when:** Justice ≥ 8 and one of: Mayer Egmont: MADE A DEAL or Mayer Egmont: TRUE DEATH
 
-> “You’ve already picked a side, [name] Brante. Now’s not the time to change it. Help me escape, and you’ll be one of the heroes of the uprising — but if you betray me, you’ll be one of its first victims.  
+> “You’ve already picked a side, [name] [El] Brante. Now’s not the time to change it. Help me escape, and you’ll be one of the heroes of the uprising — but if you betray me, you’ll be one of its first victims.  
 > “Hurry!”
 
 <details><summary>All 26 text pages</summary>
@@ -2028,7 +2059,7 @@ You are interrupted by loud footsteps down the hall, accompanied by angry shouts
 The gendarmes push another prisoner into the adjacent cell. Your heart skips a beat when you recognize him.
 
 “Do you know who I am? I own half the mines in Magra!  
-”Judge Brante! Your gendarmes dragged me here by force. Why didn’t you just summon me? I’d have come of my own free will!”
+”Judge [El] Brante! Your gendarmes dragged me here by force. Why didn’t you just summon me? I’d have come of my own free will!”
 
 The gendarmes unceremoniously lock the industrialist in the cell and report to you: this commoner is suspected of transferring gunpowder to the rebels.
 
@@ -2037,16 +2068,16 @@ You, Egmont, and the rebel Alida are alone in the cold semi-darkness.
 Egmont clutches the bars anxiously.
 
 “Now I see… I’m accused of orchestrating the explosion at the Three Phaleras.  
-“Come closer, Brante. Your life is in as much peril as mine.”
+“Come closer, [El] Brante. Your life is in as much peril as mine.”
 
 You take a step forward, approaching the bars.  
 You feel the imprisoned industrialist’s heavy breath on your face.
 
-“I’ll cut right to the chase, Brante. Yes, with your help, we put the gunpowder to good use. We used it for a great cause: fighting for the rights of the lowborn. I armed the soldiers of the Last Straw, and I’m forming my own militia.  
+“I’ll cut right to the chase, [El] Brante. Yes, with your help, we put the gunpowder to good use. We used it for a great cause: fighting for the rights of the lowborn. I armed the soldiers of the Last Straw, and I’m forming my own militia.  
 “The gunpowder finally forced the nobles to take us seriously!
 
 “But I’m not a madman, and I’m not a butcher. The explosion in the tavern was just a way to demonstrate what we’re capable of in case the Empire doesn’t make any concessions.  
-“We’re no longer just rabble that can be ordered about. And we achieved that in no small part thanks to your help, Judge Brante. Now the nobles will see that if they don’t give us rights, we’ll have to take them by force!”
+“We’re no longer just rabble that can be ordered about. And we achieved that in no small part thanks to your help, Judge [El] Brante. Now the nobles will see that if they don’t give us rights, we’ll have to take them by force!”
 
 You look at the wealthy commoner in consternation.  
 So, you have unwittingly become part of his conspiracy!
@@ -2062,7 +2093,7 @@ You demand that Egmont tell you the nature of his connection to the Last Straw.
 Egmont casts a disapproving sidelong glance at the rebel girl.  
 Then he leans in even closer and continues quietly.
 
-“But explosions and bloodshed aren’t my goal. I’m going to make Anizotte the first city in the Empire where all citizens have equal rights — no matter what estate they’re born to or what Lot they have. Isn’t that what you’ve been struggling to achieve all along, Brante?
+“But explosions and bloodshed aren’t my goal. I’m going to make Anizotte the first city in the Empire where all citizens have equal rights — no matter what estate they’re born to or what Lot they have. Isn’t that what you’ve been struggling to achieve all along, [El] Brante?
 
 “Do you think this is just some fantasy? We’re one step away from taking power in the city and imposing our conditions on the Overseer and the Archduke!
 
@@ -2075,7 +2106,7 @@ Your face is thoroughly concealed by the shadows.
 “Let us both out of the cage, me and the girl from the Last Straw. Help us escape. I’ll make sure you’re clear of any suspicion — it’ll seem like we broke out on our own. The Secret Chancellery will be busy hunting us down, and they’ll leave you alone.  
 “Meanwhile, we’ll finish our preparations and strike first.
 
-“You’ve already picked a side, [name] Brante. Now’s not the time to change it. Help me escape, and you’ll be one of the heroes of the uprising — but if you betray me, you’ll be one of its first victims.  
+“You’ve already picked a side, [name] [El] Brante. Now’s not the time to change it. Help me escape, and you’ll be one of the heroes of the uprising — but if you betray me, you’ll be one of its first victims.  
 “Hurry!”
 
 </details>
@@ -2108,7 +2139,7 @@ You have become accustomed to your new position as well. With the influential Ma
 In response to your latest report, you receive a letter from El Verman.  
 The envelope is made of intentionally coarse paper — according to noble custom, this is how good news is delivered.
 
-“Sir [name] Brante, since our last meeting, you have achieved quite a lot at your post. I have not been idle either. I have provided you with the support of the nobles. The elite of the province are ready to make you the next prefect.  
+“Sir [name] [El] Brante, since our last meeting, you have achieved quite a lot at your post. I have not been idle either. I have provided you with the support of the nobles. The elite of the province are ready to make you the next prefect.  
 “There is just one step left.
 
 “El Borne must relinquish the post of prefect.  
@@ -2144,7 +2175,7 @@ The City Hall is empty — there is no one in the building save for the guards a
 You are escorted to El Verman’s quarters. In the twilight, the Magistrate’s figure looms over the room like a long shadow.  
 A servant lights the candles. The reflections of their flickering flames dance across the walls.
 
-“It is time, Brante. This night will be a difficult one for Anizotte. But it will also go down in history. And we can take some credit for it, sir judge. This is the night we rid the province of its vilest enemies.
+“It is time, [El] Brante. This night will be a difficult one for Anizotte. But it will also go down in history. And we can take some credit for it, sir judge. This is the night we rid the province of its vilest enemies.
 
 “You have done well. Your rulings in court, your defense of the nobles, your reports on El Borne’s plans — they have all allowed us to seize power.  
 “We will protect order and destroy those who are leading the province and the Empire to ruin.
@@ -2153,7 +2184,7 @@ A servant lights the candles. The reflections of their flickering flames dance a
 “This night, the noble militia will smite the supporters of Gaius Tempest. El Borne and the other false nobles who have forgotten honor and tradition in favor of lowborn rebels will soon meet true death at the hands of the Court of Honor.  
 “The Archduke will reclaim this province, and henceforth no one will dare to defy the power of the nobility or attempt to strike at the very foundations of the Empire.
 
-“We have a long list of traitors. Sadly, your father Robert Brante is among them. However, out of regard for you, I have excluded him from the list. Your family is safe.”
+“We have a long list of traitors. Sadly, your father Robert [El] Brante is among them. However, out of regard for you, I have excluded him from the list. Your family is safe.”
 
 El Verman gives you a heavy parcel.
 
@@ -2162,14 +2193,14 @@ El Verman gives you a heavy parcel.
 You cannot hide your anxiety.  
 Why is it only now that you hear of this plan? How long has the Magistrate been preparing it?
 
-“Come now, Brante, don’t get so worked up! Yes, I’ve concealed some of my plans from you, but it was for your own good. Do you have any idea how dangerous the preparations for this night were for me? I have spared you that.
+“Come now, [El] Brante, don’t get so worked up! Yes, I’ve concealed some of my plans from you, but it was for your own good. Do you have any idea how dangerous the preparations for this night were for me? I have spared you that.
 
 “All my promises still stand. The position of prefect will be yours. You will uphold the laws and protect order in the province.  
 “Now we just need to clear a path for you. But the noble militia is saddling up already.
 
 “Oh yes, and forget that so-called Otton case once and for all. The commander is on our side, and tonight he will lead the noble militia. Don’t worry, I’ll help you make peace with him.
 
-“Take my advice, Brante: go home, don’t talk to anyone, fly the serpent flag, and go to sleep in peace. You have already done your part.  
+“Take my advice, [El] Brante: go home, don’t talk to anyone, fly the serpent flag, and go to sleep in peace. You have already done your part.  
 “If all goes according to plan tonight, tomorrow you will awaken as the new prefect of Magra.”
 
 You hastily leave the City Hall and find yourself in the middle of a deserted square. Everywhere you look, shutters are drawn and doors are locked. A carriage rolls past you. You hear the sound of hooves in the distance.  
@@ -2227,17 +2258,17 @@ The street just outside your window lights up. More torch-carrying riders appear
 “That’s Mayer Egmont! They’ve murdered the richest man in Magra! And you’re saying they’re going to spare my family and me, a man who supports El Borne?”
 
 The riders stop in front of your estate. Their leader dismounts, checks his papers, and walks up to the gate.  
-You hear him shout through the window: “Robert and [name] Brante! Open the gate! You stand accused of treason against the Archduke!”  
+You hear him shout through the window: “Robert and [name] [El] Brante! Open the gate! You stand accused of treason against the Archduke!”  
 Father glances at you and slowly heads for the door, his sword at the ready.
 
 But then another group of riders stop outside the house. They are led by none other than Dorius Otton!  
 The Arknian’s voice is strong and powerful as he speaks to the besieging noblemen:
 
-“Why, good sirs, don’t you see the flag on the gate? The people who live here are no traitors — they’ve sided with the Archduke! I’m well aware that their reputation is far from spotless, but [name] Brante himself has proven his loyalty to the Magistrate. No one will touch this house tonight!”
+“Why, good sirs, don’t you see the flag on the gate? The people who live here are no traitors — they’ve sided with the Archduke! I’m well aware that their reputation is far from spotless, but [name] [El] Brante himself has proven his loyalty to the Magistrate. No one will touch this house tonight!”
 
 The High Commander of Magra turns to your window, his eyes searching for you.
 
-“Rest easy, Brante! The Archduke and his men know how to keep their promises.”
+“Rest easy, [El] Brante! The Archduke and his men know how to keep their promises.”
 
 “Now keep moving, good sirs! We have real enemies to hunt. Follow me — to El Borne’s estate!”
 
@@ -2279,7 +2310,7 @@ With the influential Magistrate’s patronage, many doors are now open to you.
 
 But soon after the breakup of your family, El Verman sends you a letter.
 
-“Dear Sir [name] Brante, I used to consider you a reliable ally. I made sure you were supported by the aristocracy. The rulers of the province had already agreed to make you prefect in due time.
+“Dear Sir [name] [El] Brante, I used to consider you a reliable ally. I made sure you were supported by the aristocracy. The rulers of the province had already agreed to make you prefect in due time.
 
 “You were one step away — but you ruined it all! Or did you think a nobleman could allow his family to collapse and escape with his honor intact?  
 “You have dishonored my name as much as yours! I was a fool to trust a man who lost his own family and bloodline. You have ruined all my plans!
@@ -2430,7 +2461,7 @@ Otton leans down to you and looks you in the eye.
 Otton takes off his jacket and draws his sword. He has clearly done this many times before. A blindfold is placed over his eyes.  
 Your head is covered by the same sack, this time knotted tightly around your neck.
 
-“Dorius of the Otton dynasty and [name] of the Brante bloodline will now cross swords in mortal combat! I summon their ancestors to bear witness to their duel! May their Blood Tides meet in sacred battle and determine the truth. May the Younger witness our trial and behold the power of His inevitable Law!”
+“Dorius of the Otton dynasty and [name] of the [El] Brante bloodline will now cross swords in mortal combat! I summon their ancestors to bear witness to their duel! May their Blood Tides meet in sacred battle and determine the truth. May the Younger witness our trial and behold the power of His inevitable Law!”
 
 A hand shoves a sword into yours.  
 You can barely breathe through the thick sackcloth. Your hands are shaking, unwilling to fight.  
@@ -2452,7 +2483,7 @@ Your head shrinks into your shoulders. You cannot allow yourself to breathe, wai
 Surprised by the voice, you take a deep breath.  
 The steel band you had felt around your chest is suddenly shattered.
 
-“You cannot possibly defeat him. But you can accept your death with dignity. Prove you’re worthy of the Brante name!”
+“You cannot possibly defeat him. But you can accept your death with dignity. Prove you’re worthy of the [El] Brante name!”
 
 You square your shoulders. The rope around your neck bothers you no longer.  
 You still cannot see a thing, but you have no need for sight now.
@@ -2516,7 +2547,7 @@ The stalls grow silent. All eyes turn to the Overseer.
 Gaius Tempest winces and knits his brow. He casts a glance over the nobles gathered in the courtroom, then nods for El Borne to continue.
 
 “In one sense, Sir Otton, you are correct. It truly is disgraceful to see an Arknian stoop so low that he must be brought before this court!  
-“The trial will continue. Sir Brante, please conclude your opening statement.”
+“The trial will continue. Sir [El] Brante, please conclude your opening statement.”
 
 You move on to the core of your accusation, speaking with such force that it shakes the stalls.  
 Otton has not merely violated the dueling ban — he has taken lives of at least nineteen of his subordinates, all loyal servants of the Emperor! This is murder. It is an act of sabotage against the Legion. It is treason against the Emperor himself.
@@ -2612,9 +2643,9 @@ The High Commander shudders with hatred.
 
 “You, a former commoner… how dare you speak of an Arknian’s honor?! Your words are as pathetic as your lowly birth!”
 
-“Silence, subject! Unlike you, Sir Brante knows the meaning of honor and respect for authority. Does the Court of Honor doubt his words?”
+“Silence, subject! Unlike you, Sir [El] Brante knows the meaning of honor and respect for authority. Does the Court of Honor doubt his words?”
 
-“The Court of Honor hereby accepts Sir Brante’s accusation. Through his actions, Otton has insulted His Grace Gaius Tempest. May the duel to the true death begin! May the ancestors of their bloodlines bear witness to the duel and guide their swords in sacred combat! May the Younger carry out His justice through this battle!”
+“The Court of Honor hereby accepts Sir [El] Brante’s accusation. Through his actions, Otton has insulted His Grace Gaius Tempest. May the duel to the true death begin! May the ancestors of their bloodlines bear witness to the duel and guide their swords in sacred combat! May the Younger carry out His justice through this battle!”
 
 Gaius Tempest takes off his cloak. He walks down to the center of the hall and draws his sword.  
 Dorius Otton adopts a combat stance, then immediately attacks, making one jab after another.
@@ -2639,7 +2670,7 @@ Otton falls to his knees, wounded. With a loud clang, his sword drops from his f
 The nobles kneel before the Overseer.  
 Otton heaves and pants, clutching at the fresh wound on his chest.
 
-“Sir Brante! Act as my right hand and deprive Otton of his blade.”
+“Sir [El] Brante! Act as my right hand and deprive Otton of his blade.”
 
 Otton’s sword comes to rest in your hands. The entire hall watches you, holding its breath.  
 Raising your old nemesis’s weapon above your head, you turn and bow to the Overseer.
@@ -2654,7 +2685,7 @@ And with that, the former commander of Magra is banished into exile.
 You have reached your goal — not through law and legislation, but through the power of noble tradition. The judgment of our ancestors is the highest justice there is.  
 The Overseer graciously invites you to meet him one on one — a sign of great favor.
 
-“You have served me well, Brante! The prefect’s seat is yours. I shall appoint you the next time I come to Anizotte. Be ready.”
+“You have served me well, [El] Brante! The prefect’s seat is yours. I shall appoint you the next time I come to Anizotte. Be ready.”
 
 The journey home is long and slow. You cannot help but think of the unrest in Anizotte.  
 You have intervened in a conflict between mighty Arknians and changed the course of their fates… but what happened on the streets of your hometown while you were away?
@@ -2688,10 +2719,10 @@ Many are on their knees, begging, praying. Those with the loudest voices stand o
 Prefect El Borne watches the crowd from his window, lost in thought.  
 He knits his brow as he turns to face you.
 
-“This is how a riot begins, Brante. The commoners are only asking for justice now. If they don’t get it, they will try force soon enough. Imagine what will happen if they all bring torches next time…
+“This is how a riot begins, [El] Brante. The commoners are only asking for justice now. If they don’t get it, they will try force soon enough. Imagine what will happen if they all bring torches next time…
 
 “The noble Lot is to rule, yes, but we must rule wisely and provide for those we rule over.  
-“Too many nobles think the law was written only for the common folk. It pains me to say it, but you seem to be among them, Brante…
+“Too many nobles think the law was written only for the common folk. It pains me to say it, but you seem to be among them, [El] Brante…
 
 “But you seem wise enough, sir judge, so put your wisdom to use. Go outside and set things right. Something must be done about them before this mob turns into a stampede. Take Captain Linad and his men and go to the square.  
 “You have to calm these people. They have to disperse before the noble militia notices them and reaches for their swords — and then there won’t be any end to the bloodshed. Help me buy some time, and we will defuse the situation together.”
@@ -2710,7 +2741,7 @@ She sees you, and for a moment, her voice trails off… but then she starts chan
 
 Another ringleader notices you in the meantime: a sturdy bald man with a short beard and the appearance of a craftsman.
 
-“You’re finally here, milord! You're Judge Brante! We know you well, we know you quite well!  
+“You’re finally here, milord! You're Judge [El] Brante! We know you well, we know you quite well!  
 “We’re looking for a way to help His Highness Gaius Tempest hear our pleas! If the Prefecture can’t protect us, then His Highness is our only hope!”
 
 The cries and screams grow louder and fiercer. Slowly, the mob of petitioners begins to advance toward the Prefecture.  
@@ -2973,3 +3004,26 @@ Arknians never forgive. But perhaps…
 | 1 | **Offer an apology**<br>You publicly admit your fault before Octavia. | Willpower ≥ 0 | Reputation -1, Career -1, Willpower -10, Octavia Milanidas: Good | - | - |
 | 2 | **Defend yourself**<br>You object — you did not insult Octavia. You acted like a nobleman. | - | Reputation -2, Career -2, Octavia Milanidas +2, Stephan Brante -1, Octavia Milanidas: Good | - | - |
 | 3 | **Seek assistance from the hostess**<br>You try to convince the aristocrats gathered here that this is all in jest. | Diplomacy ≥ 16 | Reputation +1, Octavia Milanidas: Good | - | - |
+
+<a id="peacefinishscreen-prefect"></a>
+### End of Chapter IV. Peace Time
+
+`PeaceFinishScreen_Prefect` · page  
+**Track:** Judge (Noble track)
+
+> Important life events that had happen to you during this Chapter.
+
+<details><summary>All 5 text pages</summary>
+
+Important life events that had happen to you during this Chapter.
+
+Personal qualities with which you end this chapter. You will have to do with them to go through the decisive chapter “The Revolt”.
+
+Peaceful years are over. The storm of the Revolt is brewing in Anizotte.  
+Tomorrow will be the day when you will reap the harvest of all your deeds during these eight years.
+
+Destiny
+
+Personality
+
+</details>

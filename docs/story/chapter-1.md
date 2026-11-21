@@ -2,6 +2,13 @@
 
 [All chapters](README.md)
 
+<a id="childhoodpicture"></a>
+### Chapter I. Childhood
+
+`ChildhoodPicture` · page
+
+*No text of its own: the game fills it in as it plays, or does not use the scene.*
+
 <a id="childhoodchapterstart"></a>
 ### Chapter I. Childhood
 
@@ -849,3 +856,25 @@ The priest’s words are for you now.
 | 2 | **Raise your head**<br>You raise your head defiantly and stand up. | Determination ≥ 4 | Willpower +5 | - | - |
 | 3 | **Catch the lash**<br>You catch the lash before it strikes your shoulders. | - | Determination +1, Perception -1 | - | - |
 | 4 | **Kiss the sword**<br>You defy the rite of the Sacrament and kiss the priest’s sword. | Willpower ≥ 0 | Determination +1, Perception -1, Willpower -10, Gregor Brante +1 | Nobleman’s Sacrament | KissTheSword=Yes |
+
+<a id="childhoodfinishscreen"></a>
+### End of Chapter I. Childhood
+
+`ChildhoodFinishScreen` · page
+
+> Important life events that had happened to you in this Сhapter.
+
+<details><summary>All 5 text pages</summary>
+
+Important life events that had happened to you in this Сhapter.
+
+Personal qualities that you have accumulated in Childhood. They will convert into adult qualities at the end of Chapter II “Adolescence”.
+
+Soon you are a small boy no longer. As the days pass, play gradually gives way to laborious study. Now your choices will decide your place in the bizarre and ruthless world of adulthood.  
+Your childhood years are over.
+
+Destiny
+
+Personality
+
+</details>

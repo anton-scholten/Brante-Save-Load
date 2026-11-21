@@ -11,8 +11,9 @@ This tool turns it into Markdown that GitHub renders:
                               plays, what it needs, its text, what its opening
                               changes, and each choice with its requirements,
                               effects, destinies and the switches it sets
-  docs/story/finale.md        the endings' pages and the scenes outside the
-                              chapter flows
+  docs/story/finale.md        before the story, the true death, the outcome, the
+                              fates, the cutscenes: the scenes outside the chapter
+                              flows (from data/scene-terms.json, tools/scene_terms.py)
 
 Usage:  python3 tools/story_doc.py [--list Brante-Save-Load/scene-list.tsv]
 """
@@ -131,7 +132,11 @@ def triggered(scene):
 
 def slot_key(scene):
     """Sort and group key: first turn, season, flow order; chapter starts
-    first, triggered scenes after the timed ones."""
+    first, triggered scenes after the timed ones, a chapter's end last."""
+    if scene.get("place") == "start":
+        return (-2, 0)
+    if scene.get("place") == "end":
+        return (300, 0)
     if scene["id"].endswith("ChapterStart"):
         return (-1, 0)
     m = re.search(r"(?:turns? |until turn )(\d+)", scene["when"])
@@ -143,7 +148,9 @@ def slot_key(scene):
 
 
 def slot_name(scene):
-    if scene["id"].endswith("ChapterStart"):
+    if scene.get("place") == "end":
+        return "chapter end"
+    if scene["id"].endswith("ChapterStart") or scene.get("place") == "start":
         return "chapter start"
     if triggered(scene):
         return "triggered: any time " + scene["when"].split(" / ")[0]
@@ -195,6 +202,8 @@ def scene_md(s, set_by):
         facts.append("**Sets:** " + s["keys"])
     out.append("  \n".join(facts))
     out.append("")
+    if s.get("note"):
+        out.append("*" + s["note"] + "*\n")
     pages = [p.strip() for p in s["text"].split(" | ") if p.strip()]
     if pages:
         lead = pages[-1] if s["kind"] == "choice" else pages[0]
@@ -215,6 +224,117 @@ def scene_md(s, set_by):
                 cell(a["destinies"]), cell(a["keys"])))
         out.append("")
     return "\n".join(out)
+
+
+# Scenes no chapter flow opens but that belong to a chapter: its picture and
+# start pages, its finish screen, its cutscenes. (chapter, place, post)
+CHAPTER_SCREENS = {
+    "ChildhoodPicture": (1, "start", ""), "ChildhoodFinishScreen": (1, "end", ""),
+    "TeenagerPicture": (2, "start", ""), "TeenFinishScreen": (2, "end", ""),
+    "YouthPicture": (3, "start", ""), "YouthFinishScreen": (3, "end", ""),
+    "Cutscene_RoadToUniversity": (3, "start", ""),
+    "PeacePicture": (4, "start", ""),
+    "PeaceChapterStart_Prefect": (4, "start", "Judge"), "PeaceFinishScreen_Prefect": (4, "end", "Judge"),
+    "PeaceChapterStart_Inquisitor": (4, "start", "Inquisitor"), "PeaceFinishScreen_Inquisitor": (4, "end", "Inquisitor"),
+    "PeaceChapterStart_Rebel": (4, "start", "Rebel"), "PeaceFinishScreen_Rebel": (4, "end", "Rebel"),
+    "InsurrectionPicture": (5, "start", ""), "Cutscene_6_RevoltBegins": (5, "start", ""),
+}
+# the game's machinery, not the story
+TECHNICAL = {"GamePreparationScene", "GameLoadingScreenGameOver", "BootScreen", "Credits",
+             "Credits_GameOver", "Settings", "MainMenu", "LoadingScreen", "GameLoadingScreen",
+             "LoadWindow", "LoadingScreen_Child", "ChildhoodDemoFinishScreen", "GameOver"}
+# the finale file's sections, by scene id
+FINALE_GROUPS = [
+    ("Before the story", lambda i: i in ("Disclaimer", "Intro") or i == "Cutscene_1"),
+    ("The true death", lambda i: i.startswith("FourthDeath") or "TrueDeath" in i),
+    ("The outcome of the revolt", lambda i: i.startswith("070.090.")),
+    ("The provinces", lambda i: i == "Final_Provinces"),
+    ("The family's fate", lambda i: "FateOfTheFamily" in i or i.startswith("070.240.")),
+    ("Fates of the people", lambda i: i.startswith("070.") or i.startswith("Final_Characters")),
+    ("Cutscenes", lambda i: i.startswith("Cutscene")),
+    ("Scenes with no text of their own", lambda i: True),
+]
+
+
+# titles for scenes whose own is missing or only an id
+TITLES = {
+    "Cutscene_1": "Cutscene: the opening", "Cutscene_RoadToUniversity": "Cutscene: the road to the capital",
+    "Cutscene_6_RevoltBegins": "Cutscene: the Revolt begins",
+    "Cutscene_7_RazgromVosstaniya": "Cutscene: The Revolt is Defeated",
+    "Cutscene_8_Razgrom_Legiona": "Cutscene: The Legion is Defeated",
+    "Cutscene_9_Gorod_Uderjan": "Cutscene: The City is Defended",
+    "Cutscene_10_Reznya": "Cutscene: The Anizotte Massacre",
+    "Cutscene_11_Smutnoe_Vremya": "Cutscene: Dark Times",
+    "Final_Provinces": "What Became of the Provinces",
+    "Final_Characters_Jeanne": "What Became of Jeanne (page)",
+    "Final_Characters_Octavia": "What Became of Octavia (page)",
+    "Final_Characters_Sofja": "What Became of Sophia (page)",
+}
+
+
+def placeholders(text):
+    """The game's placeholders kept visible: the hero's name, the "El" of a
+    family ennobled by the sword."""
+    return re.sub(r"  +", " ", (text or "").replace("<username>", "[name]").replace("<el>", "[El]")).strip()
+
+
+def natural(text):
+    return [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", text)]
+
+
+def add_term_scenes(scenes):
+    """The game's scenes scene-list.tsv lacks, from data/scene-terms.json
+    (tools/scene_terms.py: every term each scene's objects name) and the
+    English of data/localization.csv: their title, text pages and, where
+    they have them, their answers (the true-death questions)."""
+    terms_path = ROOT / "data" / "scene-terms.json"
+    loc_path = ROOT / "data" / "localization.csv"
+    if not terms_path.is_file() or not loc_path.is_file():
+        print("data/scene-terms.json or data/localization.csv missing: only scene-list.tsv's scenes",
+              file=sys.stderr)
+        return
+    import json
+    english = {r[0]: r[4] for r in csv.reader(open(loc_path, encoding="utf-8")) if len(r) > 4}
+    build = json.load(open(terms_path, encoding="utf-8"))["scenes"]
+    uses = collections.Counter(t for b in build for t in set(b["terms"]))
+    have = {s["id"] for s in scenes}
+    for b in build:
+        sid = b["scene"]
+        if sid in have or sid in TECHNICAL:
+            continue
+        own = [t for t in b["terms"] if uses[t] <= 6 and english.get(t, "").strip()]
+        title, pages, buttons = "", [], {}
+        for t in own:
+            m = re.search(r"_Button_?(\d+)$|_ButtonDescription_?(\d+)$", t)
+            if m:
+                n = m.group(1) or m.group(2)
+                kind = "name" if m.group(1) else "text"
+                buttons.setdefault(n, {})[kind] = english[t].strip()
+            elif re.search(r"(\.|_)Title$", t) and not title:
+                title = english[t].strip()
+            else:
+                pages.append(t)
+        pages.sort(key=natural)
+        if not title:
+            # a title the scene shares with others ("TrueDeath_Title"),
+            # never the general "Chapter"/"Next" words
+            for t in b["terms"]:
+                if re.search(r"(\.|_)Title$", t) and english.get(t, "").strip() and uses[t] <= 60:
+                    title = english[t].strip()
+                    break
+        chapter, place, post = CHAPTER_SCREENS.get(sid, (0, "", ""))
+        scenes.append({
+            "chapter": chapter, "id": sid, "kind": "choice" if buttons else "page",
+            "title": placeholders(TITLES.get(sid) or title or re.sub(r"^Cutscene_(\d+)$", r"Cutscene \1", sid)),
+            "text": " | ".join(placeholders(english[t].replace("\n", " / ")) for t in pages),
+            "gate": "", "opening": "", "destinies": "", "keys": "", "when": "",
+            "track": "Post=" + post if post else "", "order": 10 ** 6 + b["index"], "place": place,
+            "answers": [{"n": n, "name": placeholders(a.get("name", "")), "text": placeholders(a.get("text", "")), "requires": "",
+                         "changes": "", "destinies": "", "keys": ""}
+                        for n, a in sorted(buttons.items(), key=lambda kv: int(kv[0]))],
+            "note": "" if pages or buttons else
+                    "No text of its own: the game fills it in as it plays, or does not use the scene.",
+        })
 
 
 def chapter_names():
@@ -238,6 +358,7 @@ def main():
     ap.add_argument("--list", default=str(ROOT / "Brante-Save-Load" / "scene-list.tsv"))
     args = ap.parse_args()
     scenes = load(args.list)
+    add_term_scenes(scenes)
     set_by = setters(scenes)
     OUT.mkdir(parents=True, exist_ok=True)
 
@@ -250,10 +371,13 @@ def main():
         by_chapter[s["chapter"]].append(s)
 
     index = ["# The story, scene by scene", "",
-             "Every scene of *The Life and Suffering of Sir Brante*: when it plays, what it needs,",
-             "what it says, and every choice with what it requires, changes and earns. Generated",
-             "from the game's own data (`tools/story_doc.py`, from the mod's `scene-list.tsv`), in",
-             "the game's English.", "",
+             "Every scene built into *The Life and Suffering of Sir Brante* - all 465 story scenes",
+             "of the game's 478 (the other 13 are menus and loading screens) - with when it plays,",
+             "what it needs, everything it says, and every choice with what it requires, changes",
+             "and earns. Generated from the game's own data, in the game's English",
+             "(`tools/story_doc.py`, from the mod's `scene-list.tsv` and `data/scene-terms.json`).",
+             "`[name]` is the hero's name and `[El]` the particle of a family ennobled by the",
+             "sword: the game fills both in as it plays.", "",
              "How to read a scene:", "",
              "- **When**: the time slot the chapter's flow opens it in (turn, season). No time:",
              "  it follows in flow order, or is triggered as soon as its condition holds.",
@@ -297,13 +421,27 @@ def main():
             body += [scene_md(s, set_by) for s in group]
             (OUT / ("chapter-%d-%s.md" % (ch, post.lower()))).write_text("\n".join(body), encoding="utf-8")
 
-    rest = sorted(by_chapter.get(0, []), key=lambda s: s["id"])
+    rest = sorted(by_chapter.get(0, []), key=lambda s: natural(s["id"]))
     if rest:
         index.append("## [The finale and other pages](finale.md)\n")
-        index.append("The true death, the endings and the fates told after them: scenes the chapter")
-        index.append("flows do not open themselves.\n")
+        index.append("Before the story, the true death, the outcome of the revolt, the provinces' and")
+        index.append("everyone's fates, the cutscenes: the scenes the chapter flows do not open themselves.\n")
         body = ["# The finale and other pages", "", "[All chapters](README.md)", ""]
-        body += [scene_md(s, set_by) for s in rest]
+        placed = set()
+        for head, test in FINALE_GROUPS:
+            group = [s for s in rest if s["id"] not in placed and test(s["id"])
+                     and (head != "Scenes with no text of their own" or s.get("note"))]
+            if head != "Scenes with no text of their own":
+                group = [s for s in group if not s.get("note")]
+            if not group:
+                continue
+            placed.update(s["id"] for s in group)
+            body.append("## %s\n" % head)
+            body += [scene_md(s, set_by) for s in group]
+        others = [s for s in rest if s["id"] not in placed]
+        if others:
+            body.append("## Other pages\n")
+            body += [scene_md(s, set_by) for s in others]
         (OUT / "finale.md").write_text("\n".join(body), encoding="utf-8")
     (OUT / "README.md").write_text("\n".join(index), encoding="utf-8")
     total = sum(len(s["answers"]) for s in scenes)

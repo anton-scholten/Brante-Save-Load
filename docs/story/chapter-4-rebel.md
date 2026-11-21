@@ -2,6 +2,36 @@
 
 [All chapters](README.md) · [the chapter's other scenes](chapter-4.md)
 
+<a id="peacechapterstart-rebel"></a>
+### Chapter IV. Peace Time
+
+`PeaceChapterStart_Rebel` · page  
+**Track:** Rebel (Lotless track)
+
+> 'Occupation' screen is now available
+
+<details><summary>All 8 text pages</summary>
+
+'Occupation' screen is now available
+
+Important life events that may happen to you during this Chapter.
+
+Your personal qualities in this Chapter. They will be used for the rest of your life.
+
+The sections that open in this Chapter.
+
+You are back in your home province, but you are no longer the boy who left it by this very road four years ago.  
+Who are you now? A conspirator? A rebel? Or an agent of the Secret Chancellery?  
+Can you get your freedom back? Can you save everything you hold dear?
+
+Destiny
+
+Personal Life
+
+New Sections
+
+</details>
+
 <a id="051-000-040-arrive-rebel"></a>
 ### Homecoming
 
@@ -3035,3 +3065,26 @@ And for that matter, should you?
 | 1 | **Bribe the leaders of the revolt**<br>Momentarily overcome by greed, the leaders of the revolt agree to put an end to the riots. | Manipulation ≥ 15 and Wealth ≥ 2 | Manipulation +1, Unrest -2, Wealth -2 | - | - |
 | 2 | **Threaten the Lesser Quorum**<br>You blackmail the members of the Lesser Quorum into withdrawing their petition to the Overseer. | Spy Network ≥ 2 and Diplomacy ≥ 10 | Unrest -2, Spy Network -1 | - | - |
 | 3 | **Take control of the disturbances**<br>To prevent bloodshed, you take charge of the disturbances yourself. | - | Scheming +1, Unrest +2, Wealth -1, Order -1, Wealth of Magra +1, Spy Network -1 | - | - |
+
+<a id="peacefinishscreen-rebel"></a>
+### End of Chapter IV. Peace Time
+
+`PeaceFinishScreen_Rebel` · page  
+**Track:** Rebel (Lotless track)
+
+> Important life events that had happen to you during this Chapter.
+
+<details><summary>All 5 text pages</summary>
+
+Important life events that had happen to you during this Chapter.
+
+Personal qualities with which you end this chapter. You will have to do with them to go through the decisive chapter “The Revolt”.
+
+Peaceful years are over. The storm of the Revolt is brewing in Anizotte.  
+Tomorrow will be the day when you will reap the harvest of all your deeds during these eight years.
+
+Destiny
+
+Personality
+
+</details>

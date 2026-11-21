@@ -2,6 +2,37 @@
 
 [All chapters](README.md) · [the chapter's other scenes](chapter-4.md)
 
+<a id="peacechapterstart-inquisitor"></a>
+### Chapter IV. Peace Time
+
+`PeaceChapterStart_Inquisitor` · page  
+**Track:** Inquisitor (Priest track)
+
+> 'Occupation' screen is now available
+
+<details><summary>All 9 text pages</summary>
+
+'Occupation' screen is now available
+
+Inquisitor
+
+You are home. But you are no longer the boy who set out for the capital four years ago.  
+You are coming back a priest. Could your family ever have imagined that this would be the Lot with which you would return? You will begin your service with the Inquisition in your home province.
+
+Important life events that may happen to you during this Chapter.
+
+Your personal qualities in this Chapter. They will be used for the rest of your life.
+
+The sections that open in this Chapter.
+
+Destiny
+
+Personal Life
+
+New Sections
+
+</details>
+
 <a id="052-010-001-guidance"></a>
 ### Spiritual Guidance
 
@@ -3171,3 +3202,29 @@ Outraged by their words, Ulrich suddenly defends Jeanne.
 | 1 | **Appeal to the Overseer**<br>You ask Gaius Tempest to find a peaceful resolution to this conflict. | not Branded by Dishonor and one of: Diplomacy ≥ 12 or Reputation ≥ 7 | Inquisition Power -1, Tolerance of Faiths -1, Reputation -1 | - | - |
 | 2 | **Follow the Overseer’s order**<br>The Inquisition will force the New Believers to forsake their new sacrament. | - | Inquisition Power -2, Tolerance of Faiths -2, Church -1, Power -1 | - | - |
 | 3 | **Defend the New Believers**<br>You persuade your brothers and sisters in faith to defend the New Believers | Eloquence ≥ 15 and Willpower ≥ 0 | Eloquence +1, Tolerance of Faiths +2, Church +1, Willpower -5 | - | - |
+
+<a id="peacefinishscreen-inquisitor"></a>
+### End of Chapter IV. Peace Time
+
+`PeaceFinishScreen_Inquisitor` · page  
+**Track:** Inquisitor (Priest track)
+
+> Peaceful years are over. The storm of the Revolt is brewing in Anizotte.  
+> Tomorrow will be the day when you will reap the harvest of all your deeds during these eight years.
+
+<details><summary>All 6 text pages</summary>
+
+Peaceful years are over. The storm of the Revolt is brewing in Anizotte.  
+Tomorrow will be the day when you will reap the harvest of all your deeds during these eight years.
+
+Important life events that had happen to you during this Chapter.
+
+Personal qualities with which you end this chapter. You will have to do with them to go through the decisive chapter “The Revolt”.
+
+Destiny
+
+Personality
+
+New Sections
+
+</details>

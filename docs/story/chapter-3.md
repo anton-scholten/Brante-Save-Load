@@ -2,6 +2,30 @@
 
 [All chapters](README.md)
 
+<a id="cutscene-roadtouniversity"></a>
+### Cutscene: the road to the capital
+
+`Cutscene_RoadToUniversity` · page
+
+> I will never forget that day.
+
+<details><summary>All 3 text pages</summary>
+
+I will never forget that day.
+
+For it was then that I chose the path I would walk
+
+for the rest of my life.
+
+</details>
+
+<a id="youthpicture"></a>
+### Chapter III. Youth
+
+`YouthPicture` · page
+
+*No text of its own: the game fills it in as it plays, or does not use the scene.*
+
 <a id="youthchapterstart"></a>
 ### Chapter III. Youth
 
@@ -1930,5 +1954,28 @@ You leave the capital the morning after. The carriage hired by the Secret Chance
 Eterna, the city where you spent four years, slowly disappears on the horizon.  
 Will you ever see the capital again? You do not know.  
 The book — a gift for Gloria — is in your hands.
+
+</details>
+
+<a id="youthfinishscreen"></a>
+### End of Chapter III. Youth
+
+`YouthFinishScreen` · page
+
+> Important life events that had happen to you during Youth.
+
+<details><summary>All 5 text pages</summary>
+
+Important life events that had happen to you during Youth.
+
+Your personal qualities at the end of this Chapter. You will keep them for the rest of your life.
+
+The years of your youth are at an end. The time has come to leave the capital behind and return to your family and new business in your hometown of Anizotte.  
+The years away from home were full of tumult and hardship. Had you chosen a different Lot, it all could have been different.  
+All you can do now is walk the path you have chosen.
+
+Destiny
+
+Personality
 
 </details>

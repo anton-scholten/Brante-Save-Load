@@ -1,9 +1,12 @@
 # The story, scene by scene
 
-Every scene of *The Life and Suffering of Sir Brante*: when it plays, what it needs,
-what it says, and every choice with what it requires, changes and earns. Generated
-from the game's own data (`tools/story_doc.py`, from the mod's `scene-list.tsv`), in
-the game's English.
+Every scene built into *The Life and Suffering of Sir Brante* - all 465 story scenes
+of the game's 478 (the other 13 are menus and loading screens) - with when it plays,
+what it needs, everything it says, and every choice with what it requires, changes
+and earns. Generated from the game's own data, in the game's English
+(`tools/story_doc.py`, from the mod's `scene-list.tsv` and `data/scene-terms.json`).
+`[name]` is the hero's name and `[El]` the particle of a family ennobled by the
+sword: the game fills both in as it plays.
 
 How to read a scene:
 
@@ -25,6 +28,7 @@ rounded boxes are events (no choice).
 flowchart TD
   subgraph G0["Chapter start"]
     direction LR
+    childhoodpicture["Chapter I. Childhood"]
     childhoodchapterstart["Chapter I. Childhood"]
   end
   subgraph G1["Turn 1"]
@@ -68,6 +72,10 @@ flowchart TD
     01_10_01["Sweet Temptation"]
     01_11_01["The Sacrament"]
   end
+  subgraph G10["Chapter end"]
+    direction LR
+    childhoodfinishscreen["End of Chapter I. Childhood"]
+  end
   G0 --> G1
   G1 --> G2
   G2 --> G3
@@ -77,6 +85,7 @@ flowchart TD
   G6 --> G7
   G7 --> G8
   G8 --> G9
+  G9 --> G10
 ```
 
 ## [Chapter II. Adolescence](chapter-2.md)
@@ -85,6 +94,7 @@ flowchart TD
 flowchart TD
   subgraph G0["Chapter start"]
     direction LR
+    teenagerpicture["Chapter II. Adolescence"]
     teenchapterstart["Chapter II. Adolescence"]
   end
   subgraph G1["Turn 1"]
@@ -131,6 +141,10 @@ flowchart TD
     02_n_02["Forbidden Love"]
     02_n_03["The Poets"]
   end
+  subgraph G10["Chapter end"]
+    direction LR
+    teenfinishscreen["End of Chapter II. Adolescence"]
+  end
   G0 --> G1
   G1 --> G2
   G2 --> G3
@@ -139,6 +153,7 @@ flowchart TD
   G5 --> G6
   G6 --> G7
   G7 --> G8
+  G8 --> G10
 ```
 
 ## [Chapter III. Youth](chapter-3.md)
@@ -147,6 +162,8 @@ flowchart TD
 flowchart TD
   subgraph G0["Chapter start"]
     direction LR
+    cutscene_roadtouniversity["Cutscene: the road to the capital"]
+    youthpicture["Chapter III. Youth"]
     youthchapterstart["Chapter III. Youth"]
   end
   subgraph G1["Turn 1"]
@@ -185,10 +202,15 @@ flowchart TD
     030_070_030_recruitforreal["◇ Recruitment"]
     030_080_010_departure_bourgeois("◇ A Farewell to the Capital")
   end
+  subgraph G5["Chapter end"]
+    direction LR
+    youthfinishscreen["End of Chapter III. Youth"]
+  end
   G0 --> G1
   G1 --> G2
   G2 --> G3
   G3 --> G4
+  G4 --> G5
 ```
 
 ## [Chapter IV. Peace Time](chapter-4.md)
@@ -197,71 +219,75 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  subgraph G0["Turn 1, season 2"]
+  subgraph G0["Chapter start"]
+    direction LR
+    peacepicture["Chapter IV. Peace Time"]
+  end
+  subgraph G1["Turn 1, season 2"]
     direction LR
     051_010_010_scene_1["A Reception at the Brante Residence"]
     051_010_020_scene_2["A Rock and a Hard Place"]
   end
-  subgraph G1["Turn 2+"]
+  subgraph G2["Turn 2+"]
     direction LR
     051_090_040_minuteofrest("◇ A Moment of Respite")
   end
-  subgraph G2["Turns 2-7"]
+  subgraph G3["Turns 2-7"]
     direction LR
     051_090_050_richfamily["◇ A Family of Means"]
     051_090_060_gloriousfamily("◇ A Glorious Bloodline")
   end
-  subgraph G3["Turn 2, season 1"]
+  subgraph G4["Turn 2, season 1"]
     direction LR
     051_020_010_scene_3["A Gift for the Family"]
   end
-  subgraph G4["Turn 2, season 2"]
+  subgraph G5["Turn 2, season 2"]
     direction LR
     051_020_020_the_old_friend["An Old Friend"]
   end
-  subgraph G5["Turn 2, season 3"]
+  subgraph G6["Turn 2, season 3"]
     direction LR
     051_020_030_the_call_of_the_ancestors["The Call of the Ancestors"]
   end
-  subgraph G6["Turn 3, season 2"]
+  subgraph G7["Turn 3, season 2"]
     direction LR
     051_030_010_scene_4["Brothers in Misery"]
   end
-  subgraph G7["Turn 4, season 2"]
+  subgraph G8["Turn 4, season 2"]
     direction LR
     051_040_010_scene_7["The Festival of the Silver Tree"]
   end
-  subgraph G8["Turn 5, season 2"]
+  subgraph G9["Turn 5, season 2"]
     direction LR
     051_050_010_scene_10["◇ Stephan’s Gambit"]
     051_050_020_scene_11["◇ The Illegitimate Girl"]
   end
-  subgraph G9["Turns 6-7"]
+  subgraph G10["Turns 6-7"]
     direction LR
     051_090_030_stigmaofshame("◇ The Mark of Dishonor")
   end
-  subgraph G10["Turn 6"]
+  subgraph G11["Turn 6"]
     direction LR
     051_060_030_mortally["◇ To the Death"]
   end
-  subgraph G11["Turn 6+, season 2"]
+  subgraph G12["Turn 6+, season 2"]
     direction LR
     051_060_040_huntforthomas["◇ The Hunt for Tommas"]
   end
-  subgraph G12["Turn 6, season 3"]
+  subgraph G13["Turn 6, season 3"]
     direction LR
     051_060_010_rebelliousgirl["◇ The Rebel"]
     051_060_020_lesserevil["◇ The Lesser Evil"]
   end
-  subgraph G13["Turn 7"]
+  subgraph G14["Turn 7"]
     direction LR
     051_070_035_mortally["◇ To the Death"]
   end
-  subgraph G14["Turn 7, season 2"]
+  subgraph G15["Turn 7, season 2"]
     direction LR
     051_070_010_deathbed["Deathbed"]
   end
-  subgraph G15["Turn 7, season 3"]
+  subgraph G16["Turn 7, season 3"]
     direction LR
     051_070_020_brokenbranch["◇ A Broken Branch"]
     051_070_030_goldencage["◇ The Gilded Cage"]
@@ -271,16 +297,16 @@ flowchart TD
     051_070_050_thomaswedding["◇ Tommas’s Wedding"]
     051_070_060_repentance["Repentance"]
   end
-  subgraph G16["Turn 8, season 1"]
+  subgraph G17["Turn 8, season 1"]
     direction LR
     051_070_070_familycouncil["A Family Matter"]
     051_070_080_nobleblood["◇ A Noble Bloodline"]
   end
-  subgraph G17["Triggered: any time until turn 8"]
+  subgraph G18["Triggered: any time until turn 8"]
     direction LR
     051_090_010_familyquarrel("◇ Family Strife")
   end
-  subgraph G18["Triggered: any time until turn 7"]
+  subgraph G19["Triggered: any time until turn 7"]
     direction LR
     051_090_020_devastation("◇ Ruin and Debt")
   end
@@ -300,71 +326,76 @@ flowchart TD
   G13 --> G14
   G14 --> G15
   G15 --> G16
+  G16 --> G17
 ```
 
 **[Inquisitor (Priest track)](chapter-4-inquisitor.md)**
 
 ```mermaid
 flowchart TD
-  subgraph G0["Turn 1, season 1"]
+  subgraph G0["Chapter start"]
+    direction LR
+    peacechapterstart_inquisitor["Chapter IV. Peace Time"]
+  end
+  subgraph G1["Turn 1, season 1"]
     direction LR
     052_010_001_guidance["Spiritual Guidance"]
     051_000_020_arrive_inquisitor["Homecoming"]
     052_010_005_cassii["The Sacred Conclave"]
   end
-  subgraph G1["Turn 2, season 1"]
+  subgraph G2["Turn 2, season 1"]
     direction LR
     052_010_020_case2["The La-Tari Society"]
   end
-  subgraph G2["Turn 2, season 2"]
+  subgraph G3["Turn 2, season 2"]
     direction LR
     052_020_010_case3["In the Shadow of the Tree"]
   end
-  subgraph G3["Turn 2, season 3"]
+  subgraph G4["Turn 2, season 3"]
     direction LR
     052_010_010_case1["The Will and the Law"]
   end
-  subgraph G4["Turn 3+"]
+  subgraph G5["Turn 3+"]
     direction LR
     052_n8_010_trigger8["◇ The Fire"]
   end
-  subgraph G5["Turn 3, season 1"]
+  subgraph G6["Turn 3, season 1"]
     direction LR
     052_030_010_case4["The Printed Page"]
   end
-  subgraph G6["Turns 4-6"]
+  subgraph G7["Turns 4-6"]
     direction LR
     052_n3_010_trigger3["◇ The Principle of the Will"]
     052_n9_010_trigger9["◇ Lethal Weapons"]
   end
-  subgraph G7["Turn 4, season 1"]
+  subgraph G8["Turn 4, season 1"]
     direction LR
     052_040_010_case5["Miracles and Wonders"]
   end
-  subgraph G8["Turn 5, season 1"]
+  subgraph G9["Turn 5, season 1"]
     direction LR
     052_050_020_case7["The Trail of Sorcery"]
     052_050_010_case6["Revelation"]
   end
-  subgraph G9["Turn 5, season 2"]
+  subgraph G10["Turn 5, season 2"]
     direction LR
     052_050_025_confession["A Confession"]
   end
-  subgraph G10["Turn 6, season 1"]
+  subgraph G11["Turn 6, season 1"]
     direction LR
     052_050_026_patriarchpreaching["The Patriarch’s Sermon"]
   end
-  subgraph G11["Turn 7, season 1"]
+  subgraph G12["Turn 7, season 1"]
     direction LR
     052_050_030_case8["A Sinner’s Confession"]
     052_060_010_case9["The Renegade"]
     052_060_020_case10["◇ The Sentence"]
   end
-  subgraph G12["Turn 7, season 3"]
+  subgraph G13["Turn 7, season 3"]
     direction LR
     052_060_030_reported["The Denunciation"]
   end
-  subgraph G13["Turn 8"]
+  subgraph G14["Turn 8"]
     direction LR
     052_n5_010_trigger5("◇ The Reflection")
     052_n13_010_heretic("◇ The Heretic")
@@ -380,13 +411,17 @@ flowchart TD
     052_210_060_final6("◇ The Path of the Will")
     052_210_065_final7["◇ The Judgment of the Twins"]
   end
-  subgraph G14["Triggered: any time until turn 7"]
+  subgraph G15["Triggered: any time until turn 7"]
     direction LR
     052_n1_010_trigger1["◇ Evening Prayer"]
     052_n2_010_trigger2["◇ The Captive"]
     052_n4_010_trigger4["◇ Privilege and Authority"]
     052_n7_010_trigger7["◇ Night of Sword and Lash"]
     052_n10_010_trigger10["◇ The New Sacrament"]
+  end
+  subgraph G16["Chapter end"]
+    direction LR
+    peacefinishscreen_inquisitor["End of Chapter IV. Peace Time"]
   end
   G0 --> G1
   G1 --> G2
@@ -401,106 +436,112 @@ flowchart TD
   G10 --> G11
   G11 --> G12
   G12 --> G13
+  G13 --> G14
+  G14 --> G16
 ```
 
 **[Judge (Noble track)](chapter-4-judge.md)**
 
 ```mermaid
 flowchart TD
-  subgraph G0["Turn 0+"]
+  subgraph G0["Chapter start"]
+    direction LR
+    peacechapterstart_prefect["Chapter IV. Peace Time"]
+  end
+  subgraph G1["Turn 0+"]
     direction LR
     054_100_010_martiallaw["◇ March of the Desperate"]
   end
-  subgraph G1["Turn 1, season 1"]
+  subgraph G2["Turn 1, season 1"]
     direction LR
     051_000_030_arrive_prefect["Homecoming"]
     054_010_010_firstdaywork["First Day of Service"]
   end
-  subgraph G2["Turn 1, season 2"]
+  subgraph G3["Turn 1, season 2"]
     direction LR
     054_010_020_case1["The Land Dispute"]
   end
-  subgraph G3["Turn 2, season 1"]
+  subgraph G4["Turn 2, season 1"]
     direction LR
     054_020_010_el_born["The Power of the Law"]
   end
-  subgraph G4["Turn 2, season 2"]
+  subgraph G5["Turn 2, season 2"]
     direction LR
     054_020_020_case2["The Newspaper Case"]
   end
-  subgraph G5["Turn 3, season 1"]
+  subgraph G6["Turn 3, season 1"]
     direction LR
     054_030_010_call["The Vassal and the Lord"]
     054_030_020_passion["Passion"]
   end
-  subgraph G6["Turn 3, season 2"]
+  subgraph G7["Turn 3, season 2"]
     direction LR
     054_030_030_case3["The Case of Father Mark"]
   end
-  subgraph G7["Turns 4-7"]
+  subgraph G8["Turns 4-7"]
     direction LR
     054_100_030_rotshild["◇ Friend of the People"]
     054_100_090_milanid["◇ The Road to the Top"]
   end
-  subgraph G8["Turn 4, season 1"]
+  subgraph G9["Turn 4, season 1"]
     direction LR
     054_040_010_friendintrouble["A Friend in Need"]
     054_040_020_helpfriend["The Case against Otton"]
   end
-  subgraph G9["Turn 4, season 2"]
+  subgraph G10["Turn 4, season 2"]
     direction LR
     054_040_040_octaviadate["◇ A Rendezvous with Octavia"]
     054_040_050_octaviadate["◇ A Rendezvous with Octavia"]
   end
-  subgraph G10["Turn 5, season 1"]
+  subgraph G11["Turn 5, season 1"]
     direction LR
     054_050_010_huntforevidence["The Search for Evidence"]
   end
-  subgraph G11["Turns 5-7, season 2"]
+  subgraph G12["Turns 5-7, season 2"]
     direction LR
     054_100_100_present["◇ An Audience with the Overseer"]
   end
-  subgraph G12["Turn 5, season 2"]
+  subgraph G13["Turn 5, season 2"]
     direction LR
     054_050_020_smallvictory["A Realm Unknown"]
   end
-  subgraph G13["Turn 6, season 1"]
+  subgraph G14["Turn 6, season 1"]
     direction LR
     054_060_010_threatsandpromises["Threats and Promises"]
     054_060_020_case5["Nobleman’s Honor"]
   end
-  subgraph G14["Turn 6, season 2"]
+  subgraph G15["Turn 6, season 2"]
     direction LR
     054_060_030_witness["◇ The Hunt for Tommas"]
     054_060_040_rebelsentence["El Ferro's List"]
   end
-  subgraph G15["Turn 7, season 1"]
+  subgraph G16["Turn 7, season 1"]
     direction LR
     054_070_010_case6["Justice for All"]
   end
-  subgraph G16["Turn 7, season 2"]
+  subgraph G17["Turn 7, season 2"]
     direction LR
     054_070_020_alatari["Transformation"]
   end
-  subgraph G17["Turn 8"]
+  subgraph G18["Turn 8"]
     direction LR
     054_080_120_final3("◇ Night of the Serpents")
     054_080_140_final_judgefall("◇ The Fall of Judge Brante")
   end
-  subgraph G18["Turn 8, season 1"]
+  subgraph G19["Turn 8, season 1"]
     direction LR
     054_080_010_final1("Broken Chains")
     054_080_030_aftermath("The Smell of Gunpowder")
     054_080_020_final2("◇ Night of the Serpents")
     054_080_080_miserable("◇ Forsaken")
   end
-  subgraph G19["Turn 8+, season 1"]
+  subgraph G20["Turn 8+, season 1"]
     direction LR
     054_080_040_arrest["◇ Prisoners"]
     054_080_050_duty("The Empty Chair")
     054_080_060_trap["Twilight over Anizotte"]
   end
-  subgraph G20["Turn 8, season 2"]
+  subgraph G21["Turn 8, season 2"]
     direction LR
     054_080_070_finalpreparations["Final Preparations"]
     054_080_090_court["The Hour Has Come"]
@@ -508,16 +549,20 @@ flowchart TD
     054_080_130_final6("◇ Otton’s Sentence")
     054_080_110_final4("◇ Otton and the Court of Honor")
   end
-  subgraph G21["Triggered: any time until turn 7"]
+  subgraph G22["Triggered: any time until turn 7"]
     direction LR
     054_100_020_pickets["◇ The Crowded Square"]
     054_100_040_abuseofauthority["◇ Debacle in the Shop"]
     054_100_080_snakes["◇ Chutes and Ladders"]
     054_100_070_dismissal["◇ Invitation to the Ball"]
   end
-  subgraph G22["Triggered: any time until turn 6, season 2"]
+  subgraph G23["Triggered: any time until turn 6, season 2"]
     direction LR
     054_040_030_reckoning["◇ Payback"]
+  end
+  subgraph G24["Chapter end"]
+    direction LR
+    peacefinishscreen_prefect["End of Chapter IV. Peace Time"]
   end
   G0 --> G1
   G1 --> G2
@@ -539,88 +584,94 @@ flowchart TD
   G17 --> G18
   G18 --> G19
   G19 --> G20
+  G20 --> G21
+  G21 --> G24
 ```
 
 **[Rebel (Lotless track)](chapter-4-rebel.md)**
 
 ```mermaid
 flowchart TD
-  subgraph G0["Turn 1, season 1"]
+  subgraph G0["Chapter start"]
+    direction LR
+    peacechapterstart_rebel["Chapter IV. Peace Time"]
+  end
+  subgraph G1["Turn 1, season 1"]
     direction LR
     051_000_040_arrive_rebel["Homecoming"]
     053_010_010_firststeps["First Steps"]
   end
-  subgraph G1["Turn 1, season 2"]
+  subgraph G2["Turn 1, season 2"]
     direction LR
     053_010_020_call["The Last Straw"]
     053_010_030_case1["Hearts on Fire"]
   end
-  subgraph G2["Turn 2, season 1"]
+  subgraph G3["Turn 2, season 1"]
     direction LR
     053_020_010_rotshild["Concerned Сitizen"]
   end
-  subgraph G3["Turn 2, season 2"]
+  subgraph G4["Turn 2, season 2"]
     direction LR
     053_050_010_powder["The Gunpowder Plot"]
   end
-  subgraph G4["Turn 2, season 3"]
+  subgraph G5["Turn 2, season 3"]
     direction LR
     053_050_011_youthmistakes["The Errors of Youth"]
   end
-  subgraph G5["Turns 3-6"]
+  subgraph G6["Turns 3-6"]
     direction LR
     053_100_030_offersofya["◇ Powder Keg"]
     053_100_090_chancellor["◇ Trust"]
   end
-  subgraph G6["Turn 3, season 1"]
+  subgraph G7["Turn 3, season 1"]
     direction LR
     053_050_012_visitingtheburgomaster["A Chat with the Magistrate"]
   end
-  subgraph G7["Turn 3, season 2"]
+  subgraph G8["Turn 3, season 2"]
     direction LR
     053_030_010_case2["Freedom of Speech"]
   end
-  subgraph G8["Turn 4, season 1"]
+  subgraph G9["Turn 4, season 1"]
     direction LR
     053_040_010_case3["Blast Wave"]
   end
-  subgraph G9["Turn 5, season 1"]
+  subgraph G10["Turn 5, season 1"]
     direction LR
     053_050_020_smallvictory["An Invitation to Dinner"]
   end
-  subgraph G10["Turn 5, season 2"]
+  subgraph G11["Turn 5, season 2"]
     direction LR
     053_050_021_doriyotton["Getting Even"]
   end
-  subgraph G11["Turn 6"]
+  subgraph G12["Turn 6"]
     direction LR
     053_100_130_suspicions["◇ Usual Suspects"]
   end
-  subgraph G12["Turn 6, season 1"]
+  subgraph G13["Turn 6, season 1"]
     direction LR
     053_050_030_seconddate["The Hard Goodbye"]
     053_060_010_enteringtroops["The Legion in the City"]
   end
-  subgraph G13["Turn 6, season 2"]
+  subgraph G14["Turn 6, season 2"]
     direction LR
     053_060_020_ironphilippe["An Urgent Deal"]
   end
-  subgraph G14["Turn 7"]
+  subgraph G15["Turn 7"]
     direction LR
     053_100_140_profitableyear("◇ A Banner Year")
   end
-  subgraph G15["Turn 7, season 1"]
+  subgraph G16["Turn 7, season 1"]
     direction LR
     053_060_030_dangerouscargo["A Dangerous Haul"]
   end
-  subgraph G16["Turn 8, season 1"]
+  subgraph G17["Turn 8, season 1"]
     direction LR
     053_100_050_aftermath("◇ Explosion")
     053_100_060_arrestsofya["◇ The Greater Good"]
     053_100_110_aftermath2("◇ Mutually Beneficial Collaboration")
     053_100_120_disclosure["◇ Clean Hands"]
   end
-  subgraph G17["Turn 8, season 2"]
+  subgraph G18["Turn 8, season 2"]
     direction LR
     053_090_060_final6("◇ Glory to the Empire!")
     053_070_010_bridges["A Sleepless Night"]
@@ -631,7 +682,7 @@ flowchart TD
     053_090_040_final4("◇ The Master of Anizotte")
     053_090_020_final2("◇ Farewell, Advisor!")
   end
-  subgraph G18["Triggered: any time until turn 7"]
+  subgraph G19["Triggered: any time until turn 7"]
     direction LR
     053_100_080_tortures["◇ A Sound of Thunder"]
     053_100_070_catastrophe2["◇ At Midnight"]
@@ -639,6 +690,10 @@ flowchart TD
     053_100_020_arrest["◇ Hand of the Law"]
     053_100_010_catastrophe1["◇ Raid"]
     053_100_040_pogrom["◇ Sound and Fury"]
+  end
+  subgraph G20["Chapter end"]
+    direction LR
+    peacefinishscreen_rebel["End of Chapter IV. Peace Time"]
   end
   G0 --> G1
   G1 --> G2
@@ -657,6 +712,8 @@ flowchart TD
   G14 --> G15
   G15 --> G16
   G16 --> G17
+  G17 --> G18
+  G18 --> G20
 ```
 
 ## [Chapter V. The Revolt](chapter-5.md)
@@ -665,6 +722,8 @@ flowchart TD
 flowchart TD
   subgraph G0["Chapter start"]
     direction LR
+    cutscene_6_revoltbegins["Cutscene: the Revolt begins"]
+    insurrectionpicture["InsurrectionPicture"]
     insurrectionchapterstart("Chapter V. The Revolt")
   end
   subgraph G1["Turn 1"]
@@ -711,5 +770,5 @@ flowchart TD
 
 ## [The finale and other pages](finale.md)
 
-The true death, the endings and the fates told after them: scenes the chapter
-flows do not open themselves.
+Before the story, the true death, the outcome of the revolt, the provinces' and
+everyone's fates, the cutscenes: the scenes the chapter flows do not open themselves.
