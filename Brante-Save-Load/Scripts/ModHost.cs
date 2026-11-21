@@ -315,6 +315,14 @@ namespace Doorstop
 		private System.Collections.IEnumerator DevAutoload()
 		{
 			yield return new WaitForSeconds(5f);
+			// dev-settings.txt: the main menu's settings window, its language
+			// arrow through every language (GameLanguages.DevSettings)
+			string settings = Path.Combine(Recorder.SnapshotDir, "dev-settings.txt");
+			if (File.Exists(settings))
+			{
+				try { File.Delete(settings); } catch { }
+				yield return StartCoroutine(GameLanguages.DevSettings());
+			}
 			string marker = Path.Combine(Recorder.SnapshotDir, "dev-autoload.txt");
 			if (!File.Exists(marker))
 			{

@@ -44,6 +44,7 @@ Brante-Save-Load/            the folder that gets installed into the game dir
     SceneList.cs             writes scene-list.tsv from the tables above
     StatPanel.cs             tree's stat columns: clones of the game's stat row
     PathId.cs                path IDs: the game state as a short text line (copy/paste)
+    GameLanguages.cs         the game's settings offer all 14 languages (3 were hidden)
     Loc.cs                   the UI's own translations (13 languages)
     Palette.cs               every colour the UI uses (fades, not near-copies)
     BoltDump.cs              runtime dump of the choice machine (dev only)
@@ -621,6 +622,19 @@ community event sheet (`data/events.json`).
   Dark Times' pop-up. Path
   ID refusal reasons are `Loc.K.Pid*`. Adding a key: give it all 13
   tables.
+- **All 14 languages are selectable.** The game ships 14 complete
+  translations, but the main menu's settings window (the additive scene
+  "Settings", `SettingsWindow._languages`, a serialized list) offers 11:
+  no Traditional Chinese, Polish or Turkish. The pause menu's
+  `WindowPause` lists every `Languages` value, but names those three by
+  their I2 terms, which are only the codes ("Pl", "Tr", "Zh_Tw"), and
+  Italian's term reads "Italien". `GameLanguages` adds the three before
+  `SettingsWindow.Start` reads the list (Traditional after Simplified
+  Chinese, Polish and Turkish last) and, after each window's start and
+  arrow click, writes the language's own name and its font
+  (`ChangeFontAsset`). `dev-settings.txt` (alone, at the main menu) opens
+  the window, steps through every language logging the name and font,
+  screenshots each to `Shots/settings_<lang>.png`, and goes back.
 - **Path IDs never reach BinaryFormatter.** The tree header's paste and
   copy buttons (left of reset) turn the live state into
   `BSL1:<n>:<base64url>:<CRC-32>` and back (`PathId`). The record is the
@@ -994,6 +1008,7 @@ on use) and must be paired with `dev-autoload.txt`:
 | `dev-bolt.txt` | dump the live Bolt graph of the choice machine |
 | `dev-ironman.txt` | load the save as an Iron Man game |
 | `dev-lang.txt` | switch the game language, to exercise the window rebuild |
+| `dev-settings.txt` | alone (no `dev-autoload.txt`): open the main menu's settings window, press the language arrow through all 14 languages, log each name and font, screenshot each, and go back |
 
 Kill the game's own `…Sir Brante.exe` processes (not just the Proton wrapper)
 plus `wineserver -k` after each run.

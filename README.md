@@ -127,6 +127,7 @@ Two tabs appear on top of the book: **save / load** (the arrows) and **tree view
 ![The tree view and its Destiny tab with a choice's pop-up, cut into fourteen tilted bands, one for each of the game's languages: English, Russian, German, French, Spanish, Latin American Spanish, Italian, Brazilian Portuguese, Polish, Turkish, Japanese, Korean, Simplified and Traditional Chinese.](Languages.jpg)
 
 - The mod speaks all 14 of the game's languages, and names the game's things in the game's own words.
+- The game's settings now offer all 14: Traditional Chinese, Polish and Turkish were translated in full but missing from its language list.
 
 ## Update notes
 

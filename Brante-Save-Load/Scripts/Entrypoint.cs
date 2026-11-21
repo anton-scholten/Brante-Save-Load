@@ -99,6 +99,7 @@ namespace Doorstop
 			PatchSaveRepair(harmony);
 			PatchInterlude(harmony);
 			PatchTrueDeath(harmony);
+			GameLanguages.Patch(harmony);
 		}
 
 		// The game's own bug: on the true-death pages FourthDeath_3..6 the
