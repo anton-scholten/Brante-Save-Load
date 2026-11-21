@@ -8,7 +8,7 @@ language, in the order ChoiceWindow.ShotLanguages lists them. This tool only
 puts them together, with ImageMagick (`magick`); no Python packages needed.
 
 Usage:  python3 tools/language_bands.py SHOTS_DIR [OUT] [--width 1920]
-                [--tilt 12] [--no-labels]
+                [--tilt 12] [--no-flags]
 """
 
 import argparse
@@ -22,22 +22,24 @@ import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-# Each band's label: the language's own name, by the file name's language.
-NAMES = {
-    "English": "English",
-    "Russian": "Русский",
-    "German": "Deutsch",
-    "FrenchFrance": "Français",
-    "SpanishSpain": "Español",
-    "SpanishLatinAmericas": "Español (LatAm)",
-    "Italian": "Italiano",
-    "PortugueseBrazil": "Português (BR)",
-    "Polish": "Polski",
-    "Turkish": "Türkçe",
-    "Japanese": "日本語",
-    "Korean": "한국어",
-    "ChineseSimplified": "简体中文",
-    "ChineseTraditional": "繁體中文",
+# Each band's flag (an emoji flag, drawn from Noto Color Emoji through
+# ImageMagick's Pango), by the file name's language. Latin American
+# Spanish shows Mexico's, Traditional Chinese Taiwan's.
+FLAGS = {
+    "English": "\U0001F1EC\U0001F1E7",
+    "Russian": "\U0001F1F7\U0001F1FA",
+    "German": "\U0001F1E9\U0001F1EA",
+    "FrenchFrance": "\U0001F1EB\U0001F1F7",
+    "SpanishSpain": "\U0001F1EA\U0001F1F8",
+    "SpanishLatinAmericas": "\U0001F1F2\U0001F1FD",
+    "Italian": "\U0001F1EE\U0001F1F9",
+    "PortugueseBrazil": "\U0001F1E7\U0001F1F7",
+    "Polish": "\U0001F1F5\U0001F1F1",
+    "Turkish": "\U0001F1F9\U0001F1F7",
+    "Japanese": "\U0001F1EF\U0001F1F5",
+    "Korean": "\U0001F1F0\U0001F1F7",
+    "ChineseSimplified": "\U0001F1E8\U0001F1F3",
+    "ChineseTraditional": "\U0001F1F9\U0001F1FC",
 }
 
 
@@ -52,18 +54,6 @@ def size_of(path):
     return int(w), int(h)
 
 
-def label_font():
-    """A font with Latin, Cyrillic and CJK letters, or None."""
-    if not shutil.which("fc-match"):
-        return None
-    for family in ("Noto Sans CJK SC", "Noto Sans CJK JP", "Source Han Sans"):
-        out = subprocess.run(["fc-match", "-f", "%{file}", family + ":style=Medium"],
-                             capture_output=True, text=True).stdout.strip()
-        if out and ("CJK" in out or "Han" in out):
-            return out
-    return None
-
-
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -71,7 +61,7 @@ def main():
     ap.add_argument("out", nargs="?", default=str(ROOT / "Languages.jpg"))
     ap.add_argument("--width", type=int, default=1920, help="output width (px)")
     ap.add_argument("--tilt", type=float, default=12.0, help="band tilt from vertical (degrees)")
-    ap.add_argument("--no-labels", action="store_true")
+    ap.add_argument("--no-flags", action="store_true")
     args = ap.parse_args()
 
     if not shutil.which("magick"):
@@ -94,10 +84,9 @@ def main():
     band = (W + lean) / n
     top = [k * band for k in range(n + 1)]
     bot = [x - lean for x in top]
-    ink = "rgb(24,22,20)"                               # seams and names
+    ink = "rgba(24,22,20,0.5)"                          # the seams, half see-through
     seam = max(2, round(W / 640))
 
-    font = None if args.no_labels else label_font()
     with tempfile.TemporaryDirectory() as tmp:
         tmp = pathlib.Path(tmp)
         cmd = ["magick", "-size", "%dx%d" % (W, H), "xc:black"]
@@ -114,31 +103,27 @@ def main():
         for k in range(1, n):
             cmd += ["-stroke", ink, "-strokewidth", str(seam),
                     "-draw", "line %.1f,0 %.1f,%d" % (top[k], bot[k], H)]
-        # each band's language written along it, leaning as it does: its
-        # letters about a quarter of the band's width
-        if font:
-            size = round(band * 0.3)
+        # each band's flag where its middle line meets the diagonal from
+        # the top left to the bottom right: x = W*y/H and x = mid - lean*y/H
+        if not args.no_flags:
+            fw = round(band * 0.7)
             for k, shot in enumerate(shots):
-                key = re.sub(r"^\d\d_", "", shot.stem)
-                lbl = tmp / ("label%02d.png" % k)
-                run(["magick", "-background", "none", "-font", font, "-pointsize", str(size),
-                     "-fill", ink, "label:" + NAMES.get(key, key),
-                     "-rotate", "%.2f" % -(90 - args.tilt), "+repage", str(lbl)])
-                lw, lh = size_of(lbl)
-                # low in the band, where the stat panel is quiet; raised or
-                # lowered where the band's middle there is off the picture
-                mid = (top[k] + top[k + 1]) / 2             # the band's middle at the head
-                cy = H * 0.72
-                lo, hi = lh / 2 + seam, H - lh / 2 - seam
-                margin = lw / 2 + band * 0.1
-                cx = mid - lean * cy / H
-                if cx < margin:
-                    cy = (mid - margin) * H / lean
-                elif cx > W - margin:
-                    cy = (mid - (W - margin)) * H / lean
-                cy = min(max(cy, lo), hi)
-                cx = mid - lean * cy / H
-                cmd += [str(lbl), "-geometry", "+%d+%d" % (round(cx - lw / 2), round(cy - lh / 2)),
+                flag = FLAGS.get(re.sub(r"^\d\d_", "", shot.stem))
+                if not flag:
+                    continue
+                img = tmp / ("flag%02d.png" % k)
+                run(["magick", "-background", "none",
+                     "pango:<span font=\"Noto Color Emoji\" size=\"96000\">" + flag + "</span>",
+                     "-trim", "+repage", "-resize", "%dx" % fw, str(img)])
+                iw, ih = size_of(img)
+                mid = (top[k] + top[k + 1]) / 2
+                cy = mid * H / (W + lean)
+                cx = W * cy / H
+                # the corner flags kept whole, a little in from the edges
+                edge = band * 0.08
+                cx = min(max(cx, iw / 2 + edge), W - iw / 2 - edge)
+                cy = min(max(cy, ih / 2 + edge), H - ih / 2 - edge)
+                cmd += [str(img), "-geometry", "+%d+%d" % (round(cx - iw / 2), round(cy - ih / 2)),
                         "-compose", "over", "-composite"]
         cmd += ["-quality", "86", args.out]
         run(cmd)

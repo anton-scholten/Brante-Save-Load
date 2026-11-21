@@ -65,7 +65,7 @@ tools/scene_params.py        key chapter parameter changes from scenes/answers -
 tools/scene_objectives.py    the objectives scenes/answers unlock -> shipped TSV
 tools/build_graph.py         merge traces + snapshots + event sheet
 tools/language_shots.sh      the README's Languages.jpg: one game session, a screenshot per language
-tools/language_bands.py      cut those screenshots into tilted bands, one per language (ImageMagick)
+tools/language_bands.py      cut those screenshots into tilted bands, a flag each (ImageMagick + Noto Color Emoji)
 data/                        extracted game data (see docs/BRANCHES.md)
 docs/                        FINDINGS (game internals), BRANCHES (choice data), TODO
 ```
