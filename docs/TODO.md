@@ -382,7 +382,7 @@ saves (one row each); the two test files `slot1.dat`/`slot2.dat` still list.
 - [ ] Achievement side-effects on load (verify).
 - [ ] Full in-game pass on a played run: chapter transition, death -> restart
   chapter, explore + load from the panel.
-- [ ] Design document (`docs/DESIGN.md`).
+- [x] Design document (`docs/DESIGN.md`), written 30 Oct (see below).
 
 ## Phase 8 — save ownership and repair
 
@@ -508,7 +508,9 @@ save folders and only copies them.
   `02.07.02` to `02.09.01` logged `02.07.02 > 02.08.01 > 02.09.01` under the
   live `TriggerBlock=true` branch; the `02.N.03` path (false branch) is
   correctly not offered there.
-- [ ] Exact pre-answer branch prediction: `SceneParams.Simulate` pre-checks the
+- [x] Exact pre-answer branch prediction (done: `PlanLoad` now runs the plan
+  through the tree's `Sim`, `SimulatePlan`, full conditions included; what
+  follows is the original note). `SceneParams.Simulate` pre-checks the
   flow switch labels of each next scene, not the full condition (stats,
   objectives, character status). The tree's `After` does evaluate the full
   condition from the simulated hero, and the ordered replay stops at the first
@@ -541,8 +543,8 @@ save folders and only copies them.
   from `Hero.Objectives` (the start save's set) while evaluating conditions,
   restoring them afterwards. A plan test with the snapshot objectives ran
   without errors.
-- [ ] Scene-event objective changes after the start state are not simulated;
-  extract/simulate them if a path still diverges on a newly set objective.
+- [x] Scene-event objective changes after the start state are simulated:
+  `scene-objectives.tsv`'s scene-level rows (button 0) apply when a scene ends.
 - [x] Scene/answer objectives (30 Oct 2026): `tools/scene_objectives.py` reads
   the `SceneConsequenceGenerator`/`UniversalParametersGenerator`/
   `ConsequenceNextButton` components and writes `scene-objectives.tsv` (201
@@ -592,8 +594,9 @@ save folders and only copies them.
 - [x] In-game (30 Oct 2026): the table opened with 11 rows (9 manual, 1 game
   autosave, 1 original) and no choice points; the original row has no delete
   cell (code) and loading a row of each kind goes through the shared flow.
-- [ ] In-game: click the type header through the whole cycle, the Show more
-  row, and the original row's load/delete behaviour.
+- [x] In-game (21 Nov, `dev-table.txt`): the type header through the whole
+  cycle, the Show more row, the Original row without a delete cell. Loading
+  the Original row in game (`dev-table-load.txt`) is still to run.
 - [x] Load scene pass (30 Oct 2026): a played path reaches its target
   (`back 5`, `chapter`), a changed answer the story does not follow stops with
   the scene named and the tree open (`offpath`), a death answer replays through
@@ -611,9 +614,9 @@ save folders and only copies them.
 - [x] Table UI (30 Oct 2026): `dev-table` cycled the filter
   `All 18 -> Game autosave 7 -> Before load 8 -> Manual 2 -> Original 1 -> All`
   and the type cell's pop-up opened (`type pop-up active True`).
-- [ ] Table: "Show more" paging and clicking the Original row in game (the
-  shared load flow behind the row is verified via `dev-loadpath file`; the
-  row's own click/delete suppression is code-only).
+- [x] Table: "Show more" paging in game (21 Nov). Clicking the Original row to
+  load is still code-only (the shared load flow behind it is verified via
+  `dev-loadpath file`).
 - [x] Design document `docs/DESIGN.md` written (goals, save ownership, load
   flow, run identity, story path model, table/HUD, verification model,
   invariants, open questions).
@@ -625,4 +628,5 @@ save folders and only copies them.
   The death page itself is exercised (`dev-loadpath death` goes through it to
   the next scene); the chapter-restart control is a separate UI path not yet
   driven.
-- [ ] Refresh the README screenshots for the table's new first column.
+- [x] Refresh the README screenshots for the table's new first column (6 Nov,
+  again 19-20 Nov).

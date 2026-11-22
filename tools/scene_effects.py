@@ -474,8 +474,7 @@ def main():
                 lines.append("%s\t%s\t%s\t%s\t%d\t%d\t%s\n"
                              % (scene, button, kind, name, value, op, group))
     tsv = "".join(lines)
-    for target in (ROOT / "data" / "scene-effects.tsv",
-                   ROOT / "Brante-Save-Load" / "scene-effects.tsv"):
+    for target in (ROOT / "Brante-Save-Load" / "scene-effects.tsv",):
         target.write_text(tsv, encoding="utf-8")
         print("wrote %s" % target)
     reqs = sum(len(k.get("requires", [])) for b in effects.values() for k in b.values())

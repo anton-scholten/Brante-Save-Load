@@ -184,11 +184,6 @@ namespace Doorstop
 				+ ", run '" + (_runId == "" ? "(none)" : _runId) + "'");
 		}
 
-		public static bool ModTimeline
-		{
-			get { return _modTimeline; }
-		}
-
 		// A chapter restart (death -> "Restart chapter") loads Chapter_N.dat
 		// over the live state; it is still the current timeline.
 		public static void MarkChapterLoad()

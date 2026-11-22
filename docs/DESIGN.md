@@ -113,7 +113,7 @@ mirror is skipped while `AutoPlay.Running`).
 ## 5. Story path model
 
 Shipped data: `scene-texts.tsv` (titles, answers), `scene-flow.tsv`,
-`scene-effects.tsv`, `scene-params.tsv`. At runtime the save's
+`scene-effects.tsv`, `scene-params.tsv`, `scene-objectives.tsv`. At runtime the save's
 `ShowedScenesList` is the played path; the tree adds columns ahead from the flow
 table.
 
@@ -132,12 +132,15 @@ table.
 - Conditions after the current answer: `WorkOutOpenAnswers` stores each
   column's `AfterHero`; `SceneFlow.After(..., hero)` briefly swaps that hero's
   stats, characters and unlocked objectives into the live managers, evaluates,
-  then restores. A pick in a current or played scene rebuilds the columns.
+  then restores. A pick re-predicts the columns after it from the last full
+  build (`ResimulateAhead`); AGENTS.md has the details.
 - Key parameters: `SceneParams` applies `scene-params.tsv` — the
   `KeyChapterParametersOnEnableChanger` on scene open (button 0) and the
   `KeyChapterParametersChanger` on the answer's button index — from the start
-  save's `ChapterParameters`. `Simulate` marks the plan speculative when the
-  next scene no longer fits its switch labels.
+  save's `ChapterParameters`. `PlanLoad` runs the plan through the same `Sim`
+  as the tree (`SimulatePlan`: full conditions, stats, objectives) and marks it
+  speculative where the next scene differs; `SceneParams.Simulate` (switch
+  labels only) is the fallback when the start save cannot be simulated.
 
 `PlanLoad` pre-checks: target and current column known; divergence is the first
 changed answer at or before the target; start = nearest snapshot (or
@@ -161,8 +164,8 @@ One window opened from the book; the tree view tab sits above the save table.
 - The first header ("Save type") is a filter button, not a sort: it cycles
   `All -> Game autosave -> Before load -> Manual -> Original -> All`, reset to
   All when the window opens. Other headers sort (again to reverse).
-- Columns: Type, Saved, Chapter, Age, Year, Season, Turn, Scene. Chapter drops
-  the number prefix; Saved comes from the sidecar's `recorded=` line.
+- Columns: Type, Saved, Chapter, Age, Year, Season, Turn, Scene, Choice. Chapter
+  drops the number prefix; Saved comes from the sidecar's `recorded=` line.
 - State dedupe: rows are collapsed by `Recorder.StateSignature` (the blob hashed
   with `SlotInfo.Id`/`Date` cleared) within a kind, so repeated writes of one
   state are one row. The newest file is the row; the others become its copies
@@ -175,7 +178,9 @@ One window opened from the book; the tree view tab sits above the save table.
   `ForceMeshUpdate` to size text.
 - The tree view is a separate tab: columns per scene (played, then ahead),
   answers stacked, path highlighted, hover pop-up with effects and live
-  requirements, clicks build a path, `Load scene` runs the replay.
+  requirements, clicks build a path, `Load scene` runs the replay. Under it,
+  the panel's Stats, Family, Relations and Destiny tabs show the hero at the
+  scene shown (AGENTS.md).
 
 ## 7. Testing and verification model
 
@@ -191,7 +196,12 @@ Dev markers in `Snapshots/`, one-shot, paired with `dev-autoload.txt` unless not
 | `dev-book.txt` | tabs, table, tree: wheel, pop-ups, conflicting pick, plan, undo |
 | `dev-loadpath.txt` | Load scene end to end (`back`, `chapter`, `start`, `ahead`, `death`, `offpath`, `first`, `new`, `file`) |
 | `dev-autoplay.txt` | standalone: debug runs that make test saves at named chapters |
+| `dev-pick.txt` | the tree: picks, hovers, tabs, destiny dumps, path IDs, languages, screenshots (`shots`), `scenelist` |
+| `dev-restart.txt`, `dev-slow.txt`, `dev-stattrail.txt` | chapter restart call; replays at 1x; a stat's value at every choice point |
+| `dev-settings.txt` | standalone: the main menu's settings window through all 14 languages |
 | `dev-history.txt`, `dev-scene-tree.txt`, `dev-bolt.txt`, `dev-ironman.txt`, `dev-lang.txt` | history dump, UI dump, Bolt dump, Iron Man load, language switch |
+
+AGENTS.md has every marker's arguments.
 
 Documented as verified in game: bootstrap and probe; capture and dedup; a mod
 load reopening the scene byte-exactly; startup repair, folder rename,
@@ -206,11 +216,12 @@ and a type pop-up opening; the per-branch plan
 answer at the exam (`030.020.010_Exam -> ButtonDescription1 -> ... ->
 030.030.010_StudBrothers` from a snapshot whose recorded answer was Cleric);
 the replay matrix on fresh debug runs (`back`, `chapter`, `first`, `new`,
-`offpath`, death page, `file`, `file norun`); chapter 1's tree and conditions
-(chapters 4-5 offline only); a two-answer replay; language switch.
+`offpath`, death page, `file`, `file norun`); the tree, its prediction and
+the panel's tabs through chapter 5 (the judge's run); a two-answer replay;
+every language (14) in the tree, table and panel; the table's "Show more"
+paging and the Original row without a delete cell (21 Nov).
 
-Pending in game (not to be claimed): the "Show more" paging and loading the
-Original row, the complete `dev-loadpath` matrix after the unload change, a
+Pending in game (not to be claimed): loading the Original row, the complete `dev-loadpath` matrix after the unload change, a
 game-menu load and a death -> restart checkpoint, a replay adding no per-scene
 mirror entries, achievements after a load, a full playthrough pass, and the
 `.baseline` marker path across a restart.
@@ -240,14 +251,13 @@ reads carrying a non-empty id; no `GAME Exception` in the log from a mod step.
 ## 9. Open questions / future work
 
 - Objectives unlocked by a scene or an answer are extracted
-  (`scene-objectives.tsv`) and simulated after the answer; `SceneParams.Simulate`
-  still pre-checks only switch labels, not full conditions, and a key parameter
-  set solely by the true-death pop-up (`052.210.050_Final5`) is not modelled.
+  (`scene-objectives.tsv`) and simulated after the answer; a key parameter set
+  solely by the true-death pop-up (`052.210.050_Final5`) is not modelled.
 - Exact pre-answer branch prediction: labels and conditions are evaluated from
   the simulated hero, but a switch set only by a pop-up/event can still change
   the branch; the replay stops at the first divergence meanwhile.
-- Performance: the tree scans folders and builds the playthrough plus ahead
-  columns per open; caching across opens is open.
+- Performance: done - the tree is cached across opens and warmed up after a
+  scene loads (AGENTS.md, "Opening the window is cheap").
 - Same-scene edge cases: a load while a pop-up or consequence page is open, or
   during a replay, have no test.
 - Achievements: a replay can re-grant a held achievement (Steam ones are

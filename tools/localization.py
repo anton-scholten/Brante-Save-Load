@@ -185,7 +185,7 @@ def main():
         for name in sorted(entry["buttons"]):
             lines.append("B\t%s\t%s\t%s" % (scene, name, esc(entry["buttons"][name])))
     tsv = "\n".join(lines) + "\n"
-    for target in (ROOT / "data" / "scene-texts.tsv", game / "Brante-Save-Load" / "scene-texts.tsv"):
+    for target in (ROOT / "Brante-Save-Load" / "scene-texts.tsv",):
         try:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(tsv, encoding="utf-8")

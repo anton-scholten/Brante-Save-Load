@@ -580,7 +580,7 @@ def main():
             r["chapter"], r["order"], r["scene"], r["turn"], r["season"],
             alts, " && ".join(conditions).replace("\t", " ").replace("\n", " ")))
     tsv = "".join(lines)
-    for target in (ROOT / "data" / "scene-flow.tsv", ROOT / "Brante-Save-Load" / "scene-flow.tsv"):
+    for target in (ROOT / "Brante-Save-Load" / "scene-flow.tsv",):
         target.write_text(tsv, encoding="utf-8")
         print("wrote %s" % target)
     print("wrote %s" % path)

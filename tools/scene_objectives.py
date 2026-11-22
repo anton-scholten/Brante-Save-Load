@@ -318,15 +318,12 @@ def main():
            "objectives": json_rows}
     out_json = ROOT / "data" / "scene-objectives.json"
     out_json.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
-    for target in (ROOT / "data" / "scene-objectives.tsv",
-                   ROOT / "Brante-Save-Load" / "scene-objectives.tsv"):
-        target.write_text(tsv, encoding="utf-8")
+    (ROOT / "Brante-Save-Load" / "scene-objectives.tsv").write_text(tsv, encoding="utf-8")
     print("objective assets: %d, rows: %d, scenes: %d (answer keys: %d, scene-level: %d)"
           % (len(assets), len(tsv_rows), len({k[0] for k in merged}),
              sum(1 for k in merged if k[1] > 0),
              sum(1 for k in merged if k[1] == 0)))
-    for target in (out_json, ROOT / "data" / "scene-objectives.tsv",
-                   ROOT / "Brante-Save-Load" / "scene-objectives.tsv"):
+    for target in (out_json, ROOT / "Brante-Save-Load" / "scene-objectives.tsv"):
         print("wrote %s" % target)
     return 0
 

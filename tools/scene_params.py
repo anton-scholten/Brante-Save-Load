@@ -215,12 +215,9 @@ def main():
     out.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
     tsv = "".join("%s\t%d\t%s\t%s\n" % (r["scene"], r["button"], r["name"], r["value"])
                   for r in rows)
-    for target in (ROOT / "data" / "scene-params.tsv",
-                   ROOT / "Brante-Save-Load" / "scene-params.tsv"):
-        target.write_text(tsv, encoding="utf-8")
+    (ROOT / "Brante-Save-Load" / "scene-params.tsv").write_text(tsv, encoding="utf-8")
     print("scene parameter changes: %d (%d scenes)" % (len(rows), len({r['scene'] for r in rows})))
-    for target in (ROOT / "data" / "scene-params.tsv",
-                   ROOT / "Brante-Save-Load" / "scene-params.tsv", out):
+    for target in (ROOT / "Brante-Save-Load" / "scene-params.tsv", out):
         print("wrote %s" % target)
     return 0
 

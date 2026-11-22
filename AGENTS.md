@@ -42,7 +42,8 @@ Brante-Save-Load/            the folder that gets installed into the game dir
     SceneParams.cs           scene-params.tsv: key chapter parameter simulation
     SceneObjectives.cs       scene-objectives.tsv: objectives scenes/answers unlock
     SceneList.cs             writes scene-list.tsv from the tables above
-    StatPanel.cs             tree's stat columns: clones of the game's stat row
+    StatPanel.cs             the panel under the tree: Stats, Family, Relations, Destiny tabs
+                             (clones of the game's stat row) and the wide pop-ups
     PathId.cs                path IDs: the game state as a short text line (copy/paste)
     GameLanguages.cs         the game's settings offer all 14 languages (3 were hidden)
     Loc.cs                   the UI's own translations (13 languages)
@@ -382,10 +383,9 @@ community event sheet (`data/events.json`).
   Master of Anizotte needs him at `Deal` - or an objective it must not have).
   An objective of another post is still listed when a scene of this post
   earns it (`EarnableOn`: Tommas's New Life, inquisitor-only in the game,
-  comes from a wedding on every track). Hover: the stat pop-up with everything in
-  its description (state, description, the window's conditions, the earning
-  scenes) - its rows are sized for a stat's scale and mangled longer lines -
-  placed beside the entry's words, level with it. `dev-pick.txt` also takes
+  comes from a wedding on every track). Hover opens the wide pop-up below
+  (the game's stat tooltip beside the entry, level with its words, is only
+  the fallback when the tree is not there). `dev-pick.txt` also takes
   `destinyhover <objective>` and `forkhover`. Hovering an answer or event
   (`HighlightDestiny`) backs the entries it earns green and the ones it puts
   out of reach red (every way to earn them is another answer of that scene
@@ -430,11 +430,7 @@ community event sheet (`data/events.json`).
   column's own size, and the first pop-up's width stuck to every later
   one. `CheckOverlap` logs "OVERLAP" when Requires' drawn text reaches
   into Comes from; `destinyall` hovers every destiny (none since). In
-  Comes from, "(" and ")" keep the line's own style; only a whole line is
-  green or red. Two answers of a scene's versions whose names are at most
-  two letters apart with the same needs are one line (`SameAnswer`: "Rout
-  the insurgents" / "Route the insurgents", a typo in the game; the only
-  such pair). A key-parameter part that
+  Comes from, "(" and ")" keep the line's own style. A key-parameter part that
   only the earning answers set (`ShownByComesFrom`: every
   `SceneParams.Setters` entry is an earner - "Kiss the Sword") is left
   out: Comes from names that answer. One set elsewhere too ("GirlsMeet")
@@ -465,8 +461,10 @@ community event sheet (`data/events.json`).
   less what all versions share; `SceneFlow.Gate` takes, from a
   top-level "or" of compounds, the tests every branch makes (the
   Revolt's level). One answer in several versions is one line
-  (`SameName`, `NeedAlternatives`): the versions' needs as "A and B,
-  or C" after what they share; a version that asks nothing more leaves
+  (`SameName`: the same English name, or names at most two letters apart -
+  "Rout the insurgents" / "Route the insurgents", a typo in the game;
+  `NeedAlternatives`): the versions' needs as "A and B, or C" after what
+  they share; a version that asks nothing more leaves
   only the shared needs. The joining words are italic (`<i>` per word
   token, 0.7 of a space extra after each: italics lean past their
   measure and met the next icon); each run is centred on the font's line
@@ -560,14 +558,17 @@ community event sheet (`data/events.json`).
   stops at "Died thrice"). `ObjectiveEnum.УрокКрови` ("A Lesson Writ in
   Blood") has a title but no asset in `AllGameObjectives` and no earner:
   that ending earns only the true death, in the game too.
-- **"Comes from" is one line per scene.** `StatPanel.EarnedByLines` groups
-  a destiny's earners by scene title: a scene that earns it by itself or
-  with every answer (Forbidden Love) is its
-  title alone - listed per answer it read as the same line twice - else
-  each earning answer with what it needs (`Needs`: and-requirements, then
-  the or-group; Last Respects: the Nobleman's Sacrament, or Nobility >= 6
-  or Gregor >= 2). Until the destiny is earned, a scene behind the scene
-  shown or on another post's track is struck in the out-of-reach red, and
+- **"Comes from" is one line per scene.** `StatPanel.EarnedBy` groups a
+  destiny's earners by the scene's English title (`SceneTexts.BaseTitle`,
+  so a scene's versions are one line in every language): a scene that
+  earns it by itself or with every answer (Forbidden Love) is its title
+  with the scene's own gate - listed per answer it read as the same line
+  twice - else each earning answer with what it needs (`NeedParts`:
+  and-requirements, then the or-group; in Last Respects, Bleed needs the
+  Nobleman's Sacrament, Ask for Grandfather's blessing Nobility >= 6 or
+  Gregor >= 2). Until the destiny is earned, a scene behind the scene
+  shown, on another post's track, past its time slot (`SlotPassed`) or
+  after the path's early end (`AfterStop`) is struck in the out-of-reach red, and
   so is each condition part that can no longer be met (`PartRuledOut`;
   needing a destiny that is out of reach counts, one level deep: Blood
   Tide's Nobleman's Sacrament once chapter 1 is over without it, the
@@ -674,7 +675,8 @@ community event sheet (`data/events.json`).
   red for a loss or a turn against the hero (`BadStatus`: dead, exile,
   Hatred, Betrayed, ...), green for a gain (`GoodStatus`), a muted mark
   otherwise - it was green for anything short of death.
-- **Stats / Family / Relations tabs.** Three tabs at the top of the panel
+- **Stats / Family / Relations tabs.** Three of the panel's four tabs (the
+  fourth is Destiny, above)
   (`StatPanel.Mode`, `ModeTabs`) switch it between the stats and the
   characters as the same cloned stat row: portrait (the chapter's sprite),
   `GetCharacterTrueName`, relation -5..+5 on the two-sided slider, the game's
@@ -1032,5 +1034,5 @@ work here (black/`BadMatch` on the X1 root).
   repair, the one-time baseline, pre-rewind checkpoints including the chapter
   restart, the game-autosave mirror, the unified table with paging and the
   Original row) and id minting for id-less loads.
-- Remaining: the full playthrough pass on a clean run and the README
-  screenshot refresh.
+- Remaining: the full playthrough pass on a clean run, and loading the
+  Original save row in game.
